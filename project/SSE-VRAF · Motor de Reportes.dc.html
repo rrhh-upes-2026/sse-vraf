@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{font-family:'Public Sans',system-ui,sans-serif;color:#14181F;background:#F0F2F5;-webkit-font-smoothing:antialiased}
+  a{color:#2E6BE6;text-decoration:none}a:hover{color:#0F2647}
+  .mono{font-family:'Space Grotesk',monospace}
+  ::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:#D0D5DD;border-radius:8px;border:2px solid #F0F2F5}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes prog{from{width:0}to{width:100%}}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+
+  <!-- TOPBAR -->
+  <div style="height:56px;flex:none;background:#fff;border-bottom:1px solid #E4E8EF;display:flex;align-items:center;padding:0 24px;gap:14px;z-index:20">
+    <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#2E6BE6,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:11px">SS</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#98A2B3"><span>SSE-VRAF</span><span style="color:#CBD2DC">›</span><span style="color:#14181F;font-weight:700">Motor de Reportes</span></div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <a href="SSE-VRAF · Dashboard Ejecutivo.dc.html" target="_blank" style="height:32px;padding:0 13px;border:1px solid #E4E8EF;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#475467;display:flex;align-items:center;gap:6px;text-decoration:none">Dashboard ↗</a>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;overflow:hidden">
+
+    <!-- LEFT: REPORT LIST -->
+    <aside style="width:280px;flex:none;background:#fff;border-right:1px solid #E4E8EF;overflow-y:auto">
+      <div style="padding:14px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#98A2B3">Reportes disponibles</span>
+        <span class="mono" style="font-size:10.5px;font-weight:700;color:#2E6BE6">{{ reportCount }}</span>
+      </div>
+      <sc-for list="{{ reportList }}" as="r" hint-placeholder-count="10">
+        <button onClick="{{ r.onSel }}" style="{{ r.style }}">
+          <div style="width:30px;height:30px;flex:none;border-radius:8px;background:{{ r.bg }};color:{{ r.color }};display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ r.icon }}"></path></svg></div>
+          <div style="flex:1;text-align:left;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:{{ r.textC }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div>
+            <div style="font-size:10px;color:#98A2B3">{{ r.unit }} · {{ r.freq }}</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;color:{{ r.statusC }};background:{{ r.statusB }};padding:2px 6px;border-radius:4px;flex:none">{{ r.status }}</span>
+        </button>
+      </sc-for>
+    </aside>
+
+    <!-- CENTER: REPORT BUILDER -->
+    <main style="flex:1;min-width:0;overflow-y:auto;padding:24px">
+
+      <!-- REPORT HEADER -->
+      <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);padding:20px 24px;margin-bottom:18px;animation:fadeIn .2s ease">
+        <div style="display:flex;align-items:flex-start;gap:14px">
+          <div style="width:42px;height:42px;flex:none;border-radius:12px;background:{{ selReport.bg }};color:{{ selReport.color }};display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ selReport.icon }}"></path></svg></div>
+          <div style="flex:1">
+            <div style="font-size:19px;font-weight:800;color:#14181F">{{ selReport.name }}</div>
+            <div style="font-size:12.5px;color:#98A2B3;margin-top:3px">{{ selReport.unit }} · {{ selReport.desc }}</div>
+          </div>
+          <div style="display:flex;gap:7px">
+            <sc-for list="{{ exportBtns }}" as="e" hint-placeholder-count="3">
+              <button onClick="{{ e.onExport }}" style="height:34px;padding:0 14px;border-radius:9px;border:none;background:{{ e.bg }};color:{{ e.color }};font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4M7 11l5 5 5-5M4 20h16"></path></svg>{{ e.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- CONFIG ROW -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px">
+          <div>
+            <div style="font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Período</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              <sc-for list="{{ periodOpts }}" as="p" hint-placeholder-count="3">
+                <button onClick="{{ p.onSel }}" style="padding:5px 10px;border-radius:7px;border:{{ p.active?'1.5px solid #2E6BE6':'1px solid #E4E8EF' }};background:{{ p.active?'#EAF1FE':'#fff' }};color:{{ p.active?'#2E6BE6':'#667085' }};font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">{{ p.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Unidad</div>
+            <div style="padding:7px 11px;background:#FAFBFC;border:1.5px solid #E4E8EF;border-radius:8px;font-size:12.5px;color:#14181F">{{ selReport.unit }}</div>
+          </div>
+          <div>
+            <div style="font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Generado por</div>
+            <div style="display:flex;align-items:center;gap:7px;padding:7px 11px;background:#FAFBFC;border:1.5px solid #E4E8EF;border-radius:8px"><span style="width:20px;height:20px;border-radius:50%;background:#EAF1FE;color:#2E6BE6;font-size:8.5px;font-weight:700;display:flex;align-items:center;justify-content:center">MV</span><span style="font-size:12px;color:#14181F">M. Villalta</span></div>
+          </div>
+          <div>
+            <div style="font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Estado</div>
+            <span style="font-size:11px;font-weight:700;color:{{ selReport.statusC }};background:{{ selReport.statusB }};padding:5px 12px;border-radius:7px;display:inline-block">{{ selReport.status }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GENERATION PROGRESS -->
+      <sc-if value="{{ generating }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);padding:20px 24px;margin-bottom:18px;animation:fadeIn .2s ease">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+          <div style="width:28px;height:28px;border-radius:50%;border:3px solid #2E6BE6;border-top-color:transparent;animation:spin .8s linear infinite"></div>
+          <div style="font-size:14px;font-weight:700;color:#14181F">Generando reporte automáticamente…</div>
+        </div>
+        <sc-for list="{{ genSteps }}" as="s" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F4F6F9">
+            <sc-if value="{{ s.done }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#12A150" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></sc-if>
+            <sc-if value="{{ s.active }}" hint-placeholder-val="{{ false }}"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #2E6BE6;border-top-color:transparent;animation:spin .6s linear infinite"></div></sc-if>
+            <sc-if value="{{ s.pending }}" hint-placeholder-val="{{ false }}"><div style="width:16px;height:16px;border-radius:50%;border:2px solid #E4E8EF"></div></sc-if>
+            <span style="font-size:12.5px;font-weight:{{ s.active?'700':'500' }};color:{{ s.done?'#12A150':s.active?'#2E6BE6':'#98A2B3' }}">{{ s.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- REPORT PREVIEW -->
+      <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden;animation:fadeIn .3s ease">
+        <div style="background:#0F2647;padding:16px 24px;color:#fff;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:#7FB0FF;font-weight:700;margin-bottom:3px">Universidad Politécnica de El Salvador</div>
+            <div style="font-size:16px;font-weight:800">{{ selReport.name }}</div>
+            <div style="font-size:11px;color:#A9C0E4;margin-top:2px">{{ selReport.unit }} · Período: {{ activePeriod }} · Generado: 9 jul 2026</div>
+          </div>
+          <div style="text-align:right"><div class="mono" style="font-size:28px;font-weight:800;color:#7FB0FF">{{ selReport.mainVal }}</div><div style="font-size:11px;color:#A9C0E4;font-weight:600">{{ selReport.mainLabel }}</div></div>
+        </div>
+
+        <!-- KPI STRIP -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #EEF1F5">
+          <sc-for list="{{ reportKpis }}" as="k" hint-placeholder-count="4">
+            <div style="padding:14px 18px;border-right:1px solid #EEF1F5">
+              <div style="font-size:10px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px">{{ k.label }}</div>
+              <div class="mono" style="font-size:22px;font-weight:800;color:{{ k.valC }}">{{ k.val }}</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:5px"><span style="width:8px;height:8px;border-radius:50%;background:{{ k.sem }}"></span><span style="font-size:11px;color:#667085">{{ k.sub }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- SECTIONS -->
+        <sc-for list="{{ reportSections }}" as="sec" hint-placeholder-count="4">
+          <div style="padding:16px 24px;border-bottom:1px solid #EEF1F5">
+            <div style="font-size:13px;font-weight:800;color:#14181F;margin-bottom:12px">{{ sec.title }}</div>
+            <sc-if value="{{ sec.isTable }}" hint-placeholder-val="{{ false }}">
+              <div style="overflow:hidden;border:1px solid #EEF1F5;border-radius:10px">
+                <div style="display:grid;grid-template-columns:{{ sec.cols }};padding:8px 14px;background:#FAFBFC;font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid #EEF1F5">
+                  <sc-for list="{{ sec.headers }}" as="h" hint-placeholder-count="5"><div>{{ h }}</div></sc-for>
+                </div>
+                <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:{{ sec.cols }};padding:10px 14px;border-bottom:1px solid #F4F6F9;align-items:center">
+                    <sc-for list="{{ row }}" as="c" hint-placeholder-count="5">
+                      <div>
+                        <sc-if value="{{ c.isSem }}" hint-placeholder-val="{{ false }}"><span style="width:9px;height:9px;border-radius:50%;display:inline-block;background:{{ c.v }}"></span></sc-if>
+                        <sc-if value="{{ c.isTag }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;color:{{ c.tc }};background:{{ c.tb }};padding:2px 8px;border-radius:5px">{{ c.v }}</span></sc-if>
+                        <sc-if value="{{ c.isText }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#344054">{{ c.v }}</span></sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ sec.isNote }}" hint-placeholder-val="{{ false }}">
+              <div style="background:#F4F7FE;border-left:4px solid #2E6BE6;border-radius:0 10px 10px 0;padding:12px 16px;font-size:13px;color:#344054;line-height:1.6">{{ sec.note }}</div>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <div style="padding:16px 24px;display:flex;align-items:center;justify-content:space-between;background:#FAFBFC">
+          <div style="font-size:11px;color:#98A2B3">Reporte generado automáticamente por el SSE-VRAF · sin recaptura manual de datos</div>
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ exportBtns }}" as="e" hint-placeholder-count="3">
+              <button onClick="{{ e.onExport }}" style="height:30px;padding:0 13px;border-radius:7px;border:none;background:{{ e.bg }};color:{{ e.color }};font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">↓ {{ e.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- TOAST -->
+  <sc-if value="{{ toastOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:60;background:#0F2647;color:#fff;border-radius:12px;padding:12px 20px;box-shadow:0 12px 32px rgba(15,38,71,.32);display:flex;align-items:center;gap:11px;animation:fadeIn .3s ease;white-space:nowrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7FE0A3" stroke-width="2.6" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg>
+    <span style="font-size:13px;font-weight:700">{{ toastMsg }}</span>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { selId:'r1', period:'Mensual', generating:false, genStep:0, toastOpen:false, toastMsg:'' };
+  _tt=null; _gt=null;
+  toast(m){ this.setState({toastOpen:true,toastMsg:m}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toastOpen:false}),3200); }
+
+  reports() { return [
+    { id:'r1', name:'Contratación de Personal', unit:'Recursos Humanos', freq:'Mensual', icon:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', bg:'#EAF1FE', color:'#2E6BE6', desc:'Ciclo completo: solicitud → incorporación', mainVal:'67%', mainLabel:'Avance global', status:'Generado', statusC:'#12A150', statusB:'#EEF6EE' },
+    { id:'r2', name:'Ejecución Presupuestaria', unit:'VRAF', freq:'Mensual', icon:'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', bg:'#FDF3E1', color:'#B4791A', desc:'Presupuesto ejecutado vs planificado', mainVal:'91%', mainLabel:'Ejecución', status:'Generado', statusC:'#12A150', statusB:'#EEF6EE' },
+    { id:'r3', name:'Estado de Procesos', unit:'VRAF Consolidado', freq:'Semanal', icon:'M6 3v6M6 15v6M18 3v18M6 9a3 3 0 0 0 3 3h6', bg:'#EEF6EE', color:'#12A150', desc:'Todos los procesos activos y su avance', mainVal:'23', mainLabel:'Procesos activos', status:'Pendiente', statusC:'#B4791A', statusB:'#FDF3E1' },
+    { id:'r4', name:'Indicadores Institucionales', unit:'VRAF Consolidado', freq:'Mensual', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', bg:'#EEF0FB', color:'#5B4FD0', desc:'KPIs de todas las unidades con semáforos', mainVal:'64%', mainLabel:'En verde', status:'Pendiente', statusC:'#B4791A', statusB:'#FDF3E1' },
+    { id:'r5', name:'Solicitudes Internas', unit:'Todas las unidades', freq:'Quincenal', icon:'M4 13h4l2 3h4l2-3h4M5 5h14v13H5z', bg:'#FDECEC', color:'#E5484D', desc:'Solicitudes: apertura, resolución, SLA', mainVal:'88%', mainLabel:'SLA cumplido', status:'Pendiente', statusC:'#B4791A', statusB:'#FDF3E1' },
+    { id:'r6', name:'Inspecciones SSO', unit:'Salud y Seg. Ocup.', freq:'Mensual', icon:'M12 21C7 18 4 14 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5-3 9-8 12z', bg:'#E6F4F4', color:'#0F8A8A', desc:'Inspecciones, incidentes y cumplimiento', mainVal:'0', mainLabel:'Incidentes', status:'Generado', statusC:'#12A150', statusB:'#EEF6EE' },
+    { id:'r7', name:'Compras y Proveedores', unit:'Compras', freq:'Mensual', icon:'M6 6h15l-1.5 9h-12zM6 6L5 3H2', bg:'#EEF0FB', color:'#5B4FD0', desc:'Órdenes de compra, tiempos y SLAs', mainVal:'54%', mainLabel:'SLA cumplido', status:'Atrasado', statusC:'#E5484D', statusB:'#FDECEC' },
+    { id:'r8', name:'Mantenimiento Preventivo', unit:'Mantenimiento', freq:'Mensual', icon:'M14 7l3 3m-8 8l-5 1 1-5 9-9a2.8 2.8 0 0 1 4 4z', bg:'#FDECEC', color:'#E5484D', desc:'Órdenes de trabajo y cumplimiento', mainVal:'38%', mainLabel:'Completadas', status:'Atrasado', statusC:'#E5484D', statusB:'#FDECEC' },
+  ]; }
+
+  generate() {
+    this.setState({generating:true,genStep:1});
+    const steps = [1,2,3,4,5];
+    steps.forEach((s,i) => { this._gt=setTimeout(()=>{ this.setState({genStep:s+1}); if(s===5){ setTimeout(()=>{ this.setState({generating:false,genStep:0}); this.toast('Reporte generado automáticamente · listo para exportar'); },400); } },i*700+500); });
+  }
+
+  renderVals() {
+    const st = this.state;
+    const repts = this.reports();
+    const sel = repts.find(r=>r.id===st.selId)||repts[0];
+
+    const reportList = repts.map(r=>{ const a=r.id===st.selId; return { ...r, textC:a?'#14181F':'#475467', style:`width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;border:none;background:${a?'#F4F7FE':'transparent'};border-right:${a?'3px solid #2E6BE6':'3px solid transparent'};cursor:pointer;font-family:inherit`, onSel:()=>this.setState({selId:r.id}) }; });
+
+    const periodOpts = ['Mensual','Trimestral','Anual'].map(p=>({ label:p, active:st.period===p, onSel:()=>this.setState({period:p}) }));
+    const exportBtns = [
+      { label:'PDF', bg:'#FDECEC', color:'#E5484D', onExport:()=>this.toast('Exportando PDF · el reporte se genera automáticamente con los datos del sistema') },
+      { label:'Word', bg:'#EAF1FE', color:'#2E6BE6', onExport:()=>this.toast('Exportando Word · descarga iniciada') },
+      { label:'Excel', bg:'#EEF6EE', color:'#12A150', onExport:()=>this.toast('Exportando Excel · todas las tablas y datos numéricos incluidos') },
+    ];
+
+    const genLabels = ['Recolectando datos del proceso','Calculando indicadores','Aplicando formato institucional','Validando información','Finalizando documento'];
+    const genSteps = genLabels.map((l,i)=>({ label:l, done:st.genStep>i+1, active:st.genStep===i+1, pending:st.genStep<i+1 }));
+
+    const reportKpis = sel.id==='r1' ? [
+      { label:'Avance global', val:'67%', valC:'#E5A100', sub:'meta: 100%', sem:'#E5A100' },
+      { label:'Etapas completadas', val:'10/15', valC:'#14181F', sub:'4 pendientes', sem:'#E5A100' },
+      { label:'Evidencias cargadas', val:'18/27', valC:'#14181F', sub:'9 pendientes', sem:'#E5A100' },
+      { label:'Tiempo del proceso', val:'18 d', valC:'#12A150', sub:'meta ≤ 30 d', sem:'#12A150' },
+    ] : [
+      { label:'Indicador 1', val:sel.mainVal, valC:'#14181F', sub:sel.mainLabel, sem:'#12A150' },
+      { label:'Período', val:st.period, valC:'#14181F', sub:'jul 2026', sem:'#2E6BE6' },
+      { label:'Procesos', val:'5', valC:'#14181F', sub:'activos', sem:'#2E6BE6' },
+      { label:'Estado', val:sel.status, valC:'#12A150', sub:'automático', sem:'#12A150' },
+    ];
+
+    const mkCell = (v,type,tc='',tb='') => type==='sem'?{isSem:true,isTag:false,isText:false,v}:type==='tag'?{isSem:false,isTag:true,isText:false,v,tc,tb}:{isSem:false,isTag:false,isText:true,v};
+    const reportSections = sel.id==='r1' ? [
+      { title:'Detalle de etapas', isTable:true, isNote:false, cols:'2fr 1fr 1fr 1fr .7fr', headers:['Etapa','Responsable','Evidencias','Estado','Sem.'],
+        rows:[
+          [mkCell('Solicitud','text'),mkCell('C. Reyes','text'),mkCell('2/2','text'),mkCell('Completa','tag','#12A150','#EEF6EE'),mkCell('#12A150','sem')],
+          [mkCell('Validación de plaza','text'),mkCell('D. Alfaro','text'),mkCell('2/2','text'),mkCell('Completa','tag','#12A150','#EEF6EE'),mkCell('#12A150','sem')],
+          [mkCell('Publicación','text'),mkCell('D. Alfaro','text'),mkCell('3/3','text'),mkCell('Completa','tag','#12A150','#EEF6EE'),mkCell('#12A150','sem')],
+          [mkCell('Evaluación','text'),mkCell('S. López','text'),mkCell('1/2','text'),mkCell('En proceso','tag','#B4791A','#FDF3E1'),mkCell('#E5A100','sem')],
+        ]},
+      { title:'Indicadores del proceso', isTable:true, isNote:false, cols:'2fr 1fr 1fr 1fr .7fr', headers:['Indicador','Valor actual','Meta','Familia','Sem.'],
+        rows:[
+          [mkCell('Avance del proceso','text'),mkCell('67%','text'),mkCell('100%','text'),mkCell('Gestión','tag','#B4791A','#FDF3E1'),mkCell('#E5A100','sem')],
+          [mkCell('Tiempo de contratación','text'),mkCell('18 d','text'),mkCell('≤ 30 d','text'),mkCell('Desempeño','tag','#12A150','#EEF6EE'),mkCell('#12A150','sem')],
+        ]},
+      { title:'Observaciones y recomendaciones', isTable:false, isNote:true, note:'El proceso de contratación CT-003 (Docente de Matemáticas) presenta retraso en la etapa de evaluación. Se recomienda priorizar la revisión de CVs y agendar entrevistas antes del 15 de julio para cumplir con la fecha de incorporación prevista.' },
+    ] : [
+      { title:'Resumen ejecutivo', isTable:false, isNote:true, note:`El reporte "${sel.name}" se generará automáticamente a partir de los datos registrados durante la operación diaria de ${sel.unit}. Ningún dato se captura manualmente — toda la información fluye desde los procesos, actividades y evidencias registradas en el SSE-VRAF.` },
+      { title:'Vista previa de indicadores', isTable:true, isNote:false, cols:'2fr 1fr 1fr .8fr', headers:['Indicador','Valor','Meta','Semáforo'],
+        rows:[
+          [mkCell('Indicador principal','text'),mkCell(sel.mainVal,'text'),mkCell('100%','text'),mkCell('#12A150','sem')],
+          [mkCell('Avance del período','text'),mkCell('En curso','text'),mkCell('Mensual','text'),mkCell('#E5A100','sem')],
+        ]},
+    ];
+
+    const btn = { label:st.generating?'Generando…':'Generar reporte', onGen:()=>{ if(!st.generating) this.generate(); } };
+
+    return {
+      reportList, reportCount:String(repts.length),
+      selReport:sel, periodOpts, activePeriod:st.period, exportBtns,
+      generating:st.generating, genSteps,
+      reportKpis, reportSections, btn,
+      toastOpen:st.toastOpen, toastMsg:st.toastMsg,
+    };
+  }
+}
+</script>
+</body>
+</html>

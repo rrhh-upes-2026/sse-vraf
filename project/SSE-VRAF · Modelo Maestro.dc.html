@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:'Public Sans',system-ui,sans-serif;color:#14181F;background:#E9ECF1;-webkit-font-smoothing:antialiased;line-height:1.5}
+  a{color:#2E6BE6;text-decoration:none}
+  a:hover{color:#0F2647}
+  code,.mono{font-family:'Space Grotesk',ui-monospace,monospace}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-thumb{background:#C6CCD6;border-radius:8px;border:3px solid #E9ECF1}
+</style>
+</helmet>
+
+<div style="display:flex;max-width:1320px;margin:0 auto;background:#F5F6F8;min-height:100vh;box-shadow:0 0 60px rgba(15,38,71,.08)">
+
+  <!-- ===== TOC ===== -->
+  <aside style="width:246px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:#0F2647;color:#B4C1D6;padding:24px 16px">
+    <div style="display:flex;align-items:center;gap:11px;margin-bottom:6px">
+      <div style="width:38px;height:38px;flex:none;border-radius:10px;background:linear-gradient(135deg,#2E6BE6,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px">SS</div>
+      <div style="line-height:1.15"><div style="color:#fff;font-weight:700;font-size:14px">SSE-VRAF</div><div style="color:#7E93B4;font-size:11px;font-weight:500">Modelo Maestro</div></div>
+    </div>
+    <div style="font-size:11px;color:#7E93B4;line-height:1.4;margin:14px 0 14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.09)">Fase 1 · Modelado funcional institucional</div>
+
+    <div class="mono" style="font-size:9.5px;letter-spacing:.9px;text-transform:uppercase;color:#5E7397;font-weight:700;padding:4px 10px">Unidad en modelado</div>
+    <div style="display:flex;align-items:center;gap:9px;padding:9px 10px;margin:2px 0 12px;background:rgba(46,107,230,.18);border-radius:9px;box-shadow:inset 3px 0 0 #5B8DEF">
+      <span class="mono" style="color:#7FB0FF;font-size:11px;font-weight:700">U1</span>
+      <span style="color:#fff;font-size:12px;font-weight:600;line-height:1.2">Vicerrectoría Adm. y Financiera</span>
+    </div>
+
+    <div class="mono" style="font-size:9.5px;letter-spacing:.9px;text-transform:uppercase;color:#5E7397;font-weight:700;padding:4px 10px">Niveles del modelo</div>
+    <sc-for list="{{ levelsNav }}" as="l" hint-placeholder-count="8">
+      <a href="{{ l.href }}" style="display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-radius:8px;color:#C7D2E4;font-size:12px;font-weight:500">
+        <span class="mono" style="color:#5B8DEF;font-size:10.5px;font-weight:600;width:20px;flex:none">{{ l.n }}</span>
+        <span>{{ l.label }}</span>
+      </a>
+    </sc-for>
+
+    <div class="mono" style="font-size:9.5px;letter-spacing:.9px;text-transform:uppercase;color:#5E7397;font-weight:700;padding:14px 10px 4px">Unidades (workspaces)</div>
+    <sc-for list="{{ unitsNav }}" as="u" hint-placeholder-count="6">
+      <div style="display:flex;gap:9px;align-items:center;padding:6px 10px;font-size:11.5px;color:#9FB0C9">
+        <span style="width:7px;height:7px;border-radius:50%;flex:none;background:{{ u.dot }}"></span>
+        <span style="flex:1;line-height:1.2">{{ u.name }}</span>
+        <span class="mono" style="font-size:8.5px;font-weight:700;color:{{ u.dot }}">{{ u.tag }}</span>
+      </div>
+    </sc-for>
+  </aside>
+
+  <main style="flex:1;min-width:0;padding:0 0 80px">
+
+    <!-- ===== HEADER ===== -->
+    <header style="padding:48px 56px 36px;background:linear-gradient(135deg,#0F2647 0%,#173458 55%,#1D3E6E 100%);color:#fff">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <span class="mono" style="font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:#8FB0E6;font-weight:600">Fase 1 · Modelo Maestro de Gestión</span>
+        <span style="font-size:10.5px;font-weight:700;color:#0F2647;background:#7FB0FF;padding:3px 9px;border-radius:20px">PROPUESTA · U1</span>
+      </div>
+      <h1 style="font-size:34px;font-weight:900;letter-spacing:-.7px;margin:10px 0 8px;line-height:1.08">Modelado funcional de la Vicerrectoría<br>Administrativa y Financiera</h1>
+      <p style="font-size:14.5px;color:#C7D6EE;max-width:720px;margin:0 0 26px">Modelamos <b style="color:#fff">cómo trabaja realmente</b> cada unidad — no documentos ni formularios. Propuesta basada en buenas prácticas internacionales de gestión por procesos (ISO 9001 / cadena de valor), lista para su ajuste con la realidad de la UPES.</p>
+
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(143,176,230,.28);border-radius:14px;padding:16px 20px;max-width:940px">
+        <div class="mono" style="font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:#7FB0FF;font-weight:700;margin-bottom:11px">Regla del proyecto · cadena obligatoria (ningún elemento fuera de ella)</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ chain }}" as="c" hint-placeholder-count="10">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:11px;font-weight:700;color:{{ c.color }};background:{{ c.bg }};padding:5px 10px;border-radius:7px">{{ c.label }}</span>
+              <sc-if value="{{ c.arrow }}" hint-placeholder-val="{{ true }}"><span style="color:#5B7196;font-size:12px">→</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== ÍNDICE DE UNIDADES ===== -->
+    <section style="padding:34px 56px;border-bottom:1px solid #E4E8EE">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:6px">
+        <h2 style="font-size:20px;font-weight:800;margin:0;letter-spacing:-.3px">Seis unidades · seis workspaces</h2>
+        <span style="font-size:12.5px;color:#98A2B3">misma estructura funcional para todas · se modelan una por una</span>
+      </div>
+      <p style="font-size:13px;color:#667085;max-width:820px;margin:0 0 20px">Cada unidad es un <b>workspace independiente</b> con dashboard, objetivos, procesos, procedimientos, indicadores, evidencias, reportes y calendario propios. El acceso se rige por RBAC: cada usuario ve solo su unidad; el Administrador General tiene acceso transversal.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        <sc-for list="{{ units }}" as="u" hint-placeholder-count="6">
+          <div style="background:#fff;border:1px solid #E7EAF0;border-radius:13px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);border-top:3px solid {{ u.color }};position:relative">
+            <div style="display:flex;align-items:center;gap:11px">
+              <div style="width:36px;height:36px;flex:none;border-radius:10px;background:{{ u.bg }};color:{{ u.color }};display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ u.icon }}"></path></svg></div>
+              <div style="flex:1;min-width:0">
+                <div class="mono" style="font-size:10px;color:#98A2B3;font-weight:700">U{{ u.n }}</div>
+                <div style="font-size:13px;font-weight:700;color:#14181F;line-height:1.2">{{ u.name }}</div>
+              </div>
+            </div>
+            <div style="margin-top:11px"><span style="font-size:10.5px;font-weight:700;color:{{ u.statusColor }};background:{{ u.statusBg }};padding:3px 10px;border-radius:20px">{{ u.status }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== N1 WORKSPACE ===== -->
+    <section id="u1" style="padding:40px 56px;border-bottom:1px solid #E4E8EE;background:#FAFBFC">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:8px">
+        <span class="mono" style="font-size:11px;font-weight:700;color:#fff;background:#173458;padding:5px 11px;border-radius:8px;letter-spacing:.5px">NIVEL 1</span>
+        <h2 style="font-size:23px;font-weight:800;margin:0;letter-spacing:-.4px">Unidad organizacional · Workspace</h2>
+      </div>
+      <p style="font-size:14px;color:#475467;max-width:820px;margin:0 0 20px"><b>Vicerrectoría Administrativa y Financiera (VRAF)</b> — unidad rectora de la gestión administrativa y financiera de la UPES; coordina y supervisa a las cinco unidades operativas y responde por la asignación y el control de los recursos.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <sc-for list="{{ workspaceItems }}" as="w" hint-placeholder-count="9">
+          <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E7EAF0;border-radius:10px;padding:11px 14px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E6BE6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ w.icon }}"></path></svg>
+            <span style="font-size:12.5px;font-weight:600;color:#344054">{{ w.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== N2 MAPA DE PROCESOS ===== -->
+    <section id="u2" style="padding:40px 56px;border-bottom:1px solid #E4E8EE">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:8px">
+        <span class="mono" style="font-size:11px;font-weight:700;color:#fff;background:#173458;padding:5px 11px;border-radius:8px;letter-spacing:.5px">NIVEL 2</span>
+        <h2 style="font-size:23px;font-weight:800;margin:0;letter-spacing:-.4px">Mapa de procesos</h2>
+      </div>
+      <p style="font-size:14px;color:#475467;max-width:820px;margin:0 0 22px">Clasificación por buenas prácticas de gestión por procesos. El proceso insignia (<span style="color:#2E6BE6;font-weight:700">★</span>) se desarrolla completo en los niveles 3–8 como modelo replicable; el resto sigue la misma plantilla.</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+        <sc-for list="{{ processMap }}" as="cat" hint-placeholder-count="4">
+          <div style="background:#fff;border:1px solid #E7EAF0;border-radius:13px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+            <div style="padding:12px 15px;background:{{ cat.bg }};border-bottom:1px solid #EEF1F5">
+              <div style="font-size:13px;font-weight:800;color:{{ cat.color }}">{{ cat.cat }}</div>
+              <div style="font-size:10.5px;color:#8592A6;margin-top:1px">{{ cat.sub }}</div>
+            </div>
+            <div style="padding:8px">
+              <sc-for list="{{ cat.items }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;align-items:flex-start;gap:7px;padding:8px 9px;border-radius:8px;{{ p.hl }}">
+                  <span style="width:6px;height:6px;border-radius:50%;background:{{ cat.color }};flex:none;margin-top:5px"></span>
+                  <span style="font-size:11.5px;font-weight:600;color:#344054;line-height:1.35">{{ p.name }} <sc-if value="{{ p.flag }}" hint-placeholder-val="{{ false }}"><span style="color:#2E6BE6;font-weight:800">★</span></sc-if></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== N3 FICHA DE PROCESO ===== -->
+    <section id="u3" style="padding:40px 56px;border-bottom:1px solid #E4E8EE;background:#FAFBFC">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:8px">
+        <span class="mono" style="font-size:11px;font-weight:700;color:#fff;background:#173458;padding:5px 11px;border-radius:8px;letter-spacing:.5px">NIVEL 3</span>
+        <h2 style="font-size:23px;font-weight:800;margin:0;letter-spacing:-.4px">Ficha del proceso institucional</h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin:4px 0 18px;flex-wrap:wrap">
+        <span style="font-size:15px;font-weight:800;color:#0F2647">★ Formulación y Control Presupuestario</span>
+        <span style="font-size:10.5px;font-weight:700;color:#173458;background:#EAF0F7;padding:3px 10px;border-radius:20px">Proceso estratégico</span>
+        <span class="mono" style="font-size:10.5px;color:#98A2B3">alineado a: Plan → Objetivo financiero → Proyecto presupuestario</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+        <sc-for list="{{ fichaFields }}" as="f" hint-placeholder-count="9">
+          <div style="background:#fff;border:1px solid #E7EAF0;border-radius:11px;padding:13px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04);{{ f.span }}">
+            <div class="mono" style="font-size:10px;color:#98A2B3;font-weight:700;letter-spacing:.5px;text-transform:uppercase">{{ f.label }}</div>
+            <div style="font-size:13px;color:#14181F;margin-top:4px;line-height:1.45">{{ f.value }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== N4 PROCEDIMIENTO ===== -->
+    <section id="u4" style="padding:40px 56px;border-bottom:1px solid #E4E8EE">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:8px">
+        <span class="mono" style="font-size:11px;font-weight:700;color:#fff;background:#173458;padding:5px 11px;border-radius:8px;letter-spacing:.5px">NIVEL 4</span>
+        <h2 style="font-size:23px;font-weight:800;margin:0;letter-spacing:-.4px">Procedimiento · actividades</h2>
+      </div>
+      <p style="font-size:14px;color:#475467;margin:0 0 8px">Procedimiento <b>Formulación presupuestaria anual</b> — cada actividad vive dentro del proceso (nunca aislada) y genera documentos y evidencias.</p>
+      <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden;margin-top:12px">
+        <div style="display:grid;grid-template-columns:.5fr 2.3fr 1.4fr .8fr 1.6fr 1.6fr;padding:11px 18px;background:#0F2647;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase">
+          <div>Sec</div><div>Actividad</div><div>Responsable</div><div>Tiempo</div><div>Punto de control</div><div>Documento / Evidencia</div>
+        </div>
+        <sc-for list="{{ procActivities }}" as="a" hint-placeholder-count="6">
+          <div style="display:grid;grid-template-columns:.5fr 2.3fr 1.4fr .8fr 1.6fr 1.6fr;padding:12px 18px;border-bottom:1px solid #F4F6F9;align-items:start">
+            <div class="mono" style="font-size:12px;font-weight:700;color:#2E6BE6">{{ a.seq }}</div>
+            <div style="font-size:12.5px;font-weight:600;color:#14181F;line-height:1.35;padding-right:8px">{{ a.act }}</div>
+            <div style="font-size:11.5px;color:#475467">{{ a.resp }}</div>
+            <div class="mono" style="font-size:11.5px;color:#B4791A;font-weight:600">{{ a.time }}</div>
+            <div style="font-size:11.5px;color:#475467;line-height:1.35;padding-right:8px">{{ a.ctrl }}</div>
+            <div style="font-size:11.5px;color:#5B4FD0;line-height:1.35">{{ a.doc }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== N5/N6 INDICADORES ===== -->
+    <section id="u5" style="padding:40px 56px;border-bottom:1px solid #E4E8EE;background:#FAFBFC">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:8px">
+        <span class="mono" style="font-size:11px;font-weight:700;color:#fff;background:#173458;padding:5px 11px;border-radius:8px;letter-spacing:.5px">NIVEL 5 · 6</span>
+        <h2 style="font-size:23px;font-weight:800;margin:0;letter-spacing:-.4px">Indicadores · gestión y desempeño</h2>
+      </div>
+      <p style="font-size:14px;color:#475467;max-width:840px;margin:0 0 20px">Dos familias por proceso: <b>Gestión</b> (miden ejecución: cantidad, cobertura, cumplimiento, avance) y <b>Desempeño</b> (miden calidad: tiempo, eficiencia, productividad, satisfacción). Cada indicador se define con sus <b>16 atributos</b>.</p>
+
+      <div style="display:flex;gap:16px;align-items:stretch;flex-wrap:wrap;margin-bottom:16px">
+        <sc-for list="{{ indicatorsFull }}" as="ind" hint-placeholder-count="2">
+          <div style="flex:1;min-width:360px;background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+            <div style="padding:14px 18px;background:{{ ind.headBg }};border-bottom:1px solid #EEF1F5">
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;font-weight:700;color:#fff;background:{{ ind.famColor }};padding:2px 8px;border-radius:20px">{{ ind.family }}</span></div>
+              <div style="font-size:15px;font-weight:800;color:#14181F;margin-top:6px">{{ ind.name }}</div>
+            </div>
+            <div>
+              <sc-for list="{{ ind.attrs }}" as="at" hint-placeholder-count="16">
+                <div style="display:grid;grid-template-columns:.9fr 1.4fr;gap:10px;padding:8px 18px;border-bottom:1px solid #F6F8FA">
+                  <div class="mono" style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">{{ at.k }}</div>
+                  <div style="font-size:12px;color:#14181F;line-height:1.4">{{ at.v }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="background:#fff;border:1px solid #E7EAF0;border-radius:13px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+        <div style="padding:11px 18px;border-bottom:1px solid #EEF1F5;font-size:12.5px;font-weight:700;color:#475467">Otros indicadores del proceso (misma plantilla de 16 atributos)</div>
+        <sc-for list="{{ indicatorsList }}" as="k" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:2.2fr 1fr .9fr 1fr;padding:11px 18px;border-bottom:1px solid #F4F6F9;align-items:center">
+            <div style="font-size:12.5px;font-weight:600;color:#14181F">{{ k.name }}</div>
+            <div><span style="font-size:10px;font-weight:700;color:{{ k.famColor }};background:{{ k.famBg }};padding:2px 9px;border-radius:20px">{{ k.family }}</span></div>
+            <div class="mono" style="font-size:12px;font-weight:700;color:#12A150">{{ k.meta }}</div>
+            <div style="font-size:11.5px;color:#667085">{{ k.freq }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== N7 EVIDENCIAS ===== -->
+    <section id="u7" style="padding:40px 56px;border-bottom:1px solid #E4E8EE">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:8px">
+        <span class="mono" style="font-size:11px;font-weight:700;color:#fff;background:#173458;padding:5px 11px;border-radius:8px;letter-spacing:.5px">NIVEL 7</span>
+        <h2 style="font-size:23px;font-weight:800;margin:0;letter-spacing:-.4px">Evidencias requeridas · clasificadas</h2>
+      </div>
+      <p style="font-size:14px;color:#475467;max-width:820px;margin:0 0 20px">Cada procedimiento define qué evidencias exige y de qué tipo. La evidencia es la consecuencia del trabajo — y el disparador de las automatizaciones del Nivel 8.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <sc-for list="{{ evidences }}" as="e" hint-placeholder-count="7">
+          <div style="background:#fff;border:1px solid #E7EAF0;border-radius:11px;padding:14px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <span style="font-size:10px;font-weight:700;color:{{ e.color }};background:{{ e.bg }};padding:3px 9px;border-radius:20px">{{ e.type }}</span>
+            </div>
+            <div style="font-size:12.5px;font-weight:700;color:#14181F">{{ e.name }}</div>
+            <div style="font-size:11px;color:#98A2B3;margin-top:2px">{{ e.from }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== N8 AUTOMATIZACIONES ===== -->
+    <section id="u8" style="padding:40px 56px;border-bottom:1px solid #E4E8EE;background:#FAFBFC">
+      <div style="display:flex;align-items:center;gap:13px;margin-bottom:8px">
+        <span class="mono" style="font-size:11px;font-weight:700;color:#fff;background:#173458;padding:5px 11px;border-radius:8px;letter-spacing:.5px">NIVEL 8</span>
+        <h2 style="font-size:23px;font-weight:800;margin:0;letter-spacing:-.4px">Automatizaciones al registrar evidencia</h2>
+      </div>
+      <p style="font-size:14px;color:#475467;max-width:820px;margin:0 0 18px">Un único evento — <b>"evidencia registrada"</b> — dispara toda la cadena. El usuario captura una sola vez; el sistema hace el resto.</p>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div style="flex:none;background:linear-gradient(150deg,#5B4FD0,#4A3FB8);color:#fff;border-radius:14px;padding:18px 20px;width:200px">
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;margin-bottom:10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"></path></svg></div>
+          <div style="font-size:15px;font-weight:800;line-height:1.2">Evidencia registrada</div>
+          <div style="font-size:11.5px;color:#D6D2F5;margin-top:4px">disparador único</div>
+        </div>
+        <svg width="28" height="16" viewBox="0 0 24 14" fill="none" stroke="#98A2B3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M2 7h18M15 2l6 5-6 5"></path></svg>
+        <div style="flex:1;min-width:360px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <sc-for list="{{ automations }}" as="a" hint-placeholder-count="9">
+            <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7EAF0;border-radius:10px;padding:11px 13px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+              <div style="width:26px;height:26px;border-radius:7px;background:{{ a.bg }};color:{{ a.color }};display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ a.icon }}"></path></svg></div>
+              <span style="font-size:12px;font-weight:600;color:#344054">{{ a.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CIERRE / SIGUIENTE ===== -->
+    <section style="padding:38px 56px 20px">
+      <div style="background:linear-gradient(120deg,#173458,#0F2647);border-radius:16px;padding:26px 30px;color:#fff">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7FB0FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z"></path></svg>
+          <div style="font-size:18px;font-weight:900">Propuesta de la Unidad 1 — lista para su ajuste</div>
+        </div>
+        <div style="font-size:13.5px;color:#C7D6EE;line-height:1.55;max-width:860px">Esta es la estructura funcional propuesta para la <b style="color:#fff">Vicerrectoría Administrativa y Financiera</b> según buenas prácticas. Aporta únicamente las <b style="color:#7FB0FF">diferencias específicas de la UPES</b> (nombres reales de procesos, responsables, metas, plazos, evidencias). Una vez ajustada y aprobada, replicaré esta misma plantilla en la siguiente unidad.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+          <span style="font-size:11.5px;font-weight:700;color:#0F2647;background:#7FB0FF;padding:6px 13px;border-radius:8px">Siguiente → U2 · Recursos Humanos</span>
+          <sc-for list="{{ queue }}" as="q" hint-placeholder-count="4">
+            <span style="font-size:11.5px;font-weight:600;color:#C7D6EE;background:rgba(255,255,255,.08);border:1px solid rgba(143,176,230,.25);padding:6px 13px;border-radius:8px">{{ q }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      levelsNav: [
+        { n:'N1', label:'Unidad · Workspace', href:'#u1' },
+        { n:'N2', label:'Mapa de procesos', href:'#u2' },
+        { n:'N3', label:'Ficha del proceso', href:'#u3' },
+        { n:'N4', label:'Procedimiento', href:'#u4' },
+        { n:'N5·6', label:'Indicadores', href:'#u5' },
+        { n:'N7', label:'Evidencias', href:'#u7' },
+        { n:'N8', label:'Automatizaciones', href:'#u8' },
+      ],
+      unitsNav: [
+        { name:'VRAF', tag:'EN CURSO', dot:'#7FB0FF' },
+        { name:'Recursos Humanos', tag:'SIG.', dot:'#E5A100' },
+        { name:'Contabilidad', tag:'—', dot:'#5E7397' },
+        { name:'Compras', tag:'—', dot:'#5E7397' },
+        { name:'Mantenimiento e Infr.', tag:'—', dot:'#5E7397' },
+        { name:'Salud y Seg. Ocup.', tag:'—', dot:'#5E7397' },
+      ],
+      chain: [
+        { label:'Plan', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:true },
+        { label:'Objetivo', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:true },
+        { label:'Proyecto', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:true },
+        { label:'Proceso', color:'#0F2647', bg:'#7FB0FF', arrow:true },
+        { label:'Procedimiento', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:true },
+        { label:'Actividad', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:true },
+        { label:'Evidencia', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:true },
+        { label:'Indicador', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:true },
+        { label:'Dashboard', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:true },
+        { label:'Reporte', color:'#EAF1FE', bg:'rgba(127,176,255,.14)', arrow:false },
+      ],
+      units: [
+        { n:'1', name:'Vicerrectoría Adm. y Financiera', icon:'M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6', color:'#2E6BE6', bg:'#EAF1FE', status:'En modelado', statusColor:'#2E6BE6', statusBg:'#EAF1FE' },
+        { n:'2', name:'Recursos Humanos', icon:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z', color:'#E5A100', bg:'#FDF3E1', status:'Siguiente', statusColor:'#B4791A', statusBg:'#FDF3E1' },
+        { n:'3', name:'Contabilidad', icon:'M4 5h16v14H4zM8 9h8M8 13h8M8 17h4', color:'#12A150', bg:'#EEF6EE', status:'Pendiente', statusColor:'#667085', statusBg:'#F2F4F7' },
+        { n:'4', name:'Compras', icon:'M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z', color:'#5B4FD0', bg:'#EEF0FB', status:'Pendiente', statusColor:'#667085', statusBg:'#F2F4F7' },
+        { n:'5', name:'Mantenimiento e Infraestructura', icon:'M14 7l3 3m-8 8l-5 1 1-5 9-9a2.8 2.8 0 0 1 4 4z', color:'#E5484D', bg:'#FDECEC', status:'Pendiente', statusColor:'#667085', statusBg:'#F2F4F7' },
+        { n:'6', name:'Salud y Seguridad Ocupacional', icon:'M12 21C7 18 4 14 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5-3 9-8 12zM12 9v4M10 11h4', color:'#0F8A8A', bg:'#E6F4F4', status:'Pendiente', statusColor:'#667085', statusBg:'#F2F4F7' },
+      ],
+      workspaceItems: [
+        { label:'Dashboard propio', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16' },
+        { label:'Objetivos propios', icon:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' },
+        { label:'Procesos propios', icon:'M6 3v6M6 15v6M18 3v18M6 9a3 3 0 0 0 3 3h6' },
+        { label:'Procedimientos propios', icon:'M5 4a1 1 0 0 1 1-1h9l4 4v13H6a1 1 0 0 1-1-1zM14 3v4h4' },
+        { label:'Indicadores propios', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4' },
+        { label:'Evidencias propias', icon:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
+        { label:'Reportes propios', icon:'M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4' },
+        { label:'Calendario propio', icon:'M4 8h16M7 3v3M17 3v3M5 5h14v14H5z' },
+        { label:'Dashboard de desempeño', icon:'M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3zM5 11a7 7 0 0 0 14 0' },
+      ],
+      processMap: [
+        { cat:'Estratégicos', sub:'dirigen la unidad', color:'#173458', bg:'#EAF0F7', items:[
+          { name:'Planeación administrativa y financiera', flag:false, hl:'' },
+          { name:'Formulación y control presupuestario', flag:true, hl:'background:#EAF1FE' },
+          { name:'Seguimiento estratégico institucional', flag:false, hl:'' },
+        ]},
+        { cat:'Misionales', sub:'razón de ser', color:'#2E6BE6', bg:'#EAF1FE', items:[
+          { name:'Gestión financiera institucional', flag:false, hl:'' },
+          { name:'Coordinación de unidades administrativas', flag:false, hl:'' },
+          { name:'Rendición de cuentas y control interno', flag:false, hl:'' },
+        ]},
+        { cat:'De apoyo', sub:'habilitan', color:'#12A150', bg:'#EEF6EE', items:[
+          { name:'Gestión de la información y reportería', flag:false, hl:'' },
+          { name:'Gestión documental y normativa', flag:false, hl:'' },
+        ]},
+        { cat:'Operativos', sub:'día a día', color:'#E5A100', bg:'#FDF3E1', items:[
+          { name:'Ejecución y monitoreo del presupuesto', flag:false, hl:'' },
+          { name:'Atención de solicitudes internas', flag:false, hl:'' },
+        ]},
+      ],
+      fichaFields: [
+        { label:'Objetivo', value:'Formular, aprobar y controlar el presupuesto institucional, asegurando la asignación eficiente de los recursos financieros de la Universidad.', span:'grid-column:span 2' },
+        { label:'Alcance', value:'Desde la emisión de lineamientos anuales hasta el cierre y evaluación de la ejecución presupuestaria.' },
+        { label:'Responsables', value:'Vicerrectora VRAF (dueño del proceso) · Jefe de Contabilidad · Analista de Presupuesto.' },
+        { label:'Entradas', value:'Lineamientos del plan estratégico · POA de las unidades · históricos de ejecución · techos presupuestarios.' },
+        { label:'Salidas', value:'Presupuesto aprobado · modificaciones presupuestarias · informes de ejecución.' },
+        { label:'Clientes internos', value:'Rectoría · unidades académicas · unidades administrativas.' },
+        { label:'Clientes externos', value:'Junta Directiva · entes de auditoría / reguladores de educación superior.' },
+        { label:'Normativa asociada', value:'Reglamento financiero UPES · normativa de educación superior · políticas contables.' },
+        { label:'Procedimientos relacionados', value:'1) Formulación presupuestaria anual · 2) Modificaciones presupuestarias · 3) Control y seguimiento de la ejecución.', span:'grid-column:span 2' },
+      ],
+      procActivities: [
+        { seq:'1', act:'Emitir lineamientos y calendario de formulación', resp:'Vicerrectora VRAF', time:'5 d', ctrl:'Aprobación de lineamientos', doc:'Circular de lineamientos → Acta' },
+        { seq:'2', act:'Recopilar POA y requerimientos de las unidades', resp:'Analista de Presupuesto', time:'15 d', ctrl:'Completitud de requerimientos', doc:'Consolidado → Formularios POA' },
+        { seq:'3', act:'Consolidar y proyectar el anteproyecto de presupuesto', resp:'Analista + Contabilidad', time:'10 d', ctrl:'Cuadre financiero', doc:'Anteproyecto → Hoja consolidada' },
+        { seq:'4', act:'Revisar y ajustar con la Vicerrectoría', resp:'Vicerrectora VRAF', time:'5 d', ctrl:'Revisión y visto bueno', doc:'Acta de ajustes → Acta' },
+        { seq:'5', act:'Presentar a Rectoría / Junta para aprobación', resp:'Vicerrectora VRAF', time:'7 d', ctrl:'Aprobación formal', doc:'Presupuesto aprobado → Acta de aprobación' },
+        { seq:'6', act:'Publicar y distribuir el presupuesto oficial', resp:'Analista de Presupuesto', time:'3 d', ctrl:'Distribución confirmada', doc:'Presupuesto oficial → Comprobante' },
+      ],
+      indicatorsFull: [
+        { family:'Indicador de gestión', famColor:'#E5A100', headBg:'#FEF8EC', name:'% de POA entregados a tiempo', attrs:[
+          {k:'Objetivo', v:'Asegurar insumos oportunos para la formulación'},
+          {k:'Descripción', v:'Proporción de unidades que entregan su POA dentro del plazo'},
+          {k:'Fórmula', v:'unidades a tiempo / total de unidades × 100'},
+          {k:'Unidad', v:'%'},
+          {k:'Meta', v:'≥ 90%'},
+          {k:'Frecuencia', v:'Anual (ciclo de formulación)'},
+          {k:'Responsable', v:'Analista de Presupuesto'},
+          {k:'Fuente', v:'Registro de entregas de POA'},
+          {k:'Proceso', v:'Formulación y Control Presupuestario'},
+          {k:'Procedimiento', v:'Formulación presupuestaria anual'},
+          {k:'Evidencia', v:'Formularios POA con fecha de entrega'},
+          {k:'Dashboard', v:'Dashboard de gestión · VRAF'},
+          {k:'Reporte', v:'Informe de formulación presupuestaria'},
+          {k:'Automatización', v:'Cierre de actividad al registrar el POA'},
+          {k:'Semáforo', v:'V ≥90 · A 75–89 · R <75'},
+          {k:'Familia', v:'Gestión (cobertura / cumplimiento)'},
+        ]},
+        { family:'Indicador de desempeño', famColor:'#12A150', headBg:'#EEF8F1', name:'Índice de desviación presupuestaria', attrs:[
+          {k:'Objetivo', v:'Medir la precisión de la planeación financiera'},
+          {k:'Descripción', v:'Diferencia entre lo ejecutado y lo presupuestado'},
+          {k:'Fórmula', v:'|ejecutado − presupuestado| / presupuestado × 100'},
+          {k:'Unidad', v:'%'},
+          {k:'Meta', v:'≤ 5%'},
+          {k:'Frecuencia', v:'Mensual'},
+          {k:'Responsable', v:'Jefe de Contabilidad'},
+          {k:'Fuente', v:'Sistema contable · reporte de ejecución'},
+          {k:'Proceso', v:'Formulación y Control Presupuestario'},
+          {k:'Procedimiento', v:'Control y seguimiento de la ejecución'},
+          {k:'Evidencia', v:'Reporte de ejecución mensual'},
+          {k:'Dashboard', v:'Dashboard financiero · VRAF'},
+          {k:'Reporte', v:'Informe mensual de ejecución'},
+          {k:'Automatización', v:'Recálculo al registrar el reporte de ejecución'},
+          {k:'Semáforo', v:'V ≤5 · A 5–10 · R >10'},
+          {k:'Familia', v:'Desempeño (eficiencia / calidad)'},
+        ]},
+      ],
+      indicatorsList: [
+        { name:'% de avance de la formulación vs calendario', family:'Gestión', famColor:'#B4791A', famBg:'#FDF3E1', meta:'100%', freq:'Anual' },
+        { name:'Tiempo de aprobación del presupuesto', family:'Desempeño', famColor:'#12A150', famBg:'#EEF6EE', meta:'≤ 45 d', freq:'Anual' },
+        { name:'Índice de modificaciones presupuestarias', family:'Desempeño', famColor:'#12A150', famBg:'#EEF6EE', meta:'≤ 8', freq:'Trimestral' },
+        { name:'% de ejecución presupuestaria', family:'Gestión', famColor:'#B4791A', famBg:'#FDF3E1', meta:'≥ 95%', freq:'Mensual' },
+      ],
+      evidences: [
+        { type:'Acta', color:'#2E6BE6', bg:'#EAF1FE', name:'Circular de lineamientos', from:'Actividad 1' },
+        { type:'Formulario', color:'#E5A100', bg:'#FDF3E1', name:'Formulario POA de unidad', from:'Actividad 2' },
+        { type:'Archivo', color:'#5B4FD0', bg:'#EEF0FB', name:'Consolidado presupuestario', from:'Actividad 3' },
+        { type:'Registro', color:'#0F8A8A', bg:'#E6F4F4', name:'Registro de entregas', from:'Actividad 2' },
+        { type:'Acta', color:'#2E6BE6', bg:'#EAF1FE', name:'Acta de aprobación', from:'Actividad 5' },
+        { type:'Informe', color:'#12A150', bg:'#EEF6EE', name:'Presupuesto aprobado', from:'Actividad 5' },
+        { type:'Comprobante', color:'#E5484D', bg:'#FDECEC', name:'Comprobante de distribución', from:'Actividad 6' },
+      ],
+      automations: [
+        { label:'Actualizar indicadores', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', color:'#12A150', bg:'#EEF6EE' },
+        { label:'Actualizar dashboards', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16', color:'#5B4FD0', bg:'#EEF0FB' },
+        { label:'Actualizar reportes', icon:'M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4', color:'#E5A100', bg:'#FDF3E1' },
+        { label:'Cerrar actividades', icon:'M20 6L9 17l-5-5', color:'#12A150', bg:'#EEF6EE' },
+        { label:'Actualizar avance del proceso', icon:'M6 3v6M6 15v6M18 3v18M6 9a3 3 0 0 0 3 3h6', color:'#2E6BE6', bg:'#EAF1FE' },
+        { label:'Actualizar SLA', icon:'M12 8v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', color:'#E5A100', bg:'#FDF3E1' },
+        { label:'Actualizar historial', icon:'M12 8v4l3 2M3 12a9 9 0 1 0 3-6.7L3 8', color:'#667085', bg:'#F2F4F7' },
+        { label:'Generar alertas', icon:'M12 2L2 20h20zM12 9v5M12 17h.01', color:'#E5484D', bg:'#FDECEC' },
+        { label:'Enviar notificaciones', icon:'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0', color:'#2E6BE6', bg:'#EAF1FE' },
+      ],
+      queue: ['U3 Contabilidad','U4 Compras','U5 Mantenimiento','U6 Salud y Seg. Ocup.'],
+    };
+  }
+}
+</script>
+</body>
+</html>

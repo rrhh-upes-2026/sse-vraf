@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}html,body{margin:0}
+  body{font-family:'Public Sans',system-ui,sans-serif;color:#14181F;background:#F0F2F5;-webkit-font-smoothing:antialiased}
+  a{color:#2E6BE6;text-decoration:none}a:hover{color:#0F2647}
+  .mono{font-family:'Space Grotesk',monospace}
+  ::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:#D0D5DD;border-radius:8px;border:2px solid #F0F2F5}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<div style="max-width:1120px;margin:0 auto;padding:32px 24px 80px">
+
+  <!-- HEADER -->
+  <div style="background:linear-gradient(135deg,#0F2647,#1D3E6E);border-radius:18px;padding:32px 36px;color:#fff;margin-bottom:28px;animation:fadeIn .3s ease">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#2E6BE6,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:16px">SS</div>
+      <div><div style="font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#7FB0FF;font-weight:700">SSE-VRAF · Paquete de Entrega</div><div style="font-size:24px;font-weight:900;letter-spacing:-.4px">Handoff a Claude Code</div></div>
+      <div style="margin-left:auto;text-align:right"><div class="mono" style="font-size:22px;font-weight:800;color:#7FB0FF">v1.0</div><div style="font-size:11px;color:#A9C0E4">9 jul 2026</div></div>
+    </div>
+    <p style="font-size:14px;color:#C7D6EE;max-width:760px;line-height:1.6;margin:0 0 20px">El prototipo navegable del SSE-VRAF está completo y aprobado. Este documento es el <b style="color:#fff">paquete de entrega oficial</b> para Claude Code: arquitectura, componentes, stack tecnológico, modelo de datos, reglas de negocio y criterios de implementación.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <sc-for list="{{ stats }}" as="s" hint-placeholder-count="6">
+        <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px 16px;text-align:center"><div class="mono" style="font-size:20px;font-weight:800;color:#fff">{{ s.val }}</div><div style="font-size:10.5px;color:#7FB0FF;font-weight:600;margin-top:2px">{{ s.label }}</div></div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- NAV TABS -->
+  <div style="display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+      <button onClick="{{ t.onSel }}" style="{{ t.style }}">{{ t.label }}</button>
+    </sc-for>
+  </div>
+
+  <!-- TAB: STACK -->
+  <sc-if value="{{ tabStack }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;animation:fadeIn .2s ease">
+    <sc-for list="{{ stackItems }}" as="s" hint-placeholder-count="9">
+      <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;padding:18px;box-shadow:0 1px 3px rgba(16,24,40,.05);border-top:3px solid {{ s.color }}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:34px;height:34px;border-radius:9px;background:{{ s.bg }};color:{{ s.color }};display:flex;align-items:center;justify-content:center;font-size:16px">{{ s.emoji }}</div>
+          <div><div style="font-size:13px;font-weight:800;color:#14181F">{{ s.layer }}</div><div style="font-size:10.5px;color:#98A2B3">{{ s.cat }}</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <sc-for list="{{ s.techs }}" as="t" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 9px;background:#FAFBFC;border:1px solid #EEF1F5;border-radius:8px">
+              <span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{ s.color }}"></span>
+              <div style="flex:1"><div style="font-size:12px;font-weight:700;color:#14181F">{{ t.name }}</div><div style="font-size:10.5px;color:#98A2B3">{{ t.why }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <!-- TAB: COMPONENTES -->
+  <sc-if value="{{ tabComps }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:fadeIn .2s ease">
+    <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden;margin-bottom:16px">
+      <div style="padding:11px 20px;background:#FAFBFC;border-bottom:1px solid #EEF1F5;display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1.5fr;font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.4px">
+        <div>Componente</div><div>Archivo prototipo</div><div>Complejidad</div><div>Prioridad</div><div>Props principales</div>
+      </div>
+      <sc-for list="{{ components }}" as="c" hint-placeholder-count="14">
+        <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1.5fr;padding:11px 20px;border-bottom:1px solid #F4F6F9;align-items:start">
+          <div><div style="font-size:12.5px;font-weight:700;color:#14181F">{{ c.name }}</div><div style="font-size:10.5px;color:#98A2B3">{{ c.desc }}</div></div>
+          <div class="mono" style="font-size:10.5px;color:#5B4FD0">{{ c.file }}</div>
+          <div><span style="font-size:10px;font-weight:700;color:{{ c.compC }};background:{{ c.compB }};padding:2px 8px;border-radius:5px">{{ c.complexity }}</span></div>
+          <div><span style="font-size:10px;font-weight:700;color:{{ c.prioC }};background:{{ c.prioB }};padding:2px 8px;border-radius:5px">{{ c.priority }}</span></div>
+          <div style="font-size:10.5px;color:#667085;line-height:1.4">{{ c.props }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- TAB: ARQUITECTURA -->
+  <sc-if value="{{ tabArch }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;animation:fadeIn .2s ease">
+    <sc-for list="{{ archCards }}" as="a" hint-placeholder-count="6">
+      <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;padding:18px 20px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="width:32px;height:32px;border-radius:9px;background:{{ a.bg }};color:{{ a.color }};display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ a.icon }}"></path></svg></div>
+          <div style="font-size:13.5px;font-weight:800;color:#14181F">{{ a.title }}</div>
+        </div>
+        <sc-for list="{{ a.rules }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #F4F6F9;font-size:12px;color:#344054;line-height:1.4">
+            <span style="color:{{ a.color }};flex:none;margin-top:1px">→</span>{{ r }}
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <!-- TAB: MODELO DE DATOS -->
+  <sc-if value="{{ tabData }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:fadeIn .2s ease">
+    <div style="background:#0F2647;border-radius:14px;padding:20px 24px;margin-bottom:16px">
+      <div class="mono" style="font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:#7FB0FF;font-weight:700;margin-bottom:14px">Cadena obligatoria · toda entidad debe pertenecer a esta jerarquía</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ chainNodes }}" as="n" hint-placeholder-count="10">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="padding:7px 12px;border-radius:8px;background:{{ n.bg }};border:1.5px solid {{ n.border }}">
+              <div style="font-size:10px;font-weight:700;color:{{ n.metaC }};text-transform:uppercase;letter-spacing:.3px">{{ n.meta }}</div>
+              <div style="font-size:12px;font-weight:700;color:{{ n.labelC }};margin-top:1px">{{ n.label }}</div>
+            </div>
+            <sc-if value="{{ n.arrow }}" hint-placeholder-val="{{ true }}"><svg width="18" height="10" viewBox="0 0 24 14" fill="none" stroke="#5B7196" stroke-width="2" stroke-linecap="round"><path d="M2 7h18M15 2l6 5-6 5"></path></svg></sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <sc-for list="{{ entities }}" as="e" hint-placeholder-count="12">
+        <div style="background:#fff;border:1px solid #E4E8EF;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:26px;height:26px;border-radius:7px;background:{{ e.bg }};color:{{ e.color }};display:flex;align-items:center;justify-content:center;flex:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ e.icon }}"></path></svg></div>
+            <div style="font-size:12.5px;font-weight:700;color:#14181F">{{ e.name }}</div>
+            <sc-if value="{{ e.core }}" hint-placeholder-val="{{ false }}"><span style="font-size:8.5px;font-weight:700;color:#fff;background:#2E6BE6;padding:1px 5px;border-radius:4px;margin-left:auto">CORE</span></sc-if>
+          </div>
+          <div style="font-size:11px;color:#98A2B3;line-height:1.5">{{ e.fields }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- TAB: REGLAS DE NEGOCIO -->
+  <sc-if value="{{ tabRules }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:12px;animation:fadeIn .2s ease">
+    <sc-for list="{{ bizRules }}" as="r" hint-placeholder-count="8">
+      <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:16px 20px;box-shadow:0 1px 3px rgba(16,24,40,.05);display:flex;gap:14px;align-items:flex-start">
+        <div style="width:36px;height:36px;flex:none;border-radius:10px;background:{{ r.bg }};color:{{ r.color }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:800;font-size:13px">{{ r.num }}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:800;color:#14181F;margin-bottom:4px">{{ r.title }}</div><div style="font-size:12.5px;color:#475467;line-height:1.55">{{ r.rule }}</div></div>
+        <span style="font-size:9.5px;font-weight:700;color:{{ r.catC }};background:{{ r.catB }};padding:3px 9px;border-radius:5px;white-space:nowrap;flex:none">{{ r.cat }}</span>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <!-- TAB: SPRINTS -->
+  <sc-if value="{{ tabSprints }}" hint-placeholder-val="{{ false }}">
+  <div style="animation:fadeIn .2s ease">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ sprints }}" as="s" hint-placeholder-count="7">
+        <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+          <div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid #F4F6F9">
+            <div style="width:38px;height:38px;flex:none;border-radius:10px;background:{{ s.bg }};color:{{ s.color }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:800;font-size:13px">{{ s.num }}</div>
+            <div style="flex:1"><div style="font-size:14px;font-weight:800;color:#14181F">{{ s.name }}</div><div style="font-size:11.5px;color:#98A2B3">{{ s.goal }}</div></div>
+            <span style="font-size:10px;font-weight:700;color:#12A150;background:#EEF6EE;padding:3px 10px;border-radius:20px">{{ s.status }}</span>
+          </div>
+          <div style="padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ s.deliverables }}" as="d" hint-placeholder-count="4">
+              <span style="font-size:11px;font-weight:600;color:#5B4FD0;background:#EEF0FB;padding:4px 10px;border-radius:7px">{{ d }}</span>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="background:linear-gradient(120deg,#0F2647,#1D3E6E);border-radius:14px;padding:22px 26px;margin-top:16px;color:#fff">
+      <div style="font-size:16px;font-weight:900;margin-bottom:8px">Instrucción para Claude Code</div>
+      <div style="font-size:13.5px;color:#C7D6EE;line-height:1.65;max-width:820px">Implementa el SSE-VRAF como una aplicación <b style="color:#fff">Next.js 14 App Router</b> con <b style="color:#fff">TypeScript</b>, <b style="color:#fff">Tailwind CSS</b> y <b style="color:#fff">Prisma + PostgreSQL</b>. El prototipo navegable define el 100% del UX/UI — no redesignes ninguna pantalla. Cada sprint del prototipo corresponde a un módulo de la app. El modelo de datos ya está definido en el Data Studio. Los componentes del Form Builder se traducen directamente a componentes React reutilizables. El Process Builder define la lógica del motor de procesos. La automatización (SI→ENTONCES) se implementa como event handlers en el backend. Todo el sistema debe respetar el principio: <b style="color:#7FB0FF">capturar una sola vez la información para reutilizarla en todo el sistema</b>.</div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab:'stack' };
+  renderVals() {
+    const st = this.state;
+    const stats = [
+      { val:'7', label:'Sprints completados' }, { val:'9', label:'Archivos de prototipo' }, { val:'6', label:'Workspaces' },
+      { val:'12', label:'Entidades de datos' }, { val:'29', label:'Componentes UI' }, { val:'15', label:'Flujos de proceso' },
+    ];
+    const tabDefs = [{id:'stack',label:'Stack tecnológico'},{id:'comps',label:'Componentes'},{id:'arch',label:'Arquitectura'},{id:'data',label:'Modelo de datos'},{id:'rules',label:'Reglas de negocio'},{id:'sprints',label:'Sprints → Módulos'}];
+    const tabs = tabDefs.map(t=>{ const a=st.tab===t.id; return { ...t, onSel:()=>this.setState({tab:t.id}), style:`padding:9px 16px;border-radius:9px;border:${a?'1.5px solid #2E6BE6':'1px solid #E4E8EF'};background:${a?'#EAF1FE':'#fff'};color:${a?'#2E6BE6':'#667085'};font-size:12.5px;font-weight:${a?'700':'500'};cursor:pointer;font-family:inherit` }; });
+
+    const stackItems = [
+      { layer:'Frontend', cat:'UI + Routing', color:'#2E6BE6', bg:'#EAF1FE', emoji:'⚛️', techs:[{name:'Next.js 14 App Router',why:'SSR + SPA híbrido, ideal para protocolos institucionales'},{name:'React 18 + TypeScript',why:'Componentes tipados, hooks, server components'},{name:'Tailwind CSS',why:'Utility-first, matching del sistema visual del prototipo'}] },
+      { layer:'Estado global', cat:'State Management', color:'#5B4FD0', bg:'#EEF0FB', emoji:'🔄', techs:[{name:'Zustand',why:'Estado ligero para workspaces y proceso activo'},{name:'React Query (TanStack)',why:'Server state, caché y revalidación automática'},{name:'React Hook Form',why:'Form Builder → renderizado dinámico de formularios'}] },
+      { layer:'Backend', cat:'API + Lógica', color:'#12A150', bg:'#EEF6EE', emoji:'🖥️', techs:[{name:'Next.js API Routes',why:'API REST integrada, serverless-ready'},{name:'tRPC',why:'Type-safe end-to-end, sin duplicar tipos'},{name:'NextAuth.js',why:'Autenticación + RBAC (Admin / Operativo)'}] },
+      { layer:'Base de datos', cat:'Persistencia', color:'#E5A100', bg:'#FDF3E1', emoji:'🗄️', techs:[{name:'PostgreSQL',why:'Relaciones complejas entre entidades del Data Studio'},{name:'Prisma ORM',why:'Schema type-safe, migraciones, seed'},{name:'Redis',why:'Caché de indicadores y dashboards en tiempo real'}] },
+      { layer:'Automatización', cat:'Motor de eventos', color:'#E5484D', bg:'#FDECEC', emoji:'⚡', techs:[{name:'BullMQ',why:'Colas de trabajo para automatizaciones SI→ENTONCES'},{name:'Webhooks internos',why:'Eventos entre módulos (evidencia → indicador)'},{name:'CRON jobs',why:'SLA checking, reportes automáticos, alertas'}] },
+      { layer:'Archivos', cat:'Gestión documental', color:'#0F8A8A', bg:'#E6F4F4', emoji:'📂', techs:[{name:'Google Drive API',why:'Almacenamiento de evidencias institucionales'},{name:'Google Sheets API',why:'Fuente de datos para indicadores existentes'},{name:'PDF-lib / Puppeteer',why:'Motor de reportes PDF/Word/Excel'}] },
+      { layer:'Infraestructura', cat:'Deploy + DevOps', color:'#667085', bg:'#F2F4F7', emoji:'☁️', techs:[{name:'Vercel',why:'Deploy automático, edge functions, preview URLs'},{name:'Supabase',why:'PostgreSQL managed + storage + realtime'},{name:'GitHub Actions',why:'CI/CD, tests automáticos, deploy'}] },
+      { layer:'Testing', cat:'Calidad', color:'#5B4FD0', bg:'#EEF0FB', emoji:'✅', techs:[{name:'Vitest + Testing Library',why:'Unit tests de componentes y lógica de negocio'},{name:'Playwright',why:'E2E testing de flujos institucionales críticos'},{name:'Storybook',why:'Catálogo de componentes del Design System'}] },
+      { layer:'Monitoreo', cat:'Observabilidad', color:'#2E6BE6', bg:'#EAF1FE', emoji:'📊', techs:[{name:'Sentry',why:'Error tracking en producción'},{name:'PostHog',why:'Analytics de uso y comportamiento de usuarios'},{name:'Uptime Robot',why:'Monitoreo de disponibilidad institucional'}] },
+    ];
+
+    const mkComp = (name,desc,file,complexity,compC,compB,priority,prioC,prioB,props) => ({name,desc,file,complexity,compC,compB,priority,prioC,prioB,props});
+    const components = [
+      mkComp('ProcessCard','Tarjeta de proceso institucional','SSE-VRAF.dc.html','Alta','#E5484D','#FDECEC','P0','#E5484D','#FDECEC','name, avance, estado, responsable, sem, onOpen'),
+      mkComp('GoldenWorkflow','Flujo completo 15 etapas','SSE-VRAF.dc.html','Muy alta','#E5484D','#FDECEC','P0','#E5484D','#FDECEC','stages[], evidences{}, onUpload, gwTab'),
+      mkComp('EvidenceCard','Carga y validación de evidencias','SSE-VRAF.dc.html','Media','#E5A100','#FDF3E1','P0','#E5484D','#FDECEC','name, type, status, onUpload, required'),
+      mkComp('IndicatorCard','Tarjeta KPI ejecutiva','SSE-VRAF.dc.html','Media','#E5A100','#FDF3E1','P0','#E5484D','#FDECEC','name, valor, meta, sem, tend, onOpen'),
+      mkComp('WorkspaceDashboard','Dashboard por unidad','SSE-VRAF.dc.html','Alta','#E5484D','#FDECEC','P0','#E5484D','#FDECEC','wsId, processes[], indicators[], kpis[]'),
+      mkComp('MyWork','Panel personal del usuario','SSE-VRAF.dc.html','Alta','#E5484D','#FDECEC','P0','#E5484D','#FDECEC','userId, actividades[], evidencias[], alertas[]'),
+      mkComp('ProcessBuilder','Constructor 8 bloques','SSE-VRAF · Process Builder.dc.html','Muy alta','#E5484D','#FDECEC','P1','#B4791A','#FDF3E1','stages[], indicators[], automations[], widgets[]'),
+      mkComp('FormBuilder','Constructor visual de formularios','SSE-VRAF · Form Builder.dc.html','Muy alta','#E5484D','#FDECEC','P1','#B4791A','#FDF3E1','fields[], onSave, onPublish, versions[]'),
+      mkComp('FormRenderer','Renderizador dinámico de formularios','SSE-VRAF · Form Builder.dc.html','Alta','#E5484D','#FDECEC','P1','#B4791A','#FDF3E1','formSchema (JSON), onSubmit, readOnly'),
+      mkComp('DataStudio','Modelo de datos visual','SSE-VRAF · Data Studio.dc.html','Muy alta','#E5484D','#FDECEC','P2','#12A150','#EEF6EE','entities[], relations[], onEntitySel'),
+      mkComp('ExecutiveDashboard','Dashboard consolidado VRAF','SSE-VRAF · Dashboard Ejecutivo.dc.html','Alta','#E5484D','#FDECEC','P1','#B4791A','#FDF3E1','workspaces[], globalKpis[], activity[]'),
+      mkComp('ReportEngine','Motor de reportes','SSE-VRAF · Motor de Reportes.dc.html','Alta','#E5484D','#FDECEC','P2','#12A150','#EEF6EE','reportId, period, onGenerate, onExport'),
+      mkComp('AutomationBuilder','Constructor SI→ENTONCES','SSE-VRAF · Process Builder.dc.html','Muy alta','#E5484D','#FDECEC','P2','#12A150','#EEF6EE','rules[], triggers[], actions[]'),
+      mkComp('Timeline','Historial de cambios','SSE-VRAF.dc.html','Baja','#12A150','#EEF6EE','P0','#E5484D','#FDECEC','entries[], entityId, entityType'),
+    ];
+
+    const archCards = [
+      { title:'Modularidad', icon:'M4 4h7v7H4zM13 4h7v4h-7z', color:'#2E6BE6', bg:'#EAF1FE', rules:['Cada módulo es independiente y desacoplado','Nuevos módulos no modifican los existentes','El Proceso Institucional es la entidad central e inmutable','Toda funcionalidad se agrega sin romper el núcleo'] },
+      { title:'RBAC (Permisos)', icon:'M12 3l7 4v5c0 4.5-3 7.5-7 9', color:'#E5484D', bg:'#FDECEC', rules:['Administrador General: acceso transversal total','Usuario Operativo: solo su workspace + sus asignaciones','Jefe de unidad: workspace completo, sin admin','Los permisos se definen en la DB, no en el código'] },
+      { title:'Automatización', icon:'M13 2L3 14h7l-1 8 10-12h-7z', color:'#E5484D', bg:'#FDECEC', rules:['Todo evento dispara una cola BullMQ asíncrona','Evidencia registrada → recalcula KPI → actualiza dashboard','SLA vencido → genera alerta → notifica responsable','Nunca bloquear la UI por una automatización'] },
+      { title:'Capturar una sola vez', icon:'M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 7.5-7 9', color:'#12A150', bg:'#EEF6EE', rules:['Un dato se ingresa una vez y se reutiliza en todos los módulos','No duplicar información entre formularios y procesos','Los indicadores leen de las actividades/evidencias directamente','Los reportes se construyen desde la BD, sin recaptura'] },
+      { title:'Modelo de datos', icon:'M4 4h7v7H4zM13 11h7v9h-7zM4 14h7v6H4z', color:'#5B4FD0', bg:'#EEF0FB', rules:['Esquema Prisma define el contrato entre frontend y backend','JSON Schema para definición de formularios dinámicos','Soft-delete en todas las tablas (nunca borrar datos)','Audit log automático en todas las mutaciones críticas'] },
+      { title:'UX / Fidelidad visual', icon:'M4 5h16v14H4z', color:'#B4791A', bg:'#FDF3E1', rules:['El prototipo es la fuente de verdad del UX/UI','No rediseñar ninguna pantalla — solo implementar','Mantener el sistema de colores y tipografías del prototipo','Preferir Tailwind utility classes sobre CSS custom'] },
+    ];
+
+    const chainNodes = [
+      {meta:'Estratégico',label:'Plan',bg:'rgba(46,107,230,.14)',border:'rgba(127,176,255,.3)',metaC:'#7FB0FF',labelC:'#EAF1FE',arrow:true},
+      {meta:'Estratégico',label:'Objetivo',bg:'rgba(46,107,230,.14)',border:'rgba(127,176,255,.3)',metaC:'#7FB0FF',labelC:'#EAF1FE',arrow:true},
+      {meta:'Estratégico',label:'Proyecto',bg:'rgba(46,107,230,.14)',border:'rgba(127,176,255,.3)',metaC:'#7FB0FF',labelC:'#EAF1FE',arrow:true},
+      {meta:'NÚCLEO',label:'Proceso',bg:'rgba(255,255,255,.14)',border:'rgba(255,255,255,.4)',metaC:'#7FE0A3',labelC:'#fff',arrow:true},
+      {meta:'Operativo',label:'Procedimiento',bg:'rgba(229,160,0,.12)',border:'rgba(229,160,0,.3)',metaC:'#FDD77A',labelC:'#FDE68A',arrow:true},
+      {meta:'Operativo',label:'Actividad',bg:'rgba(229,160,0,.12)',border:'rgba(229,160,0,.3)',metaC:'#FDD77A',labelC:'#FDE68A',arrow:true},
+      {meta:'Documental',label:'Evidencia',bg:'rgba(229,160,0,.12)',border:'rgba(229,160,0,.3)',metaC:'#FDD77A',labelC:'#FDE68A',arrow:true},
+      {meta:'Analítico',label:'Indicador',bg:'rgba(18,161,80,.12)',border:'rgba(18,161,80,.3)',metaC:'#7FE0A3',labelC:'#BEEBCF',arrow:true},
+      {meta:'Visual',label:'Dashboard',bg:'rgba(18,161,80,.12)',border:'rgba(18,161,80,.3)',metaC:'#7FE0A3',labelC:'#BEEBCF',arrow:true},
+      {meta:'Salida',label:'Reporte',bg:'rgba(18,161,80,.12)',border:'rgba(18,161,80,.3)',metaC:'#7FE0A3',labelC:'#BEEBCF',arrow:false},
+    ];
+
+    const entities = [
+      {name:'PlanEstratégico',fields:'id, nombre, año, objetivo, estado',icon:'M4 5h16v14H4z',bg:'#EAF1FE',color:'#2E6BE6',core:false},
+      {name:'ObjetivoEstratégico',fields:'id, planId, nombre, meta, responsable',icon:'M4 20a8 8 0 1 1 16 0',bg:'#EAF1FE',color:'#2E6BE6',core:false},
+      {name:'ProcesoInstitucional',fields:'id, nombre, tipo, responsable, estado, avance, sla…',icon:'M6 3v6M6 15v6M18 3v18',bg:'#EAF1FE',color:'#2E6BE6',core:true},
+      {name:'Actividad',fields:'id, procesoId, nombre, responsable, estado, orden',icon:'M9 11l3 3 8-8',bg:'#FDF3E1',color:'#B4791A',core:false},
+      {name:'Evidencia',fields:'id, actividadId, nombre, tipo, url, estado, fecha',icon:'M3 7a2 2 0 0 1 2-2h4l2 2h8v9H5a2 2 0 0 1-2-2z',bg:'#EEF0FB',color:'#5B4FD0',core:false},
+      {name:'Indicador (KPI)',fields:'id, procesoId, nombre, formula, meta, valor, sem',icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4',bg:'#EEF6EE',color:'#12A150',core:false},
+      {name:'Formulario',fields:'id, nombre, version, schema (JSON), estado, unitId',icon:'M4 5h16v14H4zM8 9h8M8 13h5',bg:'#EAF1FE',color:'#2E6BE6',core:false},
+      {name:'Solicitud',fields:'id, tipo, solicitante, estado, sla, fechaApertura',icon:'M4 13h4l2 3h4l2-3h4M5 5h14v13H5z',bg:'#FDECEC',color:'#E5484D',core:false},
+      {name:'Usuario',fields:'id, nombre, email, rol, unitId, activo',icon:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',bg:'#EEF0FB',color:'#5B4FD0',core:false},
+      {name:'Unidad',fields:'id, nombre, responsable, tipo, parentId',icon:'M3 21h18M5 21V7l7-4 7 4v14',bg:'#FDF3E1',color:'#B4791A',core:false},
+      {name:'Automatización',fields:'id, triggerId, condicion, acciones[], activa',icon:'M13 2L3 14h7l-1 8 10-12h-7z',bg:'#FDECEC',color:'#E5484D',core:false},
+      {name:'HistorialAudit',fields:'id, entidadTipo, entidadId, usuarioId, accion, ts',icon:'M12 8v4l3 2M3 12a9 9 0 1 0 3-6.7',bg:'#F2F4F7',color:'#667085',core:false},
+    ];
+
+    const mkRule = (num,title,rule,cat,catC,catB,bg,color) => ({num,title,rule,cat,catC,catB,bg,color});
+    const bizRules = [
+      mkRule('R1','Capturar una sola vez','Ningún dato debe ingresarse más de una vez al sistema. Todo formulario, evidencia o registro alimenta automáticamente todos los módulos relacionados.','Fundamental','#E5484D','#FDECEC','#FDECEC','#E5484D'),
+      mkRule('R2','Sin actividades aisladas','Toda actividad debe pertenecer obligatoriamente a un Proceso Institucional. No pueden existir actividades sin proceso padre.','Arquitectura','#5B4FD0','#EEF0FB','#EEF0FB','#5B4FD0'),
+      mkRule('R3','Alineación estratégica','Todo proceso debe estar alineado a un Objetivo Estratégico. El sistema debe bloquear la creación de procesos sin alineación.','Arquitectura','#5B4FD0','#EEF0FB','#EEF0FB','#5B4FD0'),
+      mkRule('R4','Evidencia dispara automatización','Al registrar una evidencia, el sistema ejecuta automáticamente: recalcular KPI, actualizar dashboard, cerrar actividad si completa, registrar en historial.','Automatización','#E5484D','#FDECEC','#FDECEC','#E5484D'),
+      mkRule('R5','RBAC estricto','Un usuario operativo solo puede ver y editar su workspace y sus asignaciones. El middleware de Next.js valida el acceso en cada ruta.','Seguridad','#E5484D','#FDECEC','#FDECEC','#E5484D'),
+      mkRule('R6','Audit log inmutable','Todo cambio a una entidad crítica genera automáticamente un registro en HistorialAudit. Este registro no puede modificarse ni eliminarse.','Trazabilidad','#12A150','#EEF6EE','#EEF6EE','#12A150'),
+      mkRule('R7','Formularios como JSON Schema','La definición de cada formulario se almacena como JSON Schema en la BD. El FormRenderer los interpreta dinámicamente sin código nuevo.','Escalabilidad','#12A150','#EEF6EE','#EEF6EE','#12A150'),
+      mkRule('R8','SLA automático','Al crear un proceso, el sistema calcula automáticamente la fecha límite según el SLA configurado. Las alertas se generan 48 h antes del vencimiento.','Automatización','#E5484D','#FDECEC','#FDECEC','#E5484D'),
+    ];
+
+    const sprints = [
+      {num:'S1',name:'Shell + Mi Trabajo + Dashboard',goal:'App principal navegable con selector de workspace y panel personal',color:'#2E6BE6',bg:'#EAF1FE',status:'✓ Prototipo aprobado',deliverables:['AppShell.tsx','WorkspaceSelector.tsx','MyWork.tsx','DashboardWidget.tsx']},
+      {num:'S2',name:'Golden Workflow · Contratación',goal:'Ciclo de vida completo de un proceso con cascada en vivo',color:'#5B4FD0',bg:'#EEF0FB',status:'✓ Prototipo aprobado',deliverables:['ProcessDetail.tsx','StageFlow.tsx','EvidenceCard.tsx','AutomationCascade.tsx']},
+      {num:'S3',name:'Process Builder',goal:'Constructor visual de procesos institucionales (8 bloques)',color:'#E5A100',bg:'#FDF3E1',status:'✓ Prototipo aprobado',deliverables:['ProcessBuilder.tsx','StageBuilder.tsx','IndicatorBuilder.tsx','AutomationBuilder.tsx']},
+      {num:'S4',name:'Form Builder',goal:'Constructor de formularios con 40+ tipos de campo',color:'#12A150',bg:'#EEF6EE',status:'✓ Prototipo aprobado',deliverables:['FormBuilder.tsx','FormCanvas.tsx','FieldLibrary.tsx','FormRenderer.tsx']},
+      {num:'S5',name:'Data Studio',goal:'Modelo de datos visual con entidades, relaciones e impacto',color:'#E5484D',bg:'#FDECEC',status:'✓ Prototipo aprobado',deliverables:['DataStudio.tsx','EntityPanel.tsx','RelationsDiagram.tsx','ImpactView.tsx']},
+      {num:'S6',name:'Dashboard Ejecutivo',goal:'Vista consolidada de los 6 workspaces con tendencias',color:'#0F8A8A',bg:'#E6F4F4',status:'✓ Prototipo aprobado',deliverables:['ExecutiveDashboard.tsx','WorkspaceStatusRow.tsx','TrendChart.tsx','AlertBanner.tsx']},
+      {num:'S7',name:'Motor de Reportes',goal:'Generación automática PDF/Word/Excel desde datos del sistema',color:'#5B4FD0',bg:'#EEF0FB',status:'✓ Prototipo aprobado',deliverables:['ReportEngine.tsx','ReportList.tsx','ReportPreview.tsx','ExportService.ts']},
+    ];
+
+    return {
+      stats, tabs, tabStack:st.tab==='stack', tabComps:st.tab==='comps', tabArch:st.tab==='arch',
+      tabData:st.tab==='data', tabRules:st.tab==='rules', tabSprints:st.tab==='sprints',
+      stackItems, components, archCards, chainNodes, entities, bizRules, sprints,
+    };
+  }
+}
+</script>
+</body>
+</html>

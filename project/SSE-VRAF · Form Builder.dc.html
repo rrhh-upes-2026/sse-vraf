@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:'Public Sans',system-ui,sans-serif;color:#14181F;background:#F0F2F5;-webkit-font-smoothing:antialiased}
+  a{color:#2E6BE6;text-decoration:none}a:hover{color:#0F2647}
+  .mono{font-family:'Space Grotesk',ui-monospace,monospace}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#D0D5DD;border-radius:8px;border:2px solid #F0F2F5}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @keyframes slideLeft{from{transform:translateX(18px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes pop{0%{transform:scale(.97);opacity:0}100%{transform:scale(1);opacity:1}}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+
+  <!-- ====== TOPBAR ====== -->
+  <div style="height:56px;flex:none;background:#fff;border-bottom:1px solid #E4E8EF;display:flex;align-items:center;padding:0 20px;gap:14px;z-index:20">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#2E6BE6,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:11px">SS</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#98A2B3">
+        <span>Administración</span><span style="color:#CBD2DC">›</span><span>Studio</span><span style="color:#CBD2DC">›</span>
+        <span style="color:#14181F;font-weight:700">Constructor de Formularios</span>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:6px">
+      <div style="font-size:14px;font-weight:800;color:#14181F">{{ formName }}</div>
+      <span class="mono" style="font-size:10.5px;font-weight:700;color:#2E6BE6;background:#EAF1FE;padding:2px 8px;border-radius:5px">{{ formVersion }}</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button onClick="{{ openTemplates }}" style="height:32px;padding:0 12px;border:1px solid #E4E8EF;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#475467;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM8 9h8M8 13h5"></path></svg>Plantillas</button>
+      <button onClick="{{ openVersions }}" style="height:32px;padding:0 12px;border:1px solid #E4E8EF;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#475467;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"></path></svg>v1.2</button>
+      <div style="width:1px;height:22px;background:#E4E8EF"></div>
+      <button onClick="{{ doSave }}" style="height:32px;padding:0 13px;border:1px solid #E4E8EF;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#475467;cursor:pointer;font-family:inherit">Guardar</button>
+      <button onClick="{{ doSaveTemplate }}" style="height:32px;padding:0 13px;border:1px solid #2E6BE6;background:#EAF1FE;border-radius:8px;font-size:12px;font-weight:600;color:#2E6BE6;cursor:pointer;font-family:inherit">Guardar como plantilla</button>
+      <button onClick="{{ doPublish }}" style="height:32px;padding:0 13px;background:#2E6BE6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">Publicar</button>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;overflow:hidden">
+
+    <!-- ====== LEFT: COMPONENT LIBRARY ====== -->
+    <aside style="width:230px;flex:none;background:#fff;border-right:1px solid #E4E8EF;overflow-y:auto;padding-bottom:30px">
+      <div style="padding:12px 14px 8px;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#98A2B3">Biblioteca de componentes</div>
+      <sc-for list="{{ libCategories }}" as="cat" hint-placeholder-count="7">
+        <div style="margin:4px 10px 10px">
+          <div style="font-size:10.5px;font-weight:700;color:#475467;padding:6px 4px 5px">{{ cat.name }}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+            <sc-for list="{{ cat.items }}" as="item" hint-placeholder-count="4">
+              <button onClick="{{ item.onAdd }}" style="display:flex;align-items:center;gap:7px;padding:8px 9px;border:1px solid #E4E8EF;background:#FAFBFC;border-radius:9px;cursor:pointer;font-family:inherit;text-align:left">
+                <span style="width:22px;height:22px;flex:none;border-radius:6px;background:{{ item.bg }};color:{{ item.color }};display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ item.icon }}"></path></svg></span>
+                <span style="font-size:11.5px;font-weight:500;color:#344054;line-height:1.2">{{ item.label }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </aside>
+
+    <!-- ====== CENTER: CANVAS ====== -->
+    <main style="flex:1;min-width:0;overflow-y:auto;background:#E8EAEF;padding:20px">
+      <div style="max-width:680px;margin:0 auto;min-height:100%">
+        <div style="background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(16,24,40,.08);overflow:hidden">
+          <!-- Form header strip -->
+          <div style="background:{{ formColor }};padding:16px 24px;color:#fff">
+            <div style="font-size:17px;font-weight:800">{{ formName }}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:2px">{{ formDesc }}</div>
+          </div>
+          <!-- Fields -->
+          <div style="padding:16px 24px 24px;display:flex;flex-direction:column;gap:0">
+            <sc-for list="{{ canvasFields }}" as="f" hint-placeholder-count="5">
+              <div onClick="{{ f.onSel }}" style="{{ f.cardStyle }}">
+                <!-- TYPE BADGE + ACTIONS (on hover) -->
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:{{ f.labelMb }}">
+                  <span style="font-size:9px;font-weight:700;color:{{ f.typeColor }};background:{{ f.typeBg }};padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px">{{ f.typeLabel }}</span>
+                  <div style="flex:1"></div>
+                  <div style="display:flex;gap:4px">
+                    <button onClick="{{ f.onUp }}" title="Subir" style="width:24px;height:24px;border:1px solid #E4E8EF;background:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667085;font-size:11px">↑</button>
+                    <button onClick="{{ f.onDown }}" title="Bajar" style="width:24px;height:24px;border:1px solid #E4E8EF;background:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667085;font-size:11px">↓</button>
+                    <button onClick="{{ f.onDup }}" title="Duplicar" style="width:24px;height:24px;border:1px solid #E4E8EF;background:#fff;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667085"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                    <button onClick="{{ f.onDel }}" title="Eliminar" style="width:24px;height:24px;border:1px solid #FCA5A5;background:#FEF2F2;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#E5484D"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"></path></svg></button>
+                  </div>
+                </div>
+                <!-- FIELD RENDER -->
+                <sc-if value="{{ f.isTitle }}" hint-placeholder-val="{{ false }}"><div style="font-size:18px;font-weight:800;color:#14181F;letter-spacing:-.3px">{{ f.label }}</div></sc-if>
+                <sc-if value="{{ f.isSep }}" hint-placeholder-val="{{ false }}"><hr style="border:none;border-top:1px solid #E4E8EF;margin:4px 0"></sc-if>
+                <sc-if value="{{ f.isSection }}" hint-placeholder-val="{{ false }}"><div style="background:{{ formColor }}18;border-left:4px solid {{ formColor }};padding:8px 12px;border-radius:0 8px 8px 0;font-size:13px;font-weight:700;color:#14181F">{{ f.label }}</div></sc-if>
+                <sc-if value="{{ f.isField }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:13px;font-weight:600;color:#344054;margin-bottom:6px">{{ f.label }}<sc-if value="{{ f.required }}" hint-placeholder-val="{{ false }}"><span style="color:#E5484D;margin-left:2px">*</span></sc-if></div>
+                  <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ false }}"><div style="height:36px;border:1.5px solid {{ f.selected ? '#2E6BE6' : '#D0D5DD'}};border-radius:8px;background:#FAFBFC;padding:0 12px;display:flex;align-items:center;font-size:12.5px;color:#98A2B3">{{ f.placeholder }}</div></sc-if>
+                  <sc-if value="{{ f.isTextarea }}" hint-placeholder-val="{{ false }}"><div style="height:72px;border:1.5px solid #D0D5DD;border-radius:8px;background:#FAFBFC;padding:10px 12px;font-size:12.5px;color:#98A2B3">{{ f.placeholder }}</div></sc-if>
+                  <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}"><div style="height:36px;border:1.5px solid #D0D5DD;border-radius:8px;background:#FAFBFC;padding:0 12px;display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:#98A2B3"><span>{{ f.placeholder }}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"></path></svg></div></sc-if>
+                  <sc-if value="{{ f.isRadio }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:6px"><sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#344054"><span style="width:16px;height:16px;border-radius:50%;border:2px solid #D0D5DD;flex:none"></span>{{ o }}</div></sc-for></div></sc-if>
+                  <sc-if value="{{ f.isCheck }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:6px"><sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#344054"><span style="width:16px;height:16px;border-radius:4px;border:2px solid #D0D5DD;flex:none"></span>{{ o }}</div></sc-for></div></sc-if>
+                  <sc-if value="{{ f.isFile }}" hint-placeholder-val="{{ false }}"><div style="border:2px dashed #D0D5DD;border-radius:8px;padding:16px;text-align:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="1.8" stroke-linecap="round" style="margin:0 auto 6px;display:block"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"></path></svg><div style="font-size:12px;color:#98A2B3">{{ f.placeholder }}</div></div></sc-if>
+                  <sc-if value="{{ f.isUser }}" hint-placeholder-val="{{ false }}"><div style="height:36px;border:1.5px solid #D0D5DD;border-radius:8px;background:#FAFBFC;padding:0 12px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:#98A2B3"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 20v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path></svg>{{ f.placeholder }}</div></sc-if>
+                  <sc-if value="{{ f.isApproval }}" hint-placeholder-val="{{ false }}"><div style="border:1.5px solid #D0D5DD;border-radius:8px;padding:12px;display:flex;gap:10px;justify-content:center"><div style="flex:1;text-align:center;padding:8px;background:#EEF6EE;border-radius:8px;font-size:12px;font-weight:700;color:#12A150">✓ Aprobar</div><div style="flex:1;text-align:center;padding:8px;background:#FDECEC;border-radius:8px;font-size:12px;font-weight:700;color:#E5484D">✕ Rechazar</div></div></sc-if>
+                  <sc-if value="{{ f.isSmart }}" hint-placeholder-val="{{ false }}"><div style="height:36px;border:1.5px solid #D0D5DD;border-radius:8px;background:linear-gradient(90deg,#EAF1FE,#EEF0FB);padding:0 12px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:#5B4FD0;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"></path></svg>{{ f.placeholder }}</div></sc-if>
+                </sc-if>
+              </div>
+            </sc-for>
+            <!-- Drop zone -->
+            <div style="border:2px dashed #D0D5DD;border-radius:12px;padding:20px;text-align:center;margin-top:8px">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B0B8C4" stroke-width="1.8" stroke-linecap="round" style="margin:0 auto 6px;display:block"><path d="M12 5v14M5 12h14"></path></svg>
+              <div style="font-size:12.5px;color:#B0B8C4;font-weight:500">Arrastra componentes aquí o haz clic en la biblioteca</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ====== RIGHT: PROPERTIES + PREVIEW ====== -->
+    <aside style="width:292px;flex:none;background:#fff;border-left:1px solid #E4E8EF;display:flex;flex-direction:column;overflow:hidden">
+      <!-- Tab switch -->
+      <div style="display:flex;border-bottom:1px solid #E4E8EF;flex:none">
+        <button onClick="{{ showProps }}" style="flex:1;padding:13px;border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:{{ rightTab==='props'?'700':'500' }};color:{{ rightTab==='props'?'#14181F':'#98A2B3' }};cursor:pointer;border-bottom:{{ rightTab==='props'?'2px solid #2E6BE6':'2px solid transparent' }}">Propiedades</button>
+        <button onClick="{{ showPrev }}" style="flex:1;padding:13px;border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:{{ rightTab==='preview'?'700':'500' }};color:{{ rightTab==='preview'?'#14181F':'#98A2B3' }};cursor:pointer;border-bottom:{{ rightTab==='preview'?'2px solid #2E6BE6':'2px solid transparent' }}">Vista previa</button>
+      </div>
+
+      <!-- PROPERTIES TAB -->
+      <sc-if value="{{ tabProps }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;overflow-y:auto;padding:14px">
+        <sc-if value="{{ hasSelected }}" hint-placeholder-val="{{ true }}">
+        <div style="animation:slideLeft .18s ease">
+          <!-- Selected field header -->
+          <div style="display:flex;align-items:center;gap:9px;padding:10px 12px;background:#F4F7FE;border-radius:10px;margin-bottom:14px">
+            <span style="width:28px;height:28px;border-radius:8px;background:{{ selField.typeBg }};color:{{ selField.typeColor }};display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ selField.icoPath }}"></path></svg></span>
+            <div><div style="font-size:12.5px;font-weight:700;color:#14181F">{{ selField.typeLabel }}</div><div style="font-size:10.5px;color:#98A2B3">{{ selField.id }}</div></div>
+          </div>
+
+          <!-- Properties groups -->
+          <sc-for list="{{ propGroups }}" as="g" hint-placeholder-count="4">
+            <div style="margin-bottom:16px">
+              <div style="font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#98A2B3;margin-bottom:10px">{{ g.title }}</div>
+              <sc-for list="{{ g.fields }}" as="f" hint-placeholder-count="4">
+                <div style="margin-bottom:12px">
+                  <div style="font-size:11.5px;font-weight:600;color:#344054;margin-bottom:5px">{{ f.label }}</div>
+                  <sc-if value="{{ f.isDisplay }}" hint-placeholder-val="{{ false }}"><div style="padding:8px 11px;background:#FAFBFC;border:1px solid #E4E8EF;border-radius:8px;font-size:12.5px;color:#14181F;line-height:1.35">{{ f.value }}</div></sc-if>
+                  <sc-if value="{{ f.isToggle }}" hint-placeholder-val="{{ false }}">
+                    <button onClick="{{ f.onToggle }}" style="display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;font-family:inherit;padding:2px 0">
+                      <div style="width:36px;height:20px;border-radius:10px;background:{{ f.on?'#2E6BE6':'#D0D5DD' }};position:relative;transition:background .15s"><div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:{{ f.on?'18px':'2px' }};transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div></div>
+                      <span style="font-size:12px;color:{{ f.on?'#14181F':'#98A2B3' }};font-weight:{{ f.on?'600':'400' }}">{{ f.onLabel }}</span>
+                    </button>
+                  </sc-if>
+                  <sc-if value="{{ f.isOptions }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                      <sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="3"><span style="font-size:11px;font-weight:600;color:{{ o.active?'#2E6BE6':'#667085' }};background:{{ o.active?'#EAF1FE':'#F2F4F7' }};padding:4px 10px;border-radius:7px;cursor:pointer">{{ o.label }}</span></sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ f.isVal }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <sc-for list="{{ f.vals }}" as="v" hint-placeholder-count="3">
+                        <div style="display:flex;align-items:center;gap:9px;padding:7px 10px;background:#FAFBFC;border:1px solid #E4E8EF;border-radius:8px">
+                          <span style="width:18px;height:18px;border-radius:50%;background:#F2F4F7;display:flex;align-items:center;justify-content:center;flex:none"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3 8-8"></path></svg></span>
+                          <span style="font-size:11.5px;color:#344054;flex:1">{{ v.label }}</span>
+                          <span style="font-size:11px;color:#98A2B3">{{ v.value }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+
+          <!-- RULES -->
+          <div style="margin-bottom:16px">
+            <div style="font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#98A2B3;margin-bottom:10px">Reglas condicionales</div>
+            <sc-for list="{{ selRules }}" as="r" hint-placeholder-count="1">
+              <div style="background:#FFFAEB;border:1.5px solid #FDE68A;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px">
+                <div style="display:flex;items-center;gap:7px;margin-bottom:6px"><span style="font-size:9.5px;font-weight:800;color:#B4791A;background:#FDF3E1;padding:2px 7px;border-radius:5px">SI</span><span style="color:#475467">{{ r.if }}</span></div>
+                <div style="display:flex;items-center;gap:7px"><span style="font-size:9.5px;font-weight:800;color:#12A150;background:#EEF6EE;padding:2px 7px;border-radius:5px">HACER</span><span style="color:#475467">{{ r.then }}</span></div>
+              </div>
+            </sc-for>
+            <button style="width:100%;height:30px;border:1px dashed #D0D5DD;background:#FAFBFC;border-radius:8px;font-size:11.5px;color:#667085;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Agregar regla</button>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ noSelected }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:32px 20px;color:#B0B8C4"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" style="margin:0 auto 10px;display:block"><path d="M4 5h16v14H4zM8 9h8M8 13h5"></path></svg><div style="font-size:12.5px">Selecciona un campo del lienzo para editar sus propiedades</div></div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- PREVIEW TAB -->
+      <sc-if value="{{ tabPreview }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div style="padding:11px 14px;border-bottom:1px solid #EEF1F5;display:flex;gap:6px;flex:none">
+          <sc-for list="{{ deviceBtns }}" as="d" hint-placeholder-count="3">
+            <button onClick="{{ d.onSel }}" style="flex:1;padding:6px 0;border-radius:7px;border:{{ d.active?'1.5px solid #2E6BE6':'1px solid #E4E8EF' }};background:{{ d.active?'#EAF1FE':'#fff' }};color:{{ d.active?'#2E6BE6':'#667085' }};font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit">{{ d.label }}</button>
+          </sc-for>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:14px;background:#F0F2F5">
+          <div style="background:#fff;border-radius:12px;border:1px solid #E4E8EF;overflow:hidden;{{ previewContainerStyle }}">
+            <div style="background:{{ formColor }};padding:12px 16px;color:#fff">
+              <div style="font-size:14px;font-weight:800">{{ formName }}</div>
+              <div style="font-size:10.5px;color:rgba(255,255,255,.75);margin-top:1px">{{ formDesc }}</div>
+            </div>
+            <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ previewFields }}" as="pf" hint-placeholder-count="5">
+                <div>
+                  <sc-if value="{{ pf.isTitle }}" hint-placeholder-val="{{ false }}"><div style="font-size:15px;font-weight:800;color:#14181F;margin-bottom:4px">{{ pf.label }}</div></sc-if>
+                  <sc-if value="{{ pf.isSep }}" hint-placeholder-val="{{ false }}"><hr style="border:none;border-top:1px solid #EEF1F5"></sc-if>
+                  <sc-if value="{{ pf.isSection }}" hint-placeholder-val="{{ false }}"><div style="background:{{ formColor }}18;border-left:3px solid {{ formColor }};padding:6px 10px;border-radius:0 6px 6px 0;font-size:12px;font-weight:700;color:#14181F">{{ pf.label }}</div></sc-if>
+                  <sc-if value="{{ pf.isField }}" hint-placeholder-val="{{ false }}">
+                    <div style="font-size:11.5px;font-weight:600;color:#344054;margin-bottom:4px">{{ pf.label }}<sc-if value="{{ pf.required }}" hint-placeholder-val="{{ false }}"><span style="color:#E5484D;margin-left:1px">*</span></sc-if></div>
+                    <div style="height:34px;border:1.5px solid #D0D5DD;border-radius:8px;background:#FAFBFC;padding:0 10px;display:flex;align-items:center;font-size:11.5px;color:#B0B8C4">{{ pf.placeholder }}</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+              <div style="margin-top:4px"><button style="width:100%;height:38px;background:{{ formColor }};color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Enviar formulario</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+    </aside>
+  </div>
+
+  <!-- VERSIONS PANEL -->
+  <sc-if value="{{ showVersions }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeVersions }}" style="position:fixed;inset:0;background:rgba(15,38,71,.3);z-index:40"></div>
+  <div style="position:fixed;top:56px;right:0;bottom:0;width:340px;background:#fff;border-left:1px solid #E4E8EF;z-index:41;box-shadow:-6px 0 24px rgba(16,24,40,.1);display:flex;flex-direction:column;animation:slideLeft .2s ease">
+    <div style="padding:16px 20px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:14px;font-weight:700">Historial de versiones</div>
+      <button onClick="{{ closeVersions }}" style="width:30px;height:30px;border:1px solid #E4E8EF;background:#fff;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667085"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+    <div style="flex:1;overflow-y:auto">
+      <sc-for list="{{ versions }}" as="v" hint-placeholder-count="5">
+        <div style="padding:14px 20px;border-bottom:1px solid #F4F6F9;display:flex;align-items:flex-start;gap:12px">
+          <div style="width:32px;height:32px;flex:none;border-radius:9px;background:{{ v.bg }};color:{{ v.color }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:11.5px">{{ v.ver }}</div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><span style="font-size:12.5px;font-weight:700;color:#14181F">{{ v.ver }}</span><span style="font-size:10px;font-weight:700;color:{{ v.statusColor }};background:{{ v.statusBg }};padding:2px 7px;border-radius:5px">{{ v.status }}</span></div>
+            <div style="font-size:11.5px;color:#667085">{{ v.author }} · {{ v.date }}</div>
+            <div style="font-size:11px;color:#98A2B3;margin-top:2px">{{ v.note }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- TEMPLATES PANEL -->
+  <sc-if value="{{ showTemplates }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeTemplates }}" style="position:fixed;inset:0;background:rgba(15,38,71,.3);z-index:40"></div>
+  <div style="position:fixed;top:56px;left:230px;bottom:0;width:320px;background:#fff;border-right:1px solid #E4E8EF;z-index:41;box-shadow:6px 0 24px rgba(16,24,40,.1);display:flex;flex-direction:column;animation:fadeIn .2s ease">
+    <div style="padding:16px 20px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:14px;font-weight:700">Plantillas de formularios</div>
+      <button onClick="{{ closeTemplates }}" style="width:30px;height:30px;border:1px solid #E4E8EF;background:#fff;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667085"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:10px">
+      <sc-for list="{{ templates }}" as="t" hint-placeholder-count="8">
+        <button onClick="{{ t.onLoad }}" style="width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;background:#FAFBFC;border:1px solid #E4E8EF;border-radius:11px;margin-bottom:8px;cursor:pointer;font-family:inherit;text-align:left">
+          <span style="width:34px;height:34px;flex:none;border-radius:9px;background:{{ t.bg }};color:{{ t.color }};display:flex;align-items:center;justify-content:center"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ t.icon }}"></path></svg></span>
+          <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:#14181F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</div><div style="font-size:10.5px;color:#98A2B3;margin-top:1px">{{ t.fields }} campos · {{ t.category }}</div></div>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- TOAST -->
+  <sc-if value="{{ toastOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:60;background:#0F2647;color:#fff;border-radius:12px;padding:12px 20px;box-shadow:0 12px 32px rgba(15,38,71,.32);display:flex;align-items:center;gap:11px;animation:fadeIn .3s ease;white-space:nowrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7FE0A3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+    <span style="font-size:13px;font-weight:700">{{ toastMsg }}</span>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    formName: 'Solicitud de Contratación de Personal',
+    formVersion: 'v1.2',
+    formDesc: 'Recursos Humanos · Proceso: Contratación de Personal',
+    formColor: '#2E6BE6',
+    rightTab: 'props',
+    selectedId: 'f2',
+    previewDevice: 'desktop',
+    showVersions: false,
+    showTemplates: false,
+    toastOpen: false,
+    toastMsg: '',
+    fields: [
+      { id:'f1', type:'title',    label:'Solicitud de Contratación de Personal', placeholder:'', required:false, readonly:false, icoPath:'M4 7h16M4 12h16M4 17h7', opts:[] },
+      { id:'f2', type:'text',     label:'Nombre del cargo solicitado',           placeholder:'Ej. Analista de Presupuesto', required:true,  readonly:false, icoPath:'M4 7h16M4 12h10', opts:[] },
+      { id:'f3', type:'select',   label:'Unidad solicitante',                    placeholder:'Selecciona la unidad', required:true,  readonly:false, icoPath:'M6 9l6 6 6-6', opts:['VRAF','RRHH','Contabilidad','Compras','Mantenimiento','Salud Ocup.'] },
+      { id:'f4', type:'radio',    label:'Tipo de contratación',                  placeholder:'', required:true,  readonly:false, icoPath:'M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10z', opts:['Tiempo completo','Medio tiempo','Contrato temporal','Docente'] },
+      { id:'f5', type:'text',     label:'Experiencia docente requerida',         placeholder:'Especifique años y área', required:false, readonly:false, icoPath:'M4 7h16M4 12h10', opts:[], hidden:true, rule:'Visible si Tipo = Docente' },
+      { id:'f6', type:'date',     label:'Fecha requerida de incorporación',      placeholder:'dd/mm/aaaa', required:true,  readonly:false, icoPath:'M4 8h16M7 3v3M17 3v3M5 5h14v14H5z', opts:[] },
+      { id:'f7', type:'currency', label:'Salario propuesto',                     placeholder:'$ 0.00', required:true,  readonly:false, icoPath:'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6', opts:[] },
+      { id:'f8', type:'textarea', label:'Justificación de la plaza',             placeholder:'Describa la necesidad institucional y los motivos de la contratación...', required:true,  readonly:false, icoPath:'M4 7h16M4 12h16M4 17h16', opts:[] },
+      { id:'f9', type:'file',     label:'Documento de respaldo',                 placeholder:'Arrastra o haz clic · PDF, Word, máx. 10 MB', required:false, readonly:false, icoPath:'M12 16V4M7 9l5-5 5 5M4 20h16', opts:[] },
+      { id:'f10', type:'user',    label:'Responsable de la solicitud',           placeholder:'Selecciona un usuario del sistema', required:true,  readonly:false, icoPath:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', opts:[] },
+      { id:'f11', type:'approval',label:'Vo.Bo. del Administrador General',       placeholder:'', required:true,  readonly:false, icoPath:'M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 7.5-7 9', opts:[] },
+    ],
+  };
+
+  _tid = null;
+  toast(msg) { this.setState({toastOpen:true,toastMsg:msg}); clearTimeout(this._tid); this._tid=setTimeout(()=>this.setState({toastOpen:false}),3200); }
+
+  fieldMeta(type) {
+    const M = {
+      title:    {label:'Título',         typeBg:'#EEF0FB', typeColor:'#5B4FD0', typeLabel:'TÍTULO',      icoPath:'M4 7h16M4 12h16M4 17h7'},
+      separator:{label:'Separador',      typeBg:'#F2F4F7', typeColor:'#667085', typeLabel:'SEPARADOR',    icoPath:'M5 12h14'},
+      section:  {label:'Sección',        typeBg:'#FDF3E1', typeColor:'#B4791A', typeLabel:'SECCIÓN',      icoPath:'M4 5h16v14H4z'},
+      text:     {label:'Texto corto',    typeBg:'#EAF1FE', typeColor:'#2E6BE6', typeLabel:'TEXTO',        icoPath:'M4 7h16M4 12h10'},
+      textarea: {label:'Texto largo',    typeBg:'#EAF1FE', typeColor:'#2E6BE6', typeLabel:'PÁRRAFO',      icoPath:'M4 7h16M4 12h16M4 17h16'},
+      number:   {label:'Número',         typeBg:'#EEF6EE', typeColor:'#12A150', typeLabel:'NÚMERO',       icoPath:'M3 10h18M12 3v18'},
+      currency: {label:'Moneda',         typeBg:'#EEF6EE', typeColor:'#12A150', typeLabel:'MONEDA',       icoPath:'M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'},
+      percent:  {label:'Porcentaje',     typeBg:'#EEF6EE', typeColor:'#12A150', typeLabel:'%',            icoPath:'M19 5L5 19M9 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM15 13a3 3 0 1 0 0 6 3 3 0 0 0 0-6z'},
+      email:    {label:'Correo',         typeBg:'#EAF1FE', typeColor:'#2E6BE6', typeLabel:'EMAIL',        icoPath:'M4 4h16v16H4zM22 7l-10 7L2 7'},
+      phone:    {label:'Teléfono',       typeBg:'#EAF1FE', typeColor:'#2E6BE6', typeLabel:'TEL',          icoPath:'M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7 13 13 0 0 0 .7 2.8 2 2 0 0 1-.4 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4 13 13 0 0 0 2.8.7A2 2 0 0 1 22 16.9z'},
+      date:     {label:'Fecha',          typeBg:'#FDF3E1', typeColor:'#B4791A', typeLabel:'FECHA',        icoPath:'M4 8h16M7 3v3M17 3v3M5 5h14v14H5z'},
+      time:     {label:'Hora',           typeBg:'#FDF3E1', typeColor:'#B4791A', typeLabel:'HORA',         icoPath:'M12 8v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z'},
+      datetime: {label:'Fecha y hora',   typeBg:'#FDF3E1', typeColor:'#B4791A', typeLabel:'F+H',          icoPath:'M4 8h16M7 3v3M17 3v3'},
+      select:   {label:'Desplegable',    typeBg:'#EEF0FB', typeColor:'#5B4FD0', typeLabel:'SELECT',       icoPath:'M6 9l6 6 6-6'},
+      radio:    {label:'Radio',          typeBg:'#EEF0FB', typeColor:'#5B4FD0', typeLabel:'RADIO',        icoPath:'M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10z'},
+      checkbox: {label:'Checkbox',       typeBg:'#EEF0FB', typeColor:'#5B4FD0', typeLabel:'CHECK',        icoPath:'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9'},
+      file:     {label:'Archivo',        typeBg:'#FDECEC', typeColor:'#E5484D', typeLabel:'ARCHIVO',      icoPath:'M12 16V4M7 9l5-5 5 5M4 20h16'},
+      user:     {label:'Usuario',        typeBg:'#EAF1FE', typeColor:'#2E6BE6', typeLabel:'USUARIO',      icoPath:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'},
+      approval: {label:'Aprobación',     typeBg:'#EEF6EE', typeColor:'#12A150', typeLabel:'Vo.Bo.',       icoPath:'M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 7.5-7 9'},
+      sign:     {label:'Firma digital',  typeBg:'#FDECEC', typeColor:'#E5484D', typeLabel:'FIRMA',        icoPath:'M15 3l6 6-9 9H6v-6z'},
+      calculated:{label:'Calculado',     typeBg:'#EEF0FB', typeColor:'#5B4FD0', typeLabel:'CALC',         icoPath:'M13 2L3 14h7l-1 8 10-12h-7z'},
+      status:   {label:'Estado',         typeBg:'#EEF0FB', typeColor:'#5B4FD0', typeLabel:'ESTADO',       icoPath:'M9 12l2 2 4-4'},
+      sla:      {label:'SLA',            typeBg:'#FDECEC', typeColor:'#E5484D', typeLabel:'SLA',          icoPath:'M12 8v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z'},
+      code:     {label:'Código auto.',   typeBg:'#EEF0FB', typeColor:'#5B4FD0', typeLabel:'CÓDIGO',       icoPath:'M8 6H4v12h4M16 6h4v12h-4M12 3v18'},
+    };
+    return M[type] || M.text;
+  }
+
+  addField(type, label) {
+    const meta = this.fieldMeta(type);
+    const id = 'f' + Date.now();
+    const placeholder = type==='file'?'Arrastra o haz clic para subir':type==='user'?'Selecciona un usuario':'Ingresa '+label.toLowerCase()+'...';
+    const opts = type==='radio'||type==='checkbox'||type==='select' ? ['Opción 1','Opción 2','Opción 3'] : [];
+    const newField = { id, type, label, placeholder, description:'', help:'', required:false, readonly:false, opts, icoPath:meta.icoPath };
+    this.setState({ fields:[...this.state.fields, newField], selectedId:id });
+  }
+
+  delField(id) { this.setState({ fields:this.state.fields.filter(f=>f.id!==id), selectedId:this.state.fields.find(f=>f.id!==id)?.id||null }); }
+  dupField(id) { const fs=this.state.fields; const i=fs.findIndex(f=>f.id===id); const nf={...fs[i],id:'f'+Date.now()}; const na=[...fs]; na.splice(i+1,0,nf); this.setState({fields:na,selectedId:nf.id}); }
+  moveField(id,dir) { const fs=[...this.state.fields]; const i=fs.findIndex(f=>f.id===id); const j=i+dir; if(j<0||j>=fs.length) return; [fs[i],fs[j]]=[fs[j],fs[i]]; this.setState({fields:fs}); }
+  toggleReq(id) { this.setState({fields:this.state.fields.map(f=>f.id===id?{...f,required:!f.required}:f)}); }
+  toggleRo(id) { this.setState({fields:this.state.fields.map(f=>f.id===id?{...f,readonly:!f.readonly}:f)}); }
+
+  renderVals() {
+    const st = this.state;
+    const sel = st.fields.find(f=>f.id===st.selectedId);
+
+    // LIBRARY
+    const mkItem = (type,label) => ({ label, type, bg:this.fieldMeta(type).typeBg, color:this.fieldMeta(type).typeColor, icon:this.fieldMeta(type).icoPath, onAdd:()=>this.addField(type,label) });
+    const libCategories = [
+      { name:'Básicos', items:[ mkItem('text','Texto corto'), mkItem('textarea','Texto largo'), mkItem('number','Número'), mkItem('currency','Moneda'), mkItem('percent','Porcentaje'), mkItem('email','Correo'), mkItem('phone','Teléfono'), mkItem('date','Fecha') ] },
+      { name:'Selección', items:[ mkItem('select','Desplegable'), mkItem('radio','Radio'), mkItem('checkbox','Checkbox') ] },
+      { name:'Archivos', items:[ mkItem('file','Archivo'), mkItem('file','PDF'), mkItem('file','Imagen') ] },
+      { name:'Personas', items:[ mkItem('user','Usuario'), mkItem('user','Responsable'), mkItem('user','Unidad') ] },
+      { name:'Firmas', items:[ mkItem('approval','Aprobación'), mkItem('sign','Firma digital'), mkItem('approval','Vo.Bo.') ] },
+      { name:'Controles', items:[ mkItem('title','Título'), mkItem('separator','Separador'), mkItem('section','Sección') ] },
+      { name:'Inteligentes', items:[ mkItem('calculated','Calculado'), mkItem('status','Estado'), mkItem('sla','SLA'), mkItem('code','Código auto.') ] },
+    ];
+
+    // CANVAS FIELDS
+    const nonFieldTypes = ['title','separator','section'];
+    const canvasFields = st.fields.map((f,i) => {
+      const meta = this.fieldMeta(f.type);
+      const selected = f.id === st.selectedId;
+      const isField = !nonFieldTypes.includes(f.type);
+      return {
+        ...f, ...meta, selected,
+        cardStyle: `padding:12px 14px;margin-bottom:8px;border-radius:12px;border:${selected?'2px solid #2E6BE6':'1.5px solid #E4E8EF'};background:${selected?'#F4F7FE':'#fff'};cursor:pointer;box-shadow:${selected?'0 2px 8px rgba(46,107,230,.14)':'0 1px 2px rgba(16,24,40,.04)'}`,
+        labelMb: isField?'8px':'6px',
+        isTitle: f.type==='title', isSep: f.type==='separator', isSection: f.type==='section',
+        isField, isText: isField && !['textarea','select','radio','checkbox','file','user','approval','sign','calculated','status','sla','code'].includes(f.type),
+        isTextarea: f.type==='textarea', isSelect: f.type==='select', isRadio: f.type==='radio', isCheck: f.type==='checkbox',
+        isFile: f.type==='file', isUser: f.type==='user', isApproval: f.type==='approval'||f.type==='sign', isSmart: ['calculated','status','sla','code'].includes(f.type),
+        onSel: ()=>this.setState({selectedId:f.id}),
+        onDel: (e)=>{ e && e.stopPropagation(); this.delField(f.id); },
+        onDup: (e)=>{ e && e.stopPropagation(); this.dupField(f.id); },
+        onUp: (e)=>{ e && e.stopPropagation(); this.moveField(f.id,-1); },
+        onDown: (e)=>{ e && e.stopPropagation(); this.moveField(f.id,1); },
+      };
+    });
+
+    // SELECTED FIELD + PROPERTIES
+    const selField = sel ? { ...sel, ...this.fieldMeta(sel.type) } : null;
+    const hasSelected = !!sel;
+    const noSelected = !sel;
+
+    const propGroups = sel ? [
+      { title:'Identificación', fields:[
+        { label:'Etiqueta', isDisplay:true, value:sel.label, isToggle:false, isOptions:false, isVal:false },
+        { label:'Descripción', isDisplay:true, value:sel.description||'(sin descripción)', isToggle:false, isOptions:false, isVal:false },
+        { label:'Texto de ayuda', isDisplay:true, value:sel.help||'(sin texto de ayuda)', isToggle:false, isOptions:false, isVal:false },
+      ]},
+      { title:'Comportamiento', fields:[
+        { label:'Obligatorio', isToggle:true, on:sel.required, onLabel: sel.required?'Sí, obligatorio':'No obligatorio', onToggle:()=>this.toggleReq(sel.id), isDisplay:false, isOptions:false, isVal:false },
+        { label:'Solo lectura', isToggle:true, on:sel.readonly, onLabel: sel.readonly?'Solo lectura':'Editable', onToggle:()=>this.toggleRo(sel.id), isDisplay:false, isOptions:false, isVal:false },
+      ]},
+      { title:'Validaciones', fields:[
+        { label:'Reglas activas', isVal:true, vals:[
+          { label:'Longitud mínima', value:'3 caracteres' },
+          { label:'Sin duplicados', value:'activado' },
+          { label:'Formato', value:'Texto libre' },
+        ], isDisplay:false, isToggle:false, isOptions:false },
+      ]},
+    ] : [];
+
+    const selRules = sel && (sel.type==='radio'||sel.type==='select') ? [
+      { if:sel.label+' = "Docente"', then:'Mostrar campo "Experiencia docente"' },
+    ] : sel ? [] : [];
+
+    // PREVIEW
+    const previewFields = st.fields.map(f => {
+      const isField = !nonFieldTypes.includes(f.type);
+      return { ...f, isTitle:f.type==='title', isSep:f.type==='separator', isSection:f.type==='section', isField };
+    });
+    const previewContainerStyle = st.previewDevice==='mobile'?'max-width:360px;margin:0 auto':st.previewDevice==='tablet'?'max-width:560px;margin:0 auto':'';
+    const deviceBtns = ['desktop','tablet','mobile'].map(d => ({ label:{desktop:'🖥 Escritorio',tablet:'⊡ Tablet',mobile:'📱 Móvil'}[d], active:st.previewDevice===d, onSel:()=>this.setState({previewDevice:d}) }));
+
+    // VERSIONS
+    const versions = [
+      { ver:'v1.2', status:'Actual', statusColor:'#12A150', statusBg:'#EEF6EE', author:'M. Villalta', date:'8 jul 2026 · 11:30', note:'Añadido campo Vo.Bo. y firma digital', bg:'#EAF1FE', color:'#2E6BE6' },
+      { ver:'v1.1', status:'Anterior', statusColor:'#667085', statusBg:'#F2F4F7', author:'D. Alfaro', date:'5 jul 2026 · 14:20', note:'Ajustes en tipo de contratación', bg:'#EEF6EE', color:'#12A150' },
+      { ver:'v1.0', status:'Original', statusColor:'#667085', statusBg:'#F2F4F7', author:'M. Villalta', date:'1 jul 2026 · 09:00', note:'Versión inicial', bg:'#FDF3E1', color:'#B4791A' },
+    ];
+
+    // TEMPLATES
+    const templates = [
+      { name:'Solicitud de Contratación', fields:'11', category:'RRHH', icon:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', bg:'#EAF1FE', color:'#2E6BE6', onLoad:()=>{ this.toast('Plantilla cargada en el lienzo'); this.setState({showTemplates:false}); } },
+      { name:'Solicitud de Compra', fields:'9', category:'Compras', icon:'M6 6h15l-1.5 9h-12zM6 6L5 3H2', bg:'#EEF0FB', color:'#5B4FD0', onLoad:()=>{ this.toast('Plantilla cargada en el lienzo'); this.setState({showTemplates:false}); } },
+      { name:'Solicitud de Vacaciones', fields:'7', category:'RRHH', icon:'M4 8h16M7 3v3M17 3v3M5 5h14v14H5z', bg:'#EEF6EE', color:'#12A150', onLoad:()=>{ this.toast('Plantilla cargada en el lienzo'); this.setState({showTemplates:false}); } },
+      { name:'Evaluación del Desempeño', fields:'14', category:'RRHH', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', bg:'#FDF3E1', color:'#B4791A', onLoad:()=>{ this.toast('Plantilla cargada en el lienzo'); this.setState({showTemplates:false}); } },
+      { name:'Reporte de Incidente SST', fields:'12', category:'Salud Ocup.', icon:'M12 2L2 20h20zM12 9v5M12 17h.01', bg:'#FDECEC', color:'#E5484D', onLoad:()=>{ this.toast('Plantilla cargada en el lienzo'); this.setState({showTemplates:false}); } },
+      { name:'Acta de reunión', fields:'8', category:'VRAF', icon:'M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 7.5-7 9', bg:'#EEF0FB', color:'#5B4FD0', onLoad:()=>{ this.toast('Plantilla cargada en el lienzo'); this.setState({showTemplates:false}); } },
+      { name:'Lista de verificación', fields:'6', category:'General', icon:'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6', bg:'#EEF6EE', color:'#12A150', onLoad:()=>{ this.toast('Plantilla cargada en el lienzo'); this.setState({showTemplates:false}); } },
+      { name:'Solicitud de Mantenimiento', fields:'10', category:'Mantenimiento', icon:'M14 7l3 3m-8 8l-5 1 1-5 9-9a2.8 2.8 0 0 1 4 4z', bg:'#FDECEC', color:'#E5484D', onLoad:()=>{ this.toast('Plantilla cargada en el lienzo'); this.setState({showTemplates:false}); } },
+    ];
+
+    return {
+      formName:st.formName, formVersion:st.formVersion, formDesc:st.formDesc, formColor:st.formColor,
+      libCategories, canvasFields, previewFields, previewContainerStyle, deviceBtns,
+      selField, hasSelected, noSelected, propGroups, selRules,
+      rightTab:st.rightTab, tabProps:st.rightTab==='props', tabPreview:st.rightTab==='preview',
+      showProps:()=>this.setState({rightTab:'props'}), showPrev:()=>this.setState({rightTab:'preview'}),
+      showVersions:st.showVersions, openVersions:()=>this.setState({showVersions:true}), closeVersions:()=>this.setState({showVersions:false}),
+      showTemplates:st.showTemplates, openTemplates:()=>this.setState({showTemplates:true}), closeTemplates:()=>this.setState({showTemplates:false}),
+      versions, templates,
+      doSave:()=>this.toast('Formulario guardado · '+st.formVersion),
+      doSaveTemplate:()=>this.toast('Guardado como plantilla en Biblioteca institucional → disponible en todos los procesos'),
+      doPublish:()=>this.toast('Formulario publicado y disponible para asociarse a actividades del Process Builder'),
+      toastOpen:st.toastOpen, toastMsg:st.toastMsg,
+    };
+  }
+}
+</script>
+</body>
+</html>

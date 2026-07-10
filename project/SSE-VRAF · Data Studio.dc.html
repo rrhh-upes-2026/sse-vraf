@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:'Public Sans',system-ui,sans-serif;color:#14181F;background:#F0F2F5;-webkit-font-smoothing:antialiased}
+  a{color:#2E6BE6;text-decoration:none}a:hover{color:#0F2647}
+  .mono{font-family:'Space Grotesk',ui-monospace,monospace}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#D0D5DD;border-radius:8px;border:2px solid #F0F2F5}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @keyframes slideRight{from{transform:translateX(-10px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  @keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(46,107,230,.3)}50%{box-shadow:0 0 0 6px rgba(46,107,230,.0)}}
+</style>
+</helmet>
+
+<div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+
+  <!-- ====== TOPBAR ====== -->
+  <div style="height:56px;flex:none;background:#fff;border-bottom:1px solid #E4E8EF;display:flex;align-items:center;padding:0 20px;gap:14px;z-index:20">
+    <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#2E6BE6,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:11px">SS</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#98A2B3"><span>Administración</span><span style="color:#CBD2DC">›</span><span>Studio</span><span style="color:#CBD2DC">›</span><span style="color:#14181F;font-weight:700">Data Studio</span></div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button onClick="{{ showAutoDemo }}" style="height:32px;padding:0 13px;border:1.5px solid #2E6BE6;background:#EAF1FE;border-radius:8px;font-size:12px;font-weight:700;color:#2E6BE6;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"></path></svg>Ver creación automática</button>
+      <button onClick="{{ exportModel }}" style="height:32px;padding:0 13px;border:1px solid #E4E8EF;background:#fff;border-radius:8px;font-size:12px;font-weight:600;color:#475467;cursor:pointer;font-family:inherit">Exportar modelo JSON</button>
+      <button onClick="{{ addEntity }}" style="height:32px;padding:0 13px;background:#0F2647;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Nueva entidad</button>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;overflow:hidden">
+
+    <!-- ====== LEFT: ENTITY LIST ====== -->
+    <aside style="width:246px;flex:none;background:#fff;border-right:1px solid #E4E8EF;overflow-y:auto;padding-bottom:20px">
+      <div style="padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#98A2B3">Entidades de negocio</span>
+        <span class="mono" style="font-size:10.5px;font-weight:700;color:#2E6BE6">{{ entityCount }}</span>
+      </div>
+      <sc-for list="{{ entityList }}" as="e" hint-placeholder-count="12">
+        <button onClick="{{ e.onSel }}" style="{{ e.style }}">
+          <span style="width:28px;height:28px;flex:none;border-radius:8px;background:{{ e.bg }};color:{{ e.color }};display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ e.icon }}"></path></svg></span>
+          <div style="flex:1;text-align:left;min-width:0">
+            <div style="font-size:12.5px;font-weight:600;color:{{ e.textC }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</div>
+            <div style="font-size:10px;color:#98A2B3;margin-top:1px">{{ e.fieldsCount }} campos · {{ e.tag }}</div>
+          </div>
+          <sc-if value="{{ e.isAuto }}" hint-placeholder-val="{{ false }}"><span style="width:7px;height:7px;border-radius:50%;background:#12A150;flex:none;animation:pulse 2s ease infinite"></span></sc-if>
+          <sc-if value="{{ e.isCore }}" hint-placeholder-val="{{ false }}"><span style="font-size:8.5px;font-weight:700;color:#fff;background:#2E6BE6;padding:1px 5px;border-radius:4px">NÚCLEO</span></sc-if>
+        </button>
+      </sc-for>
+    </aside>
+
+    <!-- ====== CENTER: MAIN CONTENT ====== -->
+    <main style="flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column">
+
+      <!-- Entity header -->
+      <div style="background:#fff;border-bottom:1px solid #E4E8EF;padding:14px 24px;flex:none">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:38px;height:38px;border-radius:10px;background:{{ selEntity.bg }};color:{{ selEntity.color }};display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ selEntity.icon }}"></path></svg></div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px;font-weight:800;color:#14181F">{{ selEntity.name }}</span><sc-if value="{{ selEntity.isAuto }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;color:#12A150;background:#EEF6EE;padding:2px 8px;border-radius:5px;display:flex;align-items:center;gap:4px"><span style="width:5px;height:5px;border-radius:50%;background:#12A150"></span>Generada automáticamente</span></sc-if><sc-if value="{{ selEntity.isCore }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;color:#fff;background:#2E6BE6;padding:2px 8px;border-radius:5px">NÚCLEO</span></sc-if></div>
+            <div style="font-size:12px;color:#98A2B3;margin-top:2px">{{ selEntity.desc }}</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div style="text-align:center;padding:6px 13px;background:#FAFBFC;border:1px solid #EEF1F5;border-radius:9px"><div class="mono" style="font-size:17px;font-weight:700;color:#14181F">{{ selEntity.fieldsCount }}</div><div style="font-size:10px;color:#98A2B3;font-weight:600">Campos</div></div>
+            <div style="text-align:center;padding:6px 13px;background:#FAFBFC;border:1px solid #EEF1F5;border-radius:9px"><div class="mono" style="font-size:17px;font-weight:700;color:#14181F">{{ selEntity.relCount }}</div><div style="font-size:10px;color:#98A2B3;font-weight:600">Relaciones</div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:2px;margin-top:14px">
+          <sc-for list="{{ mainTabs }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.onSel }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- AUTO-DEMO BANNER -->
+      <sc-if value="{{ autoDemoOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="background:linear-gradient(120deg,#0F2647,#1D3E6E);padding:18px 24px;animation:fadeIn .3s ease;flex:none">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:280px">
+            <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:4px">Creación automática de entidades desde formularios</div>
+            <div style="font-size:11.5px;color:#A9C0E4">Cuando publicas un formulario en el Form Builder, el Data Studio genera automáticamente la entidad y sus atributos.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <sc-for list="{{ demoSteps }}" as="s" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:6px">
+                <div style="padding:8px 13px;border-radius:9px;background:{{ s.bg }};border:1.5px solid {{ s.border }};text-align:center;min-width:110px">
+                  <div style="font-size:10px;font-weight:700;color:{{ s.metaC }};text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px">{{ s.meta }}</div>
+                  <div style="font-size:12px;font-weight:700;color:{{ s.labelC }}">{{ s.label }}</div>
+                </div>
+                <sc-if value="{{ s.arrow }}" hint-placeholder-val="{{ true }}"><svg width="18" height="10" viewBox="0 0 24 14" fill="none" stroke="#5B7196" stroke-width="2" stroke-linecap="round"><path d="M2 7h18M15 2l6 5-6 5"></path></svg></sc-if>
+              </div>
+            </sc-for>
+            <button onClick="{{ stepDemo }}" style="height:34px;padding:0 14px;background:#2E6BE6;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">{{ demoBtn }}</button>
+            <button onClick="{{ closeDemo }}" style="width:30px;height:30px;background:rgba(255,255,255,.1);border:none;border-radius:8px;color:#7FB0FF;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- MAIN TABS CONTENT -->
+      <div style="flex:1;padding:20px 24px 40px">
+
+        <!-- TAB: CAMPOS -->
+        <sc-if value="{{ tabCampos }}" hint-placeholder-val="{{ true }}">
+        <div style="animation:fadeIn .2s ease">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <div style="font-size:13px;color:#667085;font-weight:600">{{ selEntity.fieldsCount }} campos definidos · clic para seleccionar y ver impacto</div>
+            <div style="flex:1"></div>
+            <button onClick="{{ addField }}" style="height:32px;padding:0 13px;background:#2E6BE6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Nuevo campo</button>
+          </div>
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+            <div style="display:grid;grid-template-columns:2fr 1.2fr .6fr .6fr .6fr .6fr .6fr 1fr;padding:10px 18px;background:#FAFBFC;border-bottom:1px solid #EEF1F5;font-size:10.5px;font-weight:700;color:#98A2B3;letter-spacing:.4px;text-transform:uppercase">
+              <div>Campo</div><div>Tipo</div><div>Oblig.</div><div>Único</div><div>Calc.</div><div>Visible</div><div>Editable</div><div>Origen / Destino</div>
+            </div>
+            <sc-for list="{{ entityFields }}" as="f" hint-placeholder-count="8">
+              <div onClick="{{ f.onSel }}" style="display:grid;grid-template-columns:2fr 1.2fr .6fr .6fr .6fr .6fr .6fr 1fr;padding:12px 18px;border-bottom:1px solid #F4F6F9;align-items:center;cursor:pointer;background:{{ f.selected?'#F4F7FE':'transparent' }}">
+                <div style="display:flex;align-items:center;gap:9px"><span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{ f.dotC }}"></span><div><div style="font-size:12.5px;font-weight:600;color:#14181F">{{ f.name }}</div><div style="font-size:10.5px;color:#98A2B3">{{ f.desc }}</div></div></div>
+                <div><span style="font-size:10.5px;font-weight:700;color:{{ f.typeColor }};background:{{ f.typeBg }};padding:2px 9px;border-radius:5px">{{ f.type }}</span></div>
+                <div style="text-align:center;font-size:13px">{{ f.required?'✓':'' }}</div>
+                <div style="text-align:center;font-size:13px">{{ f.unique?'✓':'' }}</div>
+                <div style="text-align:center;font-size:13px">{{ f.computed?'⚡':'' }}</div>
+                <div style="text-align:center;font-size:13px">{{ f.visible?'✓':'—' }}</div>
+                <div style="text-align:center;font-size:13px">{{ f.editable?'✓':'—' }}</div>
+                <div style="font-size:11px;color:#98A2B3">{{ f.origin }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <!-- CALCULATED FIELD DEMO -->
+          <div style="margin-top:16px;background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:16px 20px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+            <div style="font-size:12px;font-weight:700;color:#5B4FD0;letter-spacing:.3px;text-transform:uppercase;margin-bottom:12px">Campos calculados · reglas visuales</div>
+            <sc-for list="{{ calcRules }}" as="r" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F4F6F9">
+                <code style="font-size:12px;color:#14181F;background:#F0F2F5;padding:4px 10px;border-radius:7px">{{ r.result }}</code>
+                <span style="font-size:12px;color:#98A2B3">=</span>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <sc-for list="{{ r.parts }}" as="p" hint-placeholder-count="3"><span style="font-size:12px;font-weight:600;color:{{ p.color }};background:{{ p.bg }};padding:4px 10px;border-radius:7px">{{ p.label }}</span></sc-for>
+                </div>
+                <span style="font-size:10.5px;font-weight:700;color:#5B4FD0;background:#EEF0FB;padding:2px 9px;border-radius:5px;margin-left:auto">{{ r.type }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- TAB: RELACIONES -->
+        <sc-if value="{{ tabRelaciones }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:fadeIn .2s ease">
+          <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:14px">Relaciones automáticas · generadas por los procesos y formularios del sistema</div>
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);padding:16px;margin-bottom:16px">
+            <svg viewBox="0 0 860 520" style="width:100%;height:auto;display:block" font-family="Public Sans">
+              <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 1L6 4L0 7" fill="none" stroke="#B7C0CE" stroke-width="1.3"/></marker></defs>
+              <!-- Relations lines -->
+              <g stroke="#D0D5DD" stroke-width="1.6" fill="none" marker-end="url(#arr)">
+                <line x1="430" y1="76" x2="430" y2="134"></line>
+                <line x1="430" y1="188" x2="430" y2="246"></line>
+                <line x1="430" y1="302" x2="430" y2="360"></line>
+                <line x1="430" y1="416" x2="430" y2="474"></line>
+                <line x1="140" y1="162" x2="300" y2="162"></line>
+                <line x1="720" y1="162" x2="560" y2="162"></line>
+                <line x1="140" y1="310" x2="300" y2="310"></line>
+                <line x1="720" y1="310" x2="560" y2="310"></line>
+              </g>
+              <!-- Cardinality labels -->
+              <g font-family="Space Grotesk" font-size="11" font-weight="700" fill="#A0A8B4">
+                <text x="437" y="118">1:N</text><text x="437" y="228">1:N</text><text x="437" y="344">N:M</text><text x="437" y="454">1:N</text>
+                <text x="220" y="157">→ 1:N</text><text x="590" y="157">1:1 →</text>
+                <text x="220" y="305">→ 1:N</text><text x="590" y="305">1:N →</text>
+              </g>
+              <!-- Nodes -->
+              <rect x="330" y="28" width="200" height="48" rx="14" fill="#0F2647"></rect>
+              <text x="430" y="49" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">PROCESO INSTITUCIONAL</text>
+              <text x="430" y="66" text-anchor="middle" font-size="10" fill="#8FB0E6" font-family="Space Grotesk">Núcleo del sistema</text>
+
+              <rect x="330" y="140" width="200" height="48" rx="14" fill="#EAF1FE" stroke="#2E6BE6" stroke-width="1.4"></rect>
+              <text x="430" y="161" text-anchor="middle" font-size="12" font-weight="700" fill="#0F2647">Actividades</text>
+              <text x="430" y="177" text-anchor="middle" font-size="10" fill="#2E6BE6" font-family="Space Grotesk">del proceso</text>
+
+              <rect x="330" y="248" width="200" height="54" rx="14" fill="#EEF6EE" stroke="#12A150" stroke-width="2"></rect>
+              <text x="430" y="270" text-anchor="middle" font-size="12" font-weight="800" fill="#0F2647">Solicitud de Contratación</text>
+              <text x="430" y="287" text-anchor="middle" font-size="10" fill="#12A150" font-family="Space Grotesk">⚡ Generada automáticamente</text>
+
+              <rect x="330" y="362" width="200" height="48" rx="14" fill="#EEF0FB" stroke="#5B4FD0" stroke-width="1.4"></rect>
+              <text x="430" y="383" text-anchor="middle" font-size="12" font-weight="700" fill="#0F2647">Indicadores (KPI)</text>
+              <text x="430" y="399" text-anchor="middle" font-size="10" fill="#5B4FD0" font-family="Space Grotesk">calculados automáticamente</text>
+
+              <rect x="330" y="472" width="200" height="44" rx="14" fill="#FDF3E1" stroke="#E5A100" stroke-width="1.4"></rect>
+              <text x="430" y="494" text-anchor="middle" font-size="12" font-weight="700" fill="#0F2647">Dashboard + Reporte</text>
+              <text x="430" y="509" text-anchor="middle" font-size="10" fill="#B4791A" font-family="Space Grotesk">información consolidada</text>
+
+              <!-- Left side -->
+              <rect x="20" y="138" width="120" height="48" rx="12" fill="#FDECEC" stroke="#E5484D" stroke-width="1.4"></rect>
+              <text x="80" y="159" text-anchor="middle" font-size="11" font-weight="700" fill="#0F2647">Evidencias</text>
+              <text x="80" y="175" text-anchor="middle" font-size="10" fill="#E5484D" font-family="Space Grotesk">documentación</text>
+
+              <rect x="20" y="286" width="120" height="48" rx="12" fill="#F2F4F7" stroke="#667085" stroke-width="1.4"></rect>
+              <text x="80" y="307" text-anchor="middle" font-size="11" font-weight="700" fill="#0F2647">Usuarios</text>
+              <text x="80" y="323" text-anchor="middle" font-size="10" fill="#667085" font-family="Space Grotesk">responsables</text>
+
+              <!-- Right side -->
+              <rect x="720" y="138" width="120" height="48" rx="12" fill="#EAF1FE" stroke="#2E6BE6" stroke-width="1.4"></rect>
+              <text x="780" y="159" text-anchor="middle" font-size="11" font-weight="700" fill="#0F2647">Formularios</text>
+              <text x="780" y="175" text-anchor="middle" font-size="10" fill="#2E6BE6" font-family="Space Grotesk">Form Builder</text>
+
+              <rect x="720" y="286" width="120" height="48" rx="12" fill="#EEF6EE" stroke="#12A150" stroke-width="1.4"></rect>
+              <text x="780" y="307" text-anchor="middle" font-size="11" font-weight="700" fill="#0F2647">Solicitudes</text>
+              <text x="780" y="323" text-anchor="middle" font-size="10" fill="#12A150" font-family="Space Grotesk">internas</text>
+            </svg>
+          </div>
+          <!-- Relation table -->
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+            <sc-for list="{{ relations }}" as="r" hint-placeholder-count="8">
+              <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E4E8EF;border-radius:10px;padding:11px 14px">
+                <span class="mono" style="font-size:11.5px;font-weight:700;color:#0F2647;background:#EAF1FE;padding:3px 8px;border-radius:6px">{{ r.a }}</span>
+                <span class="mono" style="font-size:11px;font-weight:700;color:#2E6BE6">{{ r.card }}</span>
+                <span class="mono" style="font-size:11.5px;font-weight:700;color:#0F2647;background:#F2F4F7;padding:3px 8px;border-radius:6px">{{ r.b }}</span>
+                <span style="font-size:11px;color:#98A2B3;flex:1;text-align:right">{{ r.note }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- TAB: REGISTROS -->
+        <sc-if value="{{ tabRegistros }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:fadeIn .2s ease">
+          <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:14px">Registros simulados · cada fila es un objeto inteligente vinculado a proceso, evidencias e indicadores</div>
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+            <div style="display:grid;grid-template-columns:{{ recordGridCols }};padding:10px 18px;background:#FAFBFC;border-bottom:1px solid #EEF1F5;font-size:10.5px;font-weight:700;color:#98A2B3;letter-spacing:.4px;text-transform:uppercase">
+              <sc-for list="{{ recordHeaders }}" as="h" hint-placeholder-count="7"><div>{{ h }}</div></sc-for>
+            </div>
+            <sc-for list="{{ records }}" as="row" hint-placeholder-count="5">
+              <div style="display:grid;grid-template-columns:{{ recordGridCols }};padding:12px 18px;border-bottom:1px solid #F4F6F9;align-items:center">
+                <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="7">
+                  <div>
+                    <sc-if value="{{ c.isId }}" hint-placeholder-val="{{ false }}"><span class="mono" style="font-size:11px;font-weight:700;color:#2E6BE6">{{ c.v }}</span></sc-if>
+                    <sc-if value="{{ c.isStatus }}" hint-placeholder-val="{{ false }}"><span style="font-size:10.5px;font-weight:700;color:{{ c.color }};background:{{ c.bg }};padding:2px 9px;border-radius:20px">{{ c.v }}</span></sc-if>
+                    <sc-if value="{{ c.isText }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#344054">{{ c.v }}</span></sc-if>
+                    <sc-if value="{{ c.isUser }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:50%;background:#EAF1FE;color:#2E6BE6;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ c.ini }}</span><span style="font-size:12px;color:#344054">{{ c.v }}</span></div></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- TAB: IMPACTO -->
+        <sc-if value="{{ tabImpacto }}" hint-placeholder-val="{{ false }}">
+        <div style="animation:fadeIn .2s ease">
+          <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:14px">Visualiza el impacto de cada campo antes de modificarlo — evita romper procesos o indicadores</div>
+          <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+              <div style="padding:11px 16px;border-bottom:1px solid #EEF1F5;font-size:12px;font-weight:700;color:#475467">Campos de la entidad</div>
+              <sc-for list="{{ impactFields }}" as="f" hint-placeholder-count="8">
+                <button onClick="{{ f.onSel }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 16px;border:none;background:{{ f.active?'#F4F7FE':'transparent' }};border-left:{{ f.active?'3px solid #2E6BE6':'3px solid transparent' }};cursor:pointer;font-family:inherit">
+                  <span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{ f.dotC }}"></span>
+                  <span style="font-size:12px;font-weight:600;color:#14181F;flex:1;text-align:left">{{ f.name }}</span>
+                  <span style="font-size:10px;font-weight:700;color:{{ f.typeColor }};background:{{ f.typeBg }};padding:2px 7px;border-radius:4px">{{ f.type }}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:800;color:#14181F;margin-bottom:10px">Este campo es utilizado por:</div>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+                <sc-for list="{{ impactUsages }}" as="u" hint-placeholder-count="6">
+                  <div style="background:#fff;border:1px solid #E4E8EF;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+                    <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px"><span style="width:28px;height:28px;border-radius:8px;background:{{ u.bg }};color:{{ u.color }};display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ u.icon }}"></path></svg></span><span style="font-size:12.5px;font-weight:700;color:#14181F">{{ u.module }}</span></div>
+                    <sc-for list="{{ u.refs }}" as="r" hint-placeholder-count="2">
+                      <div style="font-size:11.5px;color:#667085;padding:3px 0;border-top:1px solid #F4F6F9">→ {{ r }}</div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </main>
+
+    <!-- ====== RIGHT: METADATA ====== -->
+    <aside style="width:270px;flex:none;background:#fff;border-left:1px solid #E4E8EF;overflow-y:auto">
+      <div style="padding:14px 16px;border-bottom:1px solid #EEF1F5;font-size:12.5px;font-weight:700;color:#14181F;display:flex;align-items:center;gap:8px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5B4FD0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM8 9h8M8 13h5"></path></svg>Metadatos de la entidad
+      </div>
+      <div style="padding:12px 16px">
+        <sc-for list="{{ metaRows }}" as="m" hint-placeholder-count="10">
+          <div style="margin-bottom:12px">
+            <div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">{{ m.label }}</div>
+            <sc-if value="{{ m.isText }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:#14181F;font-weight:500;line-height:1.4">{{ m.value }}</div></sc-if>
+            <sc-if value="{{ m.isTags }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;gap:5px;flex-wrap:wrap">
+                <sc-for list="{{ m.tags }}" as="t" hint-placeholder-count="3"><span style="font-size:10.5px;font-weight:600;color:{{ t.color }};background:{{ t.bg }};padding:3px 8px;border-radius:6px">{{ t.label }}</span></sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="margin-top:6px;padding-top:14px;border-top:1px solid #EEF1F5">
+          <div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px">JSON Schema (preview)</div>
+          <div style="background:#0F2647;border-radius:9px;padding:12px;font-family:'Space Grotesk',monospace;font-size:10.5px;color:#7FB0FF;line-height:1.6;overflow:hidden">
+            <div style="color:#A9C0E4">{</div>
+            <div style="padding-left:12px"><span style="color:#EAF1FE">"entity"</span>: <span style="color:#7FE0A3">"{{ selEntity.name }}"</span>,</div>
+            <div style="padding-left:12px"><span style="color:#EAF1FE">"fields"</span>: {{ selEntity.fieldsCount }},</div>
+            <div style="padding-left:12px"><span style="color:#EAF1FE">"relations"</span>: {{ selEntity.relCount }},</div>
+            <div style="padding-left:12px"><span style="color:#EAF1FE">"auto"</span>: <span style="color:#7FE0A3">{{ selEntity.autoStr }}</span>,</div>
+            <div style="padding-left:12px"><span style="color:#EAF1FE">"version"</span>: <span style="color:#7FE0A3">"v1.0"</span></div>
+            <div style="color:#A9C0E4">}</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOAST -->
+  <sc-if value="{{ toastOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:60;background:#0F2647;color:#fff;border-radius:12px;padding:12px 20px;box-shadow:0 12px 32px rgba(15,38,71,.32);display:flex;align-items:center;gap:11px;animation:fadeIn .3s ease;white-space:nowrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7FE0A3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+    <span style="font-size:13px;font-weight:700">{{ toastMsg }}</span>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { selEntityId:'e3', tab:'campos', selFieldId:'f4', selImpactId:'f4', autoDemoOpen:true, demoStep:0, toastOpen:false, toastMsg:'' };
+  _tt = null;
+  toast(m){ this.setState({toastOpen:true,toastMsg:m}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toastOpen:false}),3200); }
+
+  entities() { return [
+    { id:'e1', name:'Proceso Institucional', fieldsCount:'12', relCount:'8', icon:'M4 4h7v7H4zM13 4h7v4h-7zM13 11h7v9h-7zM4 14h7v6H4z', bg:'#EAF1FE', color:'#2E6BE6', isCore:true, isAuto:false, tag:'Núcleo', desc:'Objeto inteligente central del sistema' },
+    { id:'e2', name:'Actividades del Proceso', fieldsCount:'9', relCount:'4', icon:'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9', bg:'#FDF3E1', color:'#B4791A', isCore:false, isAuto:false, tag:'Operativa', desc:'Tareas y pasos dentro de cada proceso' },
+    { id:'e3', name:'Solicitud de Contratación', fieldsCount:'11', relCount:'3', icon:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', bg:'#EEF6EE', color:'#12A150', isCore:false, isAuto:true, tag:'Auto-generada', desc:'Generada desde el Form Builder · Sprint 4' },
+    { id:'e4', name:'Evidencias del Proceso', fieldsCount:'8', relCount:'3', icon:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', bg:'#EEF0FB', color:'#5B4FD0', isCore:false, isAuto:false, tag:'Documental', desc:'Archivos y registros del proceso' },
+    { id:'e5', name:'Indicadores (KPI)', fieldsCount:'10', relCount:'5', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', bg:'#EEF6EE', color:'#12A150', isCore:false, isAuto:false, tag:'Analítica', desc:'KPIs calculados automáticamente' },
+    { id:'e6', name:'Usuarios del Sistema', fieldsCount:'7', relCount:'6', icon:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', bg:'#EAF1FE', color:'#2E6BE6', isCore:false, isAuto:false, tag:'Identidad', desc:'Personas que usan el sistema' },
+    { id:'e7', name:'Unidades Organizacionales', fieldsCount:'6', relCount:'4', icon:'M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6', bg:'#FDF3E1', color:'#B4791A', isCore:false, isAuto:false, tag:'Estructura', desc:'Workspaces del SSE-VRAF' },
+    { id:'e8', name:'Solicitudes Internas', fieldsCount:'9', relCount:'3', icon:'M4 13h4l2 3h4l2-3h4M5 5h14v13H5z', bg:'#FDECEC', color:'#E5484D', isCore:false, isAuto:false, tag:'Operativa', desc:'Peticiones entre unidades' },
+    { id:'e9', name:'Reportes', fieldsCount:'8', relCount:'4', icon:'M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4M9 13h6', bg:'#EEF0FB', color:'#5B4FD0', isCore:false, isAuto:false, tag:'Salida', desc:'Informes automáticos del sistema' },
+    { id:'e10', name:'Automatizaciones', fieldsCount:'7', relCount:'5', icon:'M13 2L3 14h7l-1 8 10-12h-7z', bg:'#FDECEC', color:'#E5484D', isCore:false, isAuto:false, tag:'Motor', desc:'Reglas SI → ENTONCES del sistema' },
+    { id:'e11', name:'Formularios', fieldsCount:'8', relCount:'3', icon:'M4 5h16v14H4zM8 9h8M8 13h5', bg:'#EAF1FE', color:'#2E6BE6', isCore:false, isAuto:false, tag:'Form Builder', desc:'Formularios diseñados en el Studio' },
+    { id:'e12', name:'Plantillas de Proceso', fieldsCount:'9', relCount:'4', icon:'M5 4a1 1 0 0 1 1-1h9l4 4v13H6a1 1 0 0 1-1-1z', bg:'#FDF3E1', color:'#B4791A', isCore:false, isAuto:false, tag:'Blueprint', desc:'Plantillas reutilizables del Process Builder' },
+  ]; }
+
+  fieldsFor(entityId) {
+    if (entityId === 'e3') return [
+      { id:'f1', name:'ID de solicitud', desc:'Generado automáticamente', type:'Código auto.', required:true, unique:true, computed:true, visible:true, editable:false, origin:'Sistema', dotC:'#5B4FD0' },
+      { id:'f2', name:'Nombre del cargo', desc:'Campo de texto del formulario', type:'Texto', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Form Builder', dotC:'#2E6BE6' },
+      { id:'f3', name:'Unidad solicitante', desc:'Catálogo de unidades', type:'Unidad', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Form Builder', dotC:'#B4791A' },
+      { id:'f4', name:'Tipo de contratación', desc:'Radio: Tiempo completo, Docente…', type:'Lista', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Form Builder', dotC:'#E5A100' },
+      { id:'f5', name:'Fecha incorporación', desc:'Selector de fecha', type:'Fecha', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Form Builder', dotC:'#B4791A' },
+      { id:'f6', name:'Salario propuesto', desc:'Campo monetario', type:'Moneda', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Form Builder', dotC:'#12A150' },
+      { id:'f7', name:'Justificación', desc:'Texto largo', type:'Texto largo', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Form Builder', dotC:'#2E6BE6' },
+      { id:'f8', name:'Documento de respaldo', desc:'Archivo PDF/Word', type:'Archivo', required:false, unique:false, computed:false, visible:true, editable:true, origin:'Form Builder', dotC:'#E5484D' },
+      { id:'f9', name:'Responsable', desc:'Usuario del sistema', type:'Usuario', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Form Builder', dotC:'#2E6BE6' },
+      { id:'f10', name:'Estado', desc:'Calculado del proceso', type:'Estado', required:false, unique:false, computed:true, visible:true, editable:false, origin:'Motor de estados', dotC:'#5B4FD0' },
+      { id:'f11', name:'Tiempo de respuesta', desc:'Calculado: cierre - apertura', type:'Calculado', required:false, unique:false, computed:true, visible:true, editable:false, origin:'Calculado', dotC:'#5B4FD0' },
+    ];
+    return [
+      { id:'g1', name:'ID', desc:'Identificador único', type:'Código auto.', required:true, unique:true, computed:true, visible:true, editable:false, origin:'Sistema', dotC:'#5B4FD0' },
+      { id:'g2', name:'Nombre', desc:'', type:'Texto', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Definición', dotC:'#2E6BE6' },
+      { id:'g3', name:'Estado', desc:'Máquina de estados', type:'Estado', required:false, unique:false, computed:true, visible:true, editable:false, origin:'Motor', dotC:'#5B4FD0' },
+      { id:'g4', name:'Fecha creación', desc:'Automática', type:'Fecha', required:true, unique:false, computed:true, visible:true, editable:false, origin:'Sistema', dotC:'#B4791A' },
+      { id:'g5', name:'Responsable', desc:'Usuario asignado', type:'Usuario', required:true, unique:false, computed:false, visible:true, editable:true, origin:'Asignación', dotC:'#2E6BE6' },
+    ];
+  }
+
+  typeStyle(type) {
+    const m = { 'Texto':['#2E6BE6','#EAF1FE'], 'Texto largo':['#2E6BE6','#EAF1FE'], 'Número':['#12A150','#EEF6EE'], 'Moneda':['#12A150','#EEF6EE'], 'Fecha':['#B4791A','#FDF3E1'], 'Lista':['#B4791A','#FDF3E1'], 'Archivo':['#E5484D','#FDECEC'], 'Usuario':['#2E6BE6','#EAF1FE'], 'Unidad':['#B4791A','#FDF3E1'], 'Estado':['#5B4FD0','#EEF0FB'], 'Calculado':['#5B4FD0','#EEF0FB'], 'Código auto.':['#5B4FD0','#EEF0FB'] };
+    return m[type] || ['#667085','#F2F4F7'];
+  }
+
+  renderVals() {
+    const st = this.state;
+    const ents = this.entities();
+    const selEnt = ents.find(e=>e.id===st.selEntityId) || ents[0];
+    const rawFields = this.fieldsFor(selEnt.id);
+
+    // Entity list
+    const entityList = ents.map(e => { const sel = e.id===st.selEntityId; return { ...e, textC: sel?'#14181F':'#475467', style:`width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;border:none;background:${sel?'#F4F7FE':'transparent'};border-right:${sel?'3px solid #2E6BE6':'3px solid transparent'};cursor:pointer;font-family:inherit`, onSel:()=>this.setState({selEntityId:e.id}) }; });
+    const selEntity = { ...selEnt, autoStr: selEnt.isAuto?'true':'false' };
+
+    // Tabs
+    const tabDefs = [{id:'campos',label:'Campos'},{id:'relaciones',label:'Relaciones'},{id:'registros',label:'Registros'},{id:'impacto',label:'Impacto'}];
+    const mainTabs = tabDefs.map(t=>{ const a=st.tab===t.id; return { ...t, onSel:()=>this.setState({tab:t.id}), style:`padding:9px 18px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:${a?'700':'500'};color:${a?'#0F2647':'#98A2B3'};cursor:pointer;border-bottom:2px solid ${a?'#2E6BE6':'transparent'};margin-bottom:-1px` }; });
+
+    // Fields tab
+    const entityFields = rawFields.map(f => { const [tc,tb]=this.typeStyle(f.type); return { ...f, typeColor:tc, typeBg:tb, selected:f.id===st.selFieldId, onSel:()=>this.setState({selFieldId:f.id,tab:'impacto',selImpactId:f.id}) }; });
+    const calcRules = [
+      { result:'Tiempo de respuesta', type:'Calculado', parts:[{label:'Fecha cierre',color:'#B4791A',bg:'#FDF3E1'},{label:'−',color:'#98A2B3',bg:'#F2F4F7'},{label:'Fecha solicitud',color:'#B4791A',bg:'#FDF3E1'}] },
+      { result:'Salario anual', type:'Calculado', parts:[{label:'Salario propuesto',color:'#12A150',bg:'#EEF6EE'},{label:'×',color:'#98A2B3',bg:'#F2F4F7'},{label:'12',color:'#12A150',bg:'#EEF6EE'}] },
+    ];
+
+    // Relations
+    const relations = [
+      {a:'Proceso',card:'1 : N',b:'Actividades',note:'ejecutan el proceso'},
+      {a:'Proceso',card:'1 : N',b:'Evidencias',note:'documentan el avance'},
+      {a:'Proceso',card:'N : M',b:'Indicadores',note:'alimentan KPIs'},
+      {a:'Formulario',card:'1 : 1',b:'Entidad',note:'genera automáticamente'},
+      {a:'Solicitud',card:'1 : 1',b:'Proceso',note:'da origen al proceso'},
+      {a:'Actividades',card:'1 : N',b:'Evidencias',note:'cada actividad requiere'},
+      {a:'Proceso',card:'1 : N',b:'Historial',note:'bitácora inmutable'},
+      {a:'Entidad',card:'1 : N',b:'Registros',note:'instancias del objeto'},
+    ];
+
+    // Records (for Solicitud de Contratación)
+    const recordHeaders = ['ID','Cargo','Unidad','Tipo','Estado','Responsable','Fecha'];
+    const recordGridCols = '.9fr 2fr 1.2fr 1.5fr 1fr 1.4fr 1fr';
+    const mkR = (id,cargo,unidad,tipo,estado,resp,fecha) => { const [sc,sb]={ 'En proceso':['#5B4FD0','#EEF0FB'], 'En revisión':['#B4791A','#FDF3E1'], 'Aprobado':['#12A150','#EEF6EE'], 'Finalizado':['#0F2647','#E7EBF1'] }[estado]||['#667085','#F2F4F7']; return { cells:[ {v:id,isId:true},{v:cargo,isText:true},{v:unidad,isText:true},{v:tipo,isText:true},{v:estado,isStatus:true,color:sc,bg:sb},{v:resp,isUser:true,ini:resp.split(' ').map(w=>w[0]).join('')},{v:fecha,isText:true} ] }; };
+    const records = [
+      mkR('CT-001','Analista de Presupuesto','VRAF','Tiempo completo','Finalizado','D. Alfaro','1 jul 2026'),
+      mkR('CT-002','Técnico de Mantenimiento','Mantenimiento','Contrato temporal','En proceso','S. López','3 jul 2026'),
+      mkR('CT-003','Docente de Matemáticas','Académica','Docente','En revisión','M. Villalta','5 jul 2026'),
+      mkR('CT-004','Asistente Contable','Contabilidad','Tiempo completo','Aprobado','L. Portillo','7 jul 2026'),
+      mkR('CT-005','Enfermero Ocupacional','Salud Ocup.','Tiempo completo','En proceso','D. Alfaro','8 jul 2026'),
+    ];
+
+    // Impact
+    const impactFields = rawFields.map(f=>{ const [tc,tb]=this.typeStyle(f.type); return { ...f, typeColor:tc, typeBg:tb, dotC:f.dotC, active:f.id===st.selImpactId, onSel:()=>this.setState({selImpactId:f.id}) }; });
+    const impactUsages = [
+      { module:'Formularios', icon:'M4 5h16v14H4zM8 9h8M8 13h5', color:'#2E6BE6', bg:'#EAF1FE', refs:['Solicitud de Contratación v1.2'] },
+      { module:'Procesos', icon:'M9 11l3 3 8-8', color:'#E5A100', bg:'#FDF3E1', refs:['Contratación de Personal','Validación de plaza'] },
+      { module:'Indicadores', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', color:'#12A150', bg:'#EEF6EE', refs:['Tipo de contratación mix','Costo promedio por tipo'] },
+      { module:'Automatizaciones', icon:'M13 2L3 14h7l-1 8 10-12h-7z', color:'#E5484D', bg:'#FDECEC', refs:['SI tipo=Docente → mostrar exp.','SI tipo=temporal → SLA reducido'] },
+      { module:'Dashboards', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16', color:'#5B4FD0', bg:'#EEF0FB', refs:['Dashboard RRHH · filtro tipo'] },
+      { module:'Reportes', icon:'M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2z', color:'#B4791A', bg:'#FDF3E1', refs:['Informe mensual de contratación'] },
+    ];
+
+    // Metadata panel
+    const metaRows = [
+      { label:'Descripción', isText:true, value:selEnt.desc, isTags:false },
+      { label:'Última modificación', isText:true, value:'8 jul 2026 · 11:42 · M. Villalta', isTags:false },
+      { label:'Versión', isText:true, value:'v1.0', isTags:false },
+      { label:'Origen', isText:true, value: selEnt.isAuto?'Generada desde Form Builder (Sprint 4)':'Definición arquitectónica', isTags:false },
+      { label:'Campos', isText:true, value:selEnt.fieldsCount+' campos · '+rawFields.filter(f=>f.computed).length+' calculados', isTags:false },
+      { label:'Formularios asociados', isTags:true, tags: selEnt.id==='e3'?[{label:'Solicitud Contratación v1.2',color:'#2E6BE6',bg:'#EAF1FE'}]:[{label:'Sin formulario',color:'#98A2B3',bg:'#F2F4F7'}], isText:false },
+      { label:'Procesos asociados', isTags:true, tags:[{label:'Contratación Personal',color:'#E5A100',bg:'#FDF3E1'}], isText:false },
+      { label:'Indicadores asociados', isTags:true, tags:[{label:'Avance del proceso',color:'#12A150',bg:'#EEF6EE'},{label:'Etapas',color:'#5B4FD0',bg:'#EEF0FB'}], isText:false },
+      { label:'Automatizaciones', isTags:true, tags:[{label:'3 reglas activas',color:'#E5484D',bg:'#FDECEC'}], isText:false },
+    ];
+
+    // Auto demo
+    const allSteps = [
+      { meta:'Form Builder', label:'Formulario diseñado', bg:'rgba(46,107,230,.12)', border:'rgba(127,176,255,.3)', metaC:'#7FB0FF', labelC:'#EAF1FE', arrow:true },
+      { meta:'Publicación', label:'Formulario publicado', bg:'rgba(18,161,80,.12)', border:'rgba(127,210,160,.3)', metaC:'#7FE0A3', labelC:'#BEEBCF', arrow:true },
+      { meta:'Data Studio', label:'Entidad auto-creada ⚡', bg:'rgba(255,255,255,.12)', border:'rgba(255,255,255,.3)', metaC:'#A9C0E4', labelC:'#fff', arrow:true },
+      { meta:'Campos', label:selEnt.fieldsCount+' atributos generados', bg:'rgba(91,143,239,.14)', border:'rgba(127,176,255,.3)', metaC:'#7FB0FF', labelC:'#EAF1FE', arrow:false },
+    ];
+    const demoStep = st.demoStep;
+    const demoSteps = allSteps.map((s,i) => ({ ...s, bg: i<demoStep?s.bg:'rgba(255,255,255,.04)', border: i<demoStep?s.border:'rgba(255,255,255,.12)', labelC: i<demoStep?s.labelC:'#5E7397', metaC: i<demoStep?s.metaC:'#5E7397' }));
+    const demoBtn = demoStep>=4?'Reiniciar':'Siguiente paso →';
+
+    return {
+      entityCount: ents.length,
+      entityList, selEntity,
+      mainTabs, tabCampos:st.tab==='campos', tabRelaciones:st.tab==='relaciones', tabRegistros:st.tab==='registros', tabImpacto:st.tab==='impacto',
+      entityFields, calcRules, relations, records, recordHeaders, recordGridCols,
+      impactFields, impactUsages, metaRows,
+      autoDemoOpen:st.autoDemoOpen, demoSteps, demoBtn,
+      showAutoDemo:()=>this.setState({autoDemoOpen:true,demoStep:0}),
+      stepDemo:()=>{ const n=st.demoStep>=4?0:st.demoStep+1; this.setState({demoStep:n}); if(n===3) this.toast('⚡ Entidad "Solicitud de Contratación" creada automáticamente con '+selEnt.fieldsCount+' campos desde el Form Builder'); if(n===4) this.toast('Modelo completo · '+selEnt.fieldsCount+' campos generados y vinculados al proceso'); },
+      closeDemo:()=>this.setState({autoDemoOpen:false}),
+      addEntity:()=>this.toast('Nueva entidad creada · completa sus metadatos en el panel de campos'),
+      addField:()=>this.toast('Nuevo campo agregado a "'+selEnt.name+'"'),
+      exportModel:()=>this.toast('Modelo exportado como JSON · listo para Claude Code'),
+      toastOpen:st.toastOpen, toastMsg:st.toastMsg,
+    };
+  }
+}
+</script>
+</body>
+</html>

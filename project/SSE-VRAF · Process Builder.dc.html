@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:'Public Sans',system-ui,sans-serif;color:#14181F;background:#F0F2F5;-webkit-font-smoothing:antialiased}
+  a{color:#2E6BE6;text-decoration:none}a:hover{color:#0F2647}
+  .mono{font-family:'Space Grotesk',ui-monospace,monospace}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#D0D5DD;border-radius:8px;border:2px solid #F0F2F5}
+  ::-webkit-scrollbar-thumb:hover{background:#B0B8C4}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes pop{0%{transform:scale(.96);opacity:0}100%{transform:scale(1);opacity:1}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden;background:#F0F2F5">
+
+  <!-- ======= TOPBAR ======= -->
+  <div style="position:fixed;top:0;left:0;right:0;height:56px;background:#fff;border-bottom:1px solid #E4E8EF;z-index:30;display:flex;align-items:center;padding:0 20px;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;flex:none;border-radius:8px;background:linear-gradient(135deg,#2E6BE6,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:12px">SS</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#98A2B3">
+        <span>SSE-VRAF</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
+        <span>Administración</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg>
+        <span style="color:#14181F;font-weight:700">Constructor de Procesos</span>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#12A150;background:#EEF6EE;padding:5px 11px;border-radius:20px"><span style="width:7px;height:7px;border-radius:50%;background:#12A150"></span>{{ statusLabel }}</span>
+      <button onClick="{{ saveTemplate }}" style="height:34px;padding:0 15px;background:#0F2647;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2zM17 21v-8H7v8M7 3v5h8"></path></svg>Guardar plantilla</button>
+      <button onClick="{{ publishProcess }}" style="height:34px;padding:0 15px;background:#2E6BE6;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:inherit">Publicar proceso</button>
+    </div>
+  </div>
+
+  <!-- ======= LEFT: BLOCK NAV ======= -->
+  <nav style="width:220px;flex:none;background:#fff;border-right:1px solid #E4E8EF;padding-top:70px;height:100vh;overflow-y:auto">
+    <div style="padding:14px 16px 8px;font-size:10px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:#98A2B3">Bloques del proceso</div>
+    <sc-for list="{{ blockNav }}" as="b" hint-placeholder-count="8">
+      <button onClick="{{ b.onSel }}" style="{{ b.style }}">
+        <span style="width:28px;height:28px;flex:none;border-radius:8px;background:{{ b.icoB }};color:{{ b.icoC }};display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ b.icon }}"></path></svg></span>
+        <div style="flex:1;text-align:left">
+          <div style="font-size:12.5px;font-weight:600;color:{{ b.textC }}">{{ b.label }}</div>
+          <div style="font-size:10.5px;color:#98A2B3;margin-top:1px">{{ b.sub }}</div>
+        </div>
+        <sc-if value="{{ b.done }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#12A150" stroke-width="2.4" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></sc-if>
+      </button>
+    </sc-for>
+
+    <div style="margin:14px 16px 8px;padding-top:14px;border-top:1px solid #EEF1F5">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:#98A2B3;margin-bottom:10px">Biblioteca</div>
+      <sc-for list="{{ library }}" as="l" hint-placeholder-count="3">
+        <button onClick="{{ l.onSel }}" style="width:100%;display:flex;align-items:center;gap:9px;padding:8px 10px;border:none;background:transparent;border-radius:8px;cursor:pointer;font-family:inherit">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ l.icon }}"></path></svg>
+          <span style="font-size:12px;color:#667085;font-weight:500">{{ l.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </nav>
+
+  <!-- ======= CENTER: BUILDER CANVAS ======= -->
+  <div style="flex:1;min-width:0;overflow-y:auto;padding:70px 0 0">
+    <div style="padding:24px 28px 60px;max-width:860px;margin:0 auto">
+
+      <!-- B1: INFO GENERAL -->
+      <sc-if value="{{ b1Active }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:fadeIn .22s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#EAF1FE;color:#2E6BE6;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM8 9h8M8 13h5"></path></svg></div>
+          <div><div style="font-size:17px;font-weight:800;color:#14181F">Información General</div><div style="font-size:12px;color:#98A2B3">Define los metadatos del proceso institucional</div></div>
+        </div>
+        <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);padding:24px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <sc-for list="{{ infoFields }}" as="f" hint-placeholder-count="8">
+              <div style="{{ f.span }}">
+                <div style="font-size:11.5px;font-weight:700;color:#475467;margin-bottom:6px;letter-spacing:.2px">{{ f.label }}</div>
+                <sc-if value="{{ f.isColor }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="6">
+                      <button onClick="{{ o.onSel }}" style="width:26px;height:26px;border-radius:50%;background:{{ o.val }};border:{{ o.border }};cursor:pointer"></button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:7px;flex-wrap:wrap">
+                    <sc-for list="{{ f.opts }}" as="o" hint-placeholder-count="4">
+                      <button onClick="{{ o.onSel }}" style="padding:6px 13px;border-radius:8px;font-size:12.5px;font-weight:600;border:1.5px solid {{ o.border }};background:{{ o.bg }};color:{{ o.color }};cursor:pointer;font-family:inherit">{{ o.label }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ false }}">
+                  <div style="min-height:40px;padding:10px 14px;background:#FAFBFC;border:1.5px solid #E4E8EF;border-radius:10px;font-size:13.5px;color:#14181F;font-weight:{{ f.bold }};line-height:1.4">{{ f.value }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- B2: ETAPAS -->
+      <sc-if value="{{ b2Active }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .22s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#FDF3E1;color:#E5A100;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg></div>
+          <div style="flex:1"><div style="font-size:17px;font-weight:800;color:#14181F">Etapas del proceso</div><div style="font-size:12px;color:#98A2B3">Define las etapas. Arrastra para reordenar.</div></div>
+          <button onClick="{{ addStage }}" style="height:34px;padding:0 14px;background:#2E6BE6;color:#fff;border:none;border-radius:9px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Agregar etapa</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ stages }}" as="s" hint-placeholder-count="5">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:12px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden;animation:pop .18s ease">
+              <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+                <div style="cursor:grab;color:#CBD2DC"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5h2M9 12h2M9 19h2M13 5h2M13 12h2M13 19h2"></path></svg></div>
+                <div style="width:32px;height:32px;flex:none;border-radius:9px;background:{{ s.color }}22;color:{{ s.color }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:13px">{{ s.num }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:700;color:#14181F">{{ s.name }}</div>
+                  <div style="font-size:11.5px;color:#98A2B3">{{ s.resp }} · {{ s.acts }} actividades</div>
+                </div>
+                <div style="display:flex;gap:7px;flex-wrap:wrap">
+                  <sc-for list="{{ s.colors }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.onSel }}" style="width:18px;height:18px;border-radius:50%;background:{{ c.val }};border:{{ c.border }};cursor:pointer;flex:none"></button></sc-for>
+                </div>
+                <span style="font-size:10.5px;font-weight:700;color:{{ s.statusColor }};background:{{ s.statusBg }};padding:3px 10px;border-radius:20px">{{ s.status }}</span>
+                <div style="display:flex;gap:5px">
+                  <button onClick="{{ s.onToggle }}" title="Activar/desactivar" style="width:30px;height:30px;border:1px solid #E4E8EF;background:#fff;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667085"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="{{ s.toggleIcon }}"></path></svg></button>
+                  <button onClick="{{ s.onDel }}" title="Eliminar" style="width:30px;height:30px;border:1px solid #FCA5A5;background:#FEF2F2;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#E5484D"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"></path></svg></button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- B3: ACTIVIDADES -->
+      <sc-if value="{{ b3Active }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .22s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#EEF6EE;color:#12A150;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"></path></svg></div>
+          <div style="flex:1"><div style="font-size:17px;font-weight:800;color:#14181F">Actividades por etapa</div><div style="font-size:12px;color:#98A2B3">Configura las actividades de cada etapa. Arrastra para reordenar.</div></div>
+        </div>
+        <sc-for list="{{ actStages }}" as="s" hint-placeholder-count="3">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);margin-bottom:14px;overflow:hidden">
+            <div style="padding:12px 18px;background:{{ s.color }}11;border-bottom:1px solid {{ s.color }}33;display:flex;align-items:center;gap:11px">
+              <span style="width:8px;height:8px;border-radius:50%;background:{{ s.color }}"></span>
+              <span style="font-size:14px;font-weight:700;color:#14181F">Etapa {{ s.num }}: {{ s.name }}</span>
+              <button onClick="{{ s.onAddAct }}" style="margin-left:auto;height:28px;padding:0 11px;background:#fff;color:#2E6BE6;border:1px solid #BBD3F7;border-radius:7px;font-weight:600;font-size:11.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Agregar</button>
+            </div>
+            <div style="padding:10px 14px">
+              <sc-for list="{{ s.acts }}" as="a" hint-placeholder-count="3">
+                <div style="display:flex;align-items:flex-start;gap:11px;padding:10px 4px;border-bottom:1px solid #F4F6F9">
+                  <div style="cursor:grab;color:#CBD2DC;margin-top:2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 5h2M9 12h2M9 19h2M13 5h2M13 12h2M13 19h2"></path></svg></div>
+                  <div style="flex:1;display:grid;grid-template-columns:1.8fr 1fr .8fr .7fr;gap:12px;align-items:center">
+                    <div><div style="font-size:12.5px;font-weight:700;color:#14181F">{{ a.name }}</div><div style="font-size:11px;color:#98A2B3">{{ a.desc }}</div></div>
+                    <div style="font-size:11.5px;color:#475467">{{ a.resp }}</div>
+                    <div class="mono" style="font-size:11.5px;color:#B4791A;font-weight:600">{{ a.time }}</div>
+                    <span style="font-size:10px;font-weight:700;color:{{ a.pColor }};background:{{ a.pBg }};padding:2px 8px;border-radius:20px;text-align:center">{{ a.prio }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- B4: EVIDENCIAS -->
+      <sc-if value="{{ b4Active }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .22s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#EEF0FB;color:#5B4FD0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></div>
+          <div><div style="font-size:17px;font-weight:800;color:#14181F">Evidencias por actividad</div><div style="font-size:12px;color:#98A2B3">Define qué documentos requiere cada actividad</div></div>
+        </div>
+        <sc-for list="{{ evStages }}" as="s" hint-placeholder-count="2">
+          <div style="margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:7px;height:7px;border-radius:50%;background:{{ s.color }}"></span><span style="font-size:13.5px;font-weight:700;color:#14181F">{{ s.name }}</span></div>
+            <sc-for list="{{ s.acts }}" as="a" hint-placeholder-count="3">
+              <div style="background:#fff;border:1px solid #E4E8EF;border-radius:12px;box-shadow:0 1px 3px rgba(16,24,40,.05);margin-bottom:10px;overflow:hidden">
+                <div style="padding:11px 16px;border-bottom:1px solid #F4F6F9;display:flex;align-items:center;gap:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#667085" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"></path></svg><span style="font-size:12.5px;font-weight:700;color:#14181F">{{ a.name }}</span></div>
+                <div style="padding:10px 16px">
+                  <sc-for list="{{ a.evs }}" as="e" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F6F8FA">
+                      <span style="font-size:9.5px;font-weight:700;color:{{ e.reqColor }};background:{{ e.reqBg }};padding:2px 7px;border-radius:5px;width:72px;text-align:center;flex:none">{{ e.req }}</span>
+                      <span style="flex:1;font-size:12px;font-weight:600;color:#14181F">{{ e.name }}</span>
+                      <span style="font-size:10.5px;color:#667085;background:#F2F4F7;padding:3px 9px;border-radius:6px">{{ e.type }}</span>
+                      <sc-if value="{{ e.sign }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;color:#E5484D;background:#FDECEC;padding:3px 8px;border-radius:6px">✍ Firma</span></sc-if>
+                    </div>
+                  </sc-for>
+                  <div style="display:flex;gap:7px;margin-top:8px">
+          <button onClick="{{ a.onAdd }}" style="height:28px;padding:0 11px;background:#FAFBFC;color:#667085;border:1px solid #E4E8EF;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Agregar</button>
+          <a href="SSE-VRAF · Form Builder.dc.html" target="_blank" style="height:28px;padding:0 11px;background:#EAF1FE;color:#2E6BE6;border:1px solid #BBD3F7;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;text-decoration:none"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Diseñar formulario ↗</a>
+        </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- B5: INDICADORES -->
+      <sc-if value="{{ b5Active }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .22s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#EEF6EE;color:#12A150;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a8 8 0 1 1 16 0M12 14l4-4"></path></svg></div>
+          <div style="flex:1"><div style="font-size:17px;font-weight:800;color:#14181F">Indicadores del proceso</div><div style="font-size:12px;color:#98A2B3">Diseña los KPIs como tarjetas configurables</div></div>
+          <button onClick="{{ addIndicator }}" style="height:34px;padding:0 14px;background:#12A150;color:#fff;border:none;border-radius:9px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Nuevo indicador</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+          <sc-for list="{{ indicators }}" as="k" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden;border-top:3px solid {{ k.color }}">
+              <div style="padding:14px 16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                  <span style="font-size:10px;font-weight:700;color:{{ k.famColor }};background:{{ k.famBg }};padding:2px 9px;border-radius:20px">{{ k.family }}</span>
+                  <span style="width:10px;height:10px;border-radius:50%;background:{{ k.sem }}"></span>
+                </div>
+                <div style="font-size:15px;font-weight:800;color:#14181F;margin-bottom:12px">{{ k.name }}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Fórmula</div><div class="mono" style="font-size:11.5px;color:#5B4FD0;margin-top:3px">{{ k.formula }}</div></div>
+                  <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Meta</div><div class="mono" style="font-size:11.5px;color:#14181F;font-weight:700;margin-top:3px">{{ k.meta }}</div></div>
+                  <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Frecuencia</div><div style="font-size:11.5px;color:#475467;margin-top:3px">{{ k.freq }}</div></div>
+                  <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:9px;padding:10px 12px"><div style="font-size:10px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Fuente</div><div style="font-size:11.5px;color:#475467;margin-top:3px">{{ k.source }}</div></div>
+                </div>
+                <div style="margin-top:11px;padding-top:11px;border-top:1px solid #EEF1F5;display:flex;align-items:center;gap:8px">
+                  <span style="font-size:11px;color:#98A2B3">Semáforo:</span>
+                  <span style="font-size:10.5px;font-weight:700;color:#12A150;background:#EEF6EE;padding:2px 8px;border-radius:5px">V {{ k.semV }}</span>
+                  <span style="font-size:10.5px;font-weight:700;color:#E5A100;background:#FDF3E1;padding:2px 8px;border-radius:5px">A {{ k.semA }}</span>
+                  <span style="font-size:10.5px;font-weight:700;color:#E5484D;background:#FDECEC;padding:2px 8px;border-radius:5px">R {{ k.semR }}</span>
+                  <div style="flex:1"></div>
+                  <span style="font-size:11px;color:#2E6BE6;font-weight:600">{{ k.dash }}</span>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- B6: AUTOMATIZACIONES -->
+      <sc-if value="{{ b6Active }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .22s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#FDECEC;color:#E5484D;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg></div>
+          <div style="flex:1"><div style="font-size:17px;font-weight:800;color:#14181F">Automatizaciones</div><div style="font-size:12px;color:#98A2B3">Constructor visual de reglas SI → ENTONCES</div></div>
+          <button onClick="{{ addAutomation }}" style="height:34px;padding:0 14px;background:#E5484D;color:#fff;border:none;border-radius:9px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Nueva regla</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ automations }}" as="a" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden;animation:pop .18s ease">
+              <div style="padding:12px 18px;border-bottom:1px solid #F4F6F9;display:flex;align-items:center;gap:10px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E5484D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"></path></svg>
+                <span style="font-size:13px;font-weight:700;color:#14181F">Regla {{ a.num }}</span>
+                <span style="flex:1"></span>
+                <span style="font-size:10.5px;font-weight:700;color:{{ a.actColor }};background:{{ a.actBg }};padding:3px 10px;border-radius:20px">{{ a.status }}</span>
+              </div>
+              <div style="display:flex;align-items:stretch;padding:16px 18px;gap:0">
+                <div style="flex:none;display:flex;flex-direction:column;align-items:center">
+                  <div style="width:38px;height:38px;border-radius:10px;background:#FDF3E1;color:#B4791A;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;letter-spacing:.3px">SI</div>
+                  <div style="width:2px;flex:1;background:#EEF1F5;margin:6px 0"></div>
+                  <div style="width:38px;height:38px;border-radius:10px;background:#EAF1FE;color:#2E6BE6;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M6 11l6 6 6-6"></path></svg></div>
+                  <div style="width:2px;flex:1;background:#EEF1F5;margin:6px 0"></div>
+                  <div style="width:38px;height:38px;border-radius:10px;background:#EEF6EE;color:#12A150;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800">HACER</div>
+                </div>
+                <div style="flex:1;padding-left:16px;display:flex;flex-direction:column;gap:8px;justify-content:space-between">
+                  <div style="padding:12px 14px;background:#FFFAEB;border:1.5px solid #FDE68A;border-radius:10px"><div style="font-size:10.5px;color:#B4791A;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px">Cuando ocurre</div><div style="font-size:13px;font-weight:600;color:#14181F">{{ a.when }}</div></div>
+                  <div style="padding:12px 14px;background:#F0F8FF;border:1.5px solid #BBD3F7;border-radius:10px;flex:1"><div style="font-size:10.5px;color:#2E6BE6;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.3px">Acciones encadenadas</div><div style="display:flex;flex-direction:column;gap:6px">
+                    <sc-for list="{{ a.actions }}" as="ac" hint-placeholder-count="3">
+                      <div style="display:flex;align-items:center;gap:9px;font-size:12.5px;color:#14181F"><span style="width:20px;height:20px;border-radius:50%;background:{{ ac.bg }};color:{{ ac.color }};display:flex;align-items:center;justify-content:center;flex:none"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12l5 5L20 7"></path></svg></span>{{ ac.label }}</div>
+                    </sc-for>
+                  </div></div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- B7: DASHBOARD WIDGETS -->
+      <sc-if value="{{ b7Active }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .22s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#EAF1FE;color:#2E6BE6;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M4 20h16"></path></svg></div>
+          <div><div style="font-size:17px;font-weight:800;color:#14181F">Dashboard del proceso</div><div style="font-size:12px;color:#98A2B3">Selecciona los widgets que aparecerán en el dashboard</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <sc-for list="{{ widgets }}" as="w" hint-placeholder-count="8">
+            <div onClick="{{ w.onSel }}" style="background:#fff;border:{{ w.border }};border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,.05);cursor:pointer;display:flex;align-items:flex-start;gap:12px">
+              <div style="width:36px;height:36px;flex:none;border-radius:10px;background:{{ w.bg }};color:{{ w.color }};display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ w.icon }}"></path></svg></div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:700;color:#14181F">{{ w.name }}</div>
+                <div style="font-size:11.5px;color:#98A2B3;margin-top:2px">{{ w.desc }}</div>
+              </div>
+              <div style="width:20px;height:20px;flex:none;border-radius:50%;border:{{ w.checkBorder }};background:{{ w.checkBg }};display:flex;align-items:center;justify-content:center"><sc-if value="{{ w.active }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="{{ w.checkColor }}" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></sc-if></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- B8: REPORTES -->
+      <sc-if value="{{ b8Active }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .22s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+          <div style="width:36px;height:36px;border-radius:10px;background:#EEF0FB;color:#5B4FD0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4M9 13h6M9 17h4"></path></svg></div>
+          <div><div style="font-size:17px;font-weight:800;color:#14181F">Configuración de reportes</div><div style="font-size:12px;color:#98A2B3">Define qué información aparecerá en los reportes automáticos</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ reportSections }}" as="r" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:12px;padding:14px 18px;box-shadow:0 1px 3px rgba(16,24,40,.05);display:flex;align-items:center;gap:14px">
+              <div onClick="{{ r.onSel }}" style="width:22px;height:22px;flex:none;border-radius:6px;border:{{ r.chkBorder }};background:{{ r.chkBg }};display:flex;align-items:center;justify-content:center;cursor:pointer"><sc-if value="{{ r.on }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></sc-if></div>
+              <div style="width:34px;height:34px;flex:none;border-radius:9px;background:{{ r.bg }};color:{{ r.color }};display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ r.icon }}"></path></svg></div>
+              <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#14181F">{{ r.name }}</div><div style="font-size:11.5px;color:#98A2B3">{{ r.desc }}</div></div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <sc-for list="{{ r.freqs }}" as="f" hint-placeholder-count="3">
+                  <button onClick="{{ f.onSel }}" style="font-size:10.5px;font-weight:600;color:{{ f.color }};background:{{ f.bg }};border:none;padding:4px 10px;border-radius:7px;cursor:pointer;font-family:inherit">{{ f.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <!-- ======= RIGHT: LIVE PREVIEW ======= -->
+  <div style="width:290px;flex:none;background:#fff;border-left:1px solid #E4E8EF;height:100vh;overflow-y:auto;padding-top:56px">
+    <div style="padding:16px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:13px;font-weight:700;color:#14181F">Vista previa</div>
+      <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:#12A150"><span style="width:6px;height:6px;border-radius:50%;background:#12A150;animation:pulse 2s ease infinite"></span>En tiempo real</span>
+    </div>
+    <div style="padding:14px">
+      <div style="background:linear-gradient(135deg,#0F2647,#1D3E6E);border-radius:12px;padding:14px;color:#fff;margin-bottom:12px">
+        <div style="font-size:9px;letter-spacing:.7px;text-transform:uppercase;color:#8FB0E6;font-weight:700;margin-bottom:4px">Proceso Institucional</div>
+        <div style="font-size:15px;font-weight:800;line-height:1.2;margin-bottom:8px">{{ previewName }}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:9.5px;font-weight:700;color:#0F2647;background:#7FB0FF;padding:2px 8px;border-radius:5px">{{ previewType }}</span>
+          <span style="font-size:9.5px;font-weight:700;color:{{ previewColor }};background:#fff;padding:2px 8px;border-radius:5px">{{ previewUnit }}</span>
+        </div>
+        <div style="margin-top:12px;height:5px;background:rgba(255,255,255,.2);border-radius:6px;overflow:hidden"><div style="height:100%;background:#7FB0FF;width:{{ previewPct }}"></div></div>
+        <div style="font-size:10px;color:#8FB0E6;margin-top:4px;font-weight:600">{{ previewPct }} construido</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px">
+        <sc-for list="{{ previewBlocks }}" as="b" hint-placeholder-count="8">
+          <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:9px;padding:10px 12px;display:flex;align-items:center;gap:10px">
+            <div style="width:26px;height:26px;flex:none;border-radius:7px;background:{{ b.bg }};color:{{ b.color }};display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ b.icon }}"></path></svg></div>
+            <div style="flex:1;min-width:0"><div style="font-size:11.5px;font-weight:700;color:#14181F">{{ b.label }}</div><div class="mono" style="font-size:10.5px;color:#98A2B3">{{ b.count }}</div></div>
+            <sc-if value="{{ b.done }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#12A150" stroke-width="2.6" stroke-linecap="round"><path d="M20 6L9 17l-5-5"></path></svg></sc-if>
+            <sc-if value="{{ b.pending }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E5A100" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v5M12 16h.01"></path></svg></sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <div style="margin-top:14px;background:#EEF6EE;border:1px solid #BFE6CC;border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;font-weight:700;color:#0B6B38;margin-bottom:6px">Plantilla del proceso</div>
+        <div style="font-size:11px;color:#3B7150;line-height:1.5">{{ stageCount }} etapas · {{ actCount }} actividades · {{ evCount }} evidencias · {{ kpiCount }} indicadores · {{ automCount }} automatizaciones</div>
+        <button onClick="{{ saveTemplate }}" style="margin-top:10px;width:100%;height:32px;background:#12A150;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:inherit">Convertir en plantilla →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAVED TOAST -->
+  <sc-if value="{{ toastSaved }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:60;background:#0F2647;color:#fff;border-radius:12px;padding:12px 20px;box-shadow:0 12px 32px rgba(15,38,71,.32);display:flex;align-items:center;gap:11px;animation:fadeIn .3s ease;white-space:nowrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7FE0A3" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+    <span style="font-size:13px;font-weight:700">{{ toastMsg }}</span>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    block: 'b1',
+    color: '#2E6BE6',
+    type: 'Misional',
+    sla: '30 d',
+    stages: [
+      { id:'s1', name:'Solicitud',            resp:'C. Reyes',  acts:2, color:'#2E6BE6', active:true  },
+      { id:'s2', name:'Validación de plaza',  resp:'D. Alfaro', acts:2, color:'#5B4FD0', active:true  },
+      { id:'s3', name:'Perfil del puesto',    resp:'D. Alfaro', acts:2, color:'#12A150', active:true  },
+      { id:'s4', name:'Publicación',          resp:'D. Alfaro', acts:3, color:'#E5A100', active:true  },
+      { id:'s5', name:'Recepción candidatos', resp:'S. López',  acts:2, color:'#E5484D', active:true  },
+      { id:'s6', name:'Evaluación',           resp:'S. López',  acts:2, color:'#0F8A8A', active:true  },
+      { id:'s7', name:'Entrevistas',          resp:'D. Alfaro', acts:2, color:'#2E6BE6', active:true  },
+      { id:'s8', name:'Selección',            resp:'D. Alfaro', acts:2, color:'#5B4FD0', active:true  },
+      { id:'s9', name:'Oferta laboral',       resp:'D. Alfaro', acts:2, color:'#12A150', active:false },
+      { id:'s10',name:'Contratación',         resp:'S. López',  acts:1, color:'#E5A100', active:true  },
+      { id:'s11',name:'Firma de contrato',    resp:'D. Alfaro', acts:1, color:'#E5484D', active:true  },
+      { id:'s12',name:'Registro institucional',resp:'M. Cruz',  acts:2, color:'#0F8A8A', active:true  },
+      { id:'s13',name:'Expediente digital',   resp:'S. López',  acts:1, color:'#2E6BE6', active:true  },
+      { id:'s14',name:'Inducción',            resp:'S. López',  acts:2, color:'#5B4FD0', active:true  },
+      { id:'s15',name:'Proceso finalizado',   resp:'D. Alfaro', acts:1, color:'#12A150', active:true  },
+    ],
+    widgets: { avance:true, etapas:true, evidencias:true, tiempo:true, timeline:true, solicitudes:false, alertas:true, indicadores:true },
+    reportSections: { portada:true, indicadores:true, etapas:true, evidencias:true, historial:true, graficos:false },
+    selectedColor: '#2E6BE6',
+    kpis: [
+      { id:'k1', name:'Avance del proceso', family:'Gestión', color:'#E5A100', sem:'#E5A100', formula:'cargadas / total × 100', meta:'100%', freq:'Continua', source:'Evidencias', dash:'Dashboard RRHH', famColor:'#B4791A', famBg:'#FDF3E1', semV:'100', semA:'≥50', semR:'<50' },
+      { id:'k2', name:'Etapas completadas', family:'Gestión', color:'#2E6BE6', sem:'#2E6BE6', formula:'cerradas / 15 × 100', meta:'15/15', freq:'Continua', source:'Máquina de estados', dash:'Dashboard RRHH', famColor:'#B4791A', famBg:'#FDF3E1', semV:'15', semA:'≥6', semR:'<6' },
+      { id:'k3', name:'Tiempo de contratación', family:'Desempeño', color:'#12A150', sem:'#12A150', formula:'cierre − solicitud', meta:'≤ 30 d', freq:'Por proceso', source:'Fechas del proceso', dash:'Dashboard RRHH', famColor:'#12A150', famBg:'#EEF6EE', semV:'≤30', semA:'30–45', semR:'>45' },
+      { id:'k4', name:'Evidencias documentadas', family:'Gestión', color:'#5B4FD0', sem:'#5B4FD0', formula:'cargadas / requeridas', meta:'100%', freq:'Continua', source:'Repositorio', dash:'Dashboard RRHH', famColor:'#B4791A', famBg:'#FDF3E1', semV:'100', semA:'≥80', semR:'<80' },
+    ],
+    automations: [
+      { when:'Se registra una evidencia', actions:[ {label:'Actualizar indicador relacionado', bg:'#EEF6EE', color:'#12A150'}, {label:'Actualizar dashboard', bg:'#EAF1FE', color:'#2E6BE6'}, {label:'Cerrar actividad (si completa)', bg:'#FDF3E1', color:'#B4791A'}, {label:'Registrar en historial', bg:'#F2F4F7', color:'#667085'} ], active:true },
+      { when:'Se completa todas las evidencias de una etapa', actions:[ {label:'Cerrar etapa automáticamente', bg:'#EEF6EE', color:'#12A150'}, {label:'Avanzar al siguiente estado', bg:'#EAF1FE', color:'#2E6BE6'}, {label:'Notificar al responsable siguiente', bg:'#EEF0FB', color:'#5B4FD0'} ], active:true },
+      { when:'Vence el SLA del proceso', actions:[ {label:'Generar alerta crítica', bg:'#FDECEC', color:'#E5484D'}, {label:'Notificar a administrador', bg:'#FDF3E1', color:'#B4791A'}, {label:'Marcar proceso en riesgo', bg:'#FDECEC', color:'#E5484D'} ], active:true },
+    ],
+    toastSaved: false, toastMsg: '',
+  };
+
+  COLOR_OPTS = ['#2E6BE6','#5B4FD0','#12A150','#E5A100','#E5484D','#0F8A8A'];
+  TYPES = ['Estratégico','Misional','De apoyo','Operativo'];
+  SLAS = ['7 d','15 d','30 d','45 d','60 d'];
+
+  toast(msg) {
+    this.setState({ toastSaved:true, toastMsg:msg });
+    clearTimeout(this._tt);
+    this._tt = setTimeout(() => this.setState({ toastSaved:false }), 3200);
+  }
+
+  addStage() {
+    const s = this.state.stages;
+    const idx = s.length + 1;
+    const colors = this.COLOR_OPTS;
+    this.setState({ stages: [...s, { id:'s'+idx, name:'Nueva etapa '+idx, resp:'Sin asignar', acts:0, color: colors[idx % colors.length], active:true }] });
+  }
+
+  addIndicator() {
+    const k = this.state.kpis;
+    this.setState({ kpis:[...k, { id:'k'+(k.length+1), name:'Nuevo indicador', family:'Gestión', color:'#2E6BE6', sem:'#E5A100', formula:'…', meta:'100%', freq:'Mensual', source:'Definir', dash:'Dashboard RRHH', famColor:'#B4791A', famBg:'#FDF3E1', semV:'…', semA:'…', semR:'…' }] });
+  }
+
+  addAutomation() {
+    const a = this.state.automations;
+    this.setState({ automations:[...a, { when:'Definir evento…', actions:[{label:'Definir acción…', bg:'#F2F4F7', color:'#667085'}], active:false }] });
+  }
+
+  renderVals() {
+    const st = this.state;
+    const blk = st.block;
+
+    // BLOCK NAV
+    const blocks = [
+      { id:'b1', label:'Info general', sub:'Metadatos del proceso', icon:'M4 5h16v14H4zM8 9h8M8 13h5', icoC:'#2E6BE6', icoB:'#EAF1FE', done:true },
+      { id:'b2', label:'Etapas', sub:st.stages.length+' etapas definidas', icon:'M4 6h16M4 10h16M4 14h16M4 18h16', icoC:'#E5A100', icoB:'#FDF3E1', done:st.stages.length>0 },
+      { id:'b3', label:'Actividades', sub:'Por etapa', icon:'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9', icoC:'#12A150', icoB:'#EEF6EE', done:true },
+      { id:'b4', label:'Evidencias', sub:'Por actividad', icon:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', icoC:'#5B4FD0', icoB:'#EEF0FB', done:true },
+      { id:'b5', label:'Indicadores', sub:st.kpis.length+' KPIs', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', icoC:'#12A150', icoB:'#EEF6EE', done:st.kpis.length>0 },
+      { id:'b6', label:'Automatizaciones', sub:st.automations.length+' reglas', icon:'M13 2L3 14h7l-1 8 10-12h-7l1-8z', icoC:'#E5484D', icoB:'#FDECEC', done:st.automations.length>0 },
+      { id:'b7', label:'Dashboard', sub:'Widgets seleccionados', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16', icoC:'#2E6BE6', icoB:'#EAF1FE', done:Object.values(st.widgets).some(v=>v) },
+      { id:'b8', label:'Reportes', sub:'Configuración', icon:'M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4M9 13h6', icoC:'#5B4FD0', icoB:'#EEF0FB', done:Object.values(st.reportSections).some(v=>v) },
+    ];
+    const blockNav = blocks.map(b => { const active = blk===b.id; return { ...b, onSel:()=>this.setState({block:b.id}), textC: active?'#14181F':'#475467', style:`width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;border:none;background:${active?'#F4F7FE':'transparent'};border-right:${active?'3px solid #2E6BE6':'3px solid transparent'};cursor:pointer;font-family:inherit` }; });
+
+    const library = [
+      { id:'l1', label:'Plantillas guardadas', icon:'M5 3h14l1 14-6 3-6-3z', onSel:()=>{} },
+      { id:'l2', label:'Etapas reutilizables', icon:'M4 6h16M4 10h16', onSel:()=>{} },
+      { id:'l3', label:'Indicadores guardados', icon:'M4 20a8 8 0 1 1 16 0', onSel:()=>{} },
+    ];
+
+    // INFO GENERAL fields
+    const colorOpts = this.COLOR_OPTS.map(c => ({ val:c, border: c===st.selectedColor?'3px solid #14181F':'2px solid transparent', onSel:()=>this.setState({selectedColor:c}) }));
+    const typeOpts = this.TYPES.map(t => ({ label:t, onSel:()=>this.setState({type:t}), border: t===st.type?'#2E6BE6':'#E4E8EF', bg: t===st.type?'#EAF1FE':'#fff', color: t===st.type?'#2E6BE6':'#475467' }));
+    const slaOpts = this.SLAS.map(s => ({ label:s, onSel:()=>this.setState({sla:s}), border: s===st.sla?'#2E6BE6':'#E4E8EF', bg: s===st.sla?'#EAF1FE':'#fff', color: s===st.sla?'#2E6BE6':'#475467' }));
+    const infoFields = [
+      { label:'Nombre del proceso', isText:true, value:'Contratación de Personal', bold:'800', span:'grid-column:span 2', isColor:false, isSelect:false },
+      { label:'Código', isText:true, value:'RH-PROC-001', bold:'600', span:'', isColor:false, isSelect:false },
+      { label:'Unidad organizacional', isText:true, value:'Recursos Humanos', bold:'600', span:'', isColor:false, isSelect:false },
+      { label:'Tipo de proceso', isSelect:true, opts:typeOpts, span:'', isText:false, isColor:false },
+      { label:'Objetivo', isText:true, value:'Seleccionar, contratar e incorporar al personal idóneo conforme a los requerimientos institucionales.', bold:'500', span:'grid-column:span 2', isColor:false, isSelect:false },
+      { label:'Responsable', isText:true, value:'D. Alfaro — Jefe de RRHH', bold:'600', span:'', isColor:false, isSelect:false },
+      { label:'SLA (tiempo máximo)', isSelect:true, opts:slaOpts, span:'', isText:false, isColor:false },
+      { label:'Color identificador', isColor:true, opts:colorOpts, span:'grid-column:span 2', isText:false, isSelect:false },
+    ];
+
+    // STAGES
+    const stColors = this.COLOR_OPTS;
+    const stages = st.stages.map((s,i) => ({ ...s, num:String(i+1),
+      status: s.active?'Activa':'Inactiva', statusColor: s.active?'#12A150':'#98A2B3', statusBg: s.active?'#EEF6EE':'#F2F4F7',
+      toggleIcon: s.active?'M12 5v14M5 12h14':'M12 5v14M5 12h14',
+      colors: stColors.map(c => ({ val:c, border: c===s.color?'3px solid #0F2647':'2px solid transparent', onSel:()=>{ const ns=[...this.state.stages]; ns[i]={...ns[i],color:c}; this.setState({stages:ns}); } })),
+      onToggle: ()=>{ const ns=[...this.state.stages]; ns[i]={...ns[i],active:!ns[i].active}; this.setState({stages:ns}); },
+      onDel: ()=>{ this.setState({stages: this.state.stages.filter((_,j)=>j!==i)}); },
+    }));
+
+    // ACTIVITIES (sample)
+    const actStages = st.stages.slice(0,4).map((s,i) => ({ ...s, num:i+1,
+      onAddAct:()=>{},
+      acts: [
+        { name:'Revisar y validar', desc:'Verificación inicial', resp:s.resp, time:'1 d', prio:'Alta', pColor:'#E5484D', pBg:'#FDECEC' },
+        { name:'Registrar en sistema', desc:'Carga al SSE-VRAF', resp:s.resp, time:'0.5 d', prio:'Media', pColor:'#B4791A', pBg:'#FDF3E1' },
+      ],
+    }));
+
+    // EVIDENCIAS (sample)
+    const evStages = st.stages.slice(0,3).map((s,i) => ({ ...s,
+      acts: [
+        { name:'Actividad 1 de '+s.name, onAdd:()=>{}, evs:[ { name:'Formulario de solicitud', type:'PDF / Word', req:'Obligatoria', reqColor:'#E5484D', reqBg:'#FDECEC', sign:true }, { name:'Justificación de plaza', type:'PDF', req:'Obligatoria', reqColor:'#E5484D', reqBg:'#FDECEC', sign:false } ] },
+        { name:'Actividad 2 de '+s.name, onAdd:()=>{}, evs:[ { name:'Comprobante de revisión', type:'PDF', req:'Opcional', reqColor:'#667085', reqBg:'#F2F4F7', sign:false } ] },
+      ],
+    }));
+
+    // INDICATORS
+    const indicators = st.kpis;
+
+    // AUTOMATIONS
+    const automations = st.automations.map((a,i) => ({ ...a, num:i+1, status: a.active?'Activa':'Inactiva', actColor: a.active?'#12A150':'#98A2B3', actBg: a.active?'#EEF6EE':'#F2F4F7' }));
+
+    // WIDGETS
+    const widgetDefs = [
+      { id:'avance', name:'Avance del proceso', desc:'Barra de progreso en tiempo real', icon:'M6 3v6M6 15v6M18 3v18M6 9a3 3 0 0 0 3 3h6', color:'#2E6BE6', bg:'#EAF1FE' },
+      { id:'etapas', name:'Etapas / Flujo', desc:'Visualización kanban de etapas', icon:'M4 6h16M4 10h16M4 14h16', color:'#E5A100', bg:'#FDF3E1' },
+      { id:'evidencias', name:'Evidencias cargadas', desc:'Contador y estado documental', icon:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', color:'#5B4FD0', bg:'#EEF0FB' },
+      { id:'tiempo', name:'Tiempo del proceso', desc:'Días transcurridos vs. SLA', icon:'M12 8v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', color:'#12A150', bg:'#EEF6EE' },
+      { id:'timeline', name:'Timeline / Historial', desc:'Actividad reciente del proceso', icon:'M12 8v4l3 2M3 12a9 9 0 1 0 3-6.7', color:'#667085', bg:'#F2F4F7' },
+      { id:'solicitudes', name:'Solicitudes relacionadas', desc:'Solicitudes vinculadas', icon:'M4 13h4l2 3h4l2-3h4M5 5h14v13H5z', color:'#E5484D', bg:'#FDECEC' },
+      { id:'alertas', name:'Alertas activas', desc:'Notificaciones y vencimientos', icon:'M12 2L2 20h20zM12 9v5M12 17h.01', color:'#E5484D', bg:'#FDECEC' },
+      { id:'indicadores', name:'Indicadores KPI', desc:'Tarjetas ejecutivas de indicadores', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', color:'#12A150', bg:'#EEF6EE' },
+    ];
+    const widgets = widgetDefs.map(w => { const on = !!st.widgets[w.id]; return { ...w, active:on, border: on?'2px solid #2E6BE6':'1px solid #E4E8EF', checkBorder: on?'none':'2px solid #D0D5DD', checkBg: on?'#2E6BE6':'#fff', checkColor:'#fff', onSel:()=>{ this.setState({widgets:{...this.state.widgets,[w.id]:!on}}); } }; });
+
+    // REPORT SECTIONS
+    const rsDefs = [
+      { id:'portada', name:'Portada del proceso', desc:'Nombre, código, responsable, fecha', icon:'M4 5h16v14H4z', color:'#2E6BE6', bg:'#EAF1FE' },
+      { id:'indicadores', name:'Indicadores del proceso', desc:'Tabla con valores y semáforos', icon:'M4 20a8 8 0 1 1 16 0', color:'#12A150', bg:'#EEF6EE' },
+      { id:'etapas', name:'Avance por etapas', desc:'Estado de cada etapa del flujo', icon:'M4 6h16M4 10h16M4 14h16', color:'#E5A100', bg:'#FDF3E1' },
+      { id:'evidencias', name:'Evidencias registradas', desc:'Listado y estado documental', icon:'M3 7a2 2 0 0 1 2-2h4l2 2h8v9H5a2 2 0 0 1-2-2z', color:'#5B4FD0', bg:'#EEF0FB' },
+      { id:'historial', name:'Historial de cambios', desc:'Bitácora completa del proceso', icon:'M12 8v4l3 2M3 12a9 9 0 1 0 3-6.7', color:'#667085', bg:'#F2F4F7' },
+      { id:'graficos', name:'Gráficos y tendencias', desc:'Visualizaciones comparativas', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16', color:'#E5484D', bg:'#FDECEC' },
+    ];
+    const freqOpts = (id) => ['Mensual','Trimestral','Anual'].map(f => ({ label:f, onSel:()=>{}, color:'#475467', bg:'#F2F4F7' }));
+    const reportSections = rsDefs.map(r => { const on = !!st.reportSections[r.id]; return { ...r, on, chkBorder: on?'none':'2px solid #D0D5DD', chkBg: on?'#2E6BE6':'#fff', freqs:freqOpts(r.id), onSel:()=>this.setState({reportSections:{...this.state.reportSections,[r.id]:!on}}) }; });
+
+    // LIVE PREVIEW
+    const doneBlocks = blocks.filter(b => b.done).length;
+    const previewPct = Math.round(doneBlocks / blocks.length * 100) + '%';
+    const activeStages = st.stages.filter(s => s.active).length;
+    const totalActs = st.stages.reduce((n,s)=>n+s.acts,0);
+    const previewBlocks = blocks.map(b => ({ label:b.label, icon:b.icon, color:b.icoC, bg:b.icoB, done:b.done, pending:!b.done, count: b.id==='b2'?activeStages+' etapas': b.id==='b5'?st.kpis.length+' KPIs': b.id==='b6'?st.automations.length+' reglas': b.id==='b7'?Object.values(st.widgets).filter(v=>v).length+' widgets': '' }));
+
+    return {
+      statusLabel: 'Borrador activo',
+      blockNav, library,
+      b1Active: blk==='b1', b2Active: blk==='b2', b3Active: blk==='b3', b4Active: blk==='b4',
+      b5Active: blk==='b5', b6Active: blk==='b6', b7Active: blk==='b7', b8Active: blk==='b8',
+      infoFields, stages, addStage:()=>this.addStage(),
+      actStages, evStages, indicators, automations,
+      addIndicator:()=>this.addIndicator(), addAutomation:()=>this.addAutomation(),
+      widgets, reportSections,
+      previewName:'Contratación de Personal', previewType: st.type, previewUnit:'RRHH', previewColor: st.selectedColor, previewPct,
+      previewBlocks, stageCount:activeStages, actCount:totalActs, evCount:'29', kpiCount:st.kpis.length, automCount:st.automations.length,
+      saveTemplate:()=>this.toast('¡Plantilla guardada! · Disponible en Biblioteca y en Workspace de RRHH'),
+      publishProcess:()=>this.toast('Proceso publicado y disponible en el Workspace de Recursos Humanos'),
+      toastSaved: st.toastSaved, toastMsg: st.toastMsg,
+    };
+  }
+}
+</script>
+</body>
+</html>

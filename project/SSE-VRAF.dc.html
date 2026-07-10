@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:'Public Sans',system-ui,sans-serif;color:#14181F;background:#F5F6F8;-webkit-font-smoothing:antialiased}
+  a{color:#2E6BE6;text-decoration:none}a:hover{color:#0F2647}
+  .mono{font-family:'Space Grotesk',ui-monospace,monospace}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#D6DAE2;border-radius:8px;border:2px solid #F5F6F8}
+  ::-webkit-scrollbar-thumb:hover{background:#B9BFCC}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @keyframes drawerIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes toastIn{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden;background:#F5F6F8">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside style="width:262px;flex:none;background:#0F2647;color:#B4C1D6;display:flex;flex-direction:column;height:100vh">
+    <div style="padding:18px 16px 14px;display:flex;align-items:center;gap:11px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="width:36px;height:36px;flex:none;border-radius:10px;background:linear-gradient(135deg,#2E6BE6,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px">SS</div>
+      <div style="line-height:1.15"><div style="color:#fff;font-weight:700;font-size:14px">SSE-VRAF</div><div style="color:#7E93B4;font-size:11px;font-weight:500">Centro de operaciones</div></div>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:12px 12px 18px">
+      <!-- MI TRABAJO -->
+      <button onClick="{{ goMyWork }}" style="{{ myWorkStyle }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7v7H4zM13 4h7v4h-7zM13 11h7v9h-7zM4 14h7v6H4z"></path></svg>
+        <span style="flex:1;text-align:left">Mi Trabajo</span>
+        <span style="font-size:10px;font-weight:700;color:#0F2647;background:#7FB0FF;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px">7</span>
+      </button>
+
+      <!-- WORKSPACE PICKER -->
+      <div style="margin:16px 0 6px;padding:0 6px;display:flex;align-items:center;justify-content:space-between">
+        <span class="mono" style="font-size:9.5px;letter-spacing:.9px;text-transform:uppercase;color:#5E7397;font-weight:700">Workspace</span>
+      </div>
+      <button onClick="{{ toggleWsMenu }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);border-radius:10px;cursor:pointer;color:#fff;font-family:inherit">
+        <span style="width:26px;height:26px;flex:none;border-radius:7px;background:{{ ws.bg }};color:{{ ws.color }};display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ ws.icon }}"></path></svg></span>
+        <span style="flex:1;text-align:left;font-size:12.5px;font-weight:600;line-height:1.15">{{ ws.short }}</span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7E93B4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <sc-if value="{{ wsMenuOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:6px;background:#0B1D38;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.3)">
+          <sc-for list="{{ unitList }}" as="u" hint-placeholder-count="6">
+            <button onClick="{{ u.onSel }}" style="{{ u.rowStyle }}">
+              <span style="width:22px;height:22px;flex:none;border-radius:6px;background:{{ u.bg }};color:{{ u.color }};display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ u.icon }}"></path></svg></span>
+              <span style="flex:1;text-align:left;font-size:12px;font-weight:600">{{ u.short }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- WS SECTIONS -->
+      <div style="margin-top:14px">
+        <sc-for list="{{ sections }}" as="s" hint-placeholder-count="10">
+          <button onClick="{{ s.onSel }}" style="{{ s.style }}">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ s.icon }}"></path></svg>
+            <span style="flex:1;text-align:left">{{ s.label }}</span>
+            <sc-if value="{{ s.badge }}" hint-placeholder-val="0"><span style="font-size:10px;font-weight:700;color:#B4C1D6;background:rgba(255,255,255,.1);min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px">{{ s.badge }}</span></sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="padding:11px 12px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;flex:none;border-radius:9px;background:#2E6BE6;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">MV</div>
+      <div style="flex:1;min-width:0;line-height:1.2"><div style="color:#fff;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">M. Villalta</div><div style="color:#7E93B4;font-size:10.5px">{{ roleLabel }}</div></div>
+      <button onClick="{{ toggleRole }}" title="Cambiar perfil" style="width:30px;height:30px;border:1px solid rgba(255,255,255,.12);background:transparent;border-radius:8px;color:#9FB0C9;cursor:pointer;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"></path></svg></button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div style="flex:1;display:flex;flex-direction:column;height:100vh;min-width:0">
+
+    <header style="height:60px;flex:none;background:#fff;border-bottom:1px solid #E7EAF0;display:flex;align-items:center;gap:16px;padding:0 24px">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px">
+        <span style="font-size:12px;color:#98A2B3;font-weight:600">{{ crumbA }}</span>
+        <sc-if value="{{ crumbB }}" hint-placeholder-val="x"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#CBD2DD" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"></path></svg><span style="font-size:14px;color:#14181F;font-weight:700">{{ crumbB }}</span></sc-if>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;height:36px;padding:0 13px;background:#F2F4F7;border:1px solid #E7EAF0;border-radius:9px;width:240px;color:#98A2B3">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4-4"></path></svg><span style="font-size:12.5px">Buscar…</span>
+      </div>
+      <button style="width:36px;height:36px;border:1px solid #E7EAF0;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#475467;cursor:pointer;position:relative"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"></path></svg><span style="position:absolute;top:-3px;right:-3px;background:#E5484D;color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:2px solid #fff">3</span></button>
+    </header>
+
+    <main style="flex:1;overflow-y:auto;padding:24px 28px 60px">
+
+      <!-- =========== MI TRABAJO =========== -->
+      <sc-if value="{{ isMyWork }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:22px;font-weight:800;letter-spacing:-.4px">Buenos días, Marta 👋</div>
+            <div style="font-size:13px;color:#667085;margin-top:2px">Miércoles 8 de julio, 2026 · esto requiere tu atención hoy</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ dailySummary }}" as="d" hint-placeholder-count="4">
+              <div style="background:#fff;border:1px solid #E7EAF0;border-radius:11px;padding:9px 15px;text-align:center;min-width:78px">
+                <div class="mono" style="font-size:20px;font-weight:700;color:{{ d.color }}">{{ d.num }}</div>
+                <div style="font-size:10.5px;color:#667085;font-weight:600">{{ d.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+        <div style="background:linear-gradient(120deg,#0F2647,#1D3E6E);border-radius:14px;padding:16px 20px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px"><div style="font-size:13px;font-weight:800">Resumen ejecutivo institucional</div><div style="font-size:11.5px;color:#A9C0E4">Acceso transversal a las 6 unidades de la VRAF</div></div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <sc-for list="{{ unitList }}" as="u" hint-placeholder-count="6">
+              <button onClick="{{ u.onSel }}" style="display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border:1px solid rgba(143,176,230,.25);border-radius:8px;padding:6px 11px;cursor:pointer;color:#EAF1FE;font-family:inherit;font-size:11.5px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:{{ u.color }}"></span>{{ u.short }}</button>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:16px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <!-- Mis actividades -->
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:9px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E5A100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"></path></svg><span style="font-weight:700;font-size:14px">Mis actividades pendientes</span><span style="margin-left:auto;font-size:11px;font-weight:700;color:#B4791A;background:#FDF3E1;padding:2px 9px;border-radius:20px">5</span></div>
+              <sc-for list="{{ myActivities }}" as="a" hint-placeholder-count="5">
+                <div onClick="{{ a.onOpen }}" style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #F4F6F9;cursor:pointer">
+                  <span style="width:9px;height:9px;border-radius:50%;flex:none;background:{{ a.dot }}"></span>
+                  <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#14181F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.name }}</div><div style="font-size:11px;color:#98A2B3">{{ a.proc }}</div></div>
+                  <span style="font-size:10.5px;font-weight:700;color:{{ a.tColor }};background:{{ a.tBg }};padding:3px 9px;border-radius:20px;flex:none">{{ a.due }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <!-- Mis evidencias + solicitudes -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+                <div style="padding:13px 16px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5B4FD0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"></path></svg><span style="font-weight:700;font-size:13px">Evidencias por cargar</span></div>
+                <sc-for list="{{ myEvidences }}" as="e" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:9px;padding:10px 16px;border-bottom:1px solid #F4F6F9"><span style="font-size:9px;font-weight:700;color:{{ e.color }};background:{{ e.bg }};padding:2px 6px;border-radius:5px;flex:none">{{ e.type }}</span><span style="flex:1;font-size:12px;color:#344054;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</span></div>
+                </sc-for>
+              </div>
+              <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+                <div style="padding:13px 16px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E5484D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13h4l2 3h4l2-3h4M5 5h14v13H5z"></path></svg><span style="font-weight:700;font-size:13px">Solicitudes por atender</span></div>
+                <sc-for list="{{ mySolic }}" as="s" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:center;gap:9px;padding:10px 16px;border-bottom:1px solid #F4F6F9"><span class="mono" style="font-size:10.5px;font-weight:700;color:#2E6BE6;flex:none">{{ s.folio }}</span><span style="flex:1;font-size:12px;color:#344054;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.asunto }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+            <!-- Mis indicadores -->
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:14px 18px">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#12A150" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a8 8 0 1 1 16 0M12 14l4-4"></path></svg><span style="font-weight:700;font-size:14px">Indicadores bajo mi responsabilidad</span></div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+                <sc-for list="{{ myIndicators }}" as="k" hint-placeholder-count="3">
+                  <div style="border:1px solid #EEF1F5;border-radius:10px;padding:12px 13px">
+                    <div style="display:flex;align-items:center;justify-content:space-between"><span style="width:9px;height:9px;border-radius:50%;background:{{ k.sem }}"></span><span style="font-size:10.5px;font-weight:700;color:{{ k.tColor }}">{{ k.tend }}</span></div>
+                    <div class="mono" style="font-size:20px;font-weight:700;color:#14181F;margin:6px 0 1px">{{ k.valor }}</div>
+                    <div style="font-size:11px;color:#667085;font-weight:600;line-height:1.25">{{ k.name }}</div>
+                    <div style="font-size:10px;color:#98A2B3;margin-top:3px">Meta {{ k.meta }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <!-- Alertas críticas -->
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:13px 16px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E5484D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 20h20zM12 9v5M12 17h.01"></path></svg><span style="font-weight:700;font-size:13px">Alertas críticas</span></div>
+              <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="3">
+                <div style="display:flex;gap:10px;padding:11px 16px;border-bottom:1px solid #F4F6F9"><span style="width:6px;flex:none;border-radius:6px;background:{{ a.color }}"></span><div style="flex:1"><div style="font-size:12px;font-weight:600;color:#14181F;line-height:1.35">{{ a.text }}</div><div style="font-size:10.5px;color:#98A2B3;margin-top:1px">{{ a.time }}</div></div></div>
+              </sc-for>
+            </div>
+            <!-- Próximos vencimientos -->
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:13px 16px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E5A100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path></svg><span style="font-weight:700;font-size:13px">Próximos vencimientos</span></div>
+              <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:1px solid #F4F6F9"><div style="text-align:center;width:38px;flex:none"><div class="mono" style="font-size:15px;font-weight:700;color:{{ u.color }};line-height:1">{{ u.day }}</div><div style="font-size:9px;color:#98A2B3;font-weight:600;text-transform:uppercase">{{ u.mon }}</div></div><div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:#14181F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.title }}</div><div style="font-size:10.5px;color:#98A2B3">{{ u.meta }}</div></div></div>
+              </sc-for>
+            </div>
+            <!-- Accesos rápidos -->
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:14px 16px">
+              <div style="font-weight:700;font-size:13px;margin-bottom:11px">Accesos rápidos</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <sc-for list="{{ quickActions }}" as="q" hint-placeholder-count="6">
+                  <button onClick="{{ q.onSel }}" style="display:flex;align-items:center;gap:9px;background:#FAFBFC;border:1px solid #EEF1F5;border-radius:9px;padding:10px 11px;cursor:pointer;font-family:inherit;text-align:left"><span style="width:26px;height:26px;flex:none;border-radius:7px;background:{{ q.bg }};color:{{ q.color }};display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ q.icon }}"></path></svg></span><span style="font-size:11.5px;font-weight:600;color:#344054;line-height:1.2">{{ q.label }}</span></button>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: DASHBOARD =========== -->
+      <sc-if value="{{ showDashboard }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px">
+          <sc-for list="{{ dashStats }}" as="s" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:13px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+              <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;color:#667085;font-weight:600">{{ s.label }}</span><span style="width:30px;height:30px;border-radius:8px;background:{{ s.bg }};color:{{ s.color }};display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ s.icon }}"></path></svg></span></div>
+              <div class="mono" style="font-size:28px;font-weight:700;color:#14181F;margin-top:8px">{{ s.num }}</div>
+              <div style="font-size:11px;color:{{ s.color }};font-weight:600">{{ s.sub }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+          <sc-for list="{{ semaforoSummary }}" as="s" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-left:4px solid {{ s.color }};border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+              <div class="mono" style="font-size:30px;font-weight:700;color:{{ s.color }}">{{ s.num }}</div>
+              <div><div style="font-size:13px;font-weight:700;color:#14181F">{{ s.label }}</div><div style="font-size:11.5px;color:#667085">{{ s.sub }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+            <div style="padding:14px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;justify-content:space-between"><span style="font-weight:700;font-size:14px">Procesos que requieren atención</span><span onClick="{{ goProcesos }}" style="font-size:11.5px;color:#2E6BE6;font-weight:600;cursor:pointer">Ver todos →</span></div>
+            <sc-for list="{{ criticalProcesses }}" as="p" hint-placeholder-count="4">
+              <div onClick="{{ p.onOpen }}" style="display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid #F4F6F9;cursor:pointer">
+                <span style="width:9px;height:9px;border-radius:50%;flex:none;background:{{ p.sem }}"></span>
+                <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#14181F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</div><div style="font-size:11px;color:#98A2B3">{{ p.resp }} · vence {{ p.limite }}</div></div>
+                <div style="width:90px;flex:none"><div style="height:6px;background:#EEF1F5;border-radius:6px;overflow:hidden"><div style="height:100%;background:{{ p.sem }};width:{{ p.avance }}"></div></div></div>
+                <span class="mono" style="font-size:12px;font-weight:600;color:#475467;width:34px;text-align:right">{{ p.avance }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:13px 16px;border-bottom:1px solid #EEF1F5;font-weight:700;font-size:13px">Actividad reciente</div>
+              <sc-for list="{{ recentActivity }}" as="r" hint-placeholder-count="4">
+                <div style="display:flex;gap:10px;padding:11px 16px;border-bottom:1px solid #F4F6F9"><span style="width:24px;height:24px;flex:none;border-radius:50%;background:{{ r.avBg }};color:{{ r.avFg }};font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ r.ini }}</span><div style="flex:1"><div style="font-size:11.5px;color:#14181F;line-height:1.35"><b>{{ r.who }}</b> {{ r.text }}</div><div style="font-size:10px;color:#98A2B3;margin-top:1px">{{ r.time }}</div></div></div>
+              </sc-for>
+            </div>
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:13px 16px;border-bottom:1px solid #EEF1F5;font-weight:700;font-size:13px">Últimas evidencias cargadas</div>
+              <sc-for list="{{ recentEvidence }}" as="e" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #F4F6F9"><span style="width:26px;height:26px;flex:none;border-radius:7px;background:{{ e.bg }};color:{{ e.color }};display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4"></path></svg></span><div style="flex:1;min-width:0"><div style="font-size:11.5px;font-weight:600;color:#14181F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</div><div style="font-size:10px;color:#98A2B3">{{ e.meta }}</div></div></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: PROCESOS LIST =========== -->
+      <sc-if value="{{ showProcesos }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <div style="font-size:13px;color:#667085;font-weight:600">{{ processCount }} procesos institucionales · clic para abrir el centro del proceso</div>
+          <div style="flex:1"></div>
+          <button style="height:36px;padding:0 15px;background:#2E6BE6;color:#fff;border:none;border-radius:9px;font-weight:600;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:inherit"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Nuevo proceso</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+          <sc-for list="{{ processes }}" as="p" hint-placeholder-count="5">
+            <div onClick="{{ p.onOpen }}" style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);cursor:pointer;border-top:3px solid {{ p.sem }}">
+              <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
+                <div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:9.5px;font-weight:700;color:{{ p.catColor }};background:{{ p.catBg }};padding:2px 8px;border-radius:20px">{{ p.cat }}</span></div><div style="font-size:15px;font-weight:800;color:#14181F;line-height:1.2">{{ p.name }}</div></div>
+                <span style="font-size:10.5px;font-weight:700;color:{{ p.estColor }};background:{{ p.estBg }};padding:3px 10px;border-radius:20px;flex:none">{{ p.estado }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:12px"><div style="flex:1;height:7px;background:#EEF1F5;border-radius:6px;overflow:hidden"><div style="height:100%;background:{{ p.sem }};width:{{ p.avance }}"></div></div><span class="mono" style="font-size:13px;font-weight:700;color:#14181F">{{ p.avance }}</span></div>
+              <div style="display:flex;align-items:center;gap:14px;font-size:11.5px;color:#667085">
+                <span style="display:flex;align-items:center;gap:6px"><span style="width:22px;height:22px;border-radius:50%;background:{{ p.avBg }};color:{{ p.avFg }};font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ p.ini }}</span>{{ p.resp }}</span>
+                <span style="display:flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path></svg>{{ p.limite }}</span>
+                <span style="margin-left:auto;display:flex;gap:8px"><span title="actividades pendientes" style="display:flex;align-items:center;gap:4px;color:#B4791A;font-weight:700">◷ {{ p.pend }}</span><span title="evidencias pendientes" style="display:flex;align-items:center;gap:4px;color:#5B4FD0;font-weight:700">⬆ {{ p.evid }}</span></span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: INDICADORES =========== -->
+      <sc-if value="{{ showIndicadores }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:16px">Tarjetas ejecutivas · actualización automática desde evidencias y actividades</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          <sc-for list="{{ indicators }}" as="k" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);border-top:3px solid {{ k.sem }}">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:#14181F;line-height:1.25;padding-right:8px">{{ k.name }}</span><span style="width:11px;height:11px;border-radius:50%;flex:none;background:{{ k.sem }}"></span></div>
+              <div style="display:flex;align-items:baseline;gap:8px"><span class="mono" style="font-size:28px;font-weight:700;color:#14181F">{{ k.valor }}</span><span style="font-size:11.5px;font-weight:700;color:{{ k.tColor }}">{{ k.tend }}</span></div>
+              <div style="font-size:11px;color:#667085;margin:2px 0 12px">Meta {{ k.meta }} · {{ k.proceso }}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding-top:11px;border-top:1px solid #F4F6F9">
+                <span style="font-size:10.5px;color:#98A2B3">{{ k.updated }}</span>
+                <button onClick="{{ k.onOpen }}" style="font-size:11px;font-weight:700;color:#2E6BE6;background:#EAF1FE;border:none;border-radius:7px;padding:5px 11px;cursor:pointer;font-family:inherit">Ver detalle</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: OBJETIVOS =========== -->
+      <sc-if value="{{ showObjetivos }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:16px">Objetivos estratégicos de la unidad · alineados al Plan Estratégico Institucional</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ objetivos }}" as="o" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:13px;padding:16px 20px;box-shadow:0 1px 2px rgba(16,24,40,.04);display:flex;align-items:center;gap:18px">
+              <div style="width:44px;height:44px;flex:none;border-radius:11px;background:{{ o.bg }};color:{{ o.color }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:15px">{{ o.code }}</div>
+              <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#14181F">{{ o.name }}</div><div style="font-size:11.5px;color:#98A2B3">{{ o.proyectos }} proyectos · {{ o.procesos }} procesos</div></div>
+              <div style="width:160px;flex:none"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#667085;font-weight:600">Avance</span><span class="mono" style="font-weight:700;color:{{ o.color }}">{{ o.avance }}</span></div><div style="height:7px;background:#EEF1F5;border-radius:6px;overflow:hidden"><div style="height:100%;background:{{ o.color }};width:{{ o.avance }}"></div></div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: PROYECTOS =========== -->
+      <sc-if value="{{ showProyectos }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:16px">Proyectos estratégicos · agrupan los procesos institucionales</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+          <sc-for list="{{ proyectos }}" as="p" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span class="mono" style="font-size:10px;font-weight:700;color:#173458;background:#EAF0F7;padding:2px 8px;border-radius:6px">{{ p.code }}</span><span style="font-size:10.5px;font-weight:700;color:{{ p.estColor }};background:{{ p.estBg }};padding:2px 9px;border-radius:20px">{{ p.estado }}</span></div>
+              <div style="font-size:14.5px;font-weight:700;color:#14181F;line-height:1.2">{{ p.name }}</div>
+              <div style="font-size:11.5px;color:#98A2B3;margin:4px 0 12px">{{ p.obj }} · resp. {{ p.resp }}</div>
+              <div style="display:flex;align-items:center;gap:9px"><div style="flex:1;height:7px;background:#EEF1F5;border-radius:6px;overflow:hidden"><div style="height:100%;background:{{ p.color }};width:{{ p.avance }}"></div></div><span class="mono" style="font-size:12.5px;font-weight:700;color:#14181F">{{ p.avance }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: SOLICITUDES =========== -->
+      <sc-if value="{{ showSolicitudes }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+          <div style="display:grid;grid-template-columns:.9fr 2.4fr 1.3fr 1.1fr .8fr;padding:12px 20px;background:#FAFBFC;border-bottom:1px solid #EEF1F5;font-size:10.5px;font-weight:700;color:#98A2B3;letter-spacing:.4px;text-transform:uppercase"><div>Folio</div><div>Asunto</div><div>Solicitante</div><div>Estado</div><div>Días</div></div>
+          <sc-for list="{{ solicitudes }}" as="s" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:.9fr 2.4fr 1.3fr 1.1fr .8fr;padding:13px 20px;border-bottom:1px solid #F4F6F9;align-items:center"><div class="mono" style="font-size:12px;font-weight:700;color:#2E6BE6">{{ s.folio }}</div><div style="font-size:13px;font-weight:600;color:#14181F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px">{{ s.asunto }}</div><div style="font-size:12px;color:#475467">{{ s.quien }}</div><div><span style="font-size:10.5px;font-weight:700;color:{{ s.color }};background:{{ s.bg }};padding:3px 10px;border-radius:20px">{{ s.estado }}</span></div><div class="mono" style="font-size:12.5px;font-weight:600;color:{{ s.diasColor }}">{{ s.dias }}</div></div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: EVIDENCIAS =========== -->
+      <sc-if value="{{ showEvidencias }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:16px">Cada evidencia vinculada a su actividad, proceso e indicador — nunca un archivo aislado</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          <sc-for list="{{ evidencias }}" as="e" hint-placeholder-count="8">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="height:80px;background:{{ e.bg }};display:flex;align-items:center;justify-content:center;color:{{ e.color }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4"></path></svg></div>
+              <div style="padding:11px 13px"><div style="font-size:12px;font-weight:600;color:#14181F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</div><div style="font-size:10.5px;color:#98A2B3;margin:2px 0 7px">{{ e.meta }}</div><div style="font-size:10px;color:#2E6BE6;font-weight:600;background:#EAF1FE;padding:3px 7px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">↳ {{ e.rel }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: REPORTES =========== -->
+      <sc-if value="{{ showReportes }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:16px">Se compilan automáticamente con la información de la operación · cero recaptura</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ reportes }}" as="r" hint-placeholder-count="5">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:12px;padding:14px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);display:flex;align-items:center;gap:14px">
+              <span style="width:38px;height:38px;flex:none;border-radius:10px;background:{{ r.bg }};color:{{ r.color }};display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4M9 13h6M9 17h4"></path></svg></span>
+              <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#14181F">{{ r.name }}</div><div style="font-size:11.5px;color:#98A2B3">{{ r.freq }} · última generación {{ r.date }}</div></div>
+              <div style="display:flex;gap:6px"><span style="font-size:10.5px;font-weight:700;color:#E5484D;background:#FDECEC;padding:5px 10px;border-radius:7px">PDF</span><span style="font-size:10.5px;font-weight:700;color:#2E6BE6;background:#EAF1FE;padding:5px 10px;border-radius:7px">Word</span><span style="font-size:10.5px;font-weight:700;color:#12A150;background:#EEF6EE;padding:5px 10px;border-radius:7px">Excel</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: CALENDARIO =========== -->
+      <sc-if value="{{ showCalendario }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="font-size:13px;color:#667085;font-weight:600;margin-bottom:16px">Eventos, obligaciones y fechas críticas de la unidad</div>
+        <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+          <sc-for list="{{ calendar }}" as="c" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid #F4F6F9"><div style="text-align:center;width:46px;flex:none"><div class="mono" style="font-size:17px;font-weight:700;color:{{ c.color }};line-height:1">{{ c.day }}</div><div style="font-size:9.5px;color:#98A2B3;font-weight:600;text-transform:uppercase">{{ c.mon }}</div></div><div style="width:9px;height:9px;border-radius:50%;flex:none;background:{{ c.color }}"></div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:#14181F">{{ c.title }}</div><div style="font-size:11px;color:#98A2B3">{{ c.meta }}</div></div><span style="font-size:10.5px;font-weight:700;color:{{ c.color }};background:{{ c.bg }};padding:3px 10px;border-radius:20px">{{ c.tag }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== WORKSPACE: CONFIG =========== -->
+      <sc-if value="{{ showConfig }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+          <sc-for list="{{ configItems }}" as="c" hint-placeholder-count="7">
+            <sc-if value="{{ c.link }}" hint-placeholder-val="x">
+              <a href="{{ c.link }}" target="_blank" style="background:linear-gradient(135deg,#0F2647,#1D3E6E);border:1px solid #2E6BE6;border-radius:12px;padding:16px 18px;box-shadow:0 2px 8px rgba(46,107,230,.2);display:flex;align-items:center;gap:14px;text-decoration:none">
+                <span style="width:38px;height:38px;flex:none;border-radius:10px;background:rgba(127,176,255,.18);color:#7FB0FF;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ c.icon }}"></path></svg></span>
+                <div style="flex:1"><div style="font-size:13.5px;font-weight:700;color:#fff">{{ c.name }}</div><div style="font-size:11.5px;color:#7FB0FF">{{ c.desc }}</div></div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7FB0FF" stroke-width="2" stroke-linecap="round"><path d="M7 17L17 7M7 7h10v10"></path></svg>
+              </a>
+            </sc-if>
+            <sc-if value="{{ c.noLink }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#fff;border:1px solid #E7EAF0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);display:flex;align-items:center;gap:14px">
+                <span style="width:38px;height:38px;flex:none;border-radius:10px;background:{{ c.bg }};color:{{ c.color }};display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="{{ c.icon }}"></path></svg></span>
+                <div><div style="font-size:13.5px;font-weight:700;color:#14181F">{{ c.name }}</div><div style="font-size:11.5px;color:#98A2B3">{{ c.desc }}</div></div>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- =========== GOLDEN WORKFLOW: CONTRATACIÓN DE PERSONAL =========== -->
+      <sc-if value="{{ showGolden }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <button onClick="{{ closeProcess }}" style="display:flex;align-items:center;gap:7px;background:none;border:none;color:#667085;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;padding:0;margin-bottom:14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>Procesos · Recursos Humanos</button>
+
+        <!-- 1. RESUMEN EJECUTIVO -->
+        <div style="background:#fff;border:1px solid #E7EAF0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:20px 24px;margin-bottom:16px">
+          <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:280px">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><span style="font-size:9.5px;font-weight:700;color:#2E6BE6;background:#EAF1FE;padding:2px 9px;border-radius:20px">Proceso misional</span><span style="font-size:10.5px;font-weight:700;color:{{ gwHeader.estColor }};background:{{ gwHeader.estBg }};padding:3px 11px;border-radius:20px">{{ gwHeader.estado }}</span><span style="font-size:10px;font-weight:700;color:#E5484D;background:#FDECEC;padding:3px 10px;border-radius:20px">Prioridad alta</span></div>
+              <div style="font-size:23px;font-weight:800;color:#14181F;letter-spacing:-.3px;line-height:1.15">Contratación de Personal</div>
+              <div style="font-size:12px;color:#98A2B3;margin-top:4px">Etapa actual: <b style="color:#475467">{{ gwHeader.currentStage }}</b> · Golden Workflow del SSE-VRAF</div>
+            </div>
+            <div style="text-align:right"><div class="mono" style="font-size:34px;font-weight:700;color:{{ gwHeader.progColor }};line-height:1">{{ gwHeader.prog }}</div><div style="font-size:11px;color:#98A2B3;font-weight:600">avance global</div></div>
+          </div>
+          <div style="height:8px;background:#EEF1F5;border-radius:6px;overflow:hidden;margin:16px 0"><div style="height:100%;background:{{ gwHeader.progColor }};width:{{ gwHeader.prog }};transition:width .5s cubic-bezier(.2,.8,.2,1)"></div></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+            <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:11px;padding:12px 14px"><div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Responsable</div><div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="width:24px;height:24px;border-radius:50%;background:#FDF3E1;color:#B4791A;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">DA</span><span style="font-size:13px;font-weight:600;color:#14181F">D. Alfaro</span></div></div>
+            <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:11px;padding:12px 14px"><div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Tiempo restante</div><div class="mono" style="font-size:14px;font-weight:700;color:#E5A100;margin-top:8px">12 días</div></div>
+            <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:11px;padding:12px 14px"><div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Etapas</div><div class="mono" style="font-size:14px;font-weight:700;color:#14181F;margin-top:8px">{{ gwHeader.etapas }}</div></div>
+            <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:11px;padding:12px 14px"><div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Indicadores</div><div style="display:flex;gap:11px;margin-top:9px"><sc-for list="{{ gwQuick }}" as="q" hint-placeholder-count="3"><span style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#475467"><span style="width:8px;height:8px;border-radius:50%;background:{{ q.sem }}"></span>{{ q.valor }}</span></sc-for></div></div>
+          </div>
+        </div>
+
+        <!-- 2. DASHBOARD EN TIEMPO REAL -->
+        <div style="background:#0F2647;border-radius:14px;padding:16px 20px;margin-bottom:16px">
+          <div class="mono" style="font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:#7FB0FF;font-weight:700;margin-bottom:12px">Dashboard en tiempo real · cada evidencia que cargas actualiza todo el sistema</div>
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <sc-for list="{{ gwCascade }}" as="c" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:4px">
+                <div style="min-width:118px;background:rgba(127,176,255,.1);border:1px solid rgba(127,176,255,.25);border-radius:10px;padding:10px 13px">
+                  <div style="display:flex;align-items:center;gap:7px;color:#7FB0FF;margin-bottom:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ c.icon }}"></path></svg><span style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px">{{ c.label }}</span></div>
+                  <div class="mono" style="font-size:14px;font-weight:700;color:#fff">{{ c.val }}</div>
+                </div>
+                <sc-if value="{{ c.arrow }}" hint-placeholder-val="{{ true }}"><span style="color:#5B7196;font-size:13px">→</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:4px;border-bottom:1px solid #E7EAF0;margin-bottom:18px;flex-wrap:wrap">
+          <sc-for list="{{ gwTabs }}" as="t" hint-placeholder-count="5"><button onClick="{{ t.onSel }}" style="{{ t.style }}">{{ t.label }}</button></sc-for>
+        </div>
+
+        <!-- FLUJO OPERATIVO -->
+        <sc-if value="{{ gwFlujo }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <sc-for list="{{ gwStages }}" as="s" hint-placeholder-count="15">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:12px;padding:14px 15px;box-shadow:0 1px 2px rgba(16,24,40,.04);border-left:4px solid {{ s.color }}">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px"><span style="width:26px;height:26px;flex:none;border-radius:8px;background:{{ s.bg }};color:{{ s.color }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:12px">{{ s.num }}</span><div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:#14181F;line-height:1.2">{{ s.name }}</div></div></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:10px;font-weight:700;color:{{ s.color }};background:{{ s.bg }};padding:2px 9px;border-radius:20px">{{ s.status }}</span><span class="mono" style="font-size:11.5px;font-weight:700;color:#475467">{{ s.pct }}</span></div>
+              <div style="height:5px;background:#EEF1F5;border-radius:6px;overflow:hidden;margin-bottom:10px"><div style="height:100%;background:{{ s.color }};width:{{ s.barPct }};transition:width .5s"></div></div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#98A2B3"><span style="width:20px;height:20px;border-radius:50%;background:#F2F4F7;color:#667085;font-size:8.5px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ s.ini }}</span>{{ s.resp }}<button onClick="{{ s.onEnter }}" style="margin-left:auto;font-size:10.5px;font-weight:700;color:#2E6BE6;background:#EAF1FE;border:none;border-radius:7px;padding:4px 10px;cursor:pointer;font-family:inherit">Ingresar</button></div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- ACTIVIDADES Y EVIDENCIAS -->
+        <sc-if value="{{ gwActsTab }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ gwActs }}" as="a" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:13px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:13px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #F4F6F9"><span style="width:26px;height:26px;flex:none;border-radius:8px;background:{{ a.stBg }};color:{{ a.stColor }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:12px">{{ a.seq }}</span><div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#14181F">{{ a.name }}</div><div style="font-size:11px;color:#98A2B3">{{ a.resp }} · {{ a.time }}</div></div><span style="font-size:10.5px;font-weight:700;color:{{ a.stColor }};background:{{ a.stBg }};padding:3px 11px;border-radius:20px">{{ a.estado }}</span></div>
+              <div style="padding:6px 18px 12px">
+                <div class="mono" style="font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:#98A2B3;font-weight:700;margin:8px 0 6px">Evidencias requeridas</div>
+                <sc-for list="{{ a.evidences }}" as="e" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid #F6F8FA">
+                    <span style="width:28px;height:28px;flex:none;border-radius:7px;background:{{ e.bg }};color:{{ e.color }};display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4"></path></svg></span>
+                    <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:#14181F">{{ e.name }}</div><div style="font-size:10.5px;color:#98A2B3">{{ e.type }}</div></div>
+                    <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:{{ e.stColor }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ e.stColor }}"></span>{{ e.status }}</span>
+                    <button onClick="{{ e.onUpload }}" style="height:30px;padding:0 12px;border-radius:8px;border:1px solid {{ e.btnBorder }};background:{{ e.btnBg }};color:{{ e.btnColor }};font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="{{ e.btnIcon }}"></path></svg>{{ e.btnLabel }}</button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- INDICADORES -->
+        <sc-if value="{{ gwInd }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <sc-for list="{{ gwIndicators }}" as="k" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(16,24,40,.04);border-top:3px solid {{ k.sem }}">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:12px;font-weight:700;color:#14181F;line-height:1.25;padding-right:8px">{{ k.name }}</span><span style="width:11px;height:11px;border-radius:50%;flex:none;background:{{ k.sem }}"></span></div>
+              <div style="display:flex;align-items:baseline;gap:8px"><span class="mono" style="font-size:26px;font-weight:700;color:#14181F">{{ k.valor }}</span><span style="font-size:11px;font-weight:700;color:{{ k.tColor }}">{{ k.tend }}</span></div>
+              <div style="font-size:11px;color:#667085;margin:2px 0 12px">Meta {{ k.meta }}</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding-top:11px;border-top:1px solid #F4F6F9"><span style="font-size:10.5px;color:#98A2B3">{{ k.updated }}</span><button onClick="{{ k.onOpen }}" style="font-size:11px;font-weight:700;color:#2E6BE6;background:#EAF1FE;border:none;border-radius:7px;padding:5px 11px;cursor:pointer;font-family:inherit">Ver detalle</button></div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- TIMELINE -->
+        <sc-if value="{{ gwTime }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:6px 20px;max-width:820px">
+          <sc-for list="{{ gwTimeline }}" as="h" hint-placeholder-count="5">
+            <div style="display:flex;gap:13px;padding:13px 0;border-bottom:1px solid #F4F6F9"><span style="width:28px;height:28px;flex:none;border-radius:50%;background:{{ h.avBg }};color:{{ h.avFg }};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ h.ini }}</span><div style="flex:1"><div style="font-size:12.5px;color:#14181F;line-height:1.4"><b>{{ h.who }}</b> {{ h.text }}</div><div style="font-size:11px;color:#98A2B3;margin-top:1px">{{ h.time }}</div></div></div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- REPORTE -->
+        <sc-if value="{{ gwRep }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:720px">
+          <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+            <div style="padding:16px 20px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:11px"><span style="width:36px;height:36px;border-radius:10px;background:#EEF0FB;color:#5B4FD0;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4M9 13h6M9 17h4"></path></svg></span><div><div style="font-size:14px;font-weight:700;color:#14181F">Informe de contratación · vista previa</div><div style="font-size:11.5px;color:#98A2B3">Se alimenta automáticamente con la información registrada durante el proceso</div></div></div>
+            <div style="padding:8px 20px"><sc-for list="{{ gwReport.rows }}" as="r" hint-placeholder-count="6"><div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F4F6F9"><span style="font-size:12px;color:#667085;font-weight:600">{{ r.k }}</span><span class="mono" style="font-size:12.5px;font-weight:700;color:#14181F">{{ r.v }}</span></div></sc-for></div>
+            <div style="padding:14px 20px;background:#FAFBFC;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:11.5px;color:#98A2B3">El generador se construirá en un sprint posterior · exportable a</span><span style="font-size:10.5px;font-weight:700;color:#E5484D;background:#FDECEC;padding:3px 9px;border-radius:6px">PDF</span><span style="font-size:10.5px;font-weight:700;color:#2E6BE6;background:#EAF1FE;padding:3px 9px;border-radius:6px">Word</span><span style="font-size:10.5px;font-weight:700;color:#12A150;background:#EEF6EE;padding:3px 9px;border-radius:6px">Excel</span></div>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <!-- =========== PROCESS DETAIL (CENTRO DEL PROCESO) =========== -->
+      <sc-if value="{{ showGeneric }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .25s ease">
+        <button onClick="{{ closeProcess }}" style="display:flex;align-items:center;gap:7px;background:none;border:none;color:#667085;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;padding:0;margin-bottom:14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg>Procesos</button>
+
+        <!-- HEADER OPERATIVO -->
+        <div style="background:#fff;border:1px solid #E7EAF0;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:20px 24px;margin-bottom:16px">
+          <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:280px">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px"><span style="font-size:9.5px;font-weight:700;color:{{ proc.catColor }};background:{{ proc.catBg }};padding:2px 9px;border-radius:20px">{{ proc.cat }}</span><span style="font-size:10.5px;font-weight:700;color:{{ proc.estColor }};background:{{ proc.estBg }};padding:3px 11px;border-radius:20px">{{ proc.estado }}</span></div>
+              <div style="font-size:22px;font-weight:800;color:#14181F;letter-spacing:-.3px;line-height:1.15">{{ proc.name }}</div>
+              <div style="font-size:12px;color:#98A2B3;margin-top:4px">Última actualización {{ proc.updated }}</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button style="height:36px;padding:0 15px;background:#2E6BE6;color:#fff;border:none;border-radius:9px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"></path></svg>Cargar evidencia</button>
+              <button style="height:36px;padding:0 15px;background:#fff;color:#344054;border:1px solid #E7EAF0;border-radius:9px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit">Avanzar estado</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px">
+            <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:11px;padding:12px 14px"><div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Avance</div><div style="display:flex;align-items:center;gap:8px;margin-top:6px"><div style="flex:1;height:7px;background:#EEF1F5;border-radius:6px;overflow:hidden"><div style="height:100%;background:{{ proc.sem }};width:{{ proc.avance }}"></div></div><span class="mono" style="font-size:14px;font-weight:700;color:#14181F">{{ proc.avance }}</span></div></div>
+            <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:11px;padding:12px 14px"><div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Responsable</div><div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="width:24px;height:24px;border-radius:50%;background:{{ proc.avBg }};color:{{ proc.avFg }};font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ proc.ini }}</span><span style="font-size:13px;font-weight:600;color:#14181F">{{ proc.resp }}</span></div></div>
+            <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:11px;padding:12px 14px"><div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Fecha límite</div><div class="mono" style="font-size:14px;font-weight:700;color:#E5A100;margin-top:8px">{{ proc.limite }}</div></div>
+            <div style="background:#FAFBFC;border:1px solid #EEF1F5;border-radius:11px;padding:12px 14px"><div style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">Pendientes</div><div style="display:flex;gap:10px;margin-top:8px;font-size:13px;font-weight:700"><span style="color:#B4791A">◷ {{ proc.pend }} act.</span><span style="color:#5B4FD0">⬆ {{ proc.evid }} ev.</span></div></div>
+          </div>
+        </div>
+
+        <!-- FLUJO OPERATIVO -->
+        <div style="background:#0F2647;border-radius:14px;padding:16px 20px;margin-bottom:16px">
+          <div class="mono" style="font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:#7FB0FF;font-weight:700;margin-bottom:12px">Flujo operativo · tu acción alimenta todo el sistema</div>
+          <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+            <sc-for list="{{ flow }}" as="f" hint-placeholder-count="8">
+              <div style="display:flex;align-items:center;gap:4px">
+                <div style="display:flex;align-items:center;gap:7px;padding:7px 11px;border-radius:8px;background:{{ f.bg }};border:1px solid {{ f.border }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ f.dot }}"></span><span style="font-size:11px;font-weight:600;color:{{ f.color }}">{{ f.label }}</span></div>
+                <sc-if value="{{ f.arrow }}" hint-placeholder-val="{{ true }}"><span style="color:#5B7196;font-size:11px">→</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div style="display:flex;gap:4px;border-bottom:1px solid #E7EAF0;margin-bottom:18px">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.onSel }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+
+        <!-- TAB: OPERACIÓN -->
+        <sc-if value="{{ tabOper }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:13px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:9px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E5A100" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"></path></svg><span style="font-weight:700;font-size:13.5px">Actividades pendientes</span></div>
+              <sc-for list="{{ pendingActs }}" as="a" hint-placeholder-count="3">
+                <div style="display:flex;align-items:center;gap:11px;padding:12px 18px;border-bottom:1px solid #F4F6F9"><span style="width:20px;height:20px;border-radius:6px;border:2px solid {{ a.dot }};flex:none"></span><div style="flex:1"><div style="font-size:13px;font-weight:600;color:#14181F">{{ a.name }}</div><div style="font-size:11px;color:#98A2B3">{{ a.resp }} · {{ a.time }}</div></div><span style="font-size:10.5px;font-weight:700;color:{{ a.tColor }};background:{{ a.tBg }};padding:3px 9px;border-radius:20px">{{ a.due }}</span></div>
+              </sc-for>
+            </div>
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:13px 18px;border-bottom:1px solid #EEF1F5;font-weight:700;font-size:13.5px">Solicitudes relacionadas</div>
+              <sc-for list="{{ relatedSolic }}" as="s" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:11px;padding:11px 18px;border-bottom:1px solid #F4F6F9"><span class="mono" style="font-size:11px;font-weight:700;color:#2E6BE6">{{ s.folio }}</span><span style="flex:1;font-size:12.5px;color:#344054">{{ s.asunto }}</span><span style="font-size:10.5px;font-weight:700;color:{{ s.color }};background:{{ s.bg }};padding:3px 9px;border-radius:20px">{{ s.estado }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+            <div style="padding:13px 18px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:9px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#12A150" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20a8 8 0 1 1 16 0M12 14l4-4"></path></svg><span style="font-weight:700;font-size:13.5px">Indicadores asociados</span></div>
+            <sc-for list="{{ procKpis }}" as="k" hint-placeholder-count="3">
+              <div style="padding:13px 18px;border-bottom:1px solid #F4F6F9"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px"><span style="font-size:12px;font-weight:600;color:#14181F;padding-right:8px">{{ k.name }}</span><span class="mono" style="font-size:13px;font-weight:700;color:{{ k.sem }}">{{ k.valor }}</span></div><div style="height:6px;background:#EEF1F5;border-radius:6px;overflow:hidden"><div style="height:100%;background:{{ k.sem }};width:{{ k.pct }}"></div></div><div style="font-size:10.5px;color:#98A2B3;margin-top:5px">Meta {{ k.meta }} · semáforo {{ k.semLabel }}</div></div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <!-- TAB: ACTIVIDADES Y EVIDENCIAS -->
+        <sc-if value="{{ tabActs }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ activities }}" as="a" hint-placeholder-count="5">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:13px;box-shadow:0 1px 2px rgba(16,24,40,.04);overflow:hidden">
+              <div style="padding:13px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #F4F6F9">
+                <span style="width:26px;height:26px;flex:none;border-radius:8px;background:{{ a.stBg }};color:{{ a.stColor }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:12px">{{ a.seq }}</span>
+                <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:700;color:#14181F">{{ a.name }}</div><div style="font-size:11px;color:#98A2B3">{{ a.resp }} · {{ a.time }}</div></div>
+                <span style="font-size:10.5px;font-weight:700;color:{{ a.stColor }};background:{{ a.stBg }};padding:3px 11px;border-radius:20px">{{ a.estado }}</span>
+              </div>
+              <div style="padding:6px 18px 12px">
+                <div class="mono" style="font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:#98A2B3;font-weight:700;margin:8px 0 6px">Evidencias obligatorias</div>
+                <sc-for list="{{ a.evidences }}" as="e" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-top:1px solid #F6F8FA">
+                    <span style="width:28px;height:28px;flex:none;border-radius:7px;background:{{ e.bg }};color:{{ e.color }};display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4"></path></svg></span>
+                    <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600;color:#14181F">{{ e.name }}</div><div style="font-size:10.5px;color:#98A2B3">{{ e.type }}</div></div>
+                    <span style="display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:{{ e.stColor }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ e.stColor }}"></span>{{ e.status }}</span>
+                    <button onClick="{{ e.onUpload }}" style="height:30px;padding:0 12px;border-radius:8px;border:1px solid {{ e.btnBorder }};background:{{ e.btnBg }};color:{{ e.btnColor }};font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="{{ e.btnIcon }}"></path></svg>{{ e.btnLabel }}</button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- TAB: HISTORIAL -->
+        <sc-if value="{{ tabHist }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border:1px solid #E7EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);padding:6px 20px;max-width:760px">
+          <sc-for list="{{ history }}" as="h" hint-placeholder-count="5">
+            <div style="display:flex;gap:13px;padding:13px 0;border-bottom:1px solid #F4F6F9"><span style="width:28px;height:28px;flex:none;border-radius:50%;background:{{ h.avBg }};color:{{ h.avFg }};font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ h.ini }}</span><div style="flex:1"><div style="font-size:12.5px;color:#14181F;line-height:1.4"><b>{{ h.who }}</b> {{ h.text }}</div><div style="font-size:11px;color:#98A2B3;margin-top:1px">{{ h.time }}</div></div></div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <!-- TAB: INFORMACIÓN GENERAL -->
+        <sc-if value="{{ tabInfo }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+          <sc-for list="{{ infoGeneral }}" as="f" hint-placeholder-count="9">
+            <div style="background:#fff;border:1px solid #E7EAF0;border-radius:11px;padding:13px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04);{{ f.span }}"><div class="mono" style="font-size:10px;color:#98A2B3;font-weight:700;letter-spacing:.4px;text-transform:uppercase">{{ f.label }}</div><div style="font-size:12.5px;color:#14181F;margin-top:4px;line-height:1.45">{{ f.value }}</div></div>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+    </main>
+  </div>
+
+  <!-- ================= INDICATOR DETAIL DRAWER ================= -->
+  <sc-if value="{{ indOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeIndicator }}" style="position:fixed;inset:0;background:rgba(15,38,71,.36);z-index:40;animation:fadeIn .18s ease"></div>
+  <div style="position:fixed;top:0;right:0;bottom:0;width:520px;max-width:94vw;background:#F7F8FA;z-index:41;box-shadow:-8px 0 32px rgba(16,24,40,.16);display:flex;flex-direction:column;animation:drawerIn .26s cubic-bezier(.2,.8,.2,1)">
+    <div style="background:#fff;border-bottom:1px solid #E7EAF0;padding:18px 22px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:10.5px;font-weight:700;color:{{ ind.famColor }};background:{{ ind.famBg }};padding:3px 11px;border-radius:20px">{{ ind.family }}</span><button onClick="{{ closeIndicator }}" style="width:32px;height:32px;border:1px solid #E7EAF0;background:#fff;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#475467"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+      <div style="font-size:18px;font-weight:800;color:#14181F;line-height:1.2">{{ ind.name }}</div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-top:10px"><span class="mono" style="font-size:32px;font-weight:700;color:{{ ind.sem }}">{{ ind.valor }}</span><span style="font-size:13px;color:#667085">/ meta {{ ind.meta }}</span><span style="font-size:12px;font-weight:700;color:{{ ind.tColor }}">{{ ind.tend }}</span></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px 22px 40px">
+      <div class="mono" style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:#98A2B3;font-weight:700;margin-bottom:10px">16 atributos del indicador</div>
+      <div style="background:#fff;border:1px solid #E7EAF0;border-radius:12px;overflow:hidden">
+        <sc-for list="{{ indAttrs }}" as="at" hint-placeholder-count="16">
+          <div style="display:grid;grid-template-columns:.8fr 1.2fr;gap:10px;padding:10px 16px;border-bottom:1px solid #F6F8FA"><div class="mono" style="font-size:10.5px;color:#98A2B3;font-weight:700;text-transform:uppercase;letter-spacing:.3px">{{ at.k }}</div><div style="font-size:12px;color:#14181F;line-height:1.4">{{ at.v }}</div></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= TOAST ================= -->
+  <sc-if value="{{ toastOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;bottom:22px;right:22px;z-index:60;max-width:370px;background:#0F2647;color:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 12px 32px rgba(15,38,71,.32);display:flex;align-items:flex-start;gap:11px;animation:toastIn .3s cubic-bezier(.2,.8,.2,1)">
+    <span style="width:30px;height:30px;flex:none;border-radius:8px;background:rgba(18,161,80,.22);color:#7FE0A3;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span>
+    <div><div style="font-size:12.5px;font-weight:700;margin-bottom:2px">Automatización ejecutada</div><div style="font-size:11.5px;color:#A9C0E4;line-height:1.4">{{ toastMsg }}</div></div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { view:'mywork', ws:'vraf', section:'dashboard', wsMenuOpen:false, process:null, ptab:'oper', indicator:null, role:'admin', uploaded:{}, gwEv:{'g-sol-1':true,'g-sol-2':true,'g-val-1':true,'g-val-2':true,'g-per-1':true,'g-per-2':true}, gwHist:[], toast:null, gwTab:'flujo' };
+
+  clock() { const d = new Date(); return 'hoy · ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
+
+  goldenStages() {
+    const T = { Acta:['#EAF1FE','#2E6BE6'], Formulario:['#FDF3E1','#B4791A'], Archivo:['#EEF0FB','#5B4FD0'], Registro:['#E6F4F4','#0F8A8A'], Informe:['#EEF6EE','#12A150'], Contrato:['#FDECEC','#E5484D'], Comprobante:['#FDECEC','#E5484D'] };
+    const ev = (id,name,type) => ({ id, name, type, bg:T[type][0], color:T[type][1] });
+    return [
+      { id:'s1', name:'Solicitud', resp:'C. Reyes', ini:'CR', evidences:[ ev('g-sol-1','Solicitud de contratación','Formulario'), ev('g-sol-2','Justificación de la plaza','Informe') ] },
+      { id:'s2', name:'Validación de plaza', resp:'D. Alfaro', ini:'DA', evidences:[ ev('g-val-1','Validación presupuestaria','Comprobante'), ev('g-val-2','Autorización de plaza','Acta') ] },
+      { id:'s3', name:'Perfil del puesto', resp:'D. Alfaro', ini:'DA', evidences:[ ev('g-per-1','Perfil del puesto','Formulario'), ev('g-per-2','Descriptor de funciones','Archivo') ] },
+      { id:'s4', name:'Publicación', resp:'D. Alfaro', ini:'DA', evidences:[ ev('g-pub-1','Autorización de publicación','Acta'), ev('g-pub-2','Aviso de convocatoria','Archivo'), ev('g-pub-3','Captura de publicación','Comprobante') ] },
+      { id:'s5', name:'Recepción de candidatos', resp:'S. López', ini:'SL', evidences:[ ev('g-rec-1','Registro de postulantes','Registro'), ev('g-rec-2','CVs recibidos','Archivo') ] },
+      { id:'s6', name:'Evaluación', resp:'S. López', ini:'SL', evidences:[ ev('g-eva-1','Matriz de evaluación','Formulario'), ev('g-eva-2','Terna preseleccionada','Informe') ] },
+      { id:'s7', name:'Entrevistas', resp:'D. Alfaro', ini:'DA', evidences:[ ev('g-ent-1','Guion de entrevista','Formulario'), ev('g-ent-2','Actas de entrevista','Acta') ] },
+      { id:'s8', name:'Selección', resp:'D. Alfaro', ini:'DA', evidences:[ ev('g-sel-1','Cuadro comparativo','Archivo'), ev('g-sel-2','Acta de selección','Acta') ] },
+      { id:'s9', name:'Oferta laboral', resp:'D. Alfaro', ini:'DA', evidences:[ ev('g-ofe-1','Carta oferta','Acta'), ev('g-ofe-2','Aceptación del candidato','Comprobante') ] },
+      { id:'s10', name:'Contratación', resp:'S. López', ini:'SL', evidences:[ ev('g-con-1','Expediente de contratación','Archivo') ] },
+      { id:'s11', name:'Firma de contrato', resp:'D. Alfaro', ini:'DA', evidences:[ ev('g-fir-1','Contrato firmado','Contrato') ] },
+      { id:'s12', name:'Registro institucional', resp:'M. Cruz', ini:'MC', evidences:[ ev('g-reg-1','Alta en planilla','Registro'), ev('g-reg-2','Registro ISSS / AFP','Comprobante') ] },
+      { id:'s13', name:'Expediente digital', resp:'S. López', ini:'SL', evidences:[ ev('g-exp-1','Expediente digital','Archivo') ] },
+      { id:'s14', name:'Inducción', resp:'S. López', ini:'SL', evidences:[ ev('g-ind-1','Plan de inducción','Formulario'), ev('g-ind-2','Constancia de inducción','Comprobante') ] },
+      { id:'s15', name:'Proceso finalizado', resp:'D. Alfaro', ini:'DA', evidences:[ ev('g-fin-1','Acta de cierre','Acta') ] },
+    ];
+  }
+
+  goldenProcess() {
+    const stages = this.goldenStages();
+    const total = stages.reduce((n,s) => n + s.evidences.length, 0);
+    const up = Object.keys(this.state.gwEv).filter(k => this.state.gwEv[k]).length;
+    const prog = Math.round(up / total * 100);
+    const completed = stages.filter(s => s.evidences.every(e => this.state.gwEv[e.id])).length;
+    const sem = prog >= 80 ? '#12A150' : prog >= 40 ? '#E5A100' : '#E5484D';
+    return { id:'gw', golden:true, name:'Contratación de Personal', cat:'Misional', catColor:'#2E6BE6', catBg:'#EAF1FE', estado: prog===100?'Finalizado':'En proceso', estColor: prog===100?'#12A150':'#5B4FD0', estBg: prog===100?'#EEF6EE':'#EEF0FB', resp:'D. Alfaro', ini:'DA', avBg:'#FDF3E1', avFg:'#B4791A', avance:prog+'%', sem, limite:'20 jul', pend:String(stages.length - completed), evid:String(total - up),
+      onOpen: () => this.setState({ view:'workspace', ws:'rrhh', section:'procesos', process:this.goldenProcess(), gwTab:'flujo' }) };
+  }
+
+  gwUpload(evId, evName, stageId) {
+    if (this.state.gwEv[evId]) return;
+    const gwEv = { ...this.state.gwEv, [evId]:true };
+    const stages = this.goldenStages();
+    const stg = stages.find(s => s.id === stageId);
+    const stageDone = stg.evidences.every(e => gwEv[e.id]);
+    const total = stages.reduce((n,s) => n + s.evidences.length, 0);
+    const uploaded = Object.keys(gwEv).filter(k => gwEv[k]).length;
+    const p = Math.round(uploaded / total * 100);
+    const t = this.clock();
+    const hist = [];
+    if (stageDone) hist.push({ who:'Sistema', text:'cerró la etapa “' + stg.name + '” y avanzó el proceso.', ini:'SS', avBg:'#EEF6EE', avFg:'#12A150', time:t });
+    hist.push({ who:'Sistema', text:'recalculó indicadores (avance ' + p + '%), actualizó el dashboard y dejó lista la vista previa del reporte.', ini:'SS', avBg:'#EEF6EE', avFg:'#12A150', time:t });
+    hist.push({ who:'M. Villalta', text:'cargó la evidencia “' + evName + '”.', ini:'MV', avBg:'#EAF1FE', avFg:'#2E6BE6', time:t });
+    this.setState({ gwEv, gwHist:[...hist, ...this.state.gwHist], toast:{ id:Date.now(), msg:'Evidencia cargada · avance ' + p + '% · indicadores, dashboard y reporte actualizados' } });
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => this.setState({ toast:null }), 3800);
+  }
+
+  units() {
+    return [
+      { id:'vraf', short:'Vicerrectoría A. y F.', name:'Vicerrectoría Administrativa y Financiera', color:'#2E6BE6', bg:'#EAF1FE', icon:'M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6' },
+      { id:'rrhh', short:'Recursos Humanos', name:'Recursos Humanos', color:'#E5A100', bg:'#FDF3E1', icon:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z' },
+      { id:'conta', short:'Contabilidad', name:'Contabilidad', color:'#12A150', bg:'#EEF6EE', icon:'M4 5h16v14H4zM8 9h8M8 13h8M8 17h4' },
+      { id:'compras', short:'Compras', name:'Compras', color:'#5B4FD0', bg:'#EEF0FB', icon:'M6 6h15l-1.5 9h-12zM6 6L5 3H2M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z' },
+      { id:'mant', short:'Mantenimiento e Infr.', name:'Mantenimiento e Infraestructura', color:'#E5484D', bg:'#FDECEC', icon:'M14 7l3 3m-8 8l-5 1 1-5 9-9a2.8 2.8 0 0 1 4 4z' },
+      { id:'salud', short:'Salud y Seg. Ocup.', name:'Salud y Seguridad Ocupacional', color:'#0F8A8A', bg:'#E6F4F4', icon:'M12 21C7 18 4 14 4 9a4 4 0 0 1 8-1 4 4 0 0 1 8 1c0 5-3 9-8 12zM12 9v4M10 11h4' },
+    ];
+  }
+  currentWs() { return this.units().find(u => u.id === this.state.ws) || this.units()[0]; }
+
+  sectionDefs() {
+    return [
+      { id:'dashboard', label:'Dashboard', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16' },
+      { id:'objetivos', label:'Objetivos', icon:'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' },
+      { id:'proyectos', label:'Proyectos', icon:'M6 3v6M6 15v6M18 3v18M6 9a3 3 0 0 0 3 3h6' },
+      { id:'procesos', label:'Procesos', icon:'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9', badge:'5' },
+      { id:'indicadores', label:'Indicadores', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4' },
+      { id:'solicitudes', label:'Solicitudes', icon:'M4 13h4l2 3h4l2-3h4M5 5h14v13H5z', badge:'3' },
+      { id:'evidencias', label:'Evidencias', icon:'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
+      { id:'reportes', label:'Reportes', icon:'M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4M9 13h6' },
+      { id:'calendario', label:'Calendario', icon:'M4 8h16M7 3v3M17 3v3M5 5h14v14H5z' },
+      { id:'config', label:'Configuración', icon:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 12a8 8 0 0 1 16 0' },
+    ];
+  }
+
+  wsProcessData(wsId) {
+    const open = (p) => this.setState({ process:p, ptab:'oper', uploaded:{} });
+    const mk = (o) => ({ ...o, onOpen: () => open(o) });
+    const byWs = {
+      cont:[
+        mk({ id:'c1', name:'Cierre Contable Mensual', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'91%', resp:'L. Portillo', ini:'LP', avBg:'#EEF6EE', avFg:'#12A150', limite:'10 jul', sem:'#12A150', pend:'1', evid:'0', updated:'hoy 08:15' }),
+        mk({ id:'c2', name:'Conciliación Bancaria', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'Completo', estColor:'#12A150', estBg:'#EEF6EE', avance:'100%', resp:'A. Cruz', ini:'AC', avBg:'#EEF6EE', avFg:'#12A150', limite:'5 jul', sem:'#12A150', pend:'0', evid:'0', updated:'5 jul' }),
+        mk({ id:'c3', name:'Reportes Financieros', cat:'Estratégico', catColor:'#173458', catBg:'#EAF0F7', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'75%', resp:'L. Portillo', ini:'LP', avBg:'#FDF3E1', avFg:'#B4791A', limite:'15 jul', sem:'#E5A100', pend:'2', evid:'1', updated:'ayer' }),
+        mk({ id:'c4', name:'Planillas y Deducciones', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'Completo', estColor:'#12A150', estBg:'#EEF6EE', avance:'100%', resp:'A. Cruz', ini:'AC', avBg:'#EEF6EE', avFg:'#12A150', limite:'1 jul', sem:'#12A150', pend:'0', evid:'0', updated:'1 jul' }),
+        mk({ id:'c5', name:'Control de Presupuesto', cat:'Estratégico', catColor:'#173458', catBg:'#EAF0F7', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'82%', resp:'L. Portillo', ini:'LP', avBg:'#EEF6EE', avFg:'#12A150', limite:'20 jul', sem:'#12A150', pend:'1', evid:'1', updated:'hoy' }),
+        mk({ id:'c6', name:'Auditoría de Cuentas', cat:'Misional', catColor:'#2E6BE6', catBg:'#EAF1FE', estado:'Planificado', estColor:'#667085', estBg:'#F2F4F7', avance:'10%', resp:'M. Flores', ini:'MF', avBg:'#EAF1FE', avFg:'#2E6BE6', limite:'31 jul', sem:'#2E6BE6', pend:'8', evid:'5', updated:'2 días' }),
+      ],
+      comp:[
+        mk({ id:'co1', name:'Proceso de Licitación', cat:'Misional', catColor:'#2E6BE6', catBg:'#EAF1FE', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'54%', resp:'M. Rivas', ini:'MR', avBg:'#FDF3E1', avFg:'#B4791A', limite:'20 jul', sem:'#E5A100', pend:'4', evid:'3', updated:'hoy' }),
+        mk({ id:'co2', name:'Compras Directas', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'Crítico', estColor:'#E5484D', estBg:'#FDECEC', avance:'38%', resp:'K. López', ini:'KL', avBg:'#FDECEC', avFg:'#E5484D', limite:'Hoy', sem:'#E5484D', pend:'5', evid:'4', updated:'hace 2 h' }),
+        mk({ id:'co3', name:'Gestión de Proveedores', cat:'De apoyo', catColor:'#12A150', catBg:'#EEF6EE', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'68%', resp:'M. Rivas', ini:'MR', avBg:'#EEF0FB', avFg:'#5B4FD0', limite:'25 jul', sem:'#E5A100', pend:'2', evid:'1', updated:'ayer' }),
+        mk({ id:'co4', name:'Solicitudes de Compra', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'En alerta', estColor:'#E5A100', estBg:'#FDF3E1', avance:'61%', resp:'K. López', ini:'KL', avBg:'#FDF3E1', avFg:'#B4791A', limite:'18 jul', sem:'#E5A100', pend:'3', evid:'2', updated:'hoy' }),
+      ],
+      mant:[
+        mk({ id:'m1', name:'Mantenimiento Preventivo', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'Crítico', estColor:'#E5484D', estBg:'#FDECEC', avance:'38%', resp:'J. Pérez', ini:'JP', avBg:'#FDECEC', avFg:'#E5484D', limite:'Hoy', sem:'#E5484D', pend:'6', evid:'4', updated:'hoy' }),
+        mk({ id:'m2', name:'Órdenes de Trabajo', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'55%', resp:'T. Guzmán', ini:'TG', avBg:'#FDF3E1', avFg:'#B4791A', limite:'15 jul', sem:'#E5A100', pend:'3', evid:'2', updated:'ayer' }),
+        mk({ id:'m3', name:'Inspección de Instalaciones', cat:'Misional', catColor:'#2E6BE6', catBg:'#EAF1FE', estado:'Planificado', estColor:'#667085', estBg:'#F2F4F7', avance:'20%', resp:'J. Pérez', ini:'JP', avBg:'#EAF1FE', avFg:'#2E6BE6', limite:'30 jul', sem:'#2E6BE6', pend:'4', evid:'3', updated:'3 días' }),
+      ],
+      sso:[
+        mk({ id:'s1', name:'Inspecciones SSO', cat:'Misional', catColor:'#2E6BE6', catBg:'#EAF1FE', estado:'Completo', estColor:'#12A150', estBg:'#EEF6EE', avance:'100%', resp:'N. Castro', ini:'NC', avBg:'#EEF6EE', avFg:'#12A150', limite:'5 jul', sem:'#12A150', pend:'0', evid:'0', updated:'5 jul' }),
+        mk({ id:'s2', name:'Plan de Prevención de Riesgos', cat:'Estratégico', catColor:'#173458', catBg:'#EAF0F7', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'78%', resp:'N. Castro', ini:'NC', avBg:'#EEF6EE', avFg:'#12A150', limite:'31 jul', sem:'#12A150', pend:'1', evid:'1', updated:'ayer' }),
+        mk({ id:'s3', name:'Gestión de Incidentes', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'Sin incidentes', estColor:'#12A150', estBg:'#EEF6EE', avance:'100%', resp:'N. Castro', ini:'NC', avBg:'#EEF6EE', avFg:'#12A150', limite:'—', sem:'#12A150', pend:'0', evid:'0', updated:'hoy' }),
+      ],
+    };
+    if (byWs[wsId]) return byWs[wsId];
+    return this.processData();
+  }
+
+  processData() {
+    const open = (p) => this.setState({ process:p, ptab:'oper', uploaded:{} });
+    const mk = (o) => ({ ...o, onOpen: () => open(o) });
+    return [
+      mk({ id:'p1', name:'Formulación y Control Presupuestario', cat:'Estratégico', catColor:'#173458', catBg:'#EAF0F7', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'80%', resp:'R. Menjívar', ini:'RM', avBg:'#EAF1FE', avFg:'#2E6BE6', limite:'12 jul', sem:'#E5A100', pend:'2', evid:'3', updated:'hoy 10:42' }),
+      mk({ id:'p2', name:'Seguimiento Estratégico Institucional', cat:'Estratégico', catColor:'#173458', catBg:'#EAF0F7', estado:'En revisión', estColor:'#E5A100', estBg:'#FDF3E1', avance:'62%', resp:'M. Villalta', ini:'MV', avBg:'#FDF3E1', avFg:'#B4791A', limite:'20 jul', sem:'#E5A100', pend:'4', evid:'2', updated:'ayer' }),
+      mk({ id:'p3', name:'Gestión Financiera Institucional', cat:'Misional', catColor:'#2E6BE6', catBg:'#EAF1FE', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'91%', resp:'L. Portillo', ini:'LP', avBg:'#EEF0FB', avFg:'#5B4FD0', limite:'15 jul', sem:'#12A150', pend:'1', evid:'0', updated:'hoy 08:15' }),
+      mk({ id:'p4', name:'Atención de Solicitudes Internas', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'Crítico', estColor:'#E5484D', estBg:'#FDECEC', avance:'34%', resp:'J. Rivas', ini:'JR', avBg:'#FDECEC', avFg:'#E5484D', limite:'Hoy', sem:'#E5484D', pend:'5', evid:'4', updated:'hace 1 h' }),
+      mk({ id:'p5', name:'Rendición de Cuentas y Control Interno', cat:'Misional', catColor:'#2E6BE6', catBg:'#EAF1FE', estado:'Planificado', estColor:'#667085', estBg:'#F2F4F7', avance:'12%', resp:'A. Cruz', ini:'AC', avBg:'#EEF6EE', avFg:'#12A150', limite:'30 jul', sem:'#2E6BE6', pend:'6', evid:'1', updated:'2 días' }),
+    ];
+  }
+
+  indicatorData() {
+    const open = (k) => this.setState({ indicator:k });
+    const mk = (o) => ({ ...o, onOpen: () => open(o) });
+    return [
+      mk({ id:'k1', name:'Cumplimiento presupuestario', valor:'80%', meta:'85%', sem:'#E5A100', tend:'▲ 3%', tColor:'#12A150', updated:'hoy 10:42', resp:'R. Menjívar', proceso:'Formulación y Control Presup.', family:'Gestión', famColor:'#B4791A', famBg:'#FDF3E1', objetivo:'Asegurar la ejecución del presupuesto aprobado', descripcion:'Proporción del presupuesto ejecutado sobre el planificado', formula:'ejecutado / planificado × 100', unidad:'%', frecuencia:'Mensual', fuente:'Sistema contable', procedimiento:'Control y seguimiento de la ejecución', evidencia:'Reporte de ejecución mensual', dashboard:'Dashboard financiero VRAF', reporte:'Informe mensual de ejecución', automatizacion:'Recálculo al cargar reporte de ejecución', semRule:'V ≥85 · A 75–84 · R <75' }),
+      mk({ id:'k2', name:'Índice de desviación presupuestaria', valor:'4.2%', meta:'≤ 5%', sem:'#12A150', tend:'▼ 0.6%', tColor:'#12A150', updated:'hoy 09:10', resp:'Jefe Contabilidad', proceso:'Formulación y Control Presup.', family:'Desempeño', famColor:'#12A150', famBg:'#EEF6EE', objetivo:'Medir la precisión de la planeación financiera', descripcion:'Diferencia entre lo ejecutado y lo presupuestado', formula:'|ejec − pres| / pres × 100', unidad:'%', frecuencia:'Mensual', fuente:'Sistema contable', procedimiento:'Control y seguimiento de la ejecución', evidencia:'Reporte de ejecución mensual', dashboard:'Dashboard financiero VRAF', reporte:'Informe mensual de ejecución', automatizacion:'Recálculo al cargar reporte', semRule:'V ≤5 · A 5–10 · R >10' }),
+      mk({ id:'k3', name:'Tiempo medio de respuesta', valor:'2.4 d', meta:'≤ 3 d', sem:'#12A150', tend:'▼ 0.3d', tColor:'#12A150', updated:'hoy 11:00', resp:'J. Rivas', proceso:'Atención de Solicitudes', family:'Desempeño', famColor:'#12A150', famBg:'#EEF6EE', objetivo:'Garantizar respuestas oportunas', descripcion:'Promedio de días entre apertura y cierre de solicitud', formula:'Σ días / nº solicitudes', unidad:'días', frecuencia:'Semanal', fuente:'Módulo de solicitudes', procedimiento:'Atención y cierre de solicitud', evidencia:'Registro de cierre', dashboard:'Dashboard operativo VRAF', reporte:'Informe de solicitudes', automatizacion:'Cálculo al cerrar la solicitud', semRule:'V ≤3 · A 3–5 · R >5' }),
+      mk({ id:'k4', name:'Evidencias documentadas', valor:'64%', meta:'80%', sem:'#E5484D', tend:'▲ 2%', tColor:'#12A150', updated:'hoy 08:30', resp:'L. Portillo', proceso:'Gestión Financiera', family:'Gestión', famColor:'#B4791A', famBg:'#FDF3E1', objetivo:'Asegurar respaldo documental de la operación', descripcion:'Evidencias cargadas sobre las requeridas', formula:'cargadas / requeridas × 100', unidad:'%', frecuencia:'Mensual', fuente:'Repositorio de evidencias', procedimiento:'Carga y validación de evidencias', evidencia:'Archivos por actividad', dashboard:'Dashboard de gestión VRAF', reporte:'Informe de cumplimiento', automatizacion:'Recálculo al registrar evidencia', semRule:'V ≥80 · A 65–79 · R <65' }),
+      mk({ id:'k5', name:'Satisfacción del usuario interno', valor:'4.5', meta:'≥ 4.2', sem:'#12A150', tend:'▲ 0.2', tColor:'#12A150', updated:'ayer', resp:'J. Rivas', proceso:'Atención de Solicitudes', family:'Desempeño', famColor:'#12A150', famBg:'#EEF6EE', objetivo:'Medir la calidad percibida del servicio', descripcion:'Promedio de la encuesta de satisfacción', formula:'promedio(encuesta)', unidad:'de 5', frecuencia:'Mensual', fuente:'Encuesta de satisfacción', procedimiento:'Encuesta post-cierre', evidencia:'Resultados de encuesta', dashboard:'Dashboard operativo VRAF', reporte:'Informe de solicitudes', automatizacion:'Actualiza al registrar respuesta', semRule:'V ≥4.2 · A 3.5–4.1 · R <3.5' }),
+      mk({ id:'k6', name:'Avance de planes de mejora', valor:'70%', meta:'75%', sem:'#E5A100', tend:'▲ 5%', tColor:'#12A150', updated:'hace 2 d', resp:'M. Villalta', proceso:'Seguimiento Estratégico', family:'Gestión', famColor:'#B4791A', famBg:'#FDF3E1', objetivo:'Asegurar el cierre de acciones de mejora', descripcion:'Acciones concluidas sobre el total', formula:'concluidas / total × 100', unidad:'%', frecuencia:'Trimestral', fuente:'Planes de mejora', procedimiento:'Seguimiento de acciones', evidencia:'Evidencia de cierre', dashboard:'Dashboard estratégico VRAF', reporte:'Informe trimestral', automatizacion:'Actualiza al cerrar acción', semRule:'V ≥75 · A 60–74 · R <60' }),
+    ];
+  }
+
+  renderVals() {
+    const st = this.state;
+    const ws = this.currentWs();
+    const isAdmin = st.role === 'admin';
+    const inWorkspace = st.view === 'workspace';
+    const hasProcess = inWorkspace && !!st.process;
+    const sectionActive = inWorkspace && !st.process ? st.section : null;
+
+    // nav
+    const navSel = (id) => this.setState({ view:'workspace', section:id, process:null, wsMenuOpen:false });
+    const sections = this.sectionDefs().map(s => {
+      const active = sectionActive === s.id;
+      return { ...s, onSel: () => navSel(s.id),
+        style:`width:100%;display:flex;align-items:center;gap:11px;padding:8px 10px;margin-bottom:2px;border:none;background:${active?'rgba(46,107,230,.20)':'transparent'};color:${active?'#fff':'#B4C1D6'};font-size:12.5px;font-weight:${active?'600':'500'};font-family:inherit;border-radius:9px;cursor:pointer;text-align:left${active?';box-shadow:inset 3px 0 0 #5B8DEF':''}` };
+    });
+
+    const unitList = this.units().map(u => ({ ...u, onSel: () => this.setState({ view:'workspace', ws:u.id, section:'dashboard', process:null, wsMenuOpen:false }),
+      rowStyle:`width:100%;display:flex;align-items:center;gap:10px;padding:8px 9px;border:none;background:${u.id===st.ws?'rgba(46,107,230,.16)':'transparent'};color:#EAF1FE;border-radius:8px;cursor:pointer;font-family:inherit` }));
+
+    // process detail
+    const proc = st.process || {};
+    const setTab = (t) => this.setState({ ptab:t });
+    const tabDefs = [ {id:'oper',label:'Operación'}, {id:'acts',label:'Actividades y evidencias'}, {id:'hist',label:'Historial'}, {id:'info',label:'Información general'} ];
+    const tabs = tabDefs.map(t => { const a = st.ptab===t.id; return { ...t, onSel:()=>setTab(t.id),
+      style:`padding:10px 15px;border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:${a?'700':'500'};color:${a?'#0F2647':'#98A2B3'};cursor:pointer;border-bottom:2px solid ${a?'#2E6BE6':'transparent'};margin-bottom:-1px` }; });
+
+    // evidence upload interactivity
+    const up = st.uploaded;
+    const evRow = (id, name, type, bg, color) => {
+      const done = !!up[id];
+      return { name, type, bg, color,
+        status: done?'Cargada':'Pendiente', stColor: done?'#12A150':'#E5A100',
+        onUpload: () => this.setState({ uploaded: { ...this.state.uploaded, [id]:true } }),
+        btnLabel: done?'Ver':'Subir', btnIcon: done?'M20 6L9 17l-5-5':'M12 16V4M7 9l5-5 5 5M4 20h16',
+        btnBg: done?'#EEF6EE':'#EAF1FE', btnColor: done?'#12A150':'#2E6BE6', btnBorder: done?'#BFE6CC':'#BBD3F7' };
+    };
+    const activities = [
+      { seq:'1', name:'Emitir lineamientos y calendario', resp:'R. Menjívar', time:'5 d', estado:'Completa', stColor:'#12A150', stBg:'#EEF6EE', evidences:[ evRow('e1','Circular de lineamientos','Acta','#EAF1FE','#2E6BE6') ] },
+      { seq:'2', name:'Recopilar POA y requerimientos', resp:'A. Cruz', time:'15 d', estado:'Completa', stColor:'#12A150', stBg:'#EEF6EE', evidences:[ evRow('e2','Formularios POA','Formulario','#FDF3E1','#B4791A'), evRow('e3','Registro de entregas','Registro','#E6F4F4','#0F8A8A') ] },
+      { seq:'3', name:'Consolidar y proyectar presupuesto', resp:'L. Portillo', time:'10 d', estado:'En curso', stColor:'#E5A100', stBg:'#FDF3E1', evidences:[ evRow('e4','Consolidado presupuestario','Archivo','#EEF0FB','#5B4FD0') ] },
+      { seq:'4', name:'Revisar y ajustar con VRAF', resp:'M. Villalta', time:'5 d', estado:'Pendiente', stColor:'#667085', stBg:'#F2F4F7', evidences:[ evRow('e5','Acta de ajustes','Acta','#EAF1FE','#2E6BE6') ] },
+      { seq:'5', name:'Presentar para aprobación', resp:'M. Villalta', time:'7 d', estado:'Pendiente', stColor:'#667085', stBg:'#F2F4F7', evidences:[ evRow('e6','Acta de aprobación','Acta','#EAF1FE','#2E6BE6') ] },
+    ];
+
+    // indicator detail attrs
+    const ind = st.indicator || {};
+    const indAttrs = st.indicator ? [
+      {k:'Objetivo',v:ind.objetivo}, {k:'Descripción',v:ind.descripcion}, {k:'Fórmula',v:ind.formula}, {k:'Unidad',v:ind.unidad},
+      {k:'Meta',v:ind.meta}, {k:'Frecuencia',v:ind.frecuencia}, {k:'Responsable',v:ind.resp}, {k:'Fuente',v:ind.fuente},
+      {k:'Proceso',v:ind.proceso}, {k:'Procedimiento',v:ind.procedimiento}, {k:'Evidencia',v:ind.evidencia}, {k:'Dashboard',v:ind.dashboard},
+      {k:'Reporte',v:ind.reporte}, {k:'Automatización',v:ind.automatizacion}, {k:'Semáforo',v:ind.semRule}, {k:'Familia',v:ind.family},
+    ] : [];
+
+    // ===== GOLDEN WORKFLOW COMPUTE =====
+    const semColor = (pct, g, a) => pct >= g ? '#12A150' : pct >= a ? '#E5A100' : '#E5484D';
+    const gStages = this.goldenStages();
+    const gEv = st.gwEv;
+    const gTotal = gStages.reduce((n,s) => n + s.evidences.length, 0);
+    const gUp = Object.keys(gEv).filter(k => gEv[k]).length;
+    const gProg = Math.round(gUp / gTotal * 100);
+    const stagesView = gStages.map((s,i) => { const done = s.evidences.filter(e => gEv[e.id]).length; return { i, s, cnt:s.evidences.length, done, complete: done === s.evidences.length, pct: Math.round(done / s.evidences.length * 100) }; });
+    const gCompleted = stagesView.filter(x => x.complete).length;
+    const gCurrentIdx = stagesView.findIndex(x => !x.complete);
+    const etapasPct = Math.round(gCompleted / gStages.length * 100);
+
+    const gwStages = stagesView.map(x => {
+      const cur = x.i === gCurrentIdx;
+      const status = x.complete ? 'Completa' : cur ? 'En curso' : 'Pendiente';
+      const c = x.complete ? '#12A150' : cur ? '#E5A100' : '#98A2B3';
+      const bg = x.complete ? '#EEF6EE' : cur ? '#FDF3E1' : '#F2F4F7';
+      return { num:String(x.i+1), name:x.s.name, resp:x.s.resp, ini:x.s.ini, status, color:c, bg, pct:x.pct+'%', barPct:x.pct+'%', onEnter:()=>this.setState({ gwTab:'acts' }) };
+    });
+    const gwActs = stagesView.map(x => {
+      const cur = x.i === gCurrentIdx;
+      const status = x.complete ? 'Completa' : cur ? 'En curso' : 'Pendiente';
+      const stColor = x.complete ? '#12A150' : cur ? '#E5A100' : '#667085';
+      const stBg = x.complete ? '#EEF6EE' : cur ? '#FDF3E1' : '#F2F4F7';
+      return { seq:String(x.i+1), name:x.s.name, resp:x.s.resp, time:x.done+'/'+x.cnt+' evidencias', estado:status, stColor, stBg,
+        evidences: x.s.evidences.map(e => { const done = !!gEv[e.id]; return { name:e.name, type:e.type, bg:e.bg, color:e.color, status: done?'Cargada':'Pendiente', stColor: done?'#12A150':'#E5A100', onUpload:()=>this.gwUpload(e.id, e.name, x.s.id), btnLabel: done?'Ver':'Subir', btnIcon: done?'M20 6L9 17l-5-5':'M12 16V4M7 9l5-5 5 5M4 20h16', btnBg: done?'#EEF6EE':'#EAF1FE', btnColor: done?'#12A150':'#2E6BE6', btnBorder: done?'#BFE6CC':'#BBD3F7' }; }) };
+    });
+    const mkGwInd = (o) => ({ ...o, onOpen:()=>this.setState({ indicator:o }) });
+    const gwIndicators = [
+      mkGwInd({ name:'Avance del proceso', valor:gProg+'%', meta:'100%', sem:semColor(gProg,99,50), tend:'▲ en vivo', tColor:'#12A150', updated:'ahora', resp:'D. Alfaro', proceso:'Contratación de Personal', family:'Gestión', famColor:'#B4791A', famBg:'#FDF3E1', objetivo:'Medir el avance global de la contratación', descripcion:'Evidencias cargadas sobre el total requerido', formula:'evidencias cargadas / total × 100', unidad:'%', frecuencia:'Continua', fuente:'Evidencias del proceso', procedimiento:'Contratación de personal', evidencia:'Todas las evidencias del proceso', dashboard:'Dashboard RRHH', reporte:'Informe de contratación', automatizacion:'Recálculo al registrar evidencia', semRule:'V 100 · A ≥50 · R <50' }),
+      mkGwInd({ name:'Etapas completadas', valor:gCompleted+'/'+gStages.length, meta:'15/15', sem:semColor(etapasPct,99,40), tend:'▲ en vivo', tColor:'#12A150', updated:'ahora', resp:'D. Alfaro', proceso:'Contratación de Personal', family:'Gestión', famColor:'#B4791A', famBg:'#FDF3E1', objetivo:'Controlar el avance por etapas del flujo', descripcion:'Etapas cerradas sobre el total del flujo', formula:'etapas cerradas / 15 × 100', unidad:'etapas', frecuencia:'Continua', fuente:'Máquina de estados', procedimiento:'Contratación de personal', evidencia:'Cierre de cada etapa', dashboard:'Dashboard RRHH', reporte:'Informe de contratación', automatizacion:'Cierre automático al completar evidencias', semRule:'V 15 · A ≥6 · R <6' }),
+      mkGwInd({ name:'Evidencias documentadas', valor:gUp+'/'+gTotal, meta:String(gTotal), sem:semColor(gProg,80,50), tend:'▲ en vivo', tColor:'#12A150', updated:'ahora', resp:'S. López', proceso:'Contratación de Personal', family:'Gestión', famColor:'#B4791A', famBg:'#FDF3E1', objetivo:'Asegurar respaldo documental completo', descripcion:'Evidencias cargadas sobre las requeridas', formula:'cargadas / requeridas × 100', unidad:'docs', frecuencia:'Continua', fuente:'Repositorio de evidencias', procedimiento:'Carga de evidencias', evidencia:'Archivos por etapa', dashboard:'Dashboard RRHH', reporte:'Informe de contratación', automatizacion:'Recálculo al registrar evidencia', semRule:'V ≥80 · A ≥50 · R <50' }),
+      mkGwInd({ name:'Tiempo de contratación', valor:'18 d', meta:'≤ 30 d', sem:'#12A150', tend:'▼ 2 d', tColor:'#12A150', updated:'hoy', resp:'D. Alfaro', proceso:'Contratación de Personal', family:'Desempeño', famColor:'#12A150', famBg:'#EEF6EE', objetivo:'Reducir el tiempo del ciclo de contratación', descripcion:'Días entre solicitud y cierre', formula:'fecha cierre − fecha solicitud', unidad:'días', frecuencia:'Por proceso', fuente:'Fechas del proceso', procedimiento:'Contratación de personal', evidencia:'Fechas registradas', dashboard:'Dashboard RRHH', reporte:'Informe de contratación', automatizacion:'Cálculo al cerrar el proceso', semRule:'V ≤30 · A 30–45 · R >45' }),
+    ];
+    const gwCascade = [
+      { label:'Tu acción', val:gUp+'/'+gTotal+' evid.', icon:'M12 16V4M7 9l5-5 5 5M4 20h16', arrow:true },
+      { label:'Avance', val:gProg+'%', icon:'M6 3v6M6 15v6M18 3v18M6 9a3 3 0 0 0 3 3h6', arrow:true },
+      { label:'Indicadores', val:gCompleted+'/'+gStages.length+' etapas', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', arrow:true },
+      { label:'Dashboard', val:'actualizado', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16', arrow:true },
+      { label:'Reporte', val: gProg===100?'listo':'en preparación', icon:'M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4', arrow:false },
+    ];
+    const gwHeader = { estado: gProg===100?'Finalizado':'En proceso', estColor: gProg===100?'#12A150':'#5B4FD0', estBg: gProg===100?'#EEF6EE':'#EEF0FB', prog:gProg+'%', progColor:semColor(gProg,80,40), etapas:gCompleted+'/'+gStages.length, currentStage: gCurrentIdx>=0 ? gStages[gCurrentIdx].name : 'Proceso finalizado' };
+    const gwQuick = [ { valor:gProg+'%', sem:semColor(gProg,80,40) }, { valor:gCompleted+'/'+gStages.length, sem:semColor(etapasPct,99,40) }, { valor:gUp+'/'+gTotal, sem:semColor(gProg,80,50) } ];
+    const gwSeed = [
+      { who:'D. Alfaro', text:'validó la plaza y autorizó la contratación.', time:'2 jul · 09:10', ini:'DA', avBg:'#FDF3E1', avFg:'#B4791A' },
+      { who:'C. Reyes', text:'registró la solicitud de contratación.', time:'1 jul · 14:20', ini:'CR', avBg:'#EAF1FE', avFg:'#2E6BE6' },
+      { who:'Sistema', text:'creó el proceso “Contratación de Personal”.', time:'1 jul · 14:20', ini:'SS', avBg:'#EEF6EE', avFg:'#12A150' },
+    ];
+    const gwReport = { rows:[ { k:'Proceso', v:'Contratación de Personal' }, { k:'Avance global', v:gProg+'%' }, { k:'Etapas completadas', v:gCompleted+'/'+gStages.length }, { k:'Evidencias registradas', v:gUp+'/'+gTotal }, { k:'Responsable', v:'D. Alfaro' }, { k:'Tiempo del proceso', v:'18 días (meta ≤ 30)' } ] };
+    const gwTabDefs = [ {id:'flujo',label:'Flujo operativo'},{id:'acts',label:'Actividades y evidencias'},{id:'indicadores',label:'Indicadores'},{id:'timeline',label:'Timeline'},{id:'reporte',label:'Reporte'} ];
+    const gwTabs = gwTabDefs.map(t => { const a = st.gwTab===t.id; return { ...t, onSel:()=>this.setState({ gwTab:t.id }), style:`padding:10px 15px;border:none;background:none;font-family:inherit;font-size:12.5px;font-weight:${a?'700':'500'};color:${a?'#0F2647':'#98A2B3'};cursor:pointer;border-bottom:2px solid ${a?'#2E6BE6':'transparent'};margin-bottom:-1px` }; });
+    const openGen = (p) => this.setState({ process:p, ptab:'oper', uploaded:{} });
+    const rrhhExtra = [
+      { id:'rh2', name:'Gestión de Planillas', cat:'Operativo', catColor:'#B4791A', catBg:'#FDF3E1', estado:'En proceso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'88%', resp:'M. Cruz', ini:'MC', avBg:'#EEF0FB', avFg:'#5B4FD0', limite:'25 jul', sem:'#12A150', pend:'1', evid:'0', updated:'hoy' },
+      { id:'rh3', name:'Evaluación del Desempeño', cat:'Misional', catColor:'#2E6BE6', catBg:'#EAF1FE', estado:'Planificado', estColor:'#667085', estBg:'#F2F4F7', avance:'20%', resp:'D. Alfaro', ini:'DA', avBg:'#FDF3E1', avFg:'#B4791A', limite:'15 ago', sem:'#2E6BE6', pend:'4', evid:'2', updated:'ayer' },
+    ].map(p => ({ ...p, onOpen:()=>openGen(p) }));
+    const wsProcesses = st.ws==='rrhh' ? [ this.goldenProcess(), ...rrhhExtra ] : this.wsProcessData(st.ws);
+
+    const gw = {
+      showGolden: hasProcess && !!proc.golden,
+      gwHeader, gwQuick, gwCascade, gwStages, gwActs, gwIndicators, gwReport, gwTabs,
+      gwTimeline: [ ...st.gwHist, ...gwSeed ],
+      gwFlujo: st.gwTab==='flujo', gwActsTab: st.gwTab==='acts', gwInd: st.gwTab==='indicadores', gwTime: st.gwTab==='timeline', gwRep: st.gwTab==='reporte',
+      toastOpen: !!st.toast, toastMsg: st.toast ? st.toast.msg : '',
+      wsProcesses,
+    };
+
+    return {
+      ...gw,
+      // sidebar
+      myWorkStyle:`width:100%;display:flex;align-items:center;gap:11px;padding:10px;border:none;background:${st.view==='mywork'?'rgba(46,107,230,.20)':'rgba(255,255,255,.04)'};color:${st.view==='mywork'?'#fff':'#EAF1FE'};font-size:13px;font-weight:700;font-family:inherit;border-radius:10px;cursor:pointer${st.view==='mywork'?';box-shadow:inset 3px 0 0 #5B8DEF':''}`,
+      goMyWork: () => this.setState({ view:'mywork', process:null, wsMenuOpen:false }),
+      toggleWsMenu: () => this.setState({ wsMenuOpen: !st.wsMenuOpen }),
+      wsMenuOpen: st.wsMenuOpen, ws, unitList, sections,
+      roleLabel: isAdmin?'Administrador General':'Usuario Operativo',
+      toggleRole: () => this.setState({ role: isAdmin?'operativo':'admin' }),
+
+      // header crumbs
+      crumbA: st.view==='mywork' ? 'Mi Trabajo' : ws.short,
+      crumbB: st.view==='mywork' ? '' : (hasProcess ? 'Procesos' : this.sectionDefs().find(s=>s.id===st.section).label),
+
+      // view flags
+      isMyWork: st.view==='mywork',
+      isAdmin,
+      showDashboard: sectionActive==='dashboard',
+      showProcesos: sectionActive==='procesos',
+      showIndicadores: sectionActive==='indicadores',
+      showObjetivos: sectionActive==='objetivos',
+      showProyectos: sectionActive==='proyectos',
+      showSolicitudes: sectionActive==='solicitudes',
+      showEvidencias: sectionActive==='evidencias',
+      showReportes: sectionActive==='reportes',
+      showCalendario: sectionActive==='calendario',
+      showConfig: sectionActive==='config',
+      hasProcess,
+      showGeneric: hasProcess && !proc.golden,
+      goProcesos: () => navSel('procesos'),
+
+      // ---- MI TRABAJO ----
+      dailySummary: [
+        { num:'5', label:'Actividades', color:'#E5A100' },
+        { num:'4', label:'Evidencias', color:'#5B4FD0' },
+        { num:'3', label:'Solicitudes', color:'#E5484D' },
+        { num:'2', label:'Vencen hoy', color:'#2E6BE6' },
+      ],
+      myActivities: [
+        { name:'Consolidar y proyectar presupuesto', proc:'Formulación y Control Presupuestario', dot:'#E5A100', due:'Hoy', tColor:'#E5484D', tBg:'#FDECEC', onOpen:()=>this.setState({view:'workspace',ws:'vraf',section:'procesos',process:this.processData()[0],ptab:'acts',uploaded:{}}) },
+        { name:'Cerrar solicitud de mantenimiento SOL-118', proc:'Atención de Solicitudes Internas', dot:'#E5484D', due:'Hoy', tColor:'#E5484D', tBg:'#FDECEC', onOpen:()=>this.setState({view:'workspace',ws:'vraf',section:'procesos',process:this.processData()[3],ptab:'oper',uploaded:{}}) },
+        { name:'Revisar plan de mejora PM-04', proc:'Seguimiento Estratégico Institucional', dot:'#E5A100', due:'11 jul', tColor:'#B4791A', tBg:'#FDF3E1', onOpen:()=>this.setState({view:'workspace',ws:'vraf',section:'procesos',process:this.processData()[1],ptab:'oper',uploaded:{}}) },
+        { name:'Registrar encuesta de satisfacción Q2', proc:'Atención de Solicitudes Internas', dot:'#2E6BE6', due:'22 jul', tColor:'#475467', tBg:'#F2F4F7', onOpen:()=>this.setState({view:'workspace',ws:'vraf',section:'procesos',process:this.processData()[3],ptab:'oper',uploaded:{}}) },
+        { name:'Validar conciliación bancaria junio', proc:'Gestión Financiera Institucional', dot:'#12A150', due:'15 jul', tColor:'#475467', tBg:'#F2F4F7', onOpen:()=>this.setState({view:'workspace',ws:'vraf',section:'procesos',process:this.processData()[2],ptab:'oper',uploaded:{}}) },
+      ],
+      myEvidences: [
+        { name:'Consolidado presupuestario.xlsx', type:'Archivo', color:'#5B4FD0', bg:'#EEF0FB' },
+        { name:'Acta de ajustes.docx', type:'Acta', color:'#2E6BE6', bg:'#EAF1FE' },
+        { name:'Registro de entregas POA', type:'Registro', color:'#0F8A8A', bg:'#E6F4F4' },
+        { name:'Encuesta satisfacción Q2', type:'Formulario', color:'#B4791A', bg:'#FDF3E1' },
+      ],
+      mySolic: [
+        { folio:'SOL-118', asunto:'Mantenimiento aire acondicionado Edif. C' },
+        { folio:'SOL-121', asunto:'Reposición de mobiliario de oficina' },
+        { folio:'SOL-124', asunto:'Contratación Analista de Presupuesto' },
+      ],
+      myIndicators: [
+        { name:'Cumplimiento presupuestario', valor:'80%', meta:'85%', sem:'#E5A100', tend:'▲ 3%', tColor:'#12A150' },
+        { name:'Tiempo de respuesta', valor:'2.4 d', meta:'≤ 3 d', sem:'#12A150', tend:'▼ 0.3d', tColor:'#12A150' },
+        { name:'Evidencias al día', valor:'64%', meta:'80%', sem:'#E5484D', tend:'▲ 2%', tColor:'#12A150' },
+      ],
+      alerts: [
+        { text:'SOL-118 está por vencer su tiempo de respuesta', time:'hace 1 h', color:'#E5484D' },
+        { text:'Indicador "Evidencias documentadas" en rojo (64%)', time:'hace 3 h', color:'#E5484D' },
+        { text:'Proceso "Atención de Solicitudes" en estado crítico', time:'hoy', color:'#E5A100' },
+      ],
+      upcoming: [
+        { day:'08', mon:'Jul', title:'Cierre solicitud SOL-118', meta:'Atención de Solicitudes', color:'#E5484D' },
+        { day:'12', mon:'Jul', title:'Aprobación de presupuesto', meta:'Formulación y Control Presup.', color:'#E5A100' },
+        { day:'15', mon:'Jul', title:'Conciliación bancaria junio', meta:'Gestión Financiera', color:'#2E6BE6' },
+        { day:'20', mon:'Jul', title:'Revisión seguimiento estratégico', meta:'Seguimiento Estratégico', color:'#5B4FD0' },
+      ],
+      quickActions: [
+        { label:'Cargar evidencia', icon:'M12 16V4M7 9l5-5 5 5M4 20h16', color:'#5B4FD0', bg:'#EEF0FB', onSel:()=>this.setState({view:'workspace',section:'evidencias',process:null}) },
+        { label:'Nueva solicitud', icon:'M12 5v14M5 12h14', color:'#E5484D', bg:'#FDECEC', onSel:()=>this.setState({view:'workspace',section:'solicitudes',process:null}) },
+        { label:'Ver procesos', icon:'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9', color:'#E5A100', bg:'#FDF3E1', onSel:()=>this.setState({view:'workspace',section:'procesos',process:null}) },
+        { label:'Indicadores', icon:'M4 20a8 8 0 1 1 16 0M12 14l4-4', color:'#12A150', bg:'#EEF6EE', onSel:()=>this.setState({view:'workspace',section:'indicadores',process:null}) },
+        { label:'Dashboard', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16', color:'#2E6BE6', bg:'#EAF1FE', onSel:()=>this.setState({view:'workspace',section:'dashboard',process:null}) },
+        { label:'Calendario', icon:'M4 8h16M7 3v3M17 3v3M5 5h14v14H5z', color:'#0F8A8A', bg:'#E6F4F4', onSel:()=>this.setState({view:'workspace',section:'calendario',process:null}) },
+      ],
+
+      // ---- DASHBOARD ----
+      dashStats: [
+        { label:'Procesos activos', num:'14', sub:'+2 esta semana', color:'#2E6BE6', bg:'#EAF1FE', icon:'M9 11l3 3 8-8M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9' },
+        { label:'Procesos críticos', num:'3', sub:'requieren atención', color:'#E5484D', bg:'#FDECEC', icon:'M12 2L2 20h20zM12 9v5M12 17h.01' },
+        { label:'Solicitudes pendientes', num:'8', sub:'2 por vencer', color:'#E5A100', bg:'#FDF3E1', icon:'M4 13h4l2 3h4l2-3h4M5 5h14v13H5z' },
+        { label:'Próximos a vencer', num:'5', sub:'en 7 días', color:'#5B4FD0', bg:'#EEF0FB', icon:'M12 8v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z' },
+      ],
+      semaforoSummary: [
+        { num:'8', label:'Indicadores en verde', sub:'en meta', color:'#12A150' },
+        { num:'3', label:'Indicadores en amarillo', sub:'en alerta', color:'#E5A100' },
+        { num:'1', label:'Indicador en rojo', sub:'fuera de meta', color:'#E5484D' },
+      ],
+      criticalProcesses: gw.wsProcesses.slice(0,4),
+      recentActivity: [
+        { who:'R. Menjívar', text:'cargó el consolidado presupuestario.', time:'hace 12 min', ini:'RM', avBg:'#EAF1FE', avFg:'#2E6BE6' },
+        { who:'Sistema', text:'recalculó el cumplimiento presupuestario a 80%.', time:'hace 40 min', ini:'SS', avBg:'#EEF6EE', avFg:'#12A150' },
+        { who:'A. Cruz', text:'completó "Recopilar POA".', time:'hace 2 h', ini:'AC', avBg:'#FDF3E1', avFg:'#B4791A' },
+        { who:'J. Rivas', text:'abrió la solicitud SOL-124.', time:'hoy', ini:'JR', avBg:'#FDECEC', avFg:'#E5484D' },
+      ],
+      recentEvidence: [
+        { name:'Consolidado_Presupuesto.xlsx', meta:'hace 12 min · Formulación', color:'#12A150', bg:'#EEF6EE' },
+        { name:'Formulario_POA_RRHH.pdf', meta:'hace 2 h · Formulación', color:'#E5484D', bg:'#FDECEC' },
+        { name:'Acta_Comite.docx', meta:'hoy · Rendición de cuentas', color:'#2E6BE6', bg:'#EAF1FE' },
+      ],
+
+      // ---- PROCESOS ----
+      processes: gw.wsProcesses,
+      processCount: gw.wsProcesses.length,
+
+      // ---- INDICADORES ----
+      indicators: this.indicatorData(),
+
+      // ---- OBJETIVOS ----
+      objetivos: [
+        { code:'O1', name:'Optimizar la gestión y ejecución presupuestaria', proyectos:'3', procesos:'5', avance:'78%', color:'#2E6BE6', bg:'#EAF1FE' },
+        { code:'O2', name:'Fortalecer el control interno y la transparencia', proyectos:'2', procesos:'4', avance:'64%', color:'#12A150', bg:'#EEF6EE' },
+        { code:'O3', name:'Mejorar la calidad del servicio a las unidades', proyectos:'2', procesos:'3', avance:'88%', color:'#E5A100', bg:'#FDF3E1' },
+        { code:'O4', name:'Digitalizar los procesos administrativos', proyectos:'1', procesos:'2', avance:'42%', color:'#5B4FD0', bg:'#EEF0FB' },
+      ],
+      // ---- PROYECTOS ----
+      proyectos: [
+        { code:'PRY-01', name:'Modernización del ciclo presupuestario', obj:'O1', resp:'R. Menjívar', estado:'En curso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'72%', color:'#2E6BE6' },
+        { code:'PRY-02', name:'Sistema de control interno automatizado', obj:'O2', resp:'M. Villalta', estado:'En curso', estColor:'#5B4FD0', estBg:'#EEF0FB', avance:'55%', color:'#12A150' },
+        { code:'PRY-03', name:'Mejora de tiempos de atención', obj:'O3', resp:'J. Rivas', estado:'En riesgo', estColor:'#E5484D', estBg:'#FDECEC', avance:'40%', color:'#E5A100' },
+        { code:'PRY-04', name:'Expediente digital administrativo', obj:'O4', resp:'L. Portillo', estado:'Planificado', estColor:'#667085', estBg:'#F2F4F7', avance:'18%', color:'#5B4FD0' },
+      ],
+      // ---- SOLICITUDES ----
+      solicitudes: [
+        { folio:'SOL-118', asunto:'Mantenimiento de aire acondicionado — Edificio C', quien:'Facultad de Ing.', estado:'Por vencer', color:'#E5A100', bg:'#FDF3E1', dias:'2.8 d', diasColor:'#E5A100' },
+        { folio:'SOL-121', asunto:'Reposición de mobiliario de oficina', quien:'Rectoría', estado:'En proceso', color:'#2E6BE6', bg:'#EAF1FE', dias:'1.2 d', diasColor:'#475467' },
+        { folio:'SOL-124', asunto:'Contratación Analista de Presupuesto', quien:'VRAF', estado:'En proceso', color:'#2E6BE6', bg:'#EAF1FE', dias:'0.5 d', diasColor:'#475467' },
+        { folio:'SOL-116', asunto:'Reposición de equipo de cómputo', quien:'Biblioteca', estado:'Cerrada', color:'#12A150', bg:'#EEF6EE', dias:'2.1 d', diasColor:'#12A150' },
+        { folio:'SOL-114', asunto:'Pago a proveedor de servicios de limpieza', quien:'Servicios Grales.', estado:'Cerrada', color:'#12A150', bg:'#EEF6EE', dias:'1.8 d', diasColor:'#12A150' },
+        { folio:'SOL-113', asunto:'Actualización de licencias de software', quien:'TIC', estado:'Cerrada', color:'#12A150', bg:'#EEF6EE', dias:'2.4 d', diasColor:'#12A150' },
+      ],
+      // ---- EVIDENCIAS ----
+      evidencias: [
+        { name:'Consolidado_Presupuesto.xlsx', meta:'Excel · v3 · hoy', color:'#12A150', bg:'#EEF6EE', rel:'Act. 3 · Formulación Presup.' },
+        { name:'Formulario_POA_RRHH.pdf', meta:'PDF · v1 · hoy', color:'#E5484D', bg:'#FDECEC', rel:'Act. 2 · Formulación Presup.' },
+        { name:'Circular_Lineamientos.pdf', meta:'PDF · v1 · 2 jul', color:'#E5484D', bg:'#FDECEC', rel:'Act. 1 · Formulación Presup.' },
+        { name:'Registro_Entregas_POA.xlsx', meta:'Excel · v1 · 3 jul', color:'#12A150', bg:'#EEF6EE', rel:'Act. 2 · Formulación Presup.' },
+        { name:'Acta_Comite.docx', meta:'Word · v1 · hoy', color:'#2E6BE6', bg:'#EAF1FE', rel:'Rendición de cuentas' },
+        { name:'Conciliacion_Junio.xlsx', meta:'Excel · v2 · ayer', color:'#12A150', bg:'#EEF6EE', rel:'Gestión Financiera' },
+        { name:'Encuesta_Satisfaccion.xlsx', meta:'Excel · v2 · 30 jun', color:'#12A150', bg:'#EEF6EE', rel:'Atención de Solicitudes' },
+        { name:'Informe_Ejecucion.pdf', meta:'PDF · v1 · 1 jul', color:'#E5484D', bg:'#FDECEC', rel:'Control presupuestario' },
+      ],
+      // ---- REPORTES ----
+      reportes: [
+        { name:'Informe mensual de ejecución presupuestaria', freq:'Mensual', date:'1 jul 2026', color:'#5B4FD0', bg:'#EEF0FB' },
+        { name:'Informe de solicitudes internas', freq:'Mensual', date:'1 jul 2026', color:'#E5484D', bg:'#FDECEC' },
+        { name:'Reporte de cumplimiento de indicadores', freq:'Trimestral', date:'30 jun 2026', color:'#12A150', bg:'#EEF6EE' },
+        { name:'Informe de seguimiento estratégico', freq:'Trimestral', date:'30 jun 2026', color:'#2E6BE6', bg:'#EAF1FE' },
+        { name:'Memoria anual de la VRAF', freq:'Anual', date:'31 dic 2025', color:'#E5A100', bg:'#FDF3E1' },
+      ],
+      // ---- CALENDARIO ----
+      calendar: [
+        { day:'08', mon:'Jul', title:'Cierre de solicitud SOL-118', meta:'Vence tiempo de respuesta', tag:'Crítico', color:'#E5484D', bg:'#FDECEC' },
+        { day:'12', mon:'Jul', title:'Aprobación del presupuesto', meta:'Comité de presupuesto', tag:'Hito', color:'#E5A100', bg:'#FDF3E1' },
+        { day:'15', mon:'Jul', title:'Conciliación bancaria junio', meta:'Gestión Financiera', tag:'Tarea', color:'#2E6BE6', bg:'#EAF1FE' },
+        { day:'20', mon:'Jul', title:'Revisión de seguimiento estratégico', meta:'Trimestral', tag:'Reunión', color:'#5B4FD0', bg:'#EEF0FB' },
+        { day:'25', mon:'Jul', title:'Cierre contable mensual', meta:'Contabilidad', tag:'Obligación', color:'#12A150', bg:'#EEF6EE' },
+        { day:'31', mon:'Jul', title:'Informe mensual de ejecución', meta:'Generación automática', tag:'Reporte', color:'#0F8A8A', bg:'#E6F4F4' },
+      ],
+      // ---- CONFIG ----
+      configItems: [
+        { name:'Usuarios de la unidad', desc:'Altas, roles y accesos', icon:'M16 20v-2a4 4 0 0 0-8 0v2M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z', color:'#2E6BE6', bg:'#EAF1FE', noLink:true },
+        { name:'Permisos (RBAC)', desc:'Capacidades por perfil', icon:'M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z', color:'#E5484D', bg:'#FDECEC', noLink:true },
+        { name:'Plantillas de proceso', desc:'Estados, SLA e indicadores', icon:'M5 4a1 1 0 0 1 1-1h9l4 4v13H6a1 1 0 0 1-1-1zM14 3v4h4', color:'#E5A100', bg:'#FDF3E1', noLink:true },
+        { name:'Catálogos', desc:'Tipos, prioridades, unidades', icon:'M4 6h16M4 12h16M4 18h10', color:'#12A150', bg:'#EEF6EE', noLink:true },
+        { name:'Automatizaciones', desc:'Reglas evento → acción', icon:'M13 2L3 14h7l-1 8 10-12h-7l1-8z', color:'#5B4FD0', bg:'#EEF0FB', noLink:true },
+        { name:'Dashboard de la unidad', desc:'Widgets y visualizaciones', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16', color:'#0F8A8A', bg:'#E6F4F4', noLink:true },
+        { name:'Constructor de Procesos', desc:'Process Builder — crear nuevos procesos', icon:'M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7z', color:'#2E6BE6', bg:'#EAF1FE', link:'SSE-VRAF · Process Builder.dc.html', noLink:false },
+        { name:'Form Builder', desc:'Constructor de formularios institucionales', icon:'M4 5h16v14H4zM8 9h8M8 13h5', color:'#5B4FD0', bg:'#EEF0FB', link:'SSE-VRAF · Form Builder.dc.html', noLink:false },
+        { name:'Data Studio', desc:'Entidades, relaciones y modelo de datos', icon:'M4 4h7v7H4zM13 4h7v4h-7zM13 11h7v9h-7zM4 14h7v6H4z', color:'#12A150', bg:'#EEF6EE', link:'SSE-VRAF · Data Studio.dc.html', noLink:false },
+        { name:'Dashboard Ejecutivo', desc:'Vista consolidada de toda la VRAF', icon:'M4 20V10M10 20V4M16 20v-7M4 20h16', color:'#0F2647', bg:'#EAF0F7', link:'SSE-VRAF · Dashboard Ejecutivo.dc.html', noLink:false },
+        { name:'Motor de Reportes', desc:'Generación automática PDF · Word · Excel', icon:'M8 3h6l4 4v14H6V5a2 2 0 0 1 2-2zM14 3v4h4M9 13h6', color:'#E5484D', bg:'#FDECEC', link:'SSE-VRAF · Motor de Reportes.dc.html', noLink:false },
+        { name:'Handoff · Claude Code', desc:'Paquete de entrega para implementación', icon:'M9 12l2 2 4-4M12 3l7 4v5c0 4.5-3 7.5-7 9', color:'#0F2647', bg:'#EAF0F7', link:'SSE-VRAF · Handoff Claude Code.dc.html', noLink:false },
+      ],
+
+      // ---- PROCESS DETAIL ----
+      proc,
+      tabs, tabOper: st.ptab==='oper', tabActs: st.ptab==='acts', tabHist: st.ptab==='hist', tabInfo: st.ptab==='info',
+      closeProcess: () => this.setState({ process:null }),
+      flow: [
+        { label:'Proceso creado', dot:'#12A150', bg:'rgba(18,161,80,.14)', border:'rgba(18,161,80,.3)', color:'#BEEBCF', arrow:true },
+        { label:'Actividades', dot:'#7FB0FF', bg:'rgba(127,176,255,.16)', border:'rgba(127,176,255,.3)', color:'#EAF1FE', arrow:true },
+        { label:'Evidencias', dot:'#7FB0FF', bg:'rgba(127,176,255,.16)', border:'rgba(127,176,255,.3)', color:'#EAF1FE', arrow:true },
+        { label:'Validación', dot:'#E5A100', bg:'rgba(229,161,0,.16)', border:'rgba(229,161,0,.3)', color:'#F6E2B8', arrow:true },
+        { label:'Actualización auto.', dot:'#5B7196', bg:'rgba(255,255,255,.05)', border:'rgba(143,176,230,.2)', color:'#9FB0C9', arrow:true },
+        { label:'Indicadores', dot:'#5B7196', bg:'rgba(255,255,255,.05)', border:'rgba(143,176,230,.2)', color:'#9FB0C9', arrow:true },
+        { label:'Dashboard', dot:'#5B7196', bg:'rgba(255,255,255,.05)', border:'rgba(143,176,230,.2)', color:'#9FB0C9', arrow:true },
+        { label:'Reporte', dot:'#5B7196', bg:'rgba(255,255,255,.05)', border:'rgba(143,176,230,.2)', color:'#9FB0C9', arrow:false },
+      ],
+      pendingActs: [
+        { name:'Consolidar y proyectar presupuesto', resp:'L. Portillo', time:'10 d', dot:'#E5A100', due:'En curso', tColor:'#B4791A', tBg:'#FDF3E1' },
+        { name:'Revisar y ajustar con VRAF', resp:'M. Villalta', time:'5 d', dot:'#667085', due:'Pendiente', tColor:'#667085', tBg:'#F2F4F7' },
+        { name:'Presentar para aprobación', resp:'M. Villalta', time:'7 d', dot:'#667085', due:'Pendiente', tColor:'#667085', tBg:'#F2F4F7' },
+      ],
+      relatedSolic: [
+        { folio:'SOL-124', asunto:'Contratación Analista de Presupuesto', estado:'En proceso', color:'#2E6BE6', bg:'#EAF1FE' },
+        { folio:'SOL-109', asunto:'Ampliación de techo presupuestario TIC', estado:'Cerrada', color:'#12A150', bg:'#EEF6EE' },
+      ],
+      procKpis: [
+        { name:'Cumplimiento presupuestario', valor:'80%', pct:'80%', meta:'85%', sem:'#E5A100', semLabel:'amarillo' },
+        { name:'Índice de desviación', valor:'4.2%', pct:'84%', meta:'≤ 5%', sem:'#12A150', semLabel:'verde' },
+        { name:'Evidencias documentadas', valor:'64%', pct:'64%', meta:'80%', sem:'#E5484D', semLabel:'rojo' },
+      ],
+      activities,
+      history: [
+        { who:'R. Menjívar', text:'cargó el consolidado presupuestario (v3) en la actividad 3.', time:'hoy · 10:42', ini:'RM', avBg:'#EAF1FE', avFg:'#2E6BE6' },
+        { who:'Sistema', text:'recalculó el cumplimiento presupuestario a 80% y actualizó el dashboard.', time:'hoy · 10:42', ini:'SS', avBg:'#EEF6EE', avFg:'#12A150' },
+        { who:'A. Cruz', text:'completó la actividad "Recopilar POA y requerimientos".', time:'ayer · 16:05', ini:'AC', avBg:'#FDF3E1', avFg:'#B4791A' },
+        { who:'M. Villalta', text:'emitió los lineamientos de formulación.', time:'2 jul · 09:12', ini:'MV', avBg:'#EEF0FB', avFg:'#5B4FD0' },
+      ],
+      infoGeneral: [
+        { label:'Objetivo', value:'Formular, aprobar y controlar el presupuesto institucional, asegurando la asignación eficiente de los recursos financieros.', span:'grid-column:span 2' },
+        { label:'Alcance', value:'Desde la emisión de lineamientos anuales hasta el cierre y evaluación de la ejecución.' },
+        { label:'Responsables', value:'Vicerrectora VRAF · Jefe de Contabilidad · Analista de Presupuesto.' },
+        { label:'Entradas', value:'Plan estratégico · POA de unidades · históricos · techos presupuestarios.' },
+        { label:'Salidas', value:'Presupuesto aprobado · modificaciones · informes de ejecución.' },
+        { label:'Clientes internos', value:'Rectoría · unidades académicas y administrativas.' },
+        { label:'Clientes externos', value:'Junta Directiva · entes de auditoría.' },
+        { label:'Normativa', value:'Reglamento financiero UPES · normativa de educación superior.' },
+        { label:'Procedimientos', value:'Formulación anual · Modificaciones · Control y seguimiento de la ejecución.', span:'grid-column:span 2' },
+      ],
+
+      // ---- INDICATOR DRAWER ----
+      indOpen: !!st.indicator, ind, indAttrs,
+      closeIndicator: () => this.setState({ indicator:null }),
+    };
+  }
+}
+</script>
+</body>
+</html>

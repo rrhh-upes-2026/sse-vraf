@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{font-family:'Public Sans',system-ui,sans-serif;color:#14181F;background:#F0F2F5;-webkit-font-smoothing:antialiased}
+  a{color:#2E6BE6;text-decoration:none}a:hover{color:#0F2647}
+  .mono{font-family:'Space Grotesk',monospace}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#D0D5DD;border-radius:8px;border:2px solid #F0F2F5}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .pill{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:700}
+  table{width:100%;border-collapse:collapse}
+  th{background:#FAFBFC;padding:9px 14px;text-align:left;font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #EEF1F5}
+  td{padding:10px 14px;font-size:12px;color:#344054;border-bottom:1px solid #F4F6F9;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden">
+
+  <!-- ===== SIDEBAR ===== -->
+  <nav style="width:260px;flex:none;background:#0F2647;overflow-y:auto;padding-bottom:30px">
+    <div style="padding:20px 18px 16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2E6BE6,#5B8DEF);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:13px">SS</div>
+        <div><div style="font-size:14px;font-weight:800;color:#fff">SSE-VRAF</div><div style="font-size:10.5px;color:#7FB0FF;font-weight:600">Master Handoff</div></div>
+      </div>
+      <div style="margin-top:12px;padding:8px 12px;background:rgba(18,161,80,.18);border-radius:9px;display:flex;align-items:center;gap:7px">
+        <span style="width:8px;height:8px;border-radius:50%;background:#12A150"></span>
+        <span style="font-size:11px;font-weight:700;color:#7FE0A3">Engineering Ready · v1.0</span>
+      </div>
+    </div>
+    <sc-for list="{{ navSections }}" as="s" hint-placeholder-count="19">
+      <button onClick="{{ s.onSel }}" style="{{ s.style }}">
+        <span style="font-size:10px;font-weight:700;color:{{ s.numC }};width:22px;flex:none;font-family:'Space Grotesk'">{{ s.num }}</span>
+        <span style="font-size:12px;font-weight:{{ s.active?'700':'500' }}">{{ s.label }}</span>
+      </button>
+    </sc-for>
+  </nav>
+
+  <!-- ===== MAIN ===== -->
+  <main style="flex:1;min-width:0;overflow-y:auto;background:#F0F2F5">
+
+    <!-- TOP STRIP -->
+    <div style="background:#fff;border-bottom:1px solid #E4E8EF;padding:12px 32px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10">
+      <div style="font-size:13px;font-weight:800;color:#14181F">{{ activeTitle }}</div>
+      <div style="flex:1"></div>
+      <span style="font-size:11px;color:#98A2B3">Sprint 0 · Engineering Readiness · 9 jul 2026</span>
+      <span style="font-size:10.5px;font-weight:700;color:#fff;background:#0F2647;padding:3px 10px;border-radius:6px">CONGELADO</span>
+    </div>
+
+    <div style="padding:28px 32px 60px;max-width:960px">
+
+      <!-- ── S1: VISIÓN ── -->
+      <sc-if value="{{ s1 }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:fadeIn .2s ease">
+        <div style="background:linear-gradient(135deg,#0F2647,#1D3E6E);border-radius:16px;padding:28px 32px;color:#fff;margin-bottom:22px">
+          <div style="font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#7FB0FF;font-weight:700;margin-bottom:8px">Sistema de Seguimiento Estratégico</div>
+          <div style="font-size:26px;font-weight:900;letter-spacing:-.4px;margin-bottom:10px">Vicerrectoría Administrativa y Financiera<br>Universidad Politécnica de El Salvador</div>
+          <p style="font-size:14px;color:#C7D6EE;max-width:740px;line-height:1.65;margin:0 0 20px">El SSE-VRAF es el <b style="color:#fff">Centro de Operaciones Digital</b> de la VRAF. No es un gestor documental ni un ERP. Es un sistema de gestión estratégica basado en Procesos Institucionales donde los usuarios capturan su trabajo una sola vez y el sistema genera automáticamente indicadores, dashboards, reportes e historial.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <sc-for list="{{ visionPills }}" as="p" hint-placeholder-count="5">
+              <span style="background:rgba(127,176,255,.15);border:1px solid rgba(127,176,255,.3);padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;color:#EAF1FE">{{ p }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <sc-for list="{{ visionCards }}" as="c" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:18px 20px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:{{ c.color }};margin-bottom:8px">{{ c.cat }}</div>
+              <div style="font-size:14px;font-weight:800;color:#14181F;margin-bottom:8px">{{ c.title }}</div>
+              <div style="font-size:12.5px;color:#475467;line-height:1.6">{{ c.body }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ── S2: ARQUITECTURA ── -->
+      <sc-if value="{{ s2 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:18px 22px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+          <div style="font-size:13px;font-weight:800;color:#14181F;margin-bottom:12px">Cadena obligatoria · toda entidad pertenece a esta jerarquía o no existe</div>
+          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+            <sc-for list="{{ chain }}" as="c" hint-placeholder-count="10">
+              <div style="display:flex;align-items:center;gap:5px">
+                <span style="font-size:11.5px;font-weight:700;color:{{ c.tc }};background:{{ c.bg }};padding:5px 12px;border-radius:7px;border:1.5px solid {{ c.border }}">{{ c.label }}</span>
+                <sc-if value="{{ c.arr }}" hint-placeholder-val="{{ true }}"><span style="color:#B0B8C4;font-size:13px">→</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <sc-for list="{{ archDecisions }}" as="d" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid #E4E8EF;border-left:4px solid {{ d.color }};border-radius:0 13px 13px 0;padding:14px 16px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+              <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:{{ d.color }};margin-bottom:6px">{{ d.cat }}</div>
+              <div style="font-size:13px;font-weight:700;color:#14181F;margin-bottom:6px">{{ d.title }}</div>
+              <div style="font-size:11.5px;color:#667085;line-height:1.5">{{ d.body }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ── S3: ESTRUCTURA ── -->
+      <sc-if value="{{ s3 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ structure }}" as="area" hint-placeholder-count="5">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+            <div style="padding:13px 20px;background:{{ area.bg }};border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:10px">
+              <span style="font-size:14px;font-weight:800;color:{{ area.color }}">{{ area.name }}</span>
+              <span style="font-size:11px;color:#98A2B3;font-weight:600">{{ area.desc }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0">
+              <sc-for list="{{ area.modules }}" as="m" hint-placeholder-count="4">
+                <div style="padding:12px 16px;border-right:1px solid #EEF1F5">
+                  <div style="font-size:12.5px;font-weight:700;color:#14181F;margin-bottom:4px">{{ m.name }}</div>
+                  <div style="font-size:11px;color:#98A2B3;line-height:1.4">{{ m.desc }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ── S4: COMPONENTES ── -->
+      <sc-if value="{{ s4 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+        <table>
+          <tr><th>Componente</th><th>Propósito</th><th>Props clave</th><th>Estado</th><th>Prio</th></tr>
+          <sc-for list="{{ components }}" as="c" hint-placeholder-count="20">
+            <tr>
+              <td><div class="mono" style="font-size:12px;font-weight:700;color:#5B4FD0">{{ c.name }}</div><div style="font-size:10px;color:#98A2B3">{{ c.path }}</div></td>
+              <td style="font-size:12px;color:#475467">{{ c.purpose }}</td>
+              <td><div class="mono" style="font-size:10.5px;color:#667085;line-height:1.5">{{ c.props }}</div></td>
+              <td><span class="pill" style="color:{{ c.stC }};background:{{ c.stB }}">{{ c.states }}</span></td>
+              <td><span class="pill" style="color:{{ c.prC }};background:{{ c.prB }}">{{ c.prio }}</span></td>
+            </tr>
+          </sc-for>
+        </table>
+      </div>
+      </sc-if>
+
+      <!-- ── S5: BUILDERS ── -->
+      <sc-if value="{{ s5 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ builders }}" as="b" hint-placeholder-count="5">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+            <div style="padding:14px 20px;border-bottom:1px solid #EEF1F5;display:flex;align-items:center;gap:12px">
+              <div style="width:36px;height:36px;border-radius:10px;background:{{ b.bg }};color:{{ b.color }};display:flex;align-items:center;justify-content:center;font-size:18px">{{ b.emoji }}</div>
+              <div style="flex:1"><div style="font-size:14px;font-weight:800;color:#14181F">{{ b.name }}</div><div style="font-size:11.5px;color:#98A2B3">{{ b.sub }}</div></div>
+              <span class="mono" style="font-size:10.5px;color:#5B4FD0;background:#EEF0FB;padding:3px 10px;border-radius:6px">{{ b.file }}</span>
+            </div>
+            <div style="padding:12px 20px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><div style="font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Propósito</div><div style="font-size:12.5px;color:#344054;line-height:1.5">{{ b.purpose }}</div></div>
+              <div><div style="font-size:10.5px;font-weight:700;color:#98A2B3;text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px">Salida (Output)</div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap">
+                  <sc-for list="{{ b.outputs }}" as="o" hint-placeholder-count="3"><span style="font-size:10.5px;font-weight:600;color:{{ b.color }};background:{{ b.bg }};padding:3px 8px;border-radius:6px">{{ o }}</span></sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ── S6: MODELO DE DATOS ── -->
+      <sc-if value="{{ s6 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+        <table>
+          <tr><th>Entidad</th><th>Descripción</th><th>Relaciones clave</th><th>Responsabilidad</th><th>Tipo</th></tr>
+          <sc-for list="{{ dataModel }}" as="e" hint-placeholder-count="12">
+            <tr>
+              <td><div style="font-weight:700;color:#14181F">{{ e.name }}</div><sc-if value="{{ e.core }}" hint-placeholder-val="{{ false }}"><span class="pill" style="color:#fff;background:#2E6BE6;margin-top:3px;display:inline-flex">NÚCLEO</span></sc-if></td>
+              <td style="font-size:12px;color:#475467;max-width:200px">{{ e.desc }}</td>
+              <td><div class="mono" style="font-size:11px;color:#5B4FD0;line-height:1.6">{{ e.relations }}</div></td>
+              <td style="font-size:12px;color:#475467">{{ e.responsibility }}</td>
+              <td><span class="pill" style="color:{{ e.tc }};background:{{ e.tb }}">{{ e.type }}</span></td>
+            </tr>
+          </sc-for>
+        </table>
+      </div>
+      </sc-if>
+
+      <!-- ── S7: REGLAS DE NEGOCIO ── -->
+      <sc-if value="{{ s7 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ bizRules }}" as="r" hint-placeholder-count="10">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:12px;padding:15px 20px;box-shadow:0 1px 3px rgba(16,24,40,.05);display:flex;gap:14px;align-items:flex-start">
+            <div style="width:34px;height:34px;flex:none;border-radius:9px;background:{{ r.bg }};color:{{ r.color }};display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:800;font-size:12px">{{ r.id }}</div>
+            <div style="flex:1"><div style="font-size:12.5px;font-weight:800;color:#14181F;margin-bottom:3px">{{ r.title }}</div><div style="font-size:12px;color:#475467;line-height:1.55">{{ r.body }}</div></div>
+            <span class="pill" style="color:{{ r.catC }};background:{{ r.catB }};flex:none">{{ r.cat }}</span>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ── S8: AUTOMATIZACIONES ── -->
+      <sc-if value="{{ s8 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ automations }}" as="a" hint-placeholder-count="6">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+            <div style="padding:11px 18px;border-bottom:1px solid #F4F6F9;display:flex;align-items:center;gap:10px">
+              <span style="font-size:11px;font-weight:700;color:#fff;background:#E5484D;padding:3px 9px;border-radius:5px">SI</span>
+              <span style="font-size:13px;font-weight:700;color:#14181F;flex:1">{{ a.trigger }}</span>
+              <span class="mono" style="font-size:10px;color:#5B4FD0;background:#EEF0FB;padding:2px 8px;border-radius:5px">{{ a.event }}</span>
+            </div>
+            <div style="padding:10px 18px;display:flex;gap:6px;flex-wrap:wrap">
+              <sc-for list="{{ a.actions }}" as="ac" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:#F4F7FE;border-radius:8px;font-size:11.5px;color:#344054;font-weight:600"><span style="color:#2E6BE6">→</span>{{ ac }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ── S9: EVENTOS ── -->
+      <sc-if value="{{ s9 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+        <table>
+          <tr><th>Evento</th><th>Descripción</th><th>Módulo origen</th><th>Consumidores</th></tr>
+          <sc-for list="{{ events }}" as="e" hint-placeholder-count="16">
+            <tr>
+              <td><div class="mono" style="font-size:11.5px;font-weight:700;color:#E5484D">{{ e.name }}</div></td>
+              <td style="font-size:12px;color:#475467">{{ e.desc }}</td>
+              <td><span class="pill" style="color:{{ e.mc }};background:{{ e.mb }}">{{ e.module }}</span></td>
+              <td style="font-size:11px;color:#667085">{{ e.consumers }}</td>
+            </tr>
+          </sc-for>
+        </table>
+      </div>
+      </sc-if>
+
+      <!-- ── S10: ROLES ── -->
+      <sc-if value="{{ s10 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ roles }}" as="r" hint-placeholder-count="6">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden;border-left:4px solid {{ r.color }}">
+            <div style="padding:13px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #EEF1F5">
+              <span style="font-size:14px;font-weight:800;color:#14181F">{{ r.name }}</span>
+              <span class="mono" style="font-size:11px;font-weight:700;color:{{ r.color }};background:{{ r.bg }};padding:2px 9px;border-radius:6px">{{ r.code }}</span>
+              <span style="font-size:11.5px;color:#667085;flex:1">{{ r.desc }}</span>
+            </div>
+            <div style="padding:10px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <sc-for list="{{ r.perms }}" as="p" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:7px;font-size:11.5px;color:#344054"><span style="width:16px;height:16px;border-radius:50%;background:{{ p.bg }};color:{{ p.c }};display:flex;align-items:center;justify-content:center;flex:none;font-size:9px">{{ p.icon }}</span>{{ p.label }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ── S11: STACK ── -->
+      <sc-if value="{{ s11 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <sc-for list="{{ stack }}" as="s" hint-placeholder-count="9">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,.05);border-top:3px solid {{ s.color }}">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:{{ s.color }};margin-bottom:8px">{{ s.layer }}</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <sc-for list="{{ s.techs }}" as="t" hint-placeholder-count="3">
+                <div style="padding:7px 10px;background:#FAFBFC;border:1px solid #EEF1F5;border-radius:8px"><div class="mono" style="font-size:12px;font-weight:700;color:#14181F">{{ t.name }}</div><div style="font-size:10.5px;color:#98A2B3;margin-top:2px">{{ t.why }}</div></div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ── S12: PROYECTO ── -->
+      <sc-if value="{{ s12 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:#0F2647;border-radius:14px;padding:20px;color:#fff">
+          <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:12px">Estructura de directorios</div>
+          <div class="mono" style="font-size:12px;line-height:2;color:#A9C0E4">
+            <div style="color:#7FE0A3">app/</div>
+            <div style="padding-left:16px;color:#7FB0FF">(auth)/ · (workspace)/ · (admin)/</div>
+            <div style="color:#7FE0A3">components/</div>
+            <div style="padding-left:16px;color:#A9C0E4">ui/ · layout/ · shared/</div>
+            <div style="color:#7FE0A3">features/</div>
+            <div style="padding-left:16px;color:#A9C0E4">process/ · evidence/ · indicator/</div>
+            <div style="color:#7FE0A3">builders/</div>
+            <div style="padding-left:16px;color:#A9C0E4">process/ · form/ · dashboard/ · report/</div>
+            <div style="color:#7FE0A3">services/</div>
+            <div style="padding-left:16px;color:#A9C0E4">automation/ · notification/ · report/</div>
+            <div style="color:#7FE0A3">repositories/</div>
+            <div style="padding-left:16px;color:#A9C0E4">process/ · evidence/ · indicator/</div>
+            <div style="color:#7FE0A3">hooks/ · types/ · lib/ · store/</div>
+            <div style="color:#7FE0A3">workers/ · queues/ · events/</div>
+            <div style="color:#7FE0A3">prisma/ · config/ · docs/</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:16px 18px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+            <div style="font-size:12.5px;font-weight:800;color:#14181F;margin-bottom:8px">Arquitectura Frontend</div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <sc-for list="{{ feArch }}" as="l" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#F4F7FE;border-radius:7px;font-size:12px">
+                  <span class="mono" style="font-size:10.5px;font-weight:700;color:#2E6BE6;width:90px;flex:none">{{ l.layer }}</span>
+                  <span style="color:#475467">{{ l.desc }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:16px 18px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+            <div style="font-size:12.5px;font-weight:800;color:#14181F;margin-bottom:8px">Arquitectura Backend</div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <sc-for list="{{ beArch }}" as="l" hint-placeholder-count="5">
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#FAFBFC;border-radius:7px;font-size:12px">
+                  <span class="mono" style="font-size:10.5px;font-weight:700;color:#12A150;width:90px;flex:none">{{ l.layer }}</span>
+                  <span style="color:#475467">{{ l.desc }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ── S13: CONVENCIONES ── -->
+      <sc-if value="{{ s13 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <sc-for list="{{ conventions }}" as="c" hint-placeholder-count="8">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:15px 18px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:{{ c.color }};margin-bottom:8px">{{ c.cat }}</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <sc-for list="{{ c.examples }}" as="e" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:10px;padding:5px 8px;background:#FAFBFC;border-radius:7px">
+                  <span style="font-size:10.5px;color:#98A2B3;width:80px;flex:none">{{ e.type }}</span>
+                  <span class="mono" style="font-size:11.5px;font-weight:700;color:#14181F">{{ e.ex }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ── S14: DESIGN SYSTEM ── -->
+      <sc-if value="{{ s14 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:16px 20px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+          <div style="font-size:12.5px;font-weight:800;color:#14181F;margin-bottom:12px">Paleta de colores oficial</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ palette }}" as="p" hint-placeholder-count="10">
+              <div style="text-align:center">
+                <div style="width:48px;height:48px;border-radius:10px;background:{{ p.hex }};margin:0 auto 4px;border:1px solid rgba(0,0,0,.06)"></div>
+                <div class="mono" style="font-size:9.5px;font-weight:700;color:#475467">{{ p.hex }}</div>
+                <div style="font-size:9.5px;color:#98A2B3">{{ p.name }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:15px 18px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+            <div style="font-size:12.5px;font-weight:800;color:#14181F;margin-bottom:10px">Tipografía</div>
+            <div style="font-size:24px;font-weight:900;color:#14181F;margin-bottom:4px">Public Sans</div>
+            <div style="font-size:12.5px;color:#98A2B3;margin-bottom:8px">Pesos: 400 · 500 · 600 · 700 · 800 · 900</div>
+            <div style="font-size:14px;font-weight:700;color:#14181F;margin-bottom:4px;font-family:'Space Grotesk'">Space Grotesk</div>
+            <div style="font-size:12px;color:#98A2B3">Monospace: IDs · código · valores numéricos</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:15px 18px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+            <div style="font-size:12.5px;font-weight:800;color:#14181F;margin-bottom:10px">Tokens de espaciado y radio</div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <sc-for list="{{ tokens }}" as="t" hint-placeholder-count="6">
+                <div style="display:flex;align-items:center;gap:10px;padding:5px 8px;background:#FAFBFC;border-radius:7px">
+                  <span class="mono" style="font-size:11px;font-weight:700;color:#5B4FD0;width:120px;flex:none">{{ t.token }}</span>
+                  <span style="font-size:11.5px;color:#475467">{{ t.value }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:15px 18px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+          <div style="font-size:12.5px;font-weight:800;color:#14181F;margin-bottom:10px">Semáforos institucionales</div>
+          <div style="display:flex;gap:12px">
+            <sc-for list="{{ semaforos }}" as="s" hint-placeholder-count="3">
+              <div style="flex:1;background:{{ s.bg }};border-radius:10px;padding:12px 14px;border:1px solid {{ s.border }}">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><div style="width:12px;height:12px;border-radius:50%;background:{{ s.color }}"></div><span style="font-size:12px;font-weight:700;color:{{ s.color }}">{{ s.label }}</span></div>
+                <div style="font-size:11.5px;color:#475467">{{ s.desc }}</div>
+                <div class="mono" style="font-size:11px;color:{{ s.color }};margin-top:4px">{{ s.hex }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ── S15: ESTADOS ── -->
+      <sc-if value="{{ s15 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+        <table>
+          <tr><th>Estado</th><th>Descripción</th><th>Visual</th><th>Aplica a</th></tr>
+          <sc-for list="{{ globalStates }}" as="s" hint-placeholder-count="8">
+            <tr>
+              <td><span class="mono" style="font-size:12px;font-weight:700;color:#E5484D">{{ s.name }}</span></td>
+              <td style="font-size:12px;color:#475467">{{ s.desc }}</td>
+              <td style="font-size:12px;color:#475467">{{ s.visual }}</td>
+              <td style="font-size:11.5px;color:#667085">{{ s.scope }}</td>
+            </tr>
+          </sc-for>
+        </table>
+      </div>
+      </sc-if>
+
+      <!-- ── S16: RBAC ── -->
+      <sc-if value="{{ s16 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;background:#fff;border:1px solid #E4E8EF;border-radius:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);overflow:hidden">
+        <table>
+          <tr><th>Acción</th><th>Admin General</th><th>Jefe Unidad</th><th>Analista</th><th>Operativo</th><th>Auditor</th></tr>
+          <sc-for list="{{ rbac }}" as="r" hint-placeholder-count="12">
+            <tr>
+              <td style="font-weight:600;color:#14181F">{{ r.action }}</td>
+              <sc-for list="{{ r.perms }}" as="p" hint-placeholder-count="5">
+                <td style="text-align:center;font-size:14px">{{ p }}</td>
+              </sc-for>
+            </tr>
+          </sc-for>
+        </table>
+        <div style="padding:12px 20px;background:#FAFBFC;font-size:11.5px;color:#667085">✅ Permitido &nbsp; ⚠ Solo propia unidad &nbsp; 👁 Solo lectura &nbsp; ❌ Denegado</div>
+      </div>
+      </sc-if>
+
+      <!-- ── S17: RUI ── -->
+      <sc-if value="{{ s17 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:12px">
+        <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:18px 22px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+          <div style="font-size:13px;font-weight:800;color:#14181F;margin-bottom:12px">Registro Único Institucional (RUI) · esquema oficial de identificadores</div>
+          <sc-for list="{{ rui }}" as="r" hint-placeholder-count="8">
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #F4F6F9">
+              <span class="mono" style="font-size:13px;font-weight:700;color:#2E6BE6;width:160px;flex:none">{{ r.pattern }}</span>
+              <span style="font-size:12px;color:#475467;flex:1">{{ r.desc }}</span>
+              <span class="mono" style="font-size:11px;color:#5B4FD0;background:#EEF0FB;padding:3px 9px;border-radius:6px">{{ r.example }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ── S18: BIBLIOTECA ── -->
+      <sc-if value="{{ s18 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <sc-for list="{{ library }}" as="cat" hint-placeholder-count="6">
+          <div style="background:#fff;border:1px solid #E4E8EF;border-radius:13px;padding:15px 16px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:{{ cat.color }};margin-bottom:8px">{{ cat.name }}</div>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <sc-for list="{{ cat.items }}" as="i" hint-placeholder-count="5">
+                <div style="font-size:12px;color:#344054;padding:4px 0;border-bottom:1px solid #F6F8FA;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;flex:none;background:{{ cat.color }}"></span>{{ i }}</div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <!-- ── S19: INSTRUCCIÓN FINAL ── -->
+      <sc-if value="{{ s19 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:fadeIn .2s ease;display:flex;flex-direction:column;gap:16px">
+        <div style="background:linear-gradient(135deg,#0F2647,#1D3E6E);border-radius:16px;padding:28px 32px;color:#fff">
+          <div style="font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#7FB0FF;font-weight:700;margin-bottom:8px">Instrucción para Claude Code</div>
+          <div style="font-size:20px;font-weight:900;margin-bottom:12px">El prototipo es la fuente de verdad</div>
+          <p style="font-size:13.5px;color:#C7D6EE;max-width:760px;line-height:1.7;margin:0 0 18px">Implementa el SSE-VRAF como una aplicación <b style="color:#fff">Next.js 14 App Router + TypeScript + Prisma + PostgreSQL</b>. Cada pantalla del prototipo define el UX/UI. No redesignar. No agregar funcionalidades. Solo implementar exactamente lo que se muestra, conectado a la base de datos real.</p>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+            <sc-for list="{{ finalChecks }}" as="c" hint-placeholder-count="8">
+              <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:12px 14px">
+                <div style="font-size:18px;margin-bottom:6px">{{ c.emoji }}</div>
+                <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:3px">{{ c.title }}</div>
+                <div style="font-size:11px;color:#A9C0E4">{{ c.desc }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #E4E8EF;border-radius:14px;padding:20px 24px;box-shadow:0 1px 3px rgba(16,24,40,.05)">
+          <div style="font-size:13px;font-weight:800;color:#14181F;margin-bottom:12px">Archivos del prototipo → Módulos de la app</div>
+          <sc-for list="{{ fileMap }}" as="f" hint-placeholder-count="9">
+            <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #F4F6F9">
+              <span class="mono" style="font-size:11px;color:#5B4FD0;width:300px;flex:none">{{ f.proto }}</span>
+              <span style="color:#B0B8C4">→</span>
+              <span class="mono" style="font-size:11px;color:#12A150">{{ f.module }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { sec: 's1' };
+
+  navDefs() {
+    return [
+      {id:'s1',num:'01',label:'Visión del producto'},
+      {id:'s2',num:'02',label:'Arquitectura'},
+      {id:'s3',num:'03',label:'Estructura del sistema'},
+      {id:'s4',num:'04',label:'Catálogo de componentes'},
+      {id:'s5',num:'05',label:'Catálogo de Builders'},
+      {id:'s6',num:'06',label:'Modelo de datos'},
+      {id:'s7',num:'07',label:'Reglas de negocio'},
+      {id:'s8',num:'08',label:'Automatizaciones'},
+      {id:'s9',num:'09',label:'Eventos del sistema'},
+      {id:'s10',num:'10',label:'Roles y responsabilidades'},
+      {id:'s11',num:'11',label:'Stack tecnológico'},
+      {id:'s12',num:'12',label:'Organización del proyecto'},
+      {id:'s13',num:'13',label:'Convenciones'},
+      {id:'s14',num:'14',label:'Design System'},
+      {id:'s15',num:'15',label:'Estados globales'},
+      {id:'s16',num:'16',label:'Matriz RBAC'},
+      {id:'s17',num:'17',label:'RUI · Identificadores'},
+      {id:'s18',num:'18',label:'Biblioteca institucional'},
+      {id:'s19',num:'19',label:'Instrucción final → Claude Code'},
+    ];
+  }
+
+  renderVals() {
+    const sec = this.state.sec;
+    const defs = this.navDefs();
+    const navSections = defs.map(d => { const active = sec === d.id; return { ...d, active, numC: active ? '#7FB0FF' : '#5E7397', style: `width:100%;display:flex;align-items:center;gap:10px;padding:9px 16px;border:none;background:${active ? 'rgba(46,107,230,.18)' : 'transparent'};color:${active ? '#fff' : '#B4C1D6'};cursor:pointer;font-family:inherit;border-right:${active ? '3px solid #5B8DEF' : '3px solid transparent'}`, onSel: () => this.setState({ sec: d.id }) }; });
+    const activeTitle = defs.find(d => d.id === sec)?.label || '';
+
+    // S1 VISION
+    const visionPills = ['Gestión estratégica', 'Orientado a procesos', 'Automatización total', 'Capturar una sola vez', 'Sin duplicidad de datos'];
+    const visionCards = [
+      { cat:'Qué es', color:'#2E6BE6', title:'Centro de Operaciones Digital', body:'Sistema de gestión institucional que convierte el trabajo operativo diario en indicadores, dashboards e informes automáticos. No es un ERP ni un gestor documental.' },
+      { cat:'Principio rector', color:'#E5484D', title:'Capturar una sola vez', body:'Cada dato se registra exactamente una vez. El sistema lo reutiliza automáticamente en todos los módulos: procesos, indicadores, reportes, historial.' },
+      { cat:'Usuarios', color:'#12A150', title:'2 perfiles iniciales', body:'Administrador General (Vicerrectora + Jefe RRHH): acceso total. Usuario Operativo: solo su workspace y sus asignaciones, acceso según RBAC.' },
+      { cat:'Alcance inicial', color:'#E5A100', title:'6 workspaces', body:'VRAF · Recursos Humanos · Contabilidad · Compras · Mantenimiento e Infraestructura · Salud y Seguridad Ocupacional. Arquitectura modular para crecer sin reescribir.' },
+    ];
+
+    // S2 ARCHITECTURE
+    const chain = [
+      {label:'Plan',tc:'#C7D6EE',bg:'rgba(46,107,230,.14)',border:'rgba(127,176,255,.3)',arr:true},
+      {label:'Objetivo',tc:'#C7D6EE',bg:'rgba(46,107,230,.14)',border:'rgba(127,176,255,.3)',arr:true},
+      {label:'Proyecto',tc:'#C7D6EE',bg:'rgba(46,107,230,.14)',border:'rgba(127,176,255,.3)',arr:true},
+      {label:'Proceso ★',tc:'#fff',bg:'rgba(255,255,255,.16)',border:'rgba(255,255,255,.5)',arr:true},
+      {label:'Procedimiento',tc:'#FDE68A',bg:'rgba(229,160,0,.14)',border:'rgba(229,160,0,.3)',arr:true},
+      {label:'Actividad',tc:'#FDE68A',bg:'rgba(229,160,0,.14)',border:'rgba(229,160,0,.3)',arr:true},
+      {label:'Evidencia',tc:'#FDE68A',bg:'rgba(229,160,0,.14)',border:'rgba(229,160,0,.3)',arr:true},
+      {label:'Indicador',tc:'#BEEBCF',bg:'rgba(18,161,80,.14)',border:'rgba(18,161,80,.3)',arr:true},
+      {label:'Dashboard',tc:'#BEEBCF',bg:'rgba(18,161,80,.14)',border:'rgba(18,161,80,.3)',arr:true},
+      {label:'Reporte',tc:'#BEEBCF',bg:'rgba(18,161,80,.14)',border:'rgba(18,161,80,.3)',arr:false},
+    ];
+    const archDecisions = [
+      {cat:'Núcleo',color:'#2E6BE6',title:'Proceso Institucional',body:'Entidad central e inmutable. Todo el sistema orbita alrededor del Proceso. No puede reemplazarse por expediente, tarea u otro concepto.'},
+      {cat:'Dato único',color:'#E5484D',title:'Sin duplicación',body:'Un dato se captura una vez. Los indicadores leen de actividades/evidencias. Los reportes se construyen desde la BD sin recaptura.'},
+      {cat:'Modularidad',color:'#12A150',title:'Plug-in architecture',body:'Nuevos módulos (Compras, Activos, RRHH completo) se agregan sin modificar el núcleo. Cada workspace es independiente.'},
+      {cat:'Automatización',color:'#E5A100',title:'Event-driven',body:'Toda acción dispara eventos asíncronos (BullMQ). El usuario trabaja; el sistema actualiza indicadores, dashboards y reportes solo.'},
+      {cat:'Seguridad',color:'#5B4FD0',title:'RBAC por workspace',body:'Permisos definidos en DB. El middleware de Next.js valida cada ruta. Usuarios ven solo su workspace y sus asignaciones.'},
+      {cat:'Trazabilidad',color:'#0F8A8A',title:'Audit log inmutable',body:'Toda mutación crítica genera un registro en HistorialAudit. No puede modificarse ni eliminarse. Soft-delete en todas las tablas.'},
+    ];
+
+    // S3 STRUCTURE
+    const structure = [
+      { name:'Mi Trabajo', color:'#2E6BE6', bg:'#EAF1FE', desc:'Panel personal de cada usuario autenticado', modules:[{name:'Mis procesos',desc:'Asignados al usuario'},{name:'Mis actividades',desc:'Pendientes y en curso'},{name:'Mis evidencias',desc:'Por cargar'},{name:'Mis indicadores',desc:'Bajo responsabilidad'}] },
+      { name:'Workspaces', color:'#E5A100', bg:'#FDF3E1', desc:'6 unidades organizacionales · cada una es un centro de operaciones', modules:[{name:'Dashboard',desc:'KPIs y estado'},{name:'Procesos',desc:'Todos los procesos'},{name:'Indicadores',desc:'KPIs de la unidad'},{name:'Solicitudes / Evidencias',desc:'Repositorios'}] },
+      { name:'Studio', color:'#5B4FD0', bg:'#EEF0FB', desc:'Herramientas de construcción para administradores', modules:[{name:'Process Builder',desc:'Constructor de procesos'},{name:'Form Builder',desc:'Constructor de formularios'},{name:'Data Studio',desc:'Modelo de datos'},{name:'Report Builder',desc:'Configuración de reportes'}] },
+      { name:'Administración', color:'#12A150', bg:'#EEF6EE', desc:'Configuración global del sistema', modules:[{name:'Usuarios / Roles',desc:'RBAC'},{name:'Catálogos',desc:'Tipos y valores'},{name:'Automatizaciones',desc:'Reglas globales'},{name:'Dashboard Ejecutivo',desc:'Vista consolidada'}] },
+      { name:'Motores internos', color:'#E5484D', bg:'#FDECEC', desc:'Servicios que corren en background', modules:[{name:'Motor de procesos',desc:'Máquina de estados'},{name:'Motor de indicadores',desc:'Recálculo automático'},{name:'Motor de reportes',desc:'Generación automática'},{name:'Motor de automatización',desc:'BullMQ workers'}] },
+    ];
+
+    // S4 COMPONENTS
+    const c = (name,path,purpose,props,states,stC,stB,prio,prC,prB) => ({name,path,purpose,props,states,stC,stB,prio,prC,prB});
+    const components = [
+      c('ProcessCard','features/process','Tarjeta de proceso en lista','name, avance, estado, sem, onOpen','Loading · Error · Empty','#B4791A','#FDF3E1','P0','#E5484D','#FDECEC'),
+      c('ProcessDetail','features/process','Centro de control del proceso','process, gwTab, stages[], onTabChange','Loading · Unauthorized','#B4791A','#FDF3E1','P0','#E5484D','#FDECEC'),
+      c('StageFlow','features/process','Flujo de 15 etapas','stages[], currentIdx, onEnter','Loading','#12A150','#EEF6EE','P0','#E5484D','#FDECEC'),
+      c('EvidenceCard','features/evidence','Carga y validación de evidencia','name, type, status, required, onUpload','Loading · Success · Error','#B4791A','#FDF3E1','P0','#E5484D','#FDECEC'),
+      c('IndicatorCard','features/indicator','Tarjeta KPI ejecutiva','name, valor, meta, sem, tend, onOpen','Loading · Empty','#12A150','#EEF6EE','P0','#E5484D','#FDECEC'),
+      c('IndicatorDetail','features/indicator','Panel de 16 atributos del KPI','indicator (16 attrs)','Loading','#12A150','#EEF6EE','P0','#B4791A','#FDF3E1'),
+      c('Timeline','shared','Historial de cambios','entries[], entityId','Loading · Empty','#12A150','#EEF6EE','P0','#E5484D','#FDECEC'),
+      c('DashboardWidget','shared','Widget reutilizable de dashboard','type, data, config','Loading · Error','#B4791A','#FDF3E1','P0','#E5484D','#FDECEC'),
+      c('MyWork','features/mywork','Panel personal del usuario','userId, actividades[], evidencias[]','Loading · Empty','#12A150','#EEF6EE','P0','#E5484D','#FDECEC'),
+      c('WorkspaceShell','layout','Shell del workspace con sidebar','wsId, section, role','Unauthorized','#12A150','#EEF6EE','P0','#E5484D','#FDECEC'),
+      c('NotificationCenter','shared','Centro de notificaciones','notifications[], onRead','Empty','#12A150','#EEF6EE','P0','#B4791A','#FDF3E1'),
+      c('Toast','ui','Notificación temporal','msg, type, duration','—','#12A150','#EEF6EE','P0','#E5484D','#FDECEC'),
+      c('AutomationCascade','features/automation','Visualización cascada en vivo','gwEv, gwCascade[]','—','#12A150','#EEF6EE','P0','#B4791A','#FDF3E1'),
+      c('SemáforoIndicator','ui','Punto de semáforo V/A/R','value, thresholds','—','#12A150','#EEF6EE','P0','#12A150','#EEF6EE'),
+      c('FormRenderer','builders/form','Renderiza formulario desde JSON','formSchema, onSubmit, readOnly','Loading · Disabled','#B4791A','#FDF3E1','P1','#B4791A','#FDF3E1'),
+      c('ReportPreview','features/reports','Vista previa del reporte','reportId, period, data','Loading · Empty','#12A150','#EEF6EE','P2','#12A150','#EEF6EE'),
+    ];
+
+    // S5 BUILDERS
+    const builders = [
+      {name:'Process Builder',sub:'Constructor de procesos institucionales',emoji:'⚙️',file:'ProcessBuilder.dc.html',color:'#2E6BE6',bg:'#EAF1FE',purpose:'Permite crear procesos completos (etapas, actividades, evidencias, KPIs, automatizaciones, widgets, reportes) sin código. 8 bloques configurables. Salida: definición JSON del proceso.',outputs:['JSON proceso','Plantilla reutilizable','Publicación en workspace']},
+      {name:'Form Builder',sub:'Constructor visual de formularios',emoji:'📋',file:'FormBuilder.dc.html',color:'#5B4FD0',bg:'#EEF0FB',purpose:'Constructor drag-and-drop de 40+ tipos de campo. Validaciones, reglas condicionales, versiones y biblioteca institucional. Salida: JSON Schema del formulario.',outputs:['JSON Schema','Versión histórica','Entidad en Data Studio']},
+      {name:'Data Studio',sub:'Modelo de datos visual',emoji:'🗄️',file:'DataStudio.dc.html',color:'#12A150',bg:'#EEF6EE',purpose:'Administra las entidades de negocio, sus relaciones y su impacto. Los formularios publicados generan entidades automáticamente.',outputs:['Diagrama ER','Reporte de impacto','JSON export']},
+      {name:'Dashboard Builder',sub:'Configuración de widgets por workspace',emoji:'📊',file:'ProcessBuilder.dc.html (B7)',color:'#E5A100',bg:'#FDF3E1',purpose:'El administrador selecciona qué widgets aparecen en el dashboard de cada workspace. Widgets: avance, KPIs, timeline, solicitudes, alertas.',outputs:['Config dashboard','Layout de widgets']},
+      {name:'Report Builder',sub:'Configuración del motor de reportes',emoji:'📄',file:'MotorReportes.dc.html',color:'#E5484D',bg:'#FDECEC',purpose:'Define qué secciones incluye cada reporte automático: portada, indicadores, etapas, evidencias, historial, gráficos. Frecuencia: mensual/trimestral/anual.',outputs:['PDF automático','Word/Excel','Vista previa']},
+    ];
+
+    // S6 DATA MODEL
+    const dm = (name,desc,relations,responsibility,type,core,tc,tb) => ({name,desc,relations,responsibility,type,core,tc,tb});
+    const dataModel = [
+      dm('PlanEstratégico','Plan institucional anual o plurianual','→ N ObjetivosEstratégicos','Capa estratégica superior','Estratégico',false,'#2E6BE6','#EAF1FE'),
+      dm('ObjetivoEstratégico','Meta institucional de alto nivel','→ N ProyectosEstratégicos · ← 1 Plan','Alineación estratégica','Estratégico',false,'#2E6BE6','#EAF1FE'),
+      dm('ProyectoEstratégico','Iniciativa que agrupa procesos','→ N Procesos · ← 1 Objetivo','Contenedor de procesos','Estratégico',false,'#2E6BE6','#EAF1FE'),
+      dm('ProcesoInstitucional','Objeto inteligente central del sistema','→ N Actividades · → N Indicadores · → N Evidencias · → N Solicitudes · ← 1 Proyecto','Núcleo del sistema','NÚCLEO',true,'#fff','#2E6BE6'),
+      dm('Actividad','Paso dentro de un proceso','→ N Evidencias · ← 1 Proceso','Unidad de trabajo','Operativa',false,'#B4791A','#FDF3E1'),
+      dm('Evidencia','Archivo o registro que respalda una actividad','← 1 Actividad · → trigger Automatización','Documentación','Documental',false,'#5B4FD0','#EEF0FB'),
+      dm('Indicador','KPI calculado automáticamente','← 1 Proceso · → Dashboard · → Reporte','Medición','Analítica',false,'#12A150','#EEF6EE'),
+      dm('Formulario','JSON Schema de un formulario','→ genera 1 Entidad · ← N Actividades','Form Builder','Configuración',false,'#2E6BE6','#EAF1FE'),
+      dm('Solicitud','Petición formal entre unidades','← 1 Proceso · → Tiempo respuesta','Interacción','Operativa',false,'#E5484D','#FDECEC'),
+      dm('Usuario','Persona autenticada','→ N Asignaciones · ← 1 Unidad · 1 Rol','Identidad','Seguridad',false,'#667085','#F2F4F7'),
+      dm('Unidad','Workspace organizacional','→ N Usuarios · → N Procesos','Estructura','Org.',false,'#B4791A','#FDF3E1'),
+      dm('HistorialAudit','Log inmutable de cambios','← cualquier entidad crítica','Trazabilidad','Sistema',false,'#667085','#F2F4F7'),
+    ];
+
+    // S7 BIZ RULES
+    const r = (id,title,body,cat,catC,catB,bg,color) => ({id,title,body,cat,catC,catB,bg,color});
+    const bizRules = [
+      r('R01','Sin datos duplicados','Cada dato se registra exactamente una vez. Indicadores y reportes leen de la BD directamente.','Fundamental','#E5484D','#FDECEC','#FDECEC','#E5484D'),
+      r('R02','Sin actividades aisladas','Toda actividad pertenece obligatoriamente a un Proceso. Bloquear creación de actividades sin procesoId.','Arquitectura','#5B4FD0','#EEF0FB','#EEF0FB','#5B4FD0'),
+      r('R03','Sin procesos sin alineación','Todo proceso debe tener un proyectoEstratégicoId. Bloquear en validación del backend.','Arquitectura','#5B4FD0','#EEF0FB','#EEF0FB','#5B4FD0'),
+      r('R04','Evidencia dispara automatización','Al insertar una Evidencia, el worker EVIDENCE_UPLOADED recalcula KPIs, actualiza dashboard, cierra actividad si completa, registra en HistorialAudit.','Automatización','#E5484D','#FDECEC','#FDECEC','#E5484D'),
+      r('R05','RBAC estricto por workspace','El middleware de Next.js verifica wsId en cada petición. Operativo solo ve su unidad. Admin General ve todo.','Seguridad','#E5484D','#FDECEC','#FDECEC','#E5484D'),
+      r('R06','Audit log inmutable','INSERT en HistorialAudit es de solo escritura. No UPDATE, no DELETE. Soft-delete en entidades principales.','Trazabilidad','#12A150','#EEF6EE','#EEF6EE','#12A150'),
+      r('R07','Formularios como JSON Schema','La definición de formularios se almacena en Formulario.schema (jsonb). FormRenderer los interpreta dinámicamente.','Escalabilidad','#12A150','#EEF6EE','#EEF6EE','#12A150'),
+      r('R08','SLA automático','Al crear un proceso, el sistema calcula fechaLimite = fechaCreacion + sla_dias. BullMQ genera alerta 48 h antes.','Automatización','#E5484D','#FDECEC','#FDECEC','#E5484D'),
+      r('R09','Herencia de plantilla','Al instanciar un proceso desde una plantilla, hereda todas las etapas, actividades, evidencias e indicadores del blueprint.','Escalabilidad','#12A150','#EEF6EE','#EEF6EE','#12A150'),
+      r('R10','Versiones de formulario','Publicar un formulario crea una nueva versión. Las versiones anteriores permanecen en la BD. Soft-versioning.','Trazabilidad','#12A150','#EEF6EE','#EEF6EE','#12A150'),
+    ];
+
+    // S8 AUTOMATIONS
+    const automations = [
+      {trigger:'Se registra una Evidencia',event:'EVIDENCE_UPLOADED',actions:['Recalcular KPI relacionado','Actualizar avance del proceso','Actualizar dashboard del workspace','Cerrar actividad si todas las evidencias están cargadas','Registrar en HistorialAudit','Enviar notificación al responsable siguiente']},
+      {trigger:'Se completan todas las evidencias de una Etapa',event:'STAGE_COMPLETED',actions:['Marcar etapa como Completa','Avanzar proceso al siguiente estado','Notificar al responsable de la etapa siguiente','Recalcular semáforo del proceso']},
+      {trigger:'Vence el SLA del proceso (fechaLimite - 48 h)',event:'PROCESS_SLA_WARNING',actions:['Generar alerta crítica visible','Notificar al responsable del proceso','Notificar al Jefe de Unidad','Actualizar semáforo a Rojo']},
+      {trigger:'Se cierra una Solicitud Interna',event:'REQUEST_CLOSED',actions:['Calcular tiempo de respuesta','Actualizar KPI de tiempo medio','Enviar encuesta de satisfacción','Registrar en HistorialAudit']},
+      {trigger:'Se publica un Formulario en Form Builder',event:'FORM_PUBLISHED',actions:['Crear entidad automáticamente en Data Studio','Mapear campos del formulario a atributos de la entidad','Actualizar relaciones del modelo de datos']},
+      {trigger:'Se genera un Reporte',event:'REPORT_GENERATED',actions:['Recolectar datos de la BD (sin recaptura)','Aplicar plantilla institucional','Almacenar PDF/Word/Excel en Google Drive','Enviar enlace de descarga al solicitante']},
+    ];
+
+    // S9 EVENTS
+    const ev = (name,desc,module,consumers,mc,mb) => ({name,desc,module,consumers,mc,mb});
+    const events = [
+      ev('PROCESS_CREATED','Proceso institucional creado','Workspace','Automation Engine · Audit · Dashboard','#2E6BE6','#EAF1FE'),
+      ev('PROCESS_UPDATED','Metadatos del proceso modificados','Workspace','Audit · Dashboard','#2E6BE6','#EAF1FE'),
+      ev('PROCESS_COMPLETED','Proceso finalizado al 100%','Automation','Report Engine · Dashboard · Audit','#12A150','#EEF6EE'),
+      ev('STAGE_COMPLETED','Etapa del proceso completada','Automation','Process Engine · Notification · Audit','#12A150','#EEF6EE'),
+      ev('EVIDENCE_UPLOADED','Evidencia cargada por usuario','Workspace','KPI Engine · Dashboard · Audit · Notification','#E5484D','#FDECEC'),
+      ev('INDICATOR_UPDATED','KPI recalculado','KPI Engine','Dashboard · Report · Notification','#12A150','#EEF6EE'),
+      ev('FORM_SUBMITTED','Formulario enviado por usuario operativo','Workspace','Process Engine · Audit · Notification','#5B4FD0','#EEF0FB'),
+      ev('FORM_APPROVED','Formulario aprobado por jefe/admin','Automation','Process Engine · Notification','#12A150','#EEF6EE'),
+      ev('REQUEST_CREATED','Solicitud interna registrada','Workspace','SLA Timer · Notification · Audit','#E5484D','#FDECEC'),
+      ev('REQUEST_CLOSED','Solicitud cerrada','Workspace','KPI Engine · Survey · Audit','#E5484D','#FDECEC'),
+      ev('REPORT_GENERATED','Reporte generado automáticamente','Report Engine','Storage · Notification · Audit','#E5A100','#FDF3E1'),
+      ev('SLA_WARNING','SLA próximo a vencer (−48 h)','Scheduler','Notification · Dashboard · Alert','#E5484D','#FDECEC'),
+      ev('SLA_BREACHED','SLA vencido','Scheduler','Alert · Dashboard · Notification · Audit','#E5484D','#FDECEC'),
+      ev('LOGIN_SUCCESS','Inicio de sesión exitoso','Auth','Audit','#12A150','#EEF6EE'),
+      ev('LOGIN_FAILED','Intento de inicio de sesión fallido','Auth','Audit · Alert (si repetido)','#E5484D','#FDECEC'),
+      ev('PERMISSION_DENIED','Acceso denegado por RBAC','Middleware','Audit','#E5484D','#FDECEC'),
+    ];
+
+    // S10 ROLES
+    const mkPerm = (label,bg,c,icon) => ({label,bg,c,icon});
+    const roles = [
+      {name:'Administrador General',code:'ADMIN',color:'#2E6BE6',bg:'#EAF1FE',desc:'Acceso transversal total al sistema',perms:[mkPerm('Todos los workspaces','#EAF1FE','#2E6BE6','✅'),mkPerm('Crear/editar procesos','#EAF1FE','#2E6BE6','✅'),mkPerm('Gestionar usuarios','#EAF1FE','#2E6BE6','✅'),mkPerm('Configurar RBAC','#EAF1FE','#2E6BE6','✅'),mkPerm('Usar todos los Builders','#EAF1FE','#2E6BE6','✅'),mkPerm('Ver todos los reportes','#EAF1FE','#2E6BE6','✅')]},
+      {name:'Jefe de Unidad',code:'HEAD',color:'#E5A100',bg:'#FDF3E1',desc:'Gestiona su propio workspace',perms:[mkPerm('Solo su workspace','#FDF3E1','#B4791A','⚠'),mkPerm('Ver todos sus procesos','#FDF3E1','#B4791A','✅'),mkPerm('Aprobar solicitudes','#FDF3E1','#B4791A','✅'),mkPerm('Ver indicadores','#FDF3E1','#B4791A','✅'),mkPerm('Builders: solo lectura','#F2F4F7','#667085','👁'),mkPerm('Gestionar su equipo','#FDF3E1','#B4791A','✅')]},
+      {name:'Analista',code:'ANALYST',color:'#5B4FD0',bg:'#EEF0FB',desc:'Trabajo operativo avanzado en su unidad',perms:[mkPerm('Solo su workspace','#FDF3E1','#B4791A','⚠'),mkPerm('Gestionar sus procesos','#EEF0FB','#5B4FD0','✅'),mkPerm('Cargar evidencias','#EEF0FB','#5B4FD0','✅'),mkPerm('Ver KPIs','#EEF0FB','#5B4FD0','✅'),mkPerm('Generar reportes','#EEF0FB','#5B4FD0','✅'),mkPerm('Sin acceso a admin','#FDECEC','#E5484D','❌')]},
+      {name:'Operativo',code:'OPS',color:'#12A150',bg:'#EEF6EE',desc:'Ejecución de tareas asignadas',perms:[mkPerm('Solo sus asignaciones','#FDF3E1','#B4791A','⚠'),mkPerm('Actualizar sus tareas','#EEF6EE','#12A150','✅'),mkPerm('Cargar evidencias','#EEF6EE','#12A150','✅'),mkPerm('Consultar procedimientos','#EEF6EE','#12A150','👁'),mkPerm('Sin indicadores globales','#FDECEC','#E5484D','❌'),mkPerm('Sin builders','#FDECEC','#E5484D','❌')]},
+      {name:'Auditor',code:'AUDIT',color:'#667085',bg:'#F2F4F7',desc:'Solo lectura transversal',perms:[mkPerm('Todos los workspaces','#EAF1FE','#2E6BE6','✅'),mkPerm('Solo lectura','#F2F4F7','#667085','👁'),mkPerm('Ver historial completo','#F2F4F7','#667085','👁'),mkPerm('Exportar reportes','#F2F4F7','#667085','👁'),mkPerm('Sin escritura','#FDECEC','#E5484D','❌'),mkPerm('Sin builders','#FDECEC','#E5484D','❌')]},
+    ];
+
+    // S11 STACK
+    const stack = [
+      {layer:'Frontend',color:'#2E6BE6',techs:[{name:'Next.js 14 App Router',why:'SSR + SPA híbrido · rutas anidadas · server components'},{name:'React 18 + TypeScript',why:'Componentes tipados · hooks · server/client split'},{name:'Tailwind CSS',why:'Utility-first · matching visual del prototipo'}]},
+      {layer:'Estado',color:'#5B4FD0',techs:[{name:'Zustand',why:'Estado global: workspace activo, proceso seleccionado'},{name:'TanStack Query',why:'Server state · caché · revalidación automática'},{name:'React Hook Form',why:'FormRenderer · validaciones en tiempo real'}]},
+      {layer:'Backend',color:'#12A150',techs:[{name:'Next.js API Routes',why:'API REST serverless-ready'},{name:'tRPC',why:'Type-safe end-to-end · sin duplicar interfaces'},{name:'NextAuth.js v5',why:'Auth + RBAC · JWT + sesiones DB'}]},
+      {layer:'Base de datos',color:'#E5A100',techs:[{name:'PostgreSQL 16',why:'Relaciones complejas del Data Studio'},{name:'Prisma ORM',why:'Schema type-safe · migraciones · seed'},{name:'Redis',why:'Caché de KPIs y dashboards · sessions'}]},
+      {layer:'Automatización',color:'#E5484D',techs:[{name:'BullMQ + Redis',why:'Colas para automatizaciones event-driven'},{name:'Cron (BullMQ)',why:'SLA check · reportes automáticos · alertas'},{name:'EventEmitter interno',why:'Propagación síncrona de eventos simples'}]},
+      {layer:'Archivos',color:'#0F8A8A',techs:[{name:'Google Drive API',why:'Almacenamiento de evidencias institucionales'},{name:'Google Sheets API',why:'Fuente legacy de algunos indicadores'},{name:'Puppeteer / pdf-lib',why:'Motor de reportes PDF · Word · Excel'}]},
+      {layer:'Deploy',color:'#667085',techs:[{name:'Vercel',why:'Deploy automático · edge functions · preview URLs'},{name:'Supabase',why:'PostgreSQL managed · storage · realtime'},{name:'GitHub Actions',why:'CI/CD · lint · tests · deploy'}]},
+      {layer:'Testing',color:'#5B4FD0',techs:[{name:'Vitest + Testing Library',why:'Unit + integration tests'},{name:'Playwright',why:'E2E de flujos críticos institucionales'},{name:'Storybook',why:'Catálogo de componentes'}]},
+      {layer:'Monitoreo',color:'#2E6BE6',techs:[{name:'Sentry',why:'Error tracking en producción'},{name:'PostHog',why:'Analytics de uso'},{name:'Uptime Robot',why:'Disponibilidad institucional'}]},
+    ];
+
+    // S12 PROJECT STRUCTURE
+    const feArch = [
+      {layer:'UI',desc:'Componentes atómicos (Button, Input, Badge, Toast…) — sin lógica de negocio'},
+      {layer:'Feature',desc:'Componentes de dominio (ProcessCard, EvidenceCard) — lógica de presentación'},
+      {layer:'Service',desc:'Llamadas a API/tRPC — transformación de datos'},
+      {layer:'Repository',desc:'Abstracción del datasource (tRPC client / REST)'},
+      {layer:'Store',desc:'Estado global (Zustand) — workspace activo, usuario, notificaciones'},
+    ];
+    const beArch = [
+      {layer:'Controller',desc:'Route handler Next.js — validación de input (Zod)'},
+      {layer:'Service',desc:'Lógica de negocio — aplica reglas, orquesta repositorios'},
+      {layer:'Repository',desc:'Acceso a BD via Prisma — queries tipadas'},
+      {layer:'Domain',desc:'Entidades puras TypeScript — sin dependencias externas'},
+      {layer:'Worker',desc:'BullMQ jobs — automatizaciones asíncronas'},
+    ];
+
+    // S13 CONVENTIONS
+    const conventions = [
+      {cat:'Componentes React',color:'#2E6BE6',examples:[{type:'Comp.',ex:'ProcessCard.tsx'},{type:'Feature',ex:'features/process/'},{type:'Builder',ex:'builders/FormBuilder.tsx'},{type:'Layout',ex:'WorkspaceShell.tsx'}]},
+      {cat:'Interfaces TypeScript',color:'#5B4FD0',examples:[{type:'Entidad',ex:'IProcesoInstitucional'},{type:'Props',ex:'ProcessCardProps'},{type:'Response',ex:'ProcessDetailResponse'},{type:'DTO',ex:'CreateProcesoDTO'}]},
+      {cat:'Servicios',color:'#12A150',examples:[{type:'Service',ex:'ProcessService.ts'},{type:'Engine',ex:'KPIEngine.ts'},{type:'Worker',ex:'EvidenceWorker.ts'},{type:'Report',ex:'ReportService.ts'}]},
+      {cat:'Repositorios',color:'#E5A100',examples:[{type:'Repo',ex:'ProcessRepository.ts'},{type:'Repo',ex:'EvidenceRepository.ts'},{type:'Repo',ex:'IndicatorRepository.ts'},{type:'Repo',ex:'UserRepository.ts'}]},
+      {cat:'Eventos',color:'#E5484D',examples:[{type:'Event',ex:'EVIDENCE_UPLOADED'},{type:'Event',ex:'PROCESS_COMPLETED'},{type:'Event',ex:'SLA_WARNING'},{type:'Event',ex:'FORM_PUBLISHED'}]},
+      {cat:'Rutas Next.js',color:'#667085',examples:[{type:'Workspace',ex:'app/(ws)/[wsId]/procesos/'},{type:'Builder',ex:'app/(admin)/builders/form/'},{type:'API',ex:'app/api/procesos/[id]/'},{type:'Auth',ex:'app/(auth)/login/'}]},
+      {cat:'Prisma Models',color:'#0F8A8A',examples:[{type:'Model',ex:'ProcesoInstitucional'},{type:'Model',ex:'Actividad'},{type:'Model',ex:'Evidencia'},{type:'Model',ex:'Indicador'}]},
+      {cat:'tRPC Routers',color:'#5B4FD0',examples:[{type:'Router',ex:'procesoRouter'},{type:'Router',ex:'evidenciaRouter'},{type:'Router',ex:'indicadorRouter'},{type:'Router',ex:'formularioRouter'}]},
+    ];
+
+    // S14 DESIGN SYSTEM
+    const palette = [
+      {hex:'#0F2647',name:'Primary Dark'},{hex:'#2E6BE6',name:'Primary Blue'},{hex:'#5B8DEF',name:'Primary Light'},
+      {hex:'#12A150',name:'Success'},{hex:'#E5A100',name:'Warning'},{hex:'#E5484D',name:'Danger'},
+      {hex:'#5B4FD0',name:'Purple'},{hex:'#0F8A8A',name:'Teal'},{hex:'#14181F',name:'Text Primary'},
+      {hex:'#475467',name:'Text Secondary'},{hex:'#98A2B3',name:'Text Muted'},{hex:'#E4E8EF',name:'Border'},
+      {hex:'#F0F2F5',name:'Background'},{hex:'#FAFBFC',name:'Surface'},
+    ];
+    const tokens = [
+      {token:'radius-sm',value:'7-8px · inputs, chips, botones pequeños'},
+      {token:'radius-md',value:'12-13px · cards, paneles'},
+      {token:'radius-lg',value:'14-16px · modales, secciones principales'},
+      {token:'shadow-sm',value:'0 1px 2px rgba(16,24,40,.04)'},
+      {token:'shadow-md',value:'0 1px 3px rgba(16,24,40,.05)'},
+      {token:'shadow-lg',value:'0 12px 32px rgba(15,38,71,.2)'},
+    ];
+    const semaforos = [
+      {label:'Verde · Óptimo',color:'#12A150',bg:'#EEF6EE',border:'#BFE6CC',desc:'Cumple o supera la meta',hex:'#12A150'},
+      {label:'Amarillo · Alerta',color:'#B4791A',bg:'#FDF3E1',border:'#F5D47C',desc:'Entre 75% y 99% de la meta',hex:'#E5A100'},
+      {label:'Rojo · Crítico',color:'#E5484D',bg:'#FDECEC',border:'#FCA5A5',desc:'Por debajo del 75% de la meta',hex:'#E5484D'},
+    ];
+
+    // S15 GLOBAL STATES
+    const globalStates = [
+      {name:'loading',desc:'Datos en carga desde el servidor',visual:'Skeleton + spinner',scope:'Todos los componentes'},
+      {name:'success',desc:'Operación completada exitosamente',visual:'Toast verde · checkmark',scope:'Formularios · acciones'},
+      {name:'empty',desc:'Sin datos que mostrar',visual:'Ilustración + CTA',scope:'Listas · dashboards'},
+      {name:'error',desc:'Error de red o del servidor',visual:'Toast rojo · retry button',scope:'Todos los componentes'},
+      {name:'offline',desc:'Sin conexión a internet',visual:'Banner amarillo persistente',scope:'App shell'},
+      {name:'disabled',desc:'Acción no disponible en este contexto',visual:'Opacidad 50% · cursor not-allowed',scope:'Botones · inputs'},
+      {name:'archived',desc:'Entidad archivada (soft-delete)',visual:'Badge gris · solo lectura',scope:'Procesos · formularios'},
+      {name:'unauthorized',desc:'Acceso denegado por RBAC',visual:'Pantalla 403 · redirect',scope:'Rutas protegidas'},
+    ];
+
+    // S16 RBAC
+    const rbac = [
+      {action:'Ver workspace propio',perms:['✅','✅','✅','✅','👁']},
+      {action:'Ver otros workspaces',perms:['✅','❌','❌','❌','👁']},
+      {action:'Crear procesos',perms:['✅','✅','⚠','❌','❌']},
+      {action:'Cargar evidencias',perms:['✅','✅','✅','✅','❌']},
+      {action:'Aprobar solicitudes',perms:['✅','✅','❌','❌','❌']},
+      {action:'Ver indicadores globales',perms:['✅','⚠','⚠','❌','👁']},
+      {action:'Usar Process Builder',perms:['✅','❌','❌','❌','❌']},
+      {action:'Usar Form Builder',perms:['✅','❌','❌','❌','❌']},
+      {action:'Gestionar usuarios',perms:['✅','❌','❌','❌','❌']},
+      {action:'Ver Dashboard Ejecutivo',perms:['✅','⚠','❌','❌','👁']},
+      {action:'Exportar reportes',perms:['✅','✅','✅','❌','👁']},
+      {action:'Ver historial completo',perms:['✅','⚠','⚠','⚠','✅']},
+    ];
+
+    // S17 RUI
+    const rui = [
+      {pattern:'PROC-[UNIT]-[YY]-[SEQ]',desc:'Proceso institucional',example:'PROC-RH-26-001'},
+      {pattern:'ACT-[PROC_ID]-[SEQ]',desc:'Actividad dentro de un proceso',example:'ACT-PROC-RH-26-001-03'},
+      {pattern:'EV-[ACT_ID]-[SEQ]',desc:'Evidencia de una actividad',example:'EV-ACT-001-03-02'},
+      {pattern:'KPI-[UNIT]-[SEQ]',desc:'Indicador (KPI)',example:'KPI-RH-001'},
+      {pattern:'FORM-[UNIT]-[SEQ]-v[VER]',desc:'Formulario versionado',example:'FORM-RH-001-v1.2'},
+      {pattern:'SOL-[UNIT]-[YY]-[SEQ]',desc:'Solicitud interna',example:'SOL-COMP-26-047'},
+      {pattern:'REP-[UNIT]-[PERIOD]-[YY]',desc:'Reporte generado',example:'REP-VRAF-JUL-26'},
+      {pattern:'USR-[UNIT]-[SEQ]',desc:'Usuario del sistema',example:'USR-RH-012'},
+    ];
+
+    // S18 LIBRARY
+    const library = [
+      {name:'Procesos',color:'#2E6BE6',items:['Contratación de Personal','Formulación Presupuestaria','Mantenimiento Preventivo','Inspecciones SSO','Licitación Pública','Cierre Contable']},
+      {name:'Formularios',color:'#5B4FD0',items:['Solicitud de Contratación v1.2','Solicitud de Compra','Solicitud de Vacaciones','Evaluación del Desempeño','Reporte de Incidente SST','Acta de Reunión']},
+      {name:'Indicadores',color:'#12A150',items:['Avance del proceso (%)','Etapas completadas','Evidencias documentadas','Tiempo de contratación','Tiempo de respuesta','Ejecución presupuestaria']},
+      {name:'Automatizaciones',color:'#E5484D',items:['Evidencia → recalcular KPI','Etapa completa → avanzar proceso','SLA −48h → generar alerta','Solicitud cerrada → encuesta','Formulario publicado → crear entidad']},
+      {name:'Widgets de dashboard',color:'#E5A100',items:['Avance del proceso (barra)','Etapas (kanban)','KPI con semáforo','Timeline / historial','Solicitudes pendientes','Alertas críticas']},
+      {name:'Plantillas de reporte',color:'#0F8A8A',items:['Informe mensual de contratación','Ejecución presupuestaria','Estado de procesos','Indicadores institucionales','Solicitudes y SLA','Inspecciones SSO']},
+    ];
+
+    // S19 FINAL
+    const finalChecks = [
+      {emoji:'🎨',title:'UX congelado',desc:'9 archivos de prototipo = fuente de verdad. No redesignar.'},
+      {emoji:'🗄️',title:'Modelo definido',desc:'12 entidades, relaciones y JSON Schema en Data Studio.'},
+      {emoji:'⚙️',title:'Builders listos',desc:'5 builders documentados con sus outputs JSON.'},
+      {emoji:'⚡',title:'Automatizaciones',desc:'6 automatizaciones + 16 eventos catalogados.'},
+      {emoji:'🔐',title:'RBAC completo',desc:'5 roles con matriz de 12 acciones definida.'},
+      {emoji:'📐',title:'Convenciones',desc:'Nombres de archivos, interfaces, rutas y eventos unificados.'},
+      {emoji:'🚀',title:'Stack oficial',desc:'Next.js 14 + TypeScript + Prisma + PostgreSQL + BullMQ.'},
+      {emoji:'✅',title:'Listo para código',desc:'No se requieren nuevas definiciones. Implementar.'},
+    ];
+    const fileMap = [
+      {proto:'SSE-VRAF.dc.html',module:'app/(workspace)/ + app/(mywork)/ + WorkspaceShell.tsx'},
+      {proto:'SSE-VRAF · Arquitectura.dc.html',module:'docs/architecture.md (referencia)'},
+      {proto:'SSE-VRAF · Modelo Maestro.dc.html',module:'docs/functional-model.md + prisma/seed.ts'},
+      {proto:'SSE-VRAF · Process Builder.dc.html',module:'app/(admin)/builders/process/ + ProcessBuilder.tsx'},
+      {proto:'SSE-VRAF · Form Builder.dc.html',module:'app/(admin)/builders/form/ + FormBuilder.tsx + FormRenderer.tsx'},
+      {proto:'SSE-VRAF · Data Studio.dc.html',module:'app/(admin)/studio/data/ + DataStudio.tsx'},
+      {proto:'SSE-VRAF · Dashboard Ejecutivo.dc.html',module:'app/(admin)/dashboard/ + ExecutiveDashboard.tsx'},
+      {proto:'SSE-VRAF · Motor de Reportes.dc.html',module:'app/(admin)/reports/ + ReportEngine.tsx + services/ReportService.ts'},
+      {proto:'SSE-VRAF · Handoff Claude Code.dc.html',module:'Este documento → implementación directa'},
+    ];
+
+    const vis = { s1:sec==='s1',s2:sec==='s2',s3:sec==='s3',s4:sec==='s4',s5:sec==='s5',s6:sec==='s6',s7:sec==='s7',s8:sec==='s8',s9:sec==='s9',s10:sec==='s10',s11:sec==='s11',s12:sec==='s12',s13:sec==='s13',s14:sec==='s14',s15:sec==='s15',s16:sec==='s16',s17:sec==='s17',s18:sec==='s18',s19:sec==='s19' };
+    return { navSections, activeTitle, visionPills, visionCards, chain, archDecisions, structure, components, builders, dataModel, bizRules, automations, events, roles, stack, feArch, beArch, conventions, palette, tokens, semaforos, globalStates, rbac, rui, library, finalChecks, fileMap, ...vis };
+  }
+}
+</script>
+</body>
+</html>
