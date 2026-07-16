@@ -1,0 +1,62 @@
+/**
+ * Contract between the frontend Services layer and the Backend-for-Frontend.
+ * Every entity is a Google Sheet in production (one sheet per entity, never
+ * one giant sheet) fronted by a Google Apps Script Web App; here it's just a
+ * name. The UI/Services/Hooks layers never import Sheets/Drive/Apps Script
+ * APIs directly — only this interface. Swapping MockAppsScriptAdapter for
+ * HttpAppsScriptAdapter must not require touching anything above this file.
+ */
+
+export type EntityName =
+  | "planes"
+  | "objetivos"
+  | "proyectos"
+  | "procesos"
+  | "actividades"
+  | "evidencias"
+  | "indicadores"
+  | "formularios"
+  | "solicitudes"
+  | "usuarios"
+  | "unidades"
+  | "historial"
+  // HR domain entities (Sprint 4)
+  | "empleados"
+  | "capacitaciones"
+  | "evaluaciones"
+  | "solicitudesContratacion"
+  | "notificaciones"
+  // Workflow Engine (Sprint 5)
+  | "workflowBlueprints"
+  | "workflowInstances"
+  // Runtime Studio (Sprint 6)
+  | "blueprintRegistry"
+  | "instanceSummaries";
+
+/**
+ * Query parameters for list operations.
+ *
+ * Reserved pagination/sort keys (prefixed with _) are stripped before filter
+ * matching on the Apps Script side:
+ *   _page      — page number (1-based); presence enables the pagination envelope
+ *   _pageSize  — items per page (1–500, capped by server Config.maxPageSize)
+ *   _sortBy    — field name to sort by
+ *   _sortDir   — "asc" | "desc"
+ *
+ * All other keys are exact-match filters against entity fields.
+ */
+export interface ListQuery {
+  _page?: number;
+  _pageSize?: number;
+  _sortBy?: string;
+  _sortDir?: "asc" | "desc";
+  [key: string]: string | number | boolean | undefined;
+}
+
+export interface IAppsScriptClient {
+  list<T>(entity: EntityName, query?: ListQuery): Promise<T[]>;
+  get<T>(entity: EntityName, id: string): Promise<T | null>;
+  create<T extends { id?: string }>(entity: EntityName, payload: Partial<T>): Promise<T>;
+  update<T>(entity: EntityName, id: string, patch: Partial<T>): Promise<T>;
+  remove(entity: EntityName, id: string): Promise<void>;
+}

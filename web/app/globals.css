@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+/*
+  SSE-VRAF Design System
+  Source of truth: MASTER HANDOFF - SSE-VRAF, §14 "Design System".
+  Do not redesign — this file only encodes the tokens defined there.
+*/
+:root {
+  /* Palette */
+  --sse-primary-dark: #0f2647;
+  --sse-primary: #2e6be6;
+  --sse-primary-light: #5b8def;
+  --sse-success: #12a150;
+  --sse-warning: #e5a100;
+  --sse-danger: #e5484d;
+  --sse-purple: #5b4fd0;
+  --sse-teal: #0f8a8a;
+  --sse-ink: #14181f;
+  --sse-muted: #98a2b3;
+  --sse-border: #e4e8ef;
+  --sse-bg: #f0f2f5;
+  --sse-surface: #ffffff;
+
+  /*
+    Shell-chrome literals — taken verbatim from the navigable prototype
+    (SSE-VRAF.dc.html) so the sidebar/topbar reproduce it pixel-for-pixel.
+    These sit slightly off the documented palette above; that's the
+    prototype's own drift, not ours — kept as-is per "no rediseñar".
+  */
+  --sse-shell-canvas: #f5f6f8;
+  --sse-shell-border: #e7eaf0;
+  --sse-shell-search-bg: #f2f4f7;
+  --sse-sidebar-bg: #0f2647;
+  --sse-sidebar-text: #b4c1d6;
+  --sse-sidebar-text-dim: #7e93b4;
+  --sse-sidebar-text-bright: #eaf1fe;
+  --sse-sidebar-caption: #5e7397;
+  --sse-sidebar-icon-muted: #9fb0c9;
+  --sse-sidebar-chevron: #7e93b4;
+  --sse-sidebar-badge-bg: #7fb0ff;
+  --sse-ws-dropdown-bg: #0b1d38;
+  --sse-crumb-chevron: #cbd2dd;
+  --sse-bell-icon: #475467;
+
+  /* Semaphore (verde / amarillo / rojo institucional) */
+  --sse-sem-green-bg: #eef6ee;
+  --sse-sem-green-border: #bfe6cc;
+  --sse-sem-green-fg: #12a150;
+  --sse-sem-amber-bg: #fdf3e1;
+  --sse-sem-amber-border: #f5d47c;
+  --sse-sem-amber-fg: #b4791a;
+  --sse-sem-red-bg: #fdecec;
+  --sse-sem-red-border: #fca5a5;
+  --sse-sem-red-fg: #e5484d;
+
+  /* Soft pill backgrounds used across cards/badges */
+  --sse-pill-blue-bg: #eaf1fe;
+  --sse-pill-blue-fg: #2e6be6;
+  --sse-pill-purple-bg: #eef0fb;
+  --sse-pill-purple-fg: #5b4fd0;
+  --sse-pill-gray-bg: #f2f4f7;
+  --sse-pill-gray-fg: #667085;
+
+  /* Radius tokens */
+  --sse-radius-sm: 8px;   /* inputs, chips, botones */
+  --sse-radius-md: 13px;  /* cards, paneles */
+  --sse-radius-lg: 16px;  /* modales, secciones */
+
+  /* Shadow tokens */
+  --sse-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --sse-shadow-lg: 0 12px 32px rgba(15, 38, 71, 0.2);
+
+  /* shadcn-compatible aliases so ui/* primitives theme correctly */
+  --background: var(--sse-bg);
+  --foreground: var(--sse-ink);
+  --card: var(--sse-surface);
+  --card-foreground: var(--sse-ink);
+  --popover: var(--sse-surface);
+  --popover-foreground: var(--sse-ink);
+  --primary: var(--sse-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--sse-pill-blue-bg);
+  --secondary-foreground: var(--sse-primary);
+  --muted: #f4f6f9;
+  --muted-foreground: var(--sse-muted);
+  --accent: var(--sse-pill-blue-bg);
+  --accent-foreground: var(--sse-primary-dark);
+  --destructive: var(--sse-danger);
+  --destructive-foreground: #ffffff;
+  --border: var(--sse-border);
+  --input: var(--sse-border);
+  --ring: var(--sse-primary-light);
+  --radius: var(--sse-radius-md);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* SSE brand scale, usable as bg-sse-primary, text-sse-danger, etc. */
+  --color-sse-primary-dark: var(--sse-primary-dark);
+  --color-sse-primary: var(--sse-primary);
+  --color-sse-primary-light: var(--sse-primary-light);
+  --color-sse-success: var(--sse-success);
+  --color-sse-warning: var(--sse-warning);
+  --color-sse-danger: var(--sse-danger);
+  --color-sse-purple: var(--sse-purple);
+  --color-sse-teal: var(--sse-teal);
+  --color-sse-ink: var(--sse-ink);
+  --color-sse-muted: var(--sse-muted);
+  --color-sse-border: var(--sse-border);
+  --color-sse-bg: var(--sse-bg);
+  --color-sse-surface: var(--sse-surface);
+
+  --color-sse-shell-canvas: var(--sse-shell-canvas);
+  --color-sse-shell-border: var(--sse-shell-border);
+  --color-sse-shell-search-bg: var(--sse-shell-search-bg);
+  --color-sse-sidebar-bg: var(--sse-sidebar-bg);
+  --color-sse-sidebar-text: var(--sse-sidebar-text);
+  --color-sse-sidebar-text-dim: var(--sse-sidebar-text-dim);
+  --color-sse-sidebar-text-bright: var(--sse-sidebar-text-bright);
+  --color-sse-sidebar-caption: var(--sse-sidebar-caption);
+  --color-sse-sidebar-icon-muted: var(--sse-sidebar-icon-muted);
+  --color-sse-sidebar-chevron: var(--sse-sidebar-chevron);
+  --color-sse-sidebar-badge-bg: var(--sse-sidebar-badge-bg);
+  --color-sse-ws-dropdown-bg: var(--sse-ws-dropdown-bg);
+  --color-sse-crumb-chevron: var(--sse-crumb-chevron);
+  --color-sse-bell-icon: var(--sse-bell-icon);
+
+  --color-sse-sem-green-bg: var(--sse-sem-green-bg);
+  --color-sse-sem-green-border: var(--sse-sem-green-border);
+  --color-sse-sem-green-fg: var(--sse-sem-green-fg);
+  --color-sse-sem-amber-bg: var(--sse-sem-amber-bg);
+  --color-sse-sem-amber-border: var(--sse-sem-amber-border);
+  --color-sse-sem-amber-fg: var(--sse-sem-amber-fg);
+  --color-sse-sem-red-bg: var(--sse-sem-red-bg);
+  --color-sse-sem-red-border: var(--sse-sem-red-border);
+  --color-sse-sem-red-fg: var(--sse-sem-red-fg);
+
+  --color-sse-pill-blue-bg: var(--sse-pill-blue-bg);
+  --color-sse-pill-blue-fg: var(--sse-pill-blue-fg);
+  --color-sse-pill-purple-bg: var(--sse-pill-purple-bg);
+  --color-sse-pill-purple-fg: var(--sse-pill-purple-fg);
+  --color-sse-pill-gray-bg: var(--sse-pill-gray-bg);
+  --color-sse-pill-gray-fg: var(--sse-pill-gray-fg);
+
+  --radius-sm: var(--sse-radius-sm);
+  --radius-md: var(--sse-radius-md);
+  --radius-lg: var(--sse-radius-lg);
+  --radius: var(--sse-radius-md);
+
+  --shadow-sse-sm: var(--sse-shadow-sm);
+  --shadow-sse-lg: var(--sse-shadow-lg);
+
+  --font-sans: var(--font-public-sans), system-ui, sans-serif;
+  --font-mono: var(--font-space-grotesk), monospace;
+}
+
+/*
+  SSE-VRAF is an institutional platform — no dark mode per design system.
+  No blanket `a { color }` reset here on purpose: Tailwind's utilities are
+  emitted in @layer utilities via `@import "tailwindcss"` above, and CSS
+  cascade layers give ANY layered rule priority over unlayered ones
+  regardless of specificity/source order — so a plain unlayered `a {}`
+  would silently beat classes like `text-sse-sidebar-text` on every <Link>.
+  Every link in this app sets its own color utility instead.
+*/
+body {
+  background: var(--sse-shell-canvas);
+  color: var(--sse-ink);
+  font-family: var(--font-public-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-mono-sse {
+  font-family: var(--font-space-grotesk), monospace;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6dae2;
+  border-radius: 8px;
+  border: 2px solid var(--sse-shell-canvas);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b9bfcc;
+}
