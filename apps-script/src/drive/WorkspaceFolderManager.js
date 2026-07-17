@@ -104,6 +104,30 @@ var WorkspaceFolderManager = {
   },
 
   /**
+   * SSE-VRAF/{wsId}/Procedimientos/
+   *
+   * @param {string} wsId
+   * @returns {GoogleAppsScript.Drive.Folder}
+   */
+  getProcedimientosFolder: function (wsId) {
+    if (!wsId) throw new Error("WorkspaceFolderManager.getProcedimientosFolder: wsId is required");
+    var wsFolder = WorkspaceFolderManager.getWorkspaceFolder(wsId);
+    return DriveService.getOrCreateFolder("Procedimientos", wsFolder.getId());
+  },
+
+  /**
+   * SSE-VRAF/{wsId}/Evidencias/
+   *
+   * @param {string} wsId
+   * @returns {GoogleAppsScript.Drive.Folder}
+   */
+  getEvidenciasFolder: function (wsId) {
+    if (!wsId) throw new Error("WorkspaceFolderManager.getEvidenciasFolder: wsId is required");
+    var wsFolder = WorkspaceFolderManager.getWorkspaceFolder(wsId);
+    return DriveService.getOrCreateFolder("Evidencias", wsFolder.getId());
+  },
+
+  /**
    * SSE-VRAF/{wsId}/Plantillas/
    *
    * @param {string} wsId
@@ -161,8 +185,10 @@ var WorkspaceFolderManager = {
     var SUB_FOLDERS = [
       "Empleados",
       "Procesos",
-      "Documentos",
+      "Procedimientos",
       "Formularios",
+      "Evidencias",
+      "Documentos",
       "Plantillas",
       "Reportes",
       "_archivo",

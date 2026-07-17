@@ -1,8 +1,13 @@
 /**
- * Builder SDK — Sprint 15.5 No-Code Builder Suite
+ * Builder SDK — Sprint 16 Production Infrastructure
  *
- * Mock-first adapter. When APPS_SCRIPT_WEB_APP_URL is set, delegates to GAS.
- * All builder configs are stored in-memory keyed by wsId+tipo+id.
+ * Mock-first adapter. When APPS_SCRIPT_WEB_APP_URL is set, all operations
+ * delegate to the Google Apps Script backend (BuilderController.js) via
+ * getAppsScriptClient().call("builder.*", params).
+ *
+ * The GAS backend stores configs in WSBuilderConfigs sheet with configJson
+ * holding the full typed object, enabling all 10 builder types without
+ * separate sheets.
  */
 
 import type {
@@ -20,10 +25,11 @@ import type {
   ProcedureConfig,
   EntradaCatalogo,
 } from "@/types/builders";
+import { getAppsScriptClient } from "./adapters/getAppsScriptClient";
 
 const _isLive = !!process.env.APPS_SCRIPT_WEB_APP_URL;
 
-// ── In-memory store ───────────────────────────────────────────────────────────
+// ── In-memory store (mock mode only) ─────────────────────────────────────────
 
 const _store = new Map<string, BuilderConfig>();
 
@@ -39,7 +45,7 @@ function _nextId() {
   return `bldr-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-// ── Seed data ─────────────────────────────────────────────────────────────────
+// ── Seed data (mock mode only) ────────────────────────────────────────────────
 
 function _ensureSeeded(wsId: string) {
   const processKey = _key(wsId, "process", "demo-process-1");
@@ -47,7 +53,6 @@ function _ensureSeeded(wsId: string) {
 
   const now = new Date().toISOString();
 
-  // Demo Process
   const demoProcess: ProcessConfig = {
     id: "demo-process-1",
     wsId,
@@ -95,7 +100,6 @@ function _ensureSeeded(wsId: string) {
     publishedAt: now,
   };
 
-  // Demo Form
   const demoForm: FormConfig = {
     id: "demo-form-1",
     wsId,
@@ -137,7 +141,6 @@ function _ensureSeeded(wsId: string) {
     publishedAt: now,
   };
 
-  // Demo Catalog: Departments
   const demoCatalogDepts: CatalogConfig = {
     id: "demo-catalog-dept",
     wsId,
@@ -160,7 +163,6 @@ function _ensureSeeded(wsId: string) {
     publishedAt: now,
   };
 
-  // Demo KPI
   const demoKPI: KPIConfig = {
     id: "demo-kpi-1",
     wsId,
@@ -211,10 +213,14 @@ function _ensureSeeded(wsId: string) {
 
 // ── SDK ───────────────────────────────────────────────────────────────────────
 
+const gas = () => getAppsScriptClient();
+
 export const BuilderSDK = {
-  // List all configs of a given type
+
   async list<T extends BuilderConfig>(wsId: string, tipo: BuilderTipo): Promise<T[]> {
-    if (_isLive) throw new Error("GAS not implemented yet");
+    if (_isLive) {
+      return gas().call<T[]>("builder.list", { wsId, tipo });
+    }
     _ensureSeeded(wsId);
     const prefix = _listKey(wsId, tipo);
     const results: T[] = [];
@@ -226,18 +232,23 @@ export const BuilderSDK = {
     );
   },
 
-  // Get a single config
   async get<T extends BuilderConfig>(wsId: string, tipo: BuilderTipo, id: string): Promise<T | null> {
-    if (_isLive) throw new Error("GAS not implemented yet");
+    if (_isLive) {
+      return gas().call<T | null>("builder.get", { wsId, tipo, id });
+    }
     _ensureSeeded(wsId);
     return (_store.get(_key(wsId, tipo, id)) as T) ?? null;
   },
 
-  // Create or update
-  async save<T extends BuilderConfig>(wsId: string, config: Omit<T, "id" | "createdAt" | "updatedAt"> & { id?: string }): Promise<T> {
-    if (_isLive) throw new Error("GAS not implemented yet");
+  async save<T extends BuilderConfig>(
+    wsId: string,
+    config: Omit<T, "id" | "createdAt" | "updatedAt"> & { id?: string }
+  ): Promise<T> {
+    if (_isLive) {
+      return gas().call<T>("builder.save", { ...config, wsId });
+    }
     const now = new Date().toISOString();
-    const id   = config.id ?? _nextId();
+    const id  = config.id ?? _nextId();
     const existing = _store.get(_key(wsId, config.tipo as BuilderTipo, id));
     const saved: T = {
       ...config,
@@ -250,9 +261,10 @@ export const BuilderSDK = {
     return saved;
   },
 
-  // Publish (bumps version, sets status=published)
   async publish<T extends BuilderConfig>(wsId: string, tipo: BuilderTipo, id: string): Promise<T> {
-    if (_isLive) throw new Error("GAS not implemented yet");
+    if (_isLive) {
+      return gas().call<T>("builder.publish", { wsId, tipo, id });
+    }
     const existing = _store.get(_key(wsId, tipo, id)) as T | undefined;
     if (!existing) throw new Error(`Builder config ${id} not found`);
     const published = {
@@ -266,19 +278,23 @@ export const BuilderSDK = {
     return published as T;
   },
 
-  // Archive
   async archive(wsId: string, tipo: BuilderTipo, id: string): Promise<void> {
+    if (_isLive) {
+      await gas().call<void>("builder.archive", { wsId, tipo, id });
+      return;
+    }
     const existing = _store.get(_key(wsId, tipo, id));
     if (!existing) return;
     _store.set(_key(wsId, tipo, id), { ...existing, status: "archived", updatedAt: new Date().toISOString() });
   },
 
-  // Duplicate
   async duplicate<T extends BuilderConfig>(wsId: string, tipo: BuilderTipo, id: string): Promise<T> {
-    if (_isLive) throw new Error("GAS not implemented yet");
+    if (_isLive) {
+      return gas().call<T>("builder.duplicate", { wsId, tipo, id });
+    }
     const existing = _store.get(_key(wsId, tipo, id)) as T | undefined;
     if (!existing) throw new Error(`Builder config ${id} not found`);
-    const now = new Date().toISOString();
+    const now   = new Date().toISOString();
     const newId = _nextId();
     const copy: T = {
       ...existing,
@@ -294,13 +310,18 @@ export const BuilderSDK = {
     return copy;
   },
 
-  // Delete
   async delete(wsId: string, tipo: BuilderTipo, id: string): Promise<void> {
+    if (_isLive) {
+      await gas().call<void>("builder.delete", { wsId, tipo, id });
+      return;
+    }
     _store.delete(_key(wsId, tipo, id));
   },
 
-  // Catalog-specific: save a single entry
   async saveCatalogEntry(wsId: string, catalogId: string, entry: EntradaCatalogo): Promise<EntradaCatalogo> {
+    if (_isLive) {
+      return gas().call<EntradaCatalogo>("builder.saveCatalogEntry", { wsId, catalogId, entry });
+    }
     const catalog = _store.get(_key(wsId, "catalog", catalogId)) as CatalogConfig | undefined;
     if (!catalog) throw new Error(`Catalog ${catalogId} not found`);
     const idx = catalog.entradas.findIndex((e) => e.id === entry.id);
@@ -315,30 +336,56 @@ export const BuilderSDK = {
   },
 
   async deleteCatalogEntry(wsId: string, catalogId: string, entryId: string): Promise<void> {
+    if (_isLive) {
+      await gas().call<void>("builder.deleteCatalogEntry", { wsId, catalogId, entryId });
+      return;
+    }
     const catalog = _store.get(_key(wsId, "catalog", catalogId)) as CatalogConfig | undefined;
     if (!catalog) return;
-    catalog.entradas = catalog.entradas.filter((e) => e.id !== entryId);
+    catalog.entradas  = catalog.entradas.filter((e) => e.id !== entryId);
     catalog.updatedAt = new Date().toISOString();
     _store.set(_key(wsId, "catalog", catalogId), catalog);
   },
 
-  // Get all process configs (for cross-builder references)
   async getProcessList(wsId: string): Promise<ProcessConfig[]> {
+    if (_isLive) {
+      return gas().call<ProcessConfig[]>("builder.getProcessList", { wsId });
+    }
     return BuilderSDK.list<ProcessConfig>(wsId, "process");
   },
 
-  // Get all form configs
   async getFormList(wsId: string): Promise<FormConfig[]> {
+    if (_isLive) {
+      return gas().call<FormConfig[]>("builder.getFormList", { wsId });
+    }
     return BuilderSDK.list<FormConfig>(wsId, "form");
   },
 
-  // Get all KPI configs
   async getKPIList(wsId: string): Promise<KPIConfig[]> {
+    if (_isLive) {
+      return gas().call<KPIConfig[]>("builder.getKPIList", { wsId });
+    }
     return BuilderSDK.list<KPIConfig>(wsId, "kpi");
   },
 
-  // Get all notification configs
   async getNotificationList(wsId: string): Promise<NotificationConfig[]> {
+    if (_isLive) {
+      return gas().call<NotificationConfig[]>("builder.getNotificationList", { wsId });
+    }
     return BuilderSDK.list<NotificationConfig>(wsId, "notification");
+  },
+
+  async getVersionHistory(wsId: string, id: string): Promise<Array<{ version: number; status: string; createdAt: string }>> {
+    if (_isLive) {
+      return gas().call("builder.getVersionHistory", { wsId, id });
+    }
+    return []; // mock: no history
+  },
+
+  async restoreVersion<T extends BuilderConfig>(wsId: string, id: string, version: number): Promise<T> {
+    if (_isLive) {
+      return gas().call<T>("builder.restoreVersion", { wsId, id, version });
+    }
+    throw new Error("restoreVersion not available in mock mode");
   },
 };

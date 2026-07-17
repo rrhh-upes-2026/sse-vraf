@@ -73,6 +73,16 @@ function routeAction_(action, params, context) {
     return { data: result, pagination: null };
   }
 
+  if (namespace === "builder") {
+    result = routeBuilderAction_(verb, params || {}, context);
+    return { data: result, pagination: null };
+  }
+
+  if (namespace === "health") {
+    result = HealthController.getHealth(params || {}, context);
+    return { data: result, pagination: null };
+  }
+
   // Workspace-admin lifecycle verbs routed to WorkspaceController
   if (WS_ENTITY_NAMESPACES[namespace]) {
     var wsResult = routeWorkspaceAction_(namespace, verb, params || {}, context);
@@ -241,6 +251,35 @@ function routePlatformAction_(verb, params, context) {
     case "getStatus":        return BootstrapController.getStatus(params, context);
     default:
       throw new Error("Unknown platform verb: " + verb);
+  }
+}
+
+/**
+ * Route builder.* actions to BuilderController.
+ * All builder CRUD operations for the No-Code Builder Suite.
+ */
+function routeBuilderAction_(verb, params, context) {
+  params = params || {};
+  var userId = context && context.userId || "";
+
+  switch (verb) {
+    case "list":             return BuilderController.list(params);
+    case "get":              return BuilderController.get(params);
+    case "save":             return BuilderController.save(params);
+    case "publish":          return BuilderController.publish(Object.assign({}, params, { userId: userId }));
+    case "archive":          return BuilderController.archive(params);
+    case "delete":           return BuilderController.delete(params);
+    case "duplicate":        return BuilderController.duplicate(params);
+    case "restoreVersion":   return BuilderController.restoreVersion(params);
+    case "getVersionHistory": return BuilderController.getVersionHistory(params);
+    case "saveCatalogEntry":  return BuilderController.saveCatalogEntry(params);
+    case "deleteCatalogEntry": return BuilderController.deleteCatalogEntry(params);
+    case "getProcessList":    return BuilderController.getProcessList(params);
+    case "getFormList":       return BuilderController.getFormList(params);
+    case "getKPIList":        return BuilderController.getKPIList(params);
+    case "getNotificationList": return BuilderController.getNotificationList(params);
+    default:
+      throw new Error("Unknown builder verb: " + verb);
   }
 }
 

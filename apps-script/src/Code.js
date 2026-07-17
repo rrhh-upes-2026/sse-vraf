@@ -18,13 +18,18 @@
  * extra gate for trusted server-side callers (do not use it from the browser
  * adapter — a secret in client JS is not a secret).
  */
-// Merge workspace-admin entities at load time so the router and SheetRepository
-// can resolve ws* entity names in every request without per-request overhead.
+// Merge all entity schemas at load time so the router and SheetRepository
+// can resolve entity names in every request without per-request overhead.
 (function bootstrap_() {
   try {
     mergeWorkspaceAdminEntities_();
   } catch (e) {
     // mergeWorkspaceAdminEntities_ may not yet be defined in older deployments.
+  }
+  try {
+    mergeBuilderEntities_();
+  } catch (e) {
+    // mergeBuilderEntities_ may not yet be defined in older deployments.
   }
 })();
 

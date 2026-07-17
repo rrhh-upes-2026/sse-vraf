@@ -74,6 +74,18 @@ export function useBuilderDuplicate(wsId: string, tipo: BuilderTipo) {
   });
 }
 
+// ── Archive ───────────────────────────────────────────────────────────────────
+
+export function useBuilderArchive(wsId: string, tipo: BuilderTipo) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => BuilderSDK.archive(wsId, tipo, id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: BUILDER_KEYS.list(wsId, tipo) });
+    },
+  });
+}
+
 // ── Delete ────────────────────────────────────────────────────────────────────
 
 export function useBuilderDelete(wsId: string, tipo: BuilderTipo) {
@@ -83,5 +95,15 @@ export function useBuilderDelete(wsId: string, tipo: BuilderTipo) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: BUILDER_KEYS.list(wsId, tipo) });
     },
+  });
+}
+
+// ── Version history ───────────────────────────────────────────────────────────
+
+export function useBuilderVersionHistory(wsId: string, id: string | null) {
+  return useQuery({
+    queryKey: ["builders", wsId, "versions", id ?? ""],
+    queryFn: () => BuilderSDK.getVersionHistory(wsId, id!),
+    enabled: !!id,
   });
 }

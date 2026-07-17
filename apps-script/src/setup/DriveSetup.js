@@ -100,7 +100,22 @@ function initializeFullDriveHierarchy() {
   var root = DriveService.getRootFolder();
   var rootId = root.getId();
 
-  // ── System folders ────────────────────────────────────────────────────────
+  // ── Platform/ container (Sprint 16) ──────────────────────────────────────
+  var platformFolder = DriveService.getOrCreateFolder('Platform', rootId);
+  var platformId = platformFolder.getId();
+
+  var PLATFORM_SUB_FOLDERS = ['Config', 'Backups', 'Templates', 'Logs', 'Reports', 'System'];
+  for (var ps = 0; ps < PLATFORM_SUB_FOLDERS.length; ps++) {
+    try {
+      DriveService.getOrCreateFolder(PLATFORM_SUB_FOLDERS[ps], platformId);
+    } catch (e) {
+      AppLogger.warn('initializeFullDriveHierarchy: Platform sub-folder error', {
+        name: PLATFORM_SUB_FOLDERS[ps], error: String((e && e.message) || e),
+      });
+    }
+  }
+
+  // ── Legacy system folders (kept for backward compatibility) ───────────────
   var SYSTEM_FOLDERS = [
     'Config',
     'Database',
@@ -151,8 +166,10 @@ function initializeFullDriveHierarchy() {
 
   var WS_SUB_FOLDERS = [
     'Procesos',
-    'Documentos',
+    'Procedimientos',
+    'Formularios',
     'Evidencias',
+    'Documentos',
     'Reportes',
     'Plantillas',
     'Archivo',

@@ -22,9 +22,10 @@
  * Public entry point — call from the GAS editor to bootstrap the Spreadsheet.
  */
 function initializeDatabase() {
-  // Merge workspace-admin schemas into the global ENTITY_SHEETS so
-  // getEntityConfig_() can resolve them during setup.
+  // Merge all entity schemas into ENTITY_SHEETS so getEntityConfig_() can
+  // resolve them during setup.
   mergeWorkspaceAdminEntities_();
+  mergeBuilderEntities_();
 
   var spreadsheet = SpreadsheetApp.openById(Config.spreadsheetId());
 
