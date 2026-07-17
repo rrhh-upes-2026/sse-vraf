@@ -101,30 +101,29 @@ function pasoDesdEtapa(etapa: EtapaContratacion): number {
   return mapa[etapa] ?? 1;
 }
 
+// ── feature flag ──────────────────────────────────────────────────────────────
+
+const _isLive = typeof process !== 'undefined' && !!process.env.APPS_SCRIPT_WEB_APP_URL;
+const _client = () => getAppsScriptClient();
+
 // ── estado mutable en memoria (solo para mock) ────────────────────────────────
 
-// Clonamos en memoria para permitir mutaciones durante la sesión sin tocar los originales.
-let _procesos: ProcesoContratacion[] = MOCK_PROCESOS.map((p) => ({
+let _procesos: ProcesoContratacion[] = _isLive ? [] : MOCK_PROCESOS.map((p) => ({
   ...p,
   candidatos: [...p.candidatos],
   terna: [...p.terna],
   opcionesOferta: [...p.opcionesOferta],
   historial: [...p.historial],
 }));
-let _requisiciones: RequisicionPersonal[] = [...MOCK_REQUISICIONES];
-let _informesTecnicos: InformeTecnicoSeleccion[] = [...MOCK_INFORMES_TECNICOS];
-let _informesFinales: InformeSeleccionFinal[] = [...MOCK_INFORMES_FINALES];
-let _cartasOferta: CartaOferta[] = [...MOCK_CARTAS_OFERTA];
-let _expedientes: ExpedientePersonal[] = [...MOCK_EXPEDIENTES];
-let _contratos: ContratoTrabajo[] = [...MOCK_CONTRATOS];
-let _fichasDocente: FichaDocente[] = [...MOCK_FICHAS_DOCENTE];
-let _fichasEmpleado: FichaEmpleado[] = [];
-let _candidatos: CandidatoCV[] = [...MOCK_CANDIDATOS];
-
-// ── feature flag ──────────────────────────────────────────────────────────────
-
-const _isLive = typeof process !== 'undefined' && !!process.env.APPS_SCRIPT_WEB_APP_URL;
-const _client = () => getAppsScriptClient();
+let _requisiciones: RequisicionPersonal[]    = _isLive ? [] : [...MOCK_REQUISICIONES];
+let _informesTecnicos: InformeTecnicoSeleccion[] = _isLive ? [] : [...MOCK_INFORMES_TECNICOS];
+let _informesFinales: InformeSeleccionFinal[]    = _isLive ? [] : [...MOCK_INFORMES_FINALES];
+let _cartasOferta: CartaOferta[]                 = _isLive ? [] : [...MOCK_CARTAS_OFERTA];
+let _expedientes: ExpedientePersonal[]           = _isLive ? [] : [...MOCK_EXPEDIENTES];
+let _contratos: ContratoTrabajo[]                = _isLive ? [] : [...MOCK_CONTRATOS];
+let _fichasDocente: FichaDocente[]               = _isLive ? [] : [...MOCK_FICHAS_DOCENTE];
+let _fichasEmpleado: FichaEmpleado[]             = [];
+let _candidatos: CandidatoCV[]                   = _isLive ? [] : [...MOCK_CANDIDATOS];
 
 // ── Servicio de Contratación ──────────────────────────────────────────────────
 
@@ -140,7 +139,8 @@ export const ContratacionService = {
     filtros?: { etapa?: EtapaContratacion; prioridad?: string },
   ): Promise<ProcesoContratacion[]> => {
     if (_isLive) {
-      return _client().list<ProcesoContratacion>('procesos', {
+      return _client().call<ProcesoContratacion[]>('contratacion.listProcesos', {
+        wsId: _wsId,
         ...(filtros?.etapa && { etapaActual: filtros.etapa }),
         ...(filtros?.prioridad && { prioridad: filtros.prioridad }),
       });
@@ -155,7 +155,7 @@ export const ContratacionService = {
    * Obtiene un proceso por ID. Retorna null si no existe.
    */
   obtenerProceso: (id: string): Promise<ProcesoContratacion | null> => {
-    if (_isLive) return _client().get<ProcesoContratacion>('procesos', id);
+    if (_isLive) return _client().call<ProcesoContratacion | null>('contratacion.getProceso', { id });
     return delay(_procesos.find((p) => p.id === id) ?? null);
   },
 
@@ -163,7 +163,7 @@ export const ContratacionService = {
    * Crea un nuevo proceso de contratación en etapa inicial.
    */
   crearProceso: (payload: Partial<ProcesoContratacion>): Promise<ProcesoContratacion> => {
-    if (_isLive) return _client().create<ProcesoContratacion>('procesos', payload);
+    if (_isLive) return _client().call<ProcesoContratacion>('contratacion.crearProceso', payload);
     const ts = now();
     const nuevo: ProcesoContratacion = {
       id: uid('PROC-RH-26'),
@@ -209,7 +209,7 @@ export const ContratacionService = {
     accion: { resultado: ResultadoDecision; notas?: string; responsable: string },
   ): Promise<ProcesoContratacion> => {
     if (_isLive) {
-      return _client().call<ProcesoContratacion>('procesos.avanzarEtapa', { id, ...accion });
+      return _client().call<ProcesoContratacion>('contratacion.avanzarEtapa', { id, ...accion });
     }
     const idx = _procesos.findIndex((p) => p.id === id);
     if (idx === -1) return Promise.reject(new Error(`Proceso ${id} no encontrado`));
@@ -251,10 +251,11 @@ export const ContratacionService = {
     data: Partial<RequisicionPersonal>,
   ): Promise<RequisicionPersonal> => {
     if (_isLive) {
-      const existente = _requisiciones.find((r) => r.procesoId === procesoId);
-      return existente
-        ? _client().update<RequisicionPersonal>('solicitudes', existente.id, data)
-        : _client().create<RequisicionPersonal>('solicitudes', { procesoId, ...data });
+      return _client().call<RequisicionPersonal>('contratacion.guardarDocumento', {
+        tipo: 'requisicion',
+        procesoId,
+        ...data,
+      });
     }
     const ts = now();
     const existente = _requisiciones.find((r) => r.procesoId === procesoId);
@@ -330,9 +331,10 @@ export const ContratacionService = {
 
   obtenerRequisicion: (procesoId: string): Promise<RequisicionPersonal | null> => {
     if (_isLive) {
-      return _client()
-        .list<RequisicionPersonal>('solicitudes', { procesoId })
-        .then((r) => r[0] ?? null);
+      return _client().call<RequisicionPersonal | null>('contratacion.getDocumento', {
+        tipo: 'requisicion',
+        procesoId,
+      });
     }
     return delay(_requisiciones.find((r) => r.procesoId === procesoId) ?? null);
   },
@@ -344,10 +346,11 @@ export const ContratacionService = {
     data: Partial<InformeTecnicoSeleccion>,
   ): Promise<InformeTecnicoSeleccion> => {
     if (_isLive) {
-      const e = _informesTecnicos.find((i) => i.procesoId === procesoId);
-      return e
-        ? _client().update<InformeTecnicoSeleccion>('historial', e.id, data)
-        : _client().create<InformeTecnicoSeleccion>('historial', { procesoId, ...data });
+      return _client().call<InformeTecnicoSeleccion>('contratacion.guardarDocumento', {
+        tipo: 'informeTecnico',
+        procesoId,
+        ...data,
+      });
     }
     const ts = now();
     const existente = _informesTecnicos.find((i) => i.procesoId === procesoId);
@@ -394,10 +397,11 @@ export const ContratacionService = {
     data: Partial<InformeSeleccionFinal>,
   ): Promise<InformeSeleccionFinal> => {
     if (_isLive) {
-      const e = _informesFinales.find((i) => i.procesoId === procesoId);
-      return e
-        ? _client().update<InformeSeleccionFinal>('historial', e.id, data)
-        : _client().create<InformeSeleccionFinal>('historial', { procesoId, ...data });
+      return _client().call<InformeSeleccionFinal>('contratacion.guardarDocumento', {
+        tipo: 'informeFinal',
+        procesoId,
+        ...data,
+      });
     }
     const ts = now();
     const existente = _informesFinales.find((i) => i.procesoId === procesoId);
@@ -440,7 +444,12 @@ export const ContratacionService = {
     data: Partial<CartaOferta>,
   ): Promise<CartaOferta> => {
     if (_isLive) {
-      return _client().create<CartaOferta>('formularios', { procesoId, estado: 'emitida', ...data });
+      return _client().call<CartaOferta>('contratacion.guardarDocumento', {
+        tipo: 'cartaOferta',
+        procesoId,
+        estado: 'emitida',
+        ...data,
+      });
     }
     const ts = now();
     const proceso = _procesos.find((p) => p.id === procesoId);
@@ -484,12 +493,14 @@ export const ContratacionService = {
     aceptacion: { nombre: string; dui: string },
   ): Promise<CartaOferta> => {
     if (_isLive) {
-      return _client().update<CartaOferta>('formularios', cartaId, {
+      return _client().call<CartaOferta>('contratacion.guardarDocumento', {
+        tipo: 'cartaOferta',
+        id: cartaId,
         estado: 'aceptada',
         nombreAceptante: aceptacion.nombre,
         duiAceptante: aceptacion.dui,
         firmaAceptacion: true,
-        fechaAceptacion: now().slice(0, 10),
+        fechaAceptacion: new Date().toISOString().slice(0, 10),
       });
     }
     const carta = _cartasOferta.find((c) => c.id === cartaId);
@@ -513,10 +524,11 @@ export const ContratacionService = {
     data: Partial<ExpedientePersonal>,
   ): Promise<ExpedientePersonal> => {
     if (_isLive) {
-      const e = _expedientes.find((x) => x.procesoId === procesoId);
-      return e
-        ? _client().update<ExpedientePersonal>('evidencias', e.id, data)
-        : _client().create<ExpedientePersonal>('evidencias', { procesoId, ...data });
+      return _client().call<ExpedientePersonal>('contratacion.guardarDocumento', {
+        tipo: 'expediente',
+        procesoId,
+        ...data,
+      });
     }
     const ts = now();
     const existente = _expedientes.find((x) => x.procesoId === procesoId);
@@ -564,10 +576,11 @@ export const ContratacionService = {
     data: Partial<FichaEmpleado>,
   ): Promise<FichaEmpleado> => {
     if (_isLive) {
-      const e = _fichasEmpleado.find((f) => f.procesoId === procesoId);
-      return e
-        ? _client().update<FichaEmpleado>('usuarios', e.id, data)
-        : _client().create<FichaEmpleado>('usuarios', { procesoId, ...data });
+      return _client().call<FichaEmpleado>('contratacion.guardarDocumento', {
+        tipo: 'fichaEmpleado',
+        procesoId,
+        ...data,
+      });
     }
     const ts = now();
     const existente = _fichasEmpleado.find((f) => f.procesoId === procesoId);
@@ -634,10 +647,11 @@ export const ContratacionService = {
     data: Partial<FichaDocente>,
   ): Promise<FichaDocente> => {
     if (_isLive) {
-      const e = _fichasDocente.find((f) => f.procesoId === procesoId);
-      return e
-        ? _client().update<FichaDocente>('usuarios', e.id, data)
-        : _client().create<FichaDocente>('usuarios', { procesoId, ...data });
+      return _client().call<FichaDocente>('contratacion.guardarDocumento', {
+        tipo: 'fichaDocente',
+        procesoId,
+        ...data,
+      });
     }
     const ts = now();
     const existente = _fichasDocente.find((f) => f.procesoId === procesoId);
@@ -690,10 +704,11 @@ export const ContratacionService = {
     data: Partial<ContratoTrabajo>,
   ): Promise<ContratoTrabajo> => {
     if (_isLive) {
-      const e = _contratos.find((c) => c.procesoId === procesoId);
-      return e
-        ? _client().update<ContratoTrabajo>('formularios', e.id, data)
-        : _client().create<ContratoTrabajo>('formularios', { procesoId, ...data });
+      return _client().call<ContratoTrabajo>('contratacion.guardarDocumento', {
+        tipo: 'contrato',
+        procesoId,
+        ...data,
+      });
     }
     const ts = now();
     const existente = _contratos.find((c) => c.procesoId === procesoId);
@@ -743,7 +758,7 @@ export const ContratacionService = {
     cv: Partial<CandidatoCV>,
   ): Promise<CandidatoCV> => {
     if (_isLive) {
-      return _client().create<CandidatoCV>('evidencias', { procesoId, ...cv });
+      return _client().call<CandidatoCV>('contratacion.agregarCandidato', { procesoId, ...cv });
     }
     const ts = now();
     const nuevo: CandidatoCV = {
@@ -780,7 +795,7 @@ export const ContratacionService = {
     evaluacion: Partial<CandidatoCV>,
   ): Promise<CandidatoCV> => {
     if (_isLive) {
-      return _client().update<CandidatoCV>('evidencias', candidatoId, evaluacion);
+      return _client().call<CandidatoCV>('contratacion.evaluarCandidato', { id: candidatoId, ...evaluacion });
     }
     const candidato = _candidatos.find((c) => c.id === candidatoId);
     if (!candidato) return Promise.reject(new Error(`Candidato ${candidatoId} no encontrado`));

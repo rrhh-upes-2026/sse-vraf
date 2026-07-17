@@ -26,6 +26,7 @@ function initializeDatabase() {
   // resolve them during setup.
   mergeWorkspaceAdminEntities_();
   mergeBuilderEntities_();
+  mergeContratacionEntities_();
 
   var spreadsheet = SpreadsheetApp.openById(Config.spreadsheetId());
 

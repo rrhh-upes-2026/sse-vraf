@@ -23,14 +23,13 @@
 (function bootstrap_() {
   try {
     mergeWorkspaceAdminEntities_();
-  } catch (e) {
-    // mergeWorkspaceAdminEntities_ may not yet be defined in older deployments.
-  }
+  } catch (e) {}
   try {
     mergeBuilderEntities_();
-  } catch (e) {
-    // mergeBuilderEntities_ may not yet be defined in older deployments.
-  }
+  } catch (e) {}
+  try {
+    mergeContratacionEntities_();
+  } catch (e) {}
 })();
 
 function doPost(e) {

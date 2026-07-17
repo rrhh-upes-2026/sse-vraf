@@ -83,6 +83,11 @@ function routeAction_(action, params, context) {
     return { data: result, pagination: null };
   }
 
+  if (namespace === "contratacion") {
+    result = routeContratacionAction_(verb, params || {});
+    return { data: result, pagination: null };
+  }
+
   // Workspace-admin lifecycle verbs routed to WorkspaceController
   if (WS_ENTITY_NAMESPACES[namespace]) {
     var wsResult = routeWorkspaceAction_(namespace, verb, params || {}, context);
@@ -227,6 +232,18 @@ function routeWorkspaceAction_(entityName, verb, params, context) {
         }),
         pagination: null,
       };
+
+    case "upsertByWsId":
+      if (entityName !== "wsSettings") return undefined;
+      if (!params.wsId) throw new Error("wsId is required for upsertByWsId");
+      var settingsPatch = Object.assign({}, params);
+      settingsPatch.updatedAt = new Date().toISOString();
+      var existingSettings = getEntity_("wsSettings", params.wsId);
+      if (existingSettings) {
+        return { data: updateEntity_("wsSettings", params.wsId, settingsPatch), pagination: null };
+      }
+      settingsPatch.id = params.wsId;
+      return { data: createEntity_("wsSettings", settingsPatch), pagination: null };
 
     default:
       return undefined; // fall through to generic CRUD

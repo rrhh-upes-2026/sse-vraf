@@ -1028,12 +1028,16 @@ export const WorkspaceAdminService = {
       ? _client().remove("wsUsers", id).then(() => ({ success: true, id }))
       : delay({ success: true, id }),
 
-  // Settings (always mock for now — wsSettings uses wsId as PK, not id)
+  // Settings
   getSettings: (wsId: WorkspaceId): Promise<WorkspaceSettings | null> =>
-    delay(MOCK_SETTINGS[wsId] ?? null),
+    _isLive
+      ? _client().get<WorkspaceSettings>("wsSettings", wsId).then((r) => r ?? null)
+      : delay(MOCK_SETTINGS[wsId] ?? null),
 
-  updateSettings: (wsId: WorkspaceId, _data: Partial<WorkspaceSettings>): Promise<{ success: boolean; wsId: string }> =>
-    delay({ success: true, wsId }),
+  updateSettings: (wsId: WorkspaceId, data: Partial<WorkspaceSettings>): Promise<{ success: boolean; wsId: string }> =>
+    _isLive
+      ? _client().call("wsSettings.upsertByWsId", { wsId, ...data }).then(() => ({ success: true, wsId }))
+      : delay({ success: true, wsId }),
 
   // Forms
   listForms: (wsId: WorkspaceId): Promise<FormBlueprint[]> =>
@@ -1116,13 +1120,38 @@ export const WorkspaceAdminService = {
       ? _client().call("wsNotifRules.toggleActive", { id, active }).then(() => ({ success: true, id, active }))
       : delay({ success: true, id, active }),
 
-  // Audit (always mock — audit records are append-only server-side)
+  // Audit
   listAuditRecords: (wsId: WorkspaceId): Promise<AuditRecord[]> =>
-    delay(MOCK_AUDIT.filter((a) => a.wsId === wsId)),
+    _isLive
+      ? _client().list<AuditRecord>("historial", { wsId })
+      : delay(MOCK_AUDIT.filter((a) => a.wsId === wsId)),
 
   // Template
-  exportTemplate: (wsId: WorkspaceId): Promise<WorkspaceTemplate> =>
-    delay({
+  exportTemplate: (wsId: WorkspaceId): Promise<WorkspaceTemplate> => {
+    if (_isLive) {
+      return Promise.all([
+        _client().list<ProcessBlueprint>("wsBlueprints", { wsId }),
+        _client().list<WorkspaceKPI>("wsKPIs", { wsId }),
+        _client().list<RequestType>("wsRequestTypes", { wsId }),
+        _client().list<WorkspaceAutomation>("wsAutomations", { wsId }),
+        _client().list<FormBlueprint>("wsForms", { wsId }),
+      ]).then(([blueprints, kpis, requestTypes, automations, forms]) => ({
+        id: `TMPL-${wsId.toUpperCase()}-${Date.now()}`,
+        nombre: `Plantilla ${wsId.toUpperCase()} - ${new Date().toLocaleDateString("es-SV")}`,
+        descripcion: `Configuración completa del workspace ${wsId.toUpperCase()}.`,
+        sourceWsId: wsId,
+        exportedBy: "",
+        exportedAt: new Date().toISOString(),
+        blueprints: blueprints.length,
+        kpis: kpis.length,
+        requestTypes: requestTypes.length,
+        automations: automations.length,
+        forms: forms.length,
+        dashboards: 0,
+        schemaVersion: "1.0.0",
+      }));
+    }
+    return delay({
       id: `TMPL-${wsId.toUpperCase()}-26-001`,
       nombre: `Plantilla ${wsId.toUpperCase()} - Julio 2026`,
       descripcion: `Configuración completa del workspace ${wsId.toUpperCase()} exportada el 15/07/2026.`,
@@ -1136,5 +1165,6 @@ export const WorkspaceAdminService = {
       forms: 0,
       dashboards: 0,
       schemaVersion: "1.0.0",
-    }),
+    });
+  },
 };

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { getAppsScriptClient } from "@/services/adapters/getAppsScriptClient";
 
-const _isLive = !!process.env.NEXT_PUBLIC_APPS_SCRIPT_LIVE;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -96,7 +95,7 @@ function statusLabel(status: HealthReport["status"]) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function SystemHealth({ wsId }: { wsId: string }) {
+export function SystemHealth({ wsId, isLive = false }: { wsId: string; isLive?: boolean }) {
   const [health, setHealth] = useState<HealthReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -104,7 +103,7 @@ export function SystemHealth({ wsId }: { wsId: string }) {
   const fetchHealth = async () => {
     setLoading(true);
     try {
-      if (_isLive) {
+      if (isLive) {
         const data = await getAppsScriptClient().call<HealthReport>("health.get", { wsId });
         setHealth(data);
       } else {
@@ -283,7 +282,7 @@ export function SystemHealth({ wsId }: { wsId: string }) {
 
       {/* Footer */}
       <div style={{ marginTop: 20, fontSize: 11, color: "rgba(255,255,255,0.2)", textAlign: "center" }}>
-        SSE Platform · Sprint 16 Infrastructure · {_isLive ? "Producción" : "Mock — configura APPS_SCRIPT_WEB_APP_URL para conectar"}
+        SSE Platform · Sprint 16 Infrastructure · {isLive ? "Producción" : "Mock — configura APPS_SCRIPT_WEB_APP_URL para conectar"}
       </div>
     </div>
   );

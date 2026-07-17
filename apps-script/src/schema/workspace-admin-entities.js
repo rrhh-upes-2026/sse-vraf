@@ -217,10 +217,12 @@ var WORKSPACE_ADMIN_ENTITY_SHEETS = {
   },
 
   // ── Workspace Settings (one row per workspace) ─────────────────────────────
-  // Primary key is wsId, not id. Use listEntities_('wsSettings', { wsId }) for lookup.
+  // id column is set to wsId on create so generic CRUD (getEntity_, updateEntity_)
+  // can locate rows by wsId without a separate lookup.
   wsSettings: {
     sheetName: "WSSettings",
     columns: [
+      "id",
       "wsId",
       "nombre",
       "nombreCorto",
