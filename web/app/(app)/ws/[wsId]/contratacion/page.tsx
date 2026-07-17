@@ -1,10 +1,10 @@
-import { WorkflowRunner } from "@/components/workflow/WorkflowRunner";
+import { ListaProcesos } from "@/components/contratacion/ListaProcesos";
 
-export default function ContratacionPage() {
-  return (
-    <WorkflowRunner
-      instanceId="INST-RH-001"
-      blueprintId="BP-RRHH-001"
-    />
-  );
+export default async function ContratacionPage({
+  params,
+}: {
+  params: Promise<{ wsId: string }>;
+}) {
+  const { wsId } = await params;
+  return <ListaProcesos wsId={wsId} />;
 }
