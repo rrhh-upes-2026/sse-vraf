@@ -32,13 +32,20 @@ interface AppsScriptEnvelope<T> {
  * JSON text; doPost() in Code.js parses it the same way regardless.
  */
 export class HttpAppsScriptAdapter implements IAppsScriptClient {
-  constructor(private readonly baseUrl: string) {}
+  constructor(
+    private readonly baseUrl: string,
+    private readonly secret?: string,
+  ) {}
 
   async call<T>(action: string, params?: Record<string, unknown>): Promise<T> {
     const res = await fetch(this.baseUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action, params }),
+      body: JSON.stringify({
+        action,
+        params,
+        ...(this.secret ? { secret: this.secret } : {}),
+      }),
       cache: "no-store",
     });
 

@@ -29,7 +29,9 @@ export interface PlatformStatus {
 }
 
 const _isLive =
-  typeof process !== "undefined" && !!process.env.APPS_SCRIPT_WEB_APP_URL;
+  typeof window === "undefined"
+    ? typeof process !== "undefined" && !!process.env.APPS_SCRIPT_WEB_APP_URL
+    : process.env.NEXT_PUBLIC_APPS_SCRIPT_ENABLED === "true";
 
 function mockDelay<T>(value: T, ms = 1200): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(value), ms));

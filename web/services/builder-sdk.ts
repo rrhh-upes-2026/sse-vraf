@@ -27,7 +27,10 @@ import type {
 } from "@/types/builders";
 import { getAppsScriptClient } from "./adapters/getAppsScriptClient";
 
-const _isLive = !!process.env.APPS_SCRIPT_WEB_APP_URL;
+const _isLive =
+  typeof window === "undefined"
+    ? !!process.env.APPS_SCRIPT_WEB_APP_URL
+    : process.env.NEXT_PUBLIC_APPS_SCRIPT_ENABLED === "true";
 
 // ── In-memory store (mock mode only) ─────────────────────────────────────────
 

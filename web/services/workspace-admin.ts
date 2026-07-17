@@ -836,7 +836,10 @@ const MOCK_NOTIFICATIONS: NotificationRule[] = [
 import { getAppsScriptClient } from "./adapters/getAppsScriptClient";
 
 // Resolved once at module load — never changes at runtime.
-const _isLive = typeof process !== "undefined" && !!process.env.APPS_SCRIPT_WEB_APP_URL;
+const _isLive =
+  typeof window === "undefined"
+    ? typeof process !== "undefined" && !!process.env.APPS_SCRIPT_WEB_APP_URL
+    : process.env.NEXT_PUBLIC_APPS_SCRIPT_ENABLED === "true";
 const _client = () => getAppsScriptClient();
 
 // ── Service API ───────────────────────────────────────────────────────────────
