@@ -9,11 +9,28 @@
  *   • Events are emitted for write actions so future handlers can react
  *   • Pagination metadata is surfaced alongside list results
  *
- * Entity-specific business rules (R01-R10) are NOT here. They land as named
- * actions in a future sprint, called from this router alongside generic CRUD.
+ * Sprint 13 additions:
+ *   • workspace.* actions route to WorkspaceController lifecycle methods
+ *   • ws* entity namespaces route to generic CRUD + workspace verbs
+ *     (publish, archive, restore, duplicate, toggleActive, recordExecution,
+ *      recordKPIValue, getHistory, uploadDocument)
+ *   • mergeWorkspaceAdminEntities_ called once at startup
  */
 
 var WRITE_VERBS = { create: true, update: true, remove: true };
+
+// Workspace-admin entity namespaces that support lifecycle operations.
+var WS_ENTITY_NAMESPACES = {
+  wsBlueprints:   true,
+  wsKPIs:         true,
+  wsRequestTypes: true,
+  wsAutomations:  true,
+  wsUsers:        true,
+  wsForms:        true,
+  wsDocuments:    true,
+  wsNotifRules:   true,
+  wsSettings:     true,
+};
 
 /**
  * Main dispatch function, called by doPost in Code.js.
@@ -51,6 +68,13 @@ function routeAction_(action, params, context) {
     return { data: result, pagination: null };
   }
 
+  // Workspace-admin lifecycle verbs routed to WorkspaceController
+  if (WS_ENTITY_NAMESPACES[namespace]) {
+    var wsResult = routeWorkspaceAction_(namespace, verb, params || {}, context);
+    if (wsResult !== undefined) return wsResult;
+    // Fall through to generic CRUD for list/get/create/update/remove/restore
+  }
+
   // Generic entity CRUD
   if (!ENTITY_SHEETS[namespace]) {
     throw new Error("Unknown entity: " + namespace);
@@ -82,6 +106,9 @@ function routeAction_(action, params, context) {
     Validator.requireId(params);
     removeEntity_(namespace, params.id);
     result = null;
+  } else if (verb === "restore") {
+    Validator.requireId(params);
+    result = restoreEntity_(namespace, params.id);
   } else {
     throw new Error("Unknown verb: " + verb);
   }
@@ -101,6 +128,94 @@ function routeAction_(action, params, context) {
   }
 
   return { data: result, pagination: null };
+}
+
+/**
+ * Route workspace-admin lifecycle and operational verbs.
+ * Returns undefined if the verb is not a workspace-specific one (caller falls
+ * through to generic CRUD).
+ *
+ * @param {string} entityName
+ * @param {string} verb
+ * @param {Object} params
+ * @param {Object} context
+ * @returns {{ data: *, pagination: null } | undefined}
+ */
+function routeWorkspaceAction_(entityName, verb, params, context) {
+  var userId = context && context.userId || "";
+
+  switch (verb) {
+    case "publish":
+      Validator.requireId(params);
+      return { data: WorkspaceController.publish(entityName, params.id, userId), pagination: null };
+
+    case "archive":
+      Validator.requireId(params);
+      return { data: WorkspaceController.archive(entityName, params.id, userId), pagination: null };
+
+    case "restore":
+      Validator.requireId(params);
+      return { data: WorkspaceController.restore(entityName, params.id, userId), pagination: null };
+
+    case "duplicate":
+      Validator.requireId(params);
+      return { data: WorkspaceController.duplicate(entityName, params.id, userId), pagination: null };
+
+    case "toggleActive":
+      Validator.requireId(params);
+      return {
+        data: WorkspaceController.toggleActive(entityName, params.id, params.active !== false, userId),
+        pagination: null,
+      };
+
+    case "recordExecution":
+      if (!params.id) throw new Error("id is required for recordExecution");
+      return {
+        data: WorkspaceController.recordExecution(
+          params.id,
+          params.status || "success",
+          params.errorMessage || "",
+          params.actionsExecuted || 0,
+          userId
+        ),
+        pagination: null,
+      };
+
+    case "recordKPIValue":
+      if (!params.id) throw new Error("id is required for recordKPIValue");
+      return {
+        data: WorkspaceController.recordKPIValue(
+          params.id,
+          params.valor,
+          params.semaforo || "verde",
+          params.fecha || null
+        ),
+        pagination: null,
+      };
+
+    case "getHistory":
+      Validator.requireId(params);
+      return { data: WorkspaceController.getHistory(entityName, params.id), pagination: null };
+
+    case "uploadDocument":
+      if (entityName !== "wsDocuments") return undefined;
+      if (!params.wsId) throw new Error("wsId is required for uploadDocument");
+      return {
+        data: WorkspaceFolderManager.uploadDocument(params.wsId, {
+          nombre:       params.nombre,
+          descripcion:  params.descripcion,
+          categoria:    params.categoria,
+          mimeType:     params.mimeType,
+          base64Content: params.base64Content,
+          tags:         params.tags,
+          createdBy:    userId,
+        }),
+        pagination: null,
+      };
+
+    default:
+      return undefined; // fall through to generic CRUD
+  }
 }
 
 /**

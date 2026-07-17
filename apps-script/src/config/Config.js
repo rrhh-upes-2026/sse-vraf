@@ -43,5 +43,15 @@ var Config = (function () {
     instanceName: function () {
       return props_().getProperty("INSTANCE_NAME") || "SSE-VRAF";
     },
+    domain: function () {
+      return props_().getProperty("WORKSPACE_DOMAIN") || "";
+    },
+    adminEmail: function () {
+      return props_().getProperty("ADMIN_EMAIL") || "";
+    },
+    gmailEnabled: function () {
+      var val = props_().getProperty("GMAIL_ENABLED");
+      return val === "true" || val === "1";
+    },
   };
 })();

@@ -28,12 +28,42 @@ var IdGen = {
   },
 
   /**
-   * Generate a new ID for a named entity. Currently returns a UUID for all
-   * entity types; override per-entity in the sprint that owns RUI formatting.
+   * Generate a new ID for a named entity.
+   * Workspace-admin entities receive human-readable prefixed IDs.
+   * All other entities receive UUIDs until their owning sprint adds RUI logic.
+   *
    * @param {string} entityName
    * @returns {string}
    */
   forEntity: function (entityName) {
+    var ws = IdGen._wsPrefix_(entityName);
+    if (ws) return ws;
     return IdGen.uuid();
+  },
+
+  /**
+   * Build a workspace-admin prefixed ID when the entity name is recognised.
+   * Format: PREFIX-YY-XXXXXX  (2-digit year + 6 uppercase hex chars)
+   * Returns null for non-ws entities.
+   * @private
+   */
+  _wsPrefix_: function (entityName) {
+    var prefixMap = {
+      wsBlueprints:   "BP",
+      wsKPIs:         "KPI",
+      wsRequestTypes: "RQ",
+      wsAutomations:  "AUTO",
+      wsUsers:        "USR",
+      wsForms:        "FM",
+      wsDocuments:    "DOC",
+      wsNotifRules:   "NR",
+      wsSettings:     "WS",
+    };
+    var prefix = prefixMap[entityName];
+    if (!prefix) return null;
+
+    var year = new Date().getFullYear().toString().slice(-2);
+    var rand = Utilities.getUuid().replace(/-/g, "").substring(0, 6).toUpperCase();
+    return prefix + "-" + year + "-" + rand;
   },
 };

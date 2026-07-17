@@ -831,182 +831,293 @@ const MOCK_NOTIFICATIONS: NotificationRule[] = [
   },
 ];
 
+// ── Live adapter routing ──────────────────────────────────────────────────────
+
+import { getAppsScriptClient } from "./adapters/getAppsScriptClient";
+
+// Resolved once at module load — never changes at runtime.
+const _isLive = typeof process !== "undefined" && !!process.env.APPS_SCRIPT_WEB_APP_URL;
+const _client = () => getAppsScriptClient();
+
 // ── Service API ───────────────────────────────────────────────────────────────
 
 export const WorkspaceAdminService = {
   // Blueprints
-  listBlueprints: (wsId: WorkspaceId) =>
-    delay(MOCK_BLUEPRINTS.filter((b) => b.wsId === wsId && !b.deletedAt)),
+  listBlueprints: (wsId: WorkspaceId): Promise<ProcessBlueprint[]> =>
+    _isLive
+      ? _client().list<ProcessBlueprint>("wsBlueprints", { wsId })
+      : delay(MOCK_BLUEPRINTS.filter((b) => b.wsId === wsId && !b.deletedAt)),
 
-  getBlueprint: (id: string) =>
-    delay(MOCK_BLUEPRINTS.find((b) => b.id === id) ?? null),
+  getBlueprint: (id: string): Promise<ProcessBlueprint | null> =>
+    _isLive
+      ? _client().get<ProcessBlueprint>("wsBlueprints", id)
+      : delay(MOCK_BLUEPRINTS.find((b) => b.id === id) ?? null),
 
-  createBlueprint: (_wsId: WorkspaceId, _data: Partial<ProcessBlueprint>): Promise<ProcessBlueprint> =>
-    delay({ ...MOCK_BLUEPRINTS[0], id: `BP-NEW-${Date.now()}` }),
+  createBlueprint: (wsId: WorkspaceId, data: Partial<ProcessBlueprint>): Promise<ProcessBlueprint> =>
+    _isLive
+      ? _client().create<ProcessBlueprint>("wsBlueprints", { wsId, ...data })
+      : delay({ ...MOCK_BLUEPRINTS[0], id: `BP-NEW-${Date.now()}` }),
 
-  updateBlueprint: (id: string, _data: Partial<ProcessBlueprint>) =>
-    delay(MOCK_BLUEPRINTS.find((b) => b.id === id) ?? null),
+  updateBlueprint: (id: string, data: Partial<ProcessBlueprint>): Promise<ProcessBlueprint | null> =>
+    _isLive
+      ? _client().update<ProcessBlueprint>("wsBlueprints", id, data)
+      : delay(MOCK_BLUEPRINTS.find((b) => b.id === id) ?? null),
 
-  publishBlueprint: (id: string) =>
-    delay({ success: true, runtimeBlueprintId: `RBP-${id}` }),
+  publishBlueprint: (id: string): Promise<{ success: boolean; runtimeBlueprintId?: string }> =>
+    _isLive
+      ? _client().call("wsBlueprints.publish", { id }).then(() => ({ success: true, runtimeBlueprintId: `RBP-${id}` }))
+      : delay({ success: true, runtimeBlueprintId: `RBP-${id}` }),
 
-  archiveBlueprint: (id: string) =>
-    delay({ success: true, id }),
+  archiveBlueprint: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsBlueprints.archive", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  duplicateBlueprint: (id: string) =>
-    delay({ ...MOCK_BLUEPRINTS.find((b) => b.id === id), id: `BP-COPY-${id}`, lifecycle: "draft" as ObjectLifecycle }),
+  duplicateBlueprint: (id: string): Promise<ProcessBlueprint> =>
+    _isLive
+      ? _client().call<ProcessBlueprint>("wsBlueprints.duplicate", { id })
+      : delay({ ...MOCK_BLUEPRINTS.find((b) => b.id === id)!, id: `BP-COPY-${id}`, lifecycle: "draft" as ObjectLifecycle }),
 
-  deleteBlueprint: (id: string) =>
-    delay({ success: true, id, deletedAt: new Date().toISOString() }),
+  deleteBlueprint: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().remove("wsBlueprints", id).then(() => ({ success: true, id, deletedAt: new Date().toISOString() }))
+      : delay({ success: true, id, deletedAt: new Date().toISOString() }),
 
   // KPIs
-  listKPIs: (wsId: WorkspaceId) =>
-    delay(MOCK_KPIS.filter((k) => k.wsId === wsId)),
+  listKPIs: (wsId: WorkspaceId): Promise<WorkspaceKPI[]> =>
+    _isLive
+      ? _client().list<WorkspaceKPI>("wsKPIs", { wsId })
+      : delay(MOCK_KPIS.filter((k) => k.wsId === wsId)),
 
-  getKPI: (id: string) =>
-    delay(MOCK_KPIS.find((k) => k.id === id) ?? null),
+  getKPI: (id: string): Promise<WorkspaceKPI | null> =>
+    _isLive
+      ? _client().get<WorkspaceKPI>("wsKPIs", id)
+      : delay(MOCK_KPIS.find((k) => k.id === id) ?? null),
 
-  createKPI: (_wsId: WorkspaceId, _data: Partial<WorkspaceKPI>): Promise<WorkspaceKPI> =>
-    delay({ ...MOCK_KPIS[0], id: `KPI-NEW-${Date.now()}` }),
+  createKPI: (wsId: WorkspaceId, data: Partial<WorkspaceKPI>): Promise<WorkspaceKPI> =>
+    _isLive
+      ? _client().create<WorkspaceKPI>("wsKPIs", { wsId, ...data })
+      : delay({ ...MOCK_KPIS[0], id: `KPI-NEW-${Date.now()}` }),
 
-  updateKPI: (id: string, _data: Partial<WorkspaceKPI>) =>
-    delay(MOCK_KPIS.find((k) => k.id === id) ?? null),
+  updateKPI: (id: string, data: Partial<WorkspaceKPI>): Promise<WorkspaceKPI | null> =>
+    _isLive
+      ? _client().update<WorkspaceKPI>("wsKPIs", id, data)
+      : delay(MOCK_KPIS.find((k) => k.id === id) ?? null),
 
-  publishKPI: (id: string) =>
-    delay({ success: true, id }),
+  publishKPI: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsKPIs.publish", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  archiveKPI: (id: string) =>
-    delay({ success: true, id }),
+  archiveKPI: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsKPIs.archive", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  duplicateKPI: (id: string): Promise<WorkspaceKPI> => {
-    const src = MOCK_KPIS.find((k) => k.id === id);
-    return delay({ ...(src ?? MOCK_KPIS[0]), id: `KPI-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "KPI"}`, lifecycle: "draft" as const, version: 1 });
-  },
+  duplicateKPI: (id: string): Promise<WorkspaceKPI> =>
+    _isLive
+      ? _client().call<WorkspaceKPI>("wsKPIs.duplicate", { id })
+      : (() => {
+          const src = MOCK_KPIS.find((k) => k.id === id);
+          return delay({ ...(src ?? MOCK_KPIS[0]), id: `KPI-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "KPI"}`, lifecycle: "draft" as const, version: 1 });
+        })(),
 
   // Request Types
-  listRequestTypes: (wsId: WorkspaceId) =>
-    delay(MOCK_REQUEST_TYPES.filter((r) => r.wsId === wsId)),
+  listRequestTypes: (wsId: WorkspaceId): Promise<RequestType[]> =>
+    _isLive
+      ? _client().list<RequestType>("wsRequestTypes", { wsId })
+      : delay(MOCK_REQUEST_TYPES.filter((r) => r.wsId === wsId)),
 
-  getRequestType: (id: string) =>
-    delay(MOCK_REQUEST_TYPES.find((r) => r.id === id) ?? null),
+  getRequestType: (id: string): Promise<RequestType | null> =>
+    _isLive
+      ? _client().get<RequestType>("wsRequestTypes", id)
+      : delay(MOCK_REQUEST_TYPES.find((r) => r.id === id) ?? null),
 
-  createRequestType: (_wsId: WorkspaceId, _data: Partial<RequestType>): Promise<RequestType> =>
-    delay({ ...MOCK_REQUEST_TYPES[0], id: `REQ-NEW-${Date.now()}` }),
+  createRequestType: (wsId: WorkspaceId, data: Partial<RequestType>): Promise<RequestType> =>
+    _isLive
+      ? _client().create<RequestType>("wsRequestTypes", { wsId, ...data })
+      : delay({ ...MOCK_REQUEST_TYPES[0], id: `REQ-NEW-${Date.now()}` }),
 
-  updateRequestType: (id: string, _data: Partial<RequestType>) =>
-    delay(MOCK_REQUEST_TYPES.find((r) => r.id === id) ?? null),
+  updateRequestType: (id: string, data: Partial<RequestType>): Promise<RequestType | null> =>
+    _isLive
+      ? _client().update<RequestType>("wsRequestTypes", id, data)
+      : delay(MOCK_REQUEST_TYPES.find((r) => r.id === id) ?? null),
 
-  publishRequestType: (id: string) =>
-    delay({ success: true, id }),
+  publishRequestType: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsRequestTypes.publish", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  archiveRequestType: (id: string) =>
-    delay({ success: true, id }),
+  archiveRequestType: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsRequestTypes.archive", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  duplicateRequestType: (id: string): Promise<RequestType> => {
-    const src = MOCK_REQUEST_TYPES.find((r) => r.id === id);
-    return delay({ ...(src ?? MOCK_REQUEST_TYPES[0]), id: `REQ-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "Solicitud"}`, lifecycle: "draft" as const, version: 1 });
-  },
+  duplicateRequestType: (id: string): Promise<RequestType> =>
+    _isLive
+      ? _client().call<RequestType>("wsRequestTypes.duplicate", { id })
+      : (() => {
+          const src = MOCK_REQUEST_TYPES.find((r) => r.id === id);
+          return delay({ ...(src ?? MOCK_REQUEST_TYPES[0]), id: `REQ-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "Solicitud"}`, lifecycle: "draft" as const, version: 1 });
+        })(),
 
   // Automations
-  listAutomations: (wsId: WorkspaceId) =>
-    delay(MOCK_AUTOMATIONS.filter((a) => a.wsId === wsId)),
+  listAutomations: (wsId: WorkspaceId): Promise<WorkspaceAutomation[]> =>
+    _isLive
+      ? _client().list<WorkspaceAutomation>("wsAutomations", { wsId })
+      : delay(MOCK_AUTOMATIONS.filter((a) => a.wsId === wsId)),
 
-  getAutomation: (id: string) =>
-    delay(MOCK_AUTOMATIONS.find((a) => a.id === id) ?? null),
+  getAutomation: (id: string): Promise<WorkspaceAutomation | null> =>
+    _isLive
+      ? _client().get<WorkspaceAutomation>("wsAutomations", id)
+      : delay(MOCK_AUTOMATIONS.find((a) => a.id === id) ?? null),
 
-  createAutomation: (_wsId: WorkspaceId, _data: Partial<WorkspaceAutomation>): Promise<WorkspaceAutomation> =>
-    delay({ ...MOCK_AUTOMATIONS[0], id: `AUTO-NEW-${Date.now()}`, lifecycle: "draft" as const, active: false }),
+  createAutomation: (wsId: WorkspaceId, data: Partial<WorkspaceAutomation>): Promise<WorkspaceAutomation> =>
+    _isLive
+      ? _client().create<WorkspaceAutomation>("wsAutomations", { wsId, ...data })
+      : delay({ ...MOCK_AUTOMATIONS[0], id: `AUTO-NEW-${Date.now()}`, lifecycle: "draft" as const, active: false }),
 
-  updateAutomation: (id: string, _data: Partial<WorkspaceAutomation>) =>
-    delay(MOCK_AUTOMATIONS.find((a) => a.id === id) ?? null),
+  updateAutomation: (id: string, data: Partial<WorkspaceAutomation>): Promise<WorkspaceAutomation | null> =>
+    _isLive
+      ? _client().update<WorkspaceAutomation>("wsAutomations", id, data)
+      : delay(MOCK_AUTOMATIONS.find((a) => a.id === id) ?? null),
 
-  publishAutomation: (id: string) =>
-    delay({ success: true, id }),
+  publishAutomation: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsAutomations.publish", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  archiveAutomation: (id: string) =>
-    delay({ success: true, id }),
+  archiveAutomation: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsAutomations.archive", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  toggleAutomation: (id: string, active: boolean) =>
-    delay({ success: true, id, active }),
+  toggleAutomation: (id: string, active: boolean): Promise<{ success: boolean; id: string; active: boolean }> =>
+    _isLive
+      ? _client().call("wsAutomations.toggleActive", { id, active }).then(() => ({ success: true, id, active }))
+      : delay({ success: true, id, active }),
 
   // Users
-  listUsers: (wsId: WorkspaceId) =>
-    delay(MOCK_USERS.filter((u) => u.wsId === wsId)),
+  listUsers: (wsId: WorkspaceId): Promise<WorkspaceUser[]> =>
+    _isLive
+      ? _client().list<WorkspaceUser>("wsUsers", { wsId })
+      : delay(MOCK_USERS.filter((u) => u.wsId === wsId)),
 
-  getUser: (id: string) =>
-    delay(MOCK_USERS.find((u) => u.id === id) ?? null),
+  getUser: (id: string): Promise<WorkspaceUser | null> =>
+    _isLive
+      ? _client().get<WorkspaceUser>("wsUsers", id)
+      : delay(MOCK_USERS.find((u) => u.id === id) ?? null),
 
-  createUser: (_wsId: WorkspaceId, _data: Partial<WorkspaceUser>): Promise<WorkspaceUser> =>
-    delay({ ...MOCK_USERS[0], id: `USR-NEW-${Date.now()}` }),
+  createUser: (wsId: WorkspaceId, data: Partial<WorkspaceUser>): Promise<WorkspaceUser> =>
+    _isLive
+      ? _client().create<WorkspaceUser>("wsUsers", { wsId, ...data })
+      : delay({ ...MOCK_USERS[0], id: `USR-NEW-${Date.now()}` }),
 
-  updateUserRole: (id: string, rol: string) =>
-    delay({ success: true, id, rol }),
+  updateUserRole: (id: string, rol: string): Promise<{ success: boolean; id: string; rol: string }> =>
+    _isLive
+      ? _client().update("wsUsers", id, { rol }).then(() => ({ success: true, id, rol }))
+      : delay({ success: true, id, rol }),
 
-  toggleUserActive: (id: string, activo: boolean) =>
-    delay({ success: true, id, activo }),
+  toggleUserActive: (id: string, activo: boolean): Promise<{ success: boolean; id: string; activo: boolean }> =>
+    _isLive
+      ? _client().call("wsUsers.toggleActive", { id, active: activo }).then(() => ({ success: true, id, activo }))
+      : delay({ success: true, id, activo }),
 
-  deleteUser: (id: string) =>
-    delay({ success: true, id }),
+  deleteUser: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().remove("wsUsers", id).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  // Settings
-  getSettings: (wsId: WorkspaceId) =>
+  // Settings (always mock for now — wsSettings uses wsId as PK, not id)
+  getSettings: (wsId: WorkspaceId): Promise<WorkspaceSettings | null> =>
     delay(MOCK_SETTINGS[wsId] ?? null),
 
-  updateSettings: (wsId: WorkspaceId, _data: Partial<WorkspaceSettings>) =>
+  updateSettings: (wsId: WorkspaceId, _data: Partial<WorkspaceSettings>): Promise<{ success: boolean; wsId: string }> =>
     delay({ success: true, wsId }),
 
   // Forms
-  listForms: (wsId: WorkspaceId) =>
-    delay(MOCK_FORMS.filter((f) => f.wsId === wsId)),
+  listForms: (wsId: WorkspaceId): Promise<FormBlueprint[]> =>
+    _isLive
+      ? _client().list<FormBlueprint>("wsForms", { wsId })
+      : delay(MOCK_FORMS.filter((f) => f.wsId === wsId)),
 
-  getForm: (id: string) =>
-    delay(MOCK_FORMS.find((f) => f.id === id) ?? null),
+  getForm: (id: string): Promise<FormBlueprint | null> =>
+    _isLive
+      ? _client().get<FormBlueprint>("wsForms", id)
+      : delay(MOCK_FORMS.find((f) => f.id === id) ?? null),
 
-  createForm: (_wsId: WorkspaceId, _data: Partial<FormBlueprint>): Promise<FormBlueprint> =>
-    delay({ ...MOCK_FORMS[0], id: `FORM-NEW-${Date.now()}`, lifecycle: "draft" as const, version: 1 }),
+  createForm: (wsId: WorkspaceId, data: Partial<FormBlueprint>): Promise<FormBlueprint> =>
+    _isLive
+      ? _client().create<FormBlueprint>("wsForms", { wsId, ...data })
+      : delay({ ...MOCK_FORMS[0], id: `FORM-NEW-${Date.now()}`, lifecycle: "draft" as const, version: 1 }),
 
-  updateForm: (id: string, _data: Partial<FormBlueprint>) =>
-    delay(MOCK_FORMS.find((f) => f.id === id) ?? null),
+  updateForm: (id: string, data: Partial<FormBlueprint>): Promise<FormBlueprint | null> =>
+    _isLive
+      ? _client().update<FormBlueprint>("wsForms", id, data)
+      : delay(MOCK_FORMS.find((f) => f.id === id) ?? null),
 
-  publishForm: (id: string) =>
-    delay({ success: true, id }),
+  publishForm: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsForms.publish", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  archiveForm: (id: string) =>
-    delay({ success: true, id }),
+  archiveForm: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsForms.archive", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
-  duplicateForm: (id: string): Promise<FormBlueprint> => {
-    const src = MOCK_FORMS.find((f) => f.id === id);
-    return delay({ ...(src ?? MOCK_FORMS[0]), id: `FORM-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "Formulario"}`, lifecycle: "draft" as const, version: 1 });
-  },
+  duplicateForm: (id: string): Promise<FormBlueprint> =>
+    _isLive
+      ? _client().call<FormBlueprint>("wsForms.duplicate", { id })
+      : (() => {
+          const src = MOCK_FORMS.find((f) => f.id === id);
+          return delay({ ...(src ?? MOCK_FORMS[0]), id: `FORM-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "Formulario"}`, lifecycle: "draft" as const, version: 1 });
+        })(),
 
   // Documents
-  listDocuments: (wsId: WorkspaceId) =>
-    delay(MOCK_DOCUMENTS.filter((d) => d.wsId === wsId)),
+  listDocuments: (wsId: WorkspaceId): Promise<WorkspaceDocument[]> =>
+    _isLive
+      ? _client().list<WorkspaceDocument>("wsDocuments", { wsId })
+      : delay(MOCK_DOCUMENTS.filter((d) => d.wsId === wsId)),
 
-  getDocument: (id: string) =>
-    delay(MOCK_DOCUMENTS.find((d) => d.id === id) ?? null),
+  getDocument: (id: string): Promise<WorkspaceDocument | null> =>
+    _isLive
+      ? _client().get<WorkspaceDocument>("wsDocuments", id)
+      : delay(MOCK_DOCUMENTS.find((d) => d.id === id) ?? null),
 
-  createDocument: (_wsId: WorkspaceId, _data: Partial<WorkspaceDocument>): Promise<WorkspaceDocument> =>
-    delay({ ...MOCK_DOCUMENTS[0], id: `DOC-NEW-${Date.now()}`, lifecycle: "draft" as const }),
+  createDocument: (wsId: WorkspaceId, data: Partial<WorkspaceDocument>): Promise<WorkspaceDocument> =>
+    _isLive
+      ? _client().create<WorkspaceDocument>("wsDocuments", { wsId, ...data })
+      : delay({ ...MOCK_DOCUMENTS[0], id: `DOC-NEW-${Date.now()}`, lifecycle: "draft" as const }),
 
-  archiveDocument: (id: string) =>
-    delay({ success: true, id }),
+  archiveDocument: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsDocuments.archive", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
 
   // Notification Rules
-  listNotificationRules: (wsId: WorkspaceId) =>
-    delay(MOCK_NOTIFICATIONS.filter((n) => n.wsId === wsId)),
+  listNotificationRules: (wsId: WorkspaceId): Promise<NotificationRule[]> =>
+    _isLive
+      ? _client().list<NotificationRule>("wsNotifRules", { wsId })
+      : delay(MOCK_NOTIFICATIONS.filter((n) => n.wsId === wsId)),
 
-  createNotificationRule: (_wsId: WorkspaceId, _data: Partial<NotificationRule>): Promise<NotificationRule> =>
-    delay({ ...MOCK_NOTIFICATIONS[0], id: `NOTIF-NEW-${Date.now()}` }),
+  createNotificationRule: (wsId: WorkspaceId, data: Partial<NotificationRule>): Promise<NotificationRule> =>
+    _isLive
+      ? _client().create<NotificationRule>("wsNotifRules", { wsId, ...data })
+      : delay({ ...MOCK_NOTIFICATIONS[0], id: `NOTIF-NEW-${Date.now()}` }),
 
-  updateNotificationRule: (id: string, _data: Partial<NotificationRule>) =>
-    delay(MOCK_NOTIFICATIONS.find((n) => n.id === id) ?? null),
+  updateNotificationRule: (id: string, data: Partial<NotificationRule>): Promise<NotificationRule | null> =>
+    _isLive
+      ? _client().update<NotificationRule>("wsNotifRules", id, data)
+      : delay(MOCK_NOTIFICATIONS.find((n) => n.id === id) ?? null),
 
-  toggleNotificationRule: (id: string, active: boolean) =>
-    delay({ success: true, id, active }),
+  toggleNotificationRule: (id: string, active: boolean): Promise<{ success: boolean; id: string; active: boolean }> =>
+    _isLive
+      ? _client().call("wsNotifRules.toggleActive", { id, active }).then(() => ({ success: true, id, active }))
+      : delay({ success: true, id, active }),
 
-  // Audit
-  listAuditRecords: (wsId: WorkspaceId) =>
+  // Audit (always mock — audit records are append-only server-side)
+  listAuditRecords: (wsId: WorkspaceId): Promise<AuditRecord[]> =>
     delay(MOCK_AUDIT.filter((a) => a.wsId === wsId)),
 
   // Template

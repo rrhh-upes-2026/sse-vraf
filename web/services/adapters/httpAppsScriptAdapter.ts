@@ -34,7 +34,7 @@ interface AppsScriptEnvelope<T> {
 export class HttpAppsScriptAdapter implements IAppsScriptClient {
   constructor(private readonly baseUrl: string) {}
 
-  private async call<T>(action: string, params?: Record<string, unknown>): Promise<T> {
+  async call<T>(action: string, params?: Record<string, unknown>): Promise<T> {
     const res = await fetch(this.baseUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },

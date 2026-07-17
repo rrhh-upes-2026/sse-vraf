@@ -31,7 +31,17 @@ export type EntityName =
   | "workflowInstances"
   // Runtime Studio (Sprint 6)
   | "blueprintRegistry"
-  | "instanceSummaries";
+  | "instanceSummaries"
+  // Workspace-admin entities (Sprint 13)
+  | "wsBlueprints"
+  | "wsKPIs"
+  | "wsRequestTypes"
+  | "wsAutomations"
+  | "wsUsers"
+  | "wsForms"
+  | "wsDocuments"
+  | "wsNotifRules"
+  | "wsSettings";
 
 /**
  * Query parameters for list operations.
@@ -59,4 +69,10 @@ export interface IAppsScriptClient {
   create<T extends { id?: string }>(entity: EntityName, payload: Partial<T>): Promise<T>;
   update<T>(entity: EntityName, id: string, patch: Partial<T>): Promise<T>;
   remove(entity: EntityName, id: string): Promise<void>;
+  /**
+   * Execute an arbitrary action on an entity — used for workspace-admin
+   * lifecycle verbs that don't map to the 5-verb CRUD interface.
+   * action format: "<entity>.<verb>"  e.g. "wsBlueprints.publish"
+   */
+  call<T>(action: string, params?: Record<string, unknown>): Promise<T>;
 }

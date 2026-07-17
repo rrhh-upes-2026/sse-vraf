@@ -37,4 +37,21 @@ var EVENT_TYPES = {
   // Service requests
   SOLICITUD_CREADA:        "solicitud.creada",
   SOLICITUD_RESUELTA:      "solicitud.resuelta",
+
+  // ── Workspace Admin — Sprint 13 ────────────────────────────────────────────
+  BLUEPRINT_PUBLICADO:     "blueprint.publicado",
+  BLUEPRINT_ARCHIVADO:     "blueprint.archivado",
+  FORMULARIO_PUBLICADO:    "formulario.publicado",
+  KPI_ACTUALIZADO:         "kpi.actualizado",
+  KPI_ALERTA:              "kpi.alerta",
+  SOLICITUD_APROBADA:      "solicitud.aprobada",
+  AUTOMATION_EJECUTADA:    "automation.ejecutada",
+  DOCUMENTO_SUBIDO:        "documento.subido",
+  DOCUMENTO_ARCHIVADO:     "documento.archivado",
+  NOTIFICACION_ENVIADA:    "notificacion.enviada",
+  USUARIO_CREADO:          "usuario.creado",
+  USUARIO_ACTIVADO:        "usuario.activado",
+  USUARIO_DESACTIVADO:     "usuario.desactivado",
+  REGLA_NOTIF_ACTIVADA:    "regla.notif.activada",
+  WORKSPACE_CONFIGURADO:   "workspace.configurado",
 };

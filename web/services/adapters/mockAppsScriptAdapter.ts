@@ -132,4 +132,59 @@ export class MockAppsScriptAdapter implements IAppsScriptClient {
     const idx = table.findIndex((row) => row.id === id);
     if (idx !== -1) table.splice(idx, 1);
   }
+
+  async call<T>(action: string, params?: Record<string, unknown>): Promise<T> {
+    await delay();
+    const [entity, verb] = action.split(".");
+    const entityName = entity as EntityName;
+
+    switch (verb) {
+      case "publish":
+      case "archive":
+      case "restore": {
+        const id = params?.id as string;
+        const lc = verb === "restore" ? "draft" : verb;
+        return this.update<T>(entityName, id, { lifecycle: lc } as unknown as Partial<T>);
+      }
+      case "duplicate": {
+        const id = params?.id as string;
+        const original = await this.get<Row>(entityName, id);
+        if (!original) throw new Error(`${entityName} ${id} not found`);
+        const copy: Row = {
+          ...original,
+          id: `${entityName.toUpperCase()}-COPY-${Date.now()}`,
+          nombre: `Copia de ${(original as Record<string, unknown>).nombre ?? ""}`,
+          lifecycle: "draft",
+        };
+        const table = this.table(entityName);
+        table.push(copy);
+        return copy as unknown as T;
+      }
+      case "toggleActive": {
+        const id = params?.id as string;
+        const row = await this.get<Row>(entityName, id);
+        if (!row) throw new Error(`${entityName} ${id} not found`);
+        const active = !(row.active === true || row.active === "true" || row.activo === true || row.activo === "true");
+        return this.update<T>(entityName, id, { active, activo: active } as unknown as Partial<T>);
+      }
+      case "recordKPIValue": {
+        const id = params?.id as string;
+        return this.update<T>(entityName, id, { valorActual: params?.valor } as unknown as Partial<T>);
+      }
+      case "recordExecution": {
+        const id = params?.id as string;
+        const row = await this.get<Row>(entityName, id);
+        if (!row) throw new Error(`${entityName} ${id} not found`);
+        const count = (Number(row.executionCount) || 0) + 1;
+        return this.update<T>(entityName, id, { executionCount: count, lastStatus: params?.status } as unknown as Partial<T>);
+      }
+      case "getHistory": {
+        const id = params?.id as string;
+        const row = await this.get<Row>(entityName, id);
+        return (row ? [] : []) as unknown as T;
+      }
+      default:
+        throw new Error(`MockAppsScriptAdapter: unknown action ${action}`);
+    }
+  }
 }
