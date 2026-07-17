@@ -3,14 +3,19 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-function LoginForm() {
+type Step = "email" | "otp";
+
+function LoginFlow() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const [step, setStep]   = useState<Step>("email");
   const [email, setEmail] = useState("");
+  const [code, setCode]   = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSendOtp(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -22,7 +27,30 @@ function LoginForm() {
       });
       const data = await res.json() as { ok?: boolean; error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Error al iniciar sesión.");
+        setError(data.error ?? "Error al enviar el código.");
+        return;
+      }
+      setStep("otp");
+    } catch {
+      setError("Error de conexión. Intente nuevamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (!res.ok) {
+        setError(data.error ?? "Código inválido o expirado.");
         return;
       }
       const callbackUrl = searchParams.get("callbackUrl") ?? "/mi-trabajo";
@@ -34,8 +62,57 @@ function LoginForm() {
     }
   }
 
+  if (step === "otp") {
+    return (
+      <form className="mt-7" onSubmit={handleVerifyOtp}>
+        <p className="text-[12px] text-sse-muted mb-4 text-center leading-relaxed">
+          Enviamos un código de 6 dígitos a<br />
+          <strong className="text-sse-ink">{email}</strong>
+        </p>
+        <label className="block text-[12px] font-semibold text-sse-ink mb-1.5" htmlFor="code">
+          Código de verificación
+        </label>
+        <input
+          id="code"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]{6}"
+          maxLength={6}
+          required
+          autoFocus
+          autoComplete="one-time-code"
+          placeholder="123456"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          className="w-full rounded-[9px] border border-sse-shell-border bg-white px-3.5 py-2.5 text-[15px] font-semibold tracking-[0.35em] text-sse-ink placeholder:text-sse-muted placeholder:tracking-normal focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        />
+        {error && (
+          <p className="mt-2 text-[11.5px] font-medium text-red-600">{error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={loading || code.length !== 6}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#2E6BE6] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#2558c4] disabled:opacity-60"
+        >
+          {loading ? "Verificando…" : "Ingresar"}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setStep("email");
+            setCode("");
+            setError("");
+          }}
+          className="mt-3 w-full text-center text-[11.5px] text-sse-muted hover:text-sse-ink transition"
+        >
+          ← Cambiar correo
+        </button>
+      </form>
+    );
+  }
+
   return (
-    <form className="mt-7" onSubmit={handleSubmit}>
+    <form className="mt-7" onSubmit={handleSendOtp}>
       <label className="block text-[12px] font-semibold text-sse-ink mb-1.5" htmlFor="email">
         Correo institucional
       </label>
@@ -43,6 +120,7 @@ function LoginForm() {
         id="email"
         type="email"
         required
+        autoFocus
         autoComplete="email"
         placeholder="usuario@upes.edu.sv"
         value={email}
@@ -57,7 +135,7 @@ function LoginForm() {
         disabled={loading}
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#2E6BE6] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#2558c4] disabled:opacity-60"
       >
-        {loading ? "Verificando…" : "Iniciar sesión"}
+        {loading ? "Enviando código…" : "Enviar código"}
       </button>
     </form>
   );
@@ -78,8 +156,8 @@ export default function LoginPage() {
           Sistema de Seguimiento Estratégico · Vicerrectoría Administrativa y
           Financiera · Universidad Politécnica de El Salvador
         </p>
-        <Suspense fallback={<div className="mt-7 h-28" />}>
-          <LoginForm />
+        <Suspense fallback={<div className="mt-7 h-36" />}>
+          <LoginFlow />
         </Suspense>
         <p className="mt-5 text-center text-[10.5px] text-sse-muted">
           Acceso restringido a cuentas institucionales UPES

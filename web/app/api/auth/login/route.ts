@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSessionToken, SESSION_COOKIE, MAX_AGE } from "@/lib/session";
-import { UsuariosService, HistorialService } from "@/services";
+import { getAppsScriptClient } from "@/services/adapters/getAppsScriptClient";
 
 const ALLOWED_DOMAIN = "upes.edu.sv";
 
@@ -20,37 +19,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const [usuario] = await UsuariosService.list({ email });
-
-  if (!usuario || usuario.activo !== true) {
-    return NextResponse.json({ error: "Usuario no autorizado." }, { status: 403 });
+  try {
+    const client = getAppsScriptClient();
+    await client.call("auth.sendOtp", { email });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const status = msg.includes("autorizado") || msg.includes("institucional") ? 403 : 502;
+    return NextResponse.json({ error: msg }, { status });
   }
-
-  const token = await createSessionToken({
-    usuarioId: usuario.id,
-    nombre:    usuario.nombre,
-    name:      usuario.nombre,
-    email:     usuario.email,
-    rol:       usuario.rol,
-    unidadId:  usuario.unidadId,
-  });
-
-  HistorialService.create({
-    entidadTipo: "auth",
-    entidadId:   usuario.email,
-    usuarioId:   usuario.id,
-    accion:      "auth.login",
-    resultado:   "ok",
-    fecha:       new Date().toISOString(),
-  }).catch(() => {});
-
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure:   process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge:   MAX_AGE,
-    path:     "/",
-  });
-  return res;
 }
