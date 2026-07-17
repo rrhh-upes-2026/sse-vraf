@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useWorkflowBlueprint, useWorkflowInstance } from "./useWorkflow";
 import { WorkflowEngine } from "@/lib/workflow/workflowEngine";
 import { emitEvents } from "@/lib/workflow/eventBus";
@@ -37,7 +37,7 @@ export interface WorkflowEngineHandle {
 }
 
 export function useWorkflowEngine(instanceId: string, blueprintIdOverride?: string): WorkflowEngineHandle {
-  const { data: session } = useSession();
+  const { user } = useSession();
   const { data: serverInstance, isLoading: instanceLoading } = useWorkflowInstance(instanceId);
   const resolvedBlueprintId = blueprintIdOverride ?? serverInstance?.blueprintId ?? "";
   const { data: blueprint, isLoading: blueprintLoading } = useWorkflowBlueprint(resolvedBlueprintId);
@@ -45,14 +45,14 @@ export function useWorkflowEngine(instanceId: string, blueprintIdOverride?: stri
   const [localInstance, setLocalInstance] = useState<ProcessInstance | null>(null);
 
   const actor = useMemo((): Actor => {
-    const role = (session?.user?.rol ?? "OPS") as RoleCode;
+    const role = (user?.rol ?? "OPS") as RoleCode;
     return {
-      id: session?.user?.usuarioId ?? "",
-      name: session?.user?.name ?? "",
+      id: user?.usuarioId ?? "",
+      name: user?.name ?? "",
       roleCode: role,
       permissions: new Set<Permission>(ROLE_PERMISSIONS[role] ?? []),
     };
-  }, [session]);
+  }, [user]);
 
   const instance = localInstance ?? serverInstance ?? null;
   const isLoading = instanceLoading || blueprintLoading;

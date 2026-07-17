@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import type { Notificacion } from "@/types/notifications";
 import { mockNotificaciones } from "@/lib/mock-data";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useMemo } from "react";
 
 interface NotificationStore {
@@ -31,8 +31,8 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
 }));
 
 export function useNotifications() {
-  const { data: session } = useSession();
-  const usuarioId = session?.user?.usuarioId ?? "";
+  const { user } = useSession();
+  const usuarioId = user?.usuarioId ?? "";
   const store = useNotificationStore();
 
   const mine = useMemo(

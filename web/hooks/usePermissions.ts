@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import type { RoleCode } from "@/types/roles";
 import { ROLE_PERMISSIONS, type Permission } from "@/lib/permissions";
 
@@ -15,8 +15,8 @@ import { ROLE_PERMISSIONS, type Permission } from "@/lib/permissions";
  *   if (!hasPermission('process.create')) return null;
  */
 export function usePermissions() {
-  const { data: session, status } = useSession();
-  const role = session?.user?.rol as RoleCode | undefined;
+  const { user, status } = useSession();
+  const role = user?.rol as RoleCode | undefined;
   const permSet = role ? (ROLE_PERMISSIONS[role] ?? new Set<Permission>()) : new Set<Permission>();
 
   return {

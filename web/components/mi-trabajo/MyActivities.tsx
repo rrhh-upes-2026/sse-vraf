@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import type { Actividad } from "@/types/entities";
 import { useActividades, useActividadesActions } from "@/hooks/useActividades";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -81,8 +81,8 @@ function ActivityRow({ actividad }: { actividad: Actividad }) {
 }
 
 export function MyActivities() {
-  const { data: session } = useSession();
-  const usuarioId = session?.user?.usuarioId;
+  const { user } = useSession();
+  const usuarioId = user?.usuarioId;
 
   const { data: actividades, isLoading } = useActividades(
     usuarioId ? { responsableId: usuarioId } : undefined,

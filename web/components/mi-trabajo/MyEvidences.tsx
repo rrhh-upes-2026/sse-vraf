@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import type { Evidencia } from "@/types/entities";
 import { useEvidencias, useEvidenciasActions } from "@/hooks/useEvidencias";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -103,8 +103,8 @@ function EvidenceRow({ evidencia }: { evidencia: Evidencia }) {
 }
 
 export function MyEvidences() {
-  const { data: session } = useSession();
-  const usuarioId = session?.user?.usuarioId;
+  const { user } = useSession();
+  const usuarioId = user?.usuarioId;
 
   const { data: evidencias, isLoading } = useEvidencias(
     usuarioId ? { responsableId: usuarioId } : undefined,

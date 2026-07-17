@@ -1,4 +1,67 @@
-import { signIn } from "@/auth";
+"use client";
+
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (!res.ok) {
+        setError(data.error ?? "Error al iniciar sesión.");
+        return;
+      }
+      const callbackUrl = searchParams.get("callbackUrl") ?? "/mi-trabajo";
+      router.push(callbackUrl);
+    } catch {
+      setError("Error de conexión. Intente nuevamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form className="mt-7" onSubmit={handleSubmit}>
+      <label className="block text-[12px] font-semibold text-sse-ink mb-1.5" htmlFor="email">
+        Correo institucional
+      </label>
+      <input
+        id="email"
+        type="email"
+        required
+        autoComplete="email"
+        placeholder="usuario@upes.edu.sv"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="w-full rounded-[9px] border border-sse-shell-border bg-white px-3.5 py-2.5 text-[13px] text-sse-ink placeholder:text-sse-muted focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+      />
+      {error && (
+        <p className="mt-2 text-[11.5px] font-medium text-red-600">{error}</p>
+      )}
+      <button
+        type="submit"
+        disabled={loading}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#2E6BE6] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#2558c4] disabled:opacity-60"
+      >
+        {loading ? "Verificando…" : "Iniciar sesión"}
+      </button>
+    </form>
+  );
+}
 
 export default function LoginPage() {
   return (
@@ -15,40 +78,9 @@ export default function LoginPage() {
           Sistema de Seguimiento Estratégico · Vicerrectoría Administrativa y
           Financiera · Universidad Politécnica de El Salvador
         </p>
-
-        <form
-          className="mt-7"
-          action={async () => {
-            "use server";
-            await signIn("google", { redirectTo: "/mi-trabajo" });
-          }}
-        >
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center gap-2.5 rounded-[9px] border border-sse-shell-border bg-white px-4 py-2.5 text-[13px] font-semibold text-sse-ink transition hover:bg-sse-shell-search-bg"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                fill="#4285F4"
-                d="M23.52 12.27c0-.82-.07-1.6-.2-2.36H12v4.47h6.47c-.28 1.5-1.13 2.77-2.4 3.62v3h3.87c2.27-2.09 3.58-5.17 3.58-8.73z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 24c3.24 0 5.95-1.07 7.94-2.9l-3.87-3c-1.07.72-2.44 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.3v3.1C3.26 21.3 7.29 24 12 24z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.27 14.29A7.13 7.13 0 0 1 4.9 12c0-.8.14-1.57.37-2.29v-3.1H1.3A11.96 11.96 0 0 0 0 12c0 1.93.46 3.76 1.3 5.39l3.97-3.1z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.94 1.19 15.24 0 12 0 7.29 0 3.26 2.7 1.3 6.61l3.97 3.1c.95-2.85 3.6-4.96 6.73-4.96z"
-              />
-            </svg>
-            Iniciar sesión con Google Workspace
-          </button>
-        </form>
-
+        <Suspense fallback={<div className="mt-7 h-28" />}>
+          <LoginForm />
+        </Suspense>
         <p className="mt-5 text-center text-[10.5px] text-sse-muted">
           Acceso restringido a cuentas institucionales UPES
         </p>

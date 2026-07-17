@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import type { Indicador, SemaforoColor } from "@/types/entities";
 import { useIndicadores } from "@/hooks/useIndicadores";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
@@ -94,8 +94,8 @@ function IndicadorCard({ indicador }: { indicador: Indicador }) {
 }
 
 export function MyIndicators() {
-  const { data: session } = useSession();
-  const usuarioId = session?.user?.usuarioId;
+  const { user } = useSession();
+  const usuarioId = user?.usuarioId;
 
   const { data: indicadores, isLoading } = useIndicadores(
     usuarioId ? { responsableId: usuarioId } : undefined,

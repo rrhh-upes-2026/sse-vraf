@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import type { ProcesoInstitucional, Actividad, Indicador } from "@/types/entities";
 import { useProcesos } from "@/hooks/useProcesos";
 import { useActividades } from "@/hooks/useActividades";
@@ -125,8 +125,8 @@ function AlertItem({ alert }: { alert: Alert }) {
 }
 
 export function Alerts() {
-  const { data: session } = useSession();
-  const usuarioId = session?.user?.usuarioId;
+  const { user } = useSession();
+  const usuarioId = user?.usuarioId;
 
   const query = usuarioId ? { responsableId: usuarioId } : undefined;
   const { data: procesos, isLoading: loadingP } = useProcesos(query);

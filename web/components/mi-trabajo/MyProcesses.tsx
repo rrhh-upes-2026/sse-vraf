@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import type { RoleCode } from "@/types/roles";
 import type { WorkspaceId } from "@/config/nav";
@@ -117,8 +117,8 @@ function ProcesoCard({ proceso }: { proceso: ProcesoInstitucional }) {
 }
 
 export function MyProcesses() {
-  const { data: session } = useSession();
-  const usuarioId = session?.user?.usuarioId;
+  const { user } = useSession();
+  const usuarioId = user?.usuarioId;
 
   const { data: procesos, isLoading, isError } = useProcesos(
     usuarioId ? { responsableId: usuarioId } : undefined,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { ROLES } from "@/types/roles";
 import type { RoleCode } from "@/types/roles";
 import { VRAF_WORKSPACE } from "@/config/nav";
@@ -17,10 +17,10 @@ function todayLabel() {
 }
 
 export function WelcomeBanner() {
-  const { data: session } = useSession();
-  const name = session?.user?.name ?? "Usuario";
-  const role = session?.user?.rol as RoleCode | undefined;
-  const unidadId = session?.user?.unidadId as WorkspaceId | undefined;
+  const { user } = useSession();
+  const name = user?.name ?? "Usuario";
+  const role = user?.rol as RoleCode | undefined;
+  const unidadId = user?.unidadId as WorkspaceId | undefined;
 
   const roleDef = role ? ROLES[role] : undefined;
   const allWorkspaces = [VRAF_WORKSPACE, ...moduleRegistry.getWorkspaceUnits()];
