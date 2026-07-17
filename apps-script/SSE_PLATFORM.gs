@@ -1,7 +1,7 @@
 // ============================================================
 // SSE_PLATFORM.gs — Single-file deployment build
 // All 35 source files merged in dependency order.
-// Generated: 2026-07-17T18:51:23Z
+// Generated: 2026-07-17T19:06:42Z
 // ============================================================
 
 // ============================================================
@@ -5286,6 +5286,38 @@ function initializeDriveFolders() {
     workspacesInitialized: WORKSPACES,
     results:               results,
   };
+}
+
+/**
+ * Public entry point: initialize Drive folders for all six registered workspaces.
+ * Safe to run directly from the Apps Script editor — no parameters required.
+ * Continues processing even if one workspace fails, then returns a summary.
+ *
+ * @returns {{ success: boolean, ok: number, failed: number, results: Array }}
+ */
+function initializeAllWorkspaceFolders() {
+  var WORKSPACES = ["rrhh", "vraf", "conta", "compras", "mant", "salud"];
+  var results = [];
+  var ok = 0;
+  var failed = 0;
+
+  for (var i = 0; i < WORKSPACES.length; i++) {
+    var wsId = WORKSPACES[i];
+    try {
+      var result = initializeWorkspaceFolders(wsId);
+      results.push({ wsId: wsId, status: "ok", folderId: result.folderId });
+      ok++;
+      AppLogger.info("initializeAllWorkspaceFolders: ok", { wsId: wsId, folderId: result.folderId });
+    } catch (e) {
+      results.push({ wsId: wsId, status: "error", error: String((e && e.message) || e) });
+      failed++;
+      AppLogger.error("initializeAllWorkspaceFolders: failed", { wsId: wsId, error: String((e && e.message) || e) });
+    }
+  }
+
+  var summary = { success: failed === 0, ok: ok, failed: failed, results: results };
+  AppLogger.info("initializeAllWorkspaceFolders: complete", summary);
+  return summary;
 }
 
 /**
