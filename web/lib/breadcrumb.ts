@@ -1,5 +1,9 @@
 import { ADMIN_TOOLS, STUDIO_TOOLS, getWorkspace, getWorkspaceSection } from "@/config/nav";
 
+const SYSTEM_LABELS: Record<string, string> = {
+  "platform/wizard": "Asistente de Instalación",
+};
+
 export interface Breadcrumb {
   crumbA: string;
   crumbB: string;
@@ -27,6 +31,12 @@ export function computeBreadcrumb(pathname: string): Breadcrumb {
       ? STUDIO_TOOLS.find((t) => t.slug === studioMatch[1])
       : undefined;
     return { crumbA: "Studio", crumbB: tool?.label ?? "" };
+  }
+
+  const systemMatch = pathname.match(/^\/system\/(.+)?/);
+  if (systemMatch) {
+    const sub = systemMatch[1]?.replace(/\/$/, "") ?? "";
+    return { crumbA: "Sistema", crumbB: SYSTEM_LABELS[sub] ?? "" };
   }
 
   const adminMatch = pathname.match(/^\/admin\/([^/]+)?/);

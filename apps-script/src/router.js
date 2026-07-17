@@ -68,6 +68,11 @@ function routeAction_(action, params, context) {
     return { data: result, pagination: null };
   }
 
+  if (namespace === "platform") {
+    result = routePlatformAction_(verb, params || {}, context);
+    return { data: result, pagination: null };
+  }
+
   // Workspace-admin lifecycle verbs routed to WorkspaceController
   if (WS_ENTITY_NAMESPACES[namespace]) {
     var wsResult = routeWorkspaceAction_(namespace, verb, params || {}, context);
@@ -215,6 +220,27 @@ function routeWorkspaceAction_(entityName, verb, params, context) {
 
     default:
       return undefined; // fall through to generic CRUD
+  }
+}
+
+/**
+ * Route platform.* actions to BootstrapController.
+ * Each verb maps to one installation step.
+ */
+function routePlatformAction_(verb, params, context) {
+  switch (verb) {
+    case "validate":         return BootstrapController.validate(params, context);
+    case "initDatabase":     return BootstrapController.initDatabase(params, context);
+    case "initDrive":        return BootstrapController.initDrive(params, context);
+    case "installTemplates": return BootstrapController.installTemplates(params, context);
+    case "createAdmin":      return BootstrapController.createAdmin(params, context);
+    case "configure":        return BootstrapController.configure(params, context);
+    case "healthCheck":      return BootstrapController.healthCheck(params, context);
+    case "liveTest":         return BootstrapController.liveTest(params, context);
+    case "report":           return BootstrapController.report(params, context);
+    case "getStatus":        return BootstrapController.getStatus(params, context);
+    default:
+      throw new Error("Unknown platform verb: " + verb);
   }
 }
 

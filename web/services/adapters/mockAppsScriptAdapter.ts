@@ -183,6 +183,23 @@ export class MockAppsScriptAdapter implements IAppsScriptClient {
         const row = await this.get<Row>(entityName, id);
         return (row ? [] : []) as unknown as T;
       }
+      // Platform bootstrap steps — delegate to platform-bootstrap mock fns
+      case "getStatus":
+      case "validate":
+      case "initDatabase":
+      case "initDrive":
+      case "installTemplates":
+      case "createAdmin":
+      case "configure":
+      case "healthCheck":
+      case "liveTest":
+      case "report": {
+        // Dynamic import avoids circular dependency; cast to any for flexibility
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { runStep, getPlatformStatus } = await import("../platform-bootstrap") as any;
+        if (verb === "getStatus") return getPlatformStatus() as Promise<T>;
+        return runStep(verb, params) as Promise<T>;
+      }
       default:
         throw new Error(`MockAppsScriptAdapter: unknown action ${action}`);
     }
