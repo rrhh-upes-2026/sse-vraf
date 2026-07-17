@@ -1,7 +1,7 @@
 // ============================================================
 // SSE_PLATFORM.gs — Single-file deployment build
 // All 35 source files merged in dependency order.
-// Generated: 2026-07-17T16:53:11Z
+// Generated: 2026-07-17T18:51:23Z
 // ============================================================
 
 // ============================================================
@@ -1268,13 +1268,19 @@ function getSpreadsheet_() {
   var id = Config.spreadsheetId();
   if (id) return SpreadsheetApp.openById(id);
 
+  // Bound script — use and persist the active spreadsheet's ID
   var active = SpreadsheetApp.getActiveSpreadsheet();
-  if (active) return active;
+  if (active) {
+    PropertiesService.getScriptProperties().setProperty("SPREADSHEET_ID", active.getId());
+    return active;
+  }
 
-  throw new Error(
-    "No SPREADSHEET_ID script property set and this script is not bound to a spreadsheet. " +
-      "See apps-script/README.md.",
-  );
+  // First run on a standalone script — create the database spreadsheet and persist its ID
+  AppLogger.info("getSpreadsheet_: SPREADSHEET_ID not set — creating new spreadsheet");
+  var ss = SpreadsheetApp.create("SSE Platform Database");
+  PropertiesService.getScriptProperties().setProperty("SPREADSHEET_ID", ss.getId());
+  AppLogger.info("getSpreadsheet_: created and stored SPREADSHEET_ID", { id: ss.getId() });
+  return ss;
 }
 
 function getEntityConfig_(entityName) {
@@ -2794,7 +2800,11 @@ var DriveService = {
   getRootFolder: function () {
     var rootId = Config.driveFolderRootId();
     if (rootId) return DriveApp.getFolderById(rootId);
-    return DriveService.getOrCreateFolder("SSE-VRAF", null);
+    // First run — create the root folder and persist its ID for all subsequent calls
+    var folder = DriveService.getOrCreateFolder("SSE-VRAF", null);
+    PropertiesService.getScriptProperties().setProperty("DRIVE_FOLDER_ROOT_ID", folder.getId());
+    AppLogger.info("DriveService.getRootFolder: created root folder and stored ID", { id: folder.getId() });
+    return folder;
   },
 
   /**
@@ -5074,7 +5084,7 @@ function initializeDatabase() {
   mergeBuilderEntities_();
   mergeContratacionEntities_();
 
-  var spreadsheet = SpreadsheetApp.openById(Config.spreadsheetId());
+  var spreadsheet = getSpreadsheet_();
 
   var allEntities = Object.keys(ENTITY_SHEETS);
   var created     = 0;

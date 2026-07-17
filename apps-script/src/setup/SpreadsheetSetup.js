@@ -28,7 +28,7 @@ function initializeDatabase() {
   mergeBuilderEntities_();
   mergeContratacionEntities_();
 
-  var spreadsheet = SpreadsheetApp.openById(Config.spreadsheetId());
+  var spreadsheet = getSpreadsheet_();
 
   var allEntities = Object.keys(ENTITY_SHEETS);
   var created     = 0;

@@ -23,7 +23,11 @@ var DriveService = {
   getRootFolder: function () {
     var rootId = Config.driveFolderRootId();
     if (rootId) return DriveApp.getFolderById(rootId);
-    return DriveService.getOrCreateFolder("SSE-VRAF", null);
+    // First run — create the root folder and persist its ID for all subsequent calls
+    var folder = DriveService.getOrCreateFolder("SSE-VRAF", null);
+    PropertiesService.getScriptProperties().setProperty("DRIVE_FOLDER_ROOT_ID", folder.getId());
+    AppLogger.info("DriveService.getRootFolder: created root folder and stored ID", { id: folder.getId() });
+    return folder;
   },
 
   /**

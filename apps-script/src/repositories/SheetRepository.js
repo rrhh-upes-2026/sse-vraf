@@ -18,13 +18,19 @@ function getSpreadsheet_() {
   var id = Config.spreadsheetId();
   if (id) return SpreadsheetApp.openById(id);
 
+  // Bound script — use and persist the active spreadsheet's ID
   var active = SpreadsheetApp.getActiveSpreadsheet();
-  if (active) return active;
+  if (active) {
+    PropertiesService.getScriptProperties().setProperty("SPREADSHEET_ID", active.getId());
+    return active;
+  }
 
-  throw new Error(
-    "No SPREADSHEET_ID script property set and this script is not bound to a spreadsheet. " +
-      "See apps-script/README.md.",
-  );
+  // First run on a standalone script — create the database spreadsheet and persist its ID
+  AppLogger.info("getSpreadsheet_: SPREADSHEET_ID not set — creating new spreadsheet");
+  var ss = SpreadsheetApp.create("SSE Platform Database");
+  PropertiesService.getScriptProperties().setProperty("SPREADSHEET_ID", ss.getId());
+  AppLogger.info("getSpreadsheet_: created and stored SPREADSHEET_ID", { id: ss.getId() });
+  return ss;
 }
 
 function getEntityConfig_(entityName) {
