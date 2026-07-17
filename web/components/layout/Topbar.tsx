@@ -1,19 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { computeBreadcrumb } from "@/lib/breadcrumb";
 import { GlyphIcon } from "@/components/layout/GlyphIcon";
-import { useCommandPaletteStore } from "@/hooks/useCommandPalette";
 import { useNotifications } from "@/hooks/useNotifications";
 import { NotificationCenter } from "@/components/shell/NotificationCenter";
+import { GlobalSearch } from "@/components/shell/GlobalSearch";
 
 export function Topbar() {
   const pathname = usePathname();
   const { crumbA, crumbB } = computeBreadcrumb(pathname);
-  const openPalette = useCommandPaletteStore((s) => s.open);
   const { unreadCount } = useNotifications();
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <header className="flex h-[60px] flex-none items-center gap-4 border-b border-sse-shell-border bg-white px-6">
@@ -34,7 +45,7 @@ export function Topbar() {
 
       <button
         type="button"
-        onClick={openPalette}
+        onClick={() => setSearchOpen(true)}
         className="flex h-9 w-[240px] cursor-pointer items-center gap-2.5 rounded-[9px] border border-sse-shell-border bg-sse-shell-search-bg px-[13px] text-sse-muted"
       >
         <svg
@@ -50,8 +61,11 @@ export function Topbar() {
           <circle cx="11" cy="11" r="7" />
           <path d="M21 21l-4-4" />
         </svg>
-        <span className="text-[12.5px]">Buscar…</span>
+        <span className="flex-1 text-left text-[12.5px]">Buscar en todos los workspaces…</span>
+        <kbd className="rounded border border-sse-shell-border px-1 py-0.5 text-[10px]">⌘K</kbd>
       </button>
+
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <button
         type="button"

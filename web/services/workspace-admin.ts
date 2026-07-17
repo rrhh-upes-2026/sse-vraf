@@ -513,6 +513,13 @@ const MOCK_USERS: WorkspaceUser[] = [
     createdAt: "2026-01-01T08:00:00Z",
     updatedAt: "2026-01-01T08:00:00Z",
   },
+  // VRAF users
+  { id: "USR-VRAF-001", wsId: "vraf", nombre: "MSc. Luisa Martínez", email: "lmartinez@upes.edu.sv", rol: "HEAD", activo: true, lastLoginAt: "2026-07-15T07:45:00Z", createdAt: "2026-01-10T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
+  { id: "USR-VRAF-002", wsId: "vraf", nombre: "Lic. Jorge Domínguez", email: "jdominguez@upes.edu.sv", rol: "ANALYST", activo: true, lastLoginAt: "2026-07-14T15:00:00Z", createdAt: "2026-02-01T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
+  { id: "USR-VRAF-003", wsId: "vraf", nombre: "Admin Plataforma", email: "admin@upes.edu.sv", rol: "ADMIN", activo: true, lastLoginAt: "2026-07-15T08:30:00Z", createdAt: "2026-01-01T08:00:00Z", updatedAt: "2026-01-01T08:00:00Z" },
+  // CONTA users
+  { id: "USR-CONTA-001", wsId: "conta", nombre: "CPA. Elena Vásquez", email: "evasquez@upes.edu.sv", rol: "HEAD", activo: true, lastLoginAt: "2026-07-15T09:00:00Z", createdAt: "2026-01-10T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
+  { id: "USR-CONTA-002", wsId: "conta", nombre: "Lic. Pablo Méndez", email: "pmendez@upes.edu.sv", rol: "OPS", activo: true, lastLoginAt: "2026-07-13T14:00:00Z", createdAt: "2026-03-01T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
 ];
 
 // ── Settings ──────────────────────────────────────────────────────────────────
@@ -668,6 +675,162 @@ const MOCK_AUDIT: AuditRecord[] = [
   },
 ];
 
+// ── Forms ─────────────────────────────────────────────────────────────────────
+
+const MOCK_FORMS: FormBlueprint[] = [
+  {
+    id: "FORM-RRHH-001-v2",
+    wsId: "rrhh",
+    nombre: "Solicitud de Contratación",
+    descripcion: "Formulario para iniciar proceso de contratación de nuevo personal.",
+    schema: { fields: [{ type: "text", label: "Cargo solicitado", required: true }, { type: "select", label: "Tipo de contrato", options: ["Tiempo completo", "Medio tiempo", "Por obra"] }, { type: "textarea", label: "Justificación" }] },
+    lifecycle: "published",
+    version: 2,
+    history: [makeVersion(1, "admin@upes.edu.sv", "archived"), makeVersion(2, "admin@upes.edu.sv", "published")],
+    createdBy: "admin@upes.edu.sv",
+    createdAt: "2026-06-01T08:00:00Z",
+    updatedAt: "2026-07-01T10:00:00Z",
+  },
+  {
+    id: "FORM-RRHH-002-v1",
+    wsId: "rrhh",
+    nombre: "Evaluación de Desempeño 360°",
+    descripcion: "Formulario de evaluación multifuente para personal docente y administrativo.",
+    schema: { fields: [{ type: "scale", label: "Liderazgo", min: 1, max: 5 }, { type: "scale", label: "Comunicación", min: 1, max: 5 }, { type: "textarea", label: "Comentarios generales" }] },
+    lifecycle: "published",
+    version: 1,
+    history: [makeVersion(1, "admin@upes.edu.sv", "published")],
+    createdBy: "admin@upes.edu.sv",
+    createdAt: "2026-06-15T09:00:00Z",
+    updatedAt: "2026-06-15T09:00:00Z",
+  },
+  {
+    id: "FORM-RRHH-003-v1",
+    wsId: "rrhh",
+    nombre: "Solicitud de Permiso / Licencia",
+    descripcion: "Formulario para solicitudes de permisos, licencias y ausencias justificadas.",
+    schema: { fields: [{ type: "select", label: "Tipo de permiso", options: ["Personal", "Médico", "Maternidad/Paternidad", "Estudio"] }, { type: "date", label: "Fecha inicio" }, { type: "date", label: "Fecha fin" }, { type: "file", label: "Documento de soporte" }] },
+    lifecycle: "draft",
+    version: 1,
+    history: [makeVersion(1, "rrhh.admin@upes.edu.sv", "draft")],
+    createdBy: "rrhh.admin@upes.edu.sv",
+    createdAt: "2026-07-05T14:00:00Z",
+    updatedAt: "2026-07-05T14:00:00Z",
+  },
+];
+
+// ── Documents ─────────────────────────────────────────────────────────────────
+
+const MOCK_DOCUMENTS: WorkspaceDocument[] = [
+  {
+    id: "DOC-RRHH-001",
+    wsId: "rrhh",
+    nombre: "Manual de Políticas de Recursos Humanos",
+    descripcion: "Marco normativo institucional para la gestión del talento humano.",
+    categoria: "manual",
+    mimeType: "application/pdf",
+    sizeKb: 1240,
+    version: 3,
+    tags: ["políticas", "normativa", "RRHH"],
+    responsableRol: "HEAD",
+    lifecycle: "published",
+    history: [makeVersion(1, "admin@upes.edu.sv", "archived"), makeVersion(2, "admin@upes.edu.sv", "archived"), makeVersion(3, "admin@upes.edu.sv", "published")],
+    createdBy: "admin@upes.edu.sv",
+    createdAt: "2026-01-15T08:00:00Z",
+    updatedAt: "2026-07-01T10:00:00Z",
+  },
+  {
+    id: "DOC-RRHH-002",
+    wsId: "rrhh",
+    nombre: "Reglamento Interno de Trabajo",
+    descripcion: "Normas de conducta, derechos y obligaciones del personal institucional.",
+    categoria: "reglamento",
+    mimeType: "application/pdf",
+    sizeKb: 890,
+    version: 2,
+    tags: ["reglamento", "conducta", "obligaciones"],
+    responsableRol: "HEAD",
+    lifecycle: "published",
+    history: [makeVersion(1, "admin@upes.edu.sv", "archived"), makeVersion(2, "admin@upes.edu.sv", "published")],
+    createdBy: "admin@upes.edu.sv",
+    createdAt: "2025-08-01T08:00:00Z",
+    updatedAt: "2026-03-15T09:00:00Z",
+  },
+  {
+    id: "DOC-RRHH-003",
+    wsId: "rrhh",
+    nombre: "Procedimiento de Reclutamiento y Selección",
+    descripcion: "Instructivo detallado para el proceso de reclutamiento de personal.",
+    categoria: "procedimiento",
+    mimeType: "application/pdf",
+    sizeKb: 340,
+    version: 1,
+    tags: ["reclutamiento", "selección", "procedimiento"],
+    responsableRol: "ANALYST",
+    lifecycle: "draft",
+    history: [makeVersion(1, "rrhh.admin@upes.edu.sv", "draft")],
+    createdBy: "rrhh.admin@upes.edu.sv",
+    createdAt: "2026-07-10T11:00:00Z",
+    updatedAt: "2026-07-10T11:00:00Z",
+  },
+];
+
+// ── Notification Rules ────────────────────────────────────────────────────────
+
+const MOCK_NOTIFICATIONS: NotificationRule[] = [
+  {
+    id: "NOTIF-RRHH-001",
+    wsId: "rrhh",
+    nombre: "Alerta de vencimiento de SLA",
+    descripcion: "Notifica cuando una solicitud está a 24h de vencer su SLA.",
+    trigger: "sla.warning",
+    conditions: [{ field: "slaDias", operator: "less_than", value: "1" }],
+    destinatarioRoles: ["HEAD", "ANALYST"],
+    canal: "both",
+    asunto: "⚠️ SLA por vencer — {{request.nombre}}",
+    mensaje: "La solicitud {{request.nombre}} vence en menos de 24 horas. Responsable: {{request.responsable}}.",
+    active: true,
+    lifecycle: "published",
+    createdBy: "admin@upes.edu.sv",
+    createdAt: "2026-06-01T08:00:00Z",
+    updatedAt: "2026-07-01T10:00:00Z",
+  },
+  {
+    id: "NOTIF-RRHH-002",
+    wsId: "rrhh",
+    nombre: "Nuevo proceso publicado",
+    descripcion: "Notifica a todos los operadores cuando se publica un proceso nuevo.",
+    trigger: "process.created",
+    conditions: [{ field: "lifecycle", operator: "equals", value: "published" }],
+    destinatarioRoles: ["OPS", "ANALYST"],
+    canal: "in_app",
+    asunto: "Nuevo proceso disponible: {{process.nombre}}",
+    mensaje: "Se ha publicado el proceso {{process.nombre}}. Revisa los nuevos procedimientos en tu workspace.",
+    active: true,
+    lifecycle: "published",
+    createdBy: "admin@upes.edu.sv",
+    createdAt: "2026-06-01T08:00:00Z",
+    updatedAt: "2026-07-01T10:00:00Z",
+  },
+  {
+    id: "NOTIF-RRHH-003",
+    wsId: "rrhh",
+    nombre: "Solicitud aprobada",
+    descripcion: "Confirma al solicitante cuando su solicitud es aprobada.",
+    trigger: "request.approved",
+    conditions: [],
+    destinatarioRoles: ["OPS"],
+    canal: "email",
+    asunto: "Tu solicitud fue aprobada ✓",
+    mensaje: "Tu solicitud {{request.nombre}} ha sido aprobada el {{fecha}}. Puedes consultar el detalle en el sistema.",
+    active: false,
+    lifecycle: "draft",
+    createdBy: "rrhh.admin@upes.edu.sv",
+    createdAt: "2026-07-05T09:00:00Z",
+    updatedAt: "2026-07-05T09:00:00Z",
+  },
+];
+
 // ── Service API ───────────────────────────────────────────────────────────────
 
 export const WorkspaceAdminService = {
@@ -712,6 +875,14 @@ export const WorkspaceAdminService = {
   publishKPI: (id: string) =>
     delay({ success: true, id }),
 
+  archiveKPI: (id: string) =>
+    delay({ success: true, id }),
+
+  duplicateKPI: (id: string): Promise<WorkspaceKPI> => {
+    const src = MOCK_KPIS.find((k) => k.id === id);
+    return delay({ ...(src ?? MOCK_KPIS[0]), id: `KPI-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "KPI"}`, lifecycle: "draft" as const, version: 1 });
+  },
+
   // Request Types
   listRequestTypes: (wsId: WorkspaceId) =>
     delay(MOCK_REQUEST_TYPES.filter((r) => r.wsId === wsId)),
@@ -728,12 +899,32 @@ export const WorkspaceAdminService = {
   publishRequestType: (id: string) =>
     delay({ success: true, id }),
 
+  archiveRequestType: (id: string) =>
+    delay({ success: true, id }),
+
+  duplicateRequestType: (id: string): Promise<RequestType> => {
+    const src = MOCK_REQUEST_TYPES.find((r) => r.id === id);
+    return delay({ ...(src ?? MOCK_REQUEST_TYPES[0]), id: `REQ-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "Solicitud"}`, lifecycle: "draft" as const, version: 1 });
+  },
+
   // Automations
   listAutomations: (wsId: WorkspaceId) =>
     delay(MOCK_AUTOMATIONS.filter((a) => a.wsId === wsId)),
 
   getAutomation: (id: string) =>
     delay(MOCK_AUTOMATIONS.find((a) => a.id === id) ?? null),
+
+  createAutomation: (_wsId: WorkspaceId, _data: Partial<WorkspaceAutomation>): Promise<WorkspaceAutomation> =>
+    delay({ ...MOCK_AUTOMATIONS[0], id: `AUTO-NEW-${Date.now()}`, lifecycle: "draft" as const, active: false }),
+
+  updateAutomation: (id: string, _data: Partial<WorkspaceAutomation>) =>
+    delay(MOCK_AUTOMATIONS.find((a) => a.id === id) ?? null),
+
+  publishAutomation: (id: string) =>
+    delay({ success: true, id }),
+
+  archiveAutomation: (id: string) =>
+    delay({ success: true, id }),
 
   toggleAutomation: (id: string, active: boolean) =>
     delay({ success: true, id, active }),
@@ -745,11 +936,17 @@ export const WorkspaceAdminService = {
   getUser: (id: string) =>
     delay(MOCK_USERS.find((u) => u.id === id) ?? null),
 
+  createUser: (_wsId: WorkspaceId, _data: Partial<WorkspaceUser>): Promise<WorkspaceUser> =>
+    delay({ ...MOCK_USERS[0], id: `USR-NEW-${Date.now()}` }),
+
   updateUserRole: (id: string, rol: string) =>
     delay({ success: true, id, rol }),
 
   toggleUserActive: (id: string, activo: boolean) =>
     delay({ success: true, id, activo }),
+
+  deleteUser: (id: string) =>
+    delay({ success: true, id }),
 
   // Settings
   getSettings: (wsId: WorkspaceId) =>
@@ -757,6 +954,56 @@ export const WorkspaceAdminService = {
 
   updateSettings: (wsId: WorkspaceId, _data: Partial<WorkspaceSettings>) =>
     delay({ success: true, wsId }),
+
+  // Forms
+  listForms: (wsId: WorkspaceId) =>
+    delay(MOCK_FORMS.filter((f) => f.wsId === wsId)),
+
+  getForm: (id: string) =>
+    delay(MOCK_FORMS.find((f) => f.id === id) ?? null),
+
+  createForm: (_wsId: WorkspaceId, _data: Partial<FormBlueprint>): Promise<FormBlueprint> =>
+    delay({ ...MOCK_FORMS[0], id: `FORM-NEW-${Date.now()}`, lifecycle: "draft" as const, version: 1 }),
+
+  updateForm: (id: string, _data: Partial<FormBlueprint>) =>
+    delay(MOCK_FORMS.find((f) => f.id === id) ?? null),
+
+  publishForm: (id: string) =>
+    delay({ success: true, id }),
+
+  archiveForm: (id: string) =>
+    delay({ success: true, id }),
+
+  duplicateForm: (id: string): Promise<FormBlueprint> => {
+    const src = MOCK_FORMS.find((f) => f.id === id);
+    return delay({ ...(src ?? MOCK_FORMS[0]), id: `FORM-NEW-${Date.now()}`, nombre: `Copia de ${src?.nombre ?? "Formulario"}`, lifecycle: "draft" as const, version: 1 });
+  },
+
+  // Documents
+  listDocuments: (wsId: WorkspaceId) =>
+    delay(MOCK_DOCUMENTS.filter((d) => d.wsId === wsId)),
+
+  getDocument: (id: string) =>
+    delay(MOCK_DOCUMENTS.find((d) => d.id === id) ?? null),
+
+  createDocument: (_wsId: WorkspaceId, _data: Partial<WorkspaceDocument>): Promise<WorkspaceDocument> =>
+    delay({ ...MOCK_DOCUMENTS[0], id: `DOC-NEW-${Date.now()}`, lifecycle: "draft" as const }),
+
+  archiveDocument: (id: string) =>
+    delay({ success: true, id }),
+
+  // Notification Rules
+  listNotificationRules: (wsId: WorkspaceId) =>
+    delay(MOCK_NOTIFICATIONS.filter((n) => n.wsId === wsId)),
+
+  createNotificationRule: (_wsId: WorkspaceId, _data: Partial<NotificationRule>): Promise<NotificationRule> =>
+    delay({ ...MOCK_NOTIFICATIONS[0], id: `NOTIF-NEW-${Date.now()}` }),
+
+  updateNotificationRule: (id: string, _data: Partial<NotificationRule>) =>
+    delay(MOCK_NOTIFICATIONS.find((n) => n.id === id) ?? null),
+
+  toggleNotificationRule: (id: string, active: boolean) =>
+    delay({ success: true, id, active }),
 
   // Audit
   listAuditRecords: (wsId: WorkspaceId) =>

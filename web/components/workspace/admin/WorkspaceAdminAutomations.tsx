@@ -6,6 +6,9 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useAutomations, lifecycleBadge } from "@/hooks/useWorkspaceAdmin";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
 import type { WorkspaceAutomation } from "@/types/workspace-admin";
+import { AutomationDrawer } from "./drawers/AutomationDrawer";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 
 const TRIGGER_LABELS: Record<string, string> = {
   "process.created": "Proceso creado",
@@ -43,14 +46,40 @@ function StatusDot({ success }: { success: boolean }) {
   );
 }
 
-function AutomationCard({ auto, onAction }: { auto: WorkspaceAutomation; onAction: () => void }) {
+function AutomationCard({
+  auto,
+  onAction,
+  onEdit,
+}: {
+  auto: WorkspaceAutomation;
+  onAction: () => void;
+  onEdit: (auto: WorkspaceAutomation) => void;
+}) {
   const { hasPermission } = usePermissions();
   const canManage = hasPermission("ws.automations.manage");
   const [busy, setBusy] = useState(false);
 
-  const handleToggle = async () => {
+  const handleToggle = async (checked: boolean) => {
     setBusy(true);
-    await WorkspaceAdminService.toggleAutomation(auto.id, !auto.active);
+    await WorkspaceAdminService.toggleAutomation(auto.id, checked);
+    setBusy(false);
+    onAction();
+  };
+
+  const handlePublish = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`¿Publicar la automatización "${auto.nombre}"?`)) return;
+    setBusy(true);
+    await WorkspaceAdminService.publishAutomation(auto.id);
+    setBusy(false);
+    onAction();
+  };
+
+  const handleArchive = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`¿Archivar la automatización "${auto.nombre}"?`)) return;
+    setBusy(true);
+    await WorkspaceAdminService.archiveAutomation(auto.id);
     setBusy(false);
     onAction();
   };
@@ -61,9 +90,12 @@ function AutomationCard({ auto, onAction }: { auto: WorkspaceAutomation; onActio
     : null;
 
   return (
-    <div className="bg-sse-surface rounded-md border border-sse-border p-4">
+    <div
+      className="bg-sse-surface rounded-md border border-sse-border p-4 cursor-pointer hover:bg-sse-shell-canvas transition-colors"
+      onClick={() => onEdit(auto)}
+    >
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
@@ -82,21 +114,13 @@ function AutomationCard({ auto, onAction }: { auto: WorkspaceAutomation; onActio
           <p className="text-[11px] text-sse-muted mt-0.5 line-clamp-2">{auto.descripcion}</p>
         </div>
         {canManage && (
-          <button
-            onClick={handleToggle}
-            disabled={busy}
-            className={
-              "relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 " +
-              (auto.active ? "bg-sse-primary" : "bg-sse-border")
-            }
-          >
-            <span
-              className={
-                "inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform " +
-                (auto.active ? "translate-x-4" : "translate-x-0.5")
-              }
+          <div onClick={(e) => e.stopPropagation()}>
+            <Switch
+              checked={auto.active}
+              onCheckedChange={handleToggle}
+              disabled={busy}
             />
-          </button>
+          </div>
         )}
       </div>
 
@@ -157,6 +181,30 @@ function AutomationCard({ auto, onAction }: { auto: WorkspaceAutomation; onActio
           </div>
         </div>
       )}
+
+      {/* Action buttons */}
+      {canManage && (
+        <div className="mt-3 pt-3 border-t border-sse-border flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+          {auto.lifecycle === "draft" && (
+            <button
+              onClick={handlePublish}
+              disabled={busy}
+              className="text-[11px] font-medium text-sse-primary hover:underline disabled:opacity-50"
+            >
+              Publicar
+            </button>
+          )}
+          {auto.lifecycle !== "archived" && (
+            <button
+              onClick={handleArchive}
+              disabled={busy}
+              className="text-[11px] text-sse-muted hover:text-sse-ink disabled:opacity-50"
+            >
+              Archivar
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -165,6 +213,8 @@ export function WorkspaceAdminAutomations({ wsId }: { wsId: WorkspaceId }) {
   const { hasPermission } = usePermissions();
   const { data: automations, loading, refetch } = useAutomations(wsId);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedAutomation, setSelectedAutomation] = useState<WorkspaceAutomation | null>(null);
 
   const canManage = hasPermission("ws.automations.manage");
 
@@ -180,8 +230,19 @@ export function WorkspaceAdminAutomations({ wsId }: { wsId: WorkspaceId }) {
     inactive: (automations ?? []).filter((a) => !a.active).length,
   };
 
+  function openNew() { setSelectedAutomation(null); setDrawerOpen(true); }
+  function openEdit(auto: WorkspaceAutomation) { setSelectedAutomation(auto); setDrawerOpen(true); }
+
   return (
     <div className="space-y-4">
+      <AutomationDrawer
+        wsId={wsId}
+        automation={selectedAutomation}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSaved={refetch}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[17px] font-semibold text-sse-ink">Gestión de Automatizaciones</h1>
@@ -190,12 +251,12 @@ export function WorkspaceAdminAutomations({ wsId }: { wsId: WorkspaceId }) {
           </p>
         </div>
         {canManage && (
-          <button className="flex items-center gap-1.5 text-[12px] font-medium bg-sse-primary text-white px-3 py-1.5 rounded-md hover:bg-sse-primary/90 transition-colors">
+          <Button variant="primary" size="sm" onClick={openNew}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Nueva Automatización
-          </button>
+          </Button>
         )}
       </div>
 
@@ -210,7 +271,7 @@ export function WorkspaceAdminAutomations({ wsId }: { wsId: WorkspaceId }) {
                 "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors " +
                 (filter === f
                   ? "bg-sse-primary/10 text-sse-primary"
-                  : "text-sse-muted hover:bg-sse-hover hover:text-sse-ink")
+                  : "text-sse-muted hover:bg-sse-shell-canvas hover:text-sse-ink")
               }
             >
               {labels[f]}
@@ -229,11 +290,16 @@ export function WorkspaceAdminAutomations({ wsId }: { wsId: WorkspaceId }) {
       ) : filtered.length === 0 ? (
         <div className="bg-sse-surface rounded-md border border-sse-border p-8 text-center">
           <p className="text-[13px] text-sse-muted">No se encontraron automatizaciones.</p>
+          {canManage && filter === "all" && (
+            <Button variant="primary" size="sm" onClick={openNew} className="mt-3">
+              Crear primera automatización
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {filtered.map((auto) => (
-            <AutomationCard key={auto.id} auto={auto} onAction={refetch} />
+            <AutomationCard key={auto.id} auto={auto} onAction={refetch} onEdit={openEdit} />
           ))}
         </div>
       )}

@@ -7,6 +7,9 @@ import type {
   ProcessBlueprint,
   WorkspaceKPI,
   RequestType,
+  FormBlueprint,
+  WorkspaceDocument,
+  NotificationRule,
   WorkspaceAutomation,
   WorkspaceUser,
   WorkspaceSettings,
@@ -62,6 +65,18 @@ export function useAuditRecords(wsId: WorkspaceId) {
   return useAsync(() => WorkspaceAdminService.listAuditRecords(wsId), [wsId]);
 }
 
+export function useForms(wsId: WorkspaceId) {
+  return useAsync(() => WorkspaceAdminService.listForms(wsId), [wsId]);
+}
+
+export function useDocuments(wsId: WorkspaceId) {
+  return useAsync(() => WorkspaceAdminService.listDocuments(wsId), [wsId]);
+}
+
+export function useNotificationRules(wsId: WorkspaceId) {
+  return useAsync(() => WorkspaceAdminService.listNotificationRules(wsId), [wsId]);
+}
+
 // ── Computed helpers ──────────────────────────────────────────────────────────
 
 export function lifecycleBadge(lc: ObjectLifecycle): { label: string; color: string } {
@@ -72,3 +87,5 @@ export function lifecycleBadge(lc: ObjectLifecycle): { label: string; color: str
     case "deprecated":  return { label: "Deprecado",   color: "#E54D4D" };
   }
 }
+
+export type { ProcessBlueprint, WorkspaceKPI, RequestType, FormBlueprint, WorkspaceDocument, NotificationRule, WorkspaceAutomation, WorkspaceUser, WorkspaceSettings, AuditRecord };

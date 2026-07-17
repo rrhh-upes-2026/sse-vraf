@@ -6,6 +6,8 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useKPIs, lifecycleBadge } from "@/hooks/useWorkspaceAdmin";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
 import type { WorkspaceKPI, ObjectLifecycle } from "@/types/workspace-admin";
+import { KPIDrawer } from "./drawers/KPIDrawer";
+import { Button } from "@/components/ui/button";
 
 const CATEGORIA_LABELS: Record<string, string> = {
   gestion: "Gestión",
@@ -57,12 +59,37 @@ function TendenciaIcon({ tendencia }: { tendencia?: string }) {
   );
 }
 
-function KPIRow({ kpi, onAction }: { kpi: WorkspaceKPI; onAction: () => void }) {
+function SkeletonRows() {
+  return (
+    <>
+      {[1, 2, 3].map((i) => (
+        <tr key={i} className="border-b border-sse-border last:border-0">
+          {[140, 80, 120, 100, 80, 70, 60].map((w, j) => (
+            <td key={j} className="py-3 px-3 first:px-4 last:px-4">
+              <div className="h-4 animate-pulse rounded bg-sse-shell-canvas" style={{ width: w }} />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}
+
+function KPIRow({
+  kpi,
+  onAction,
+  onEdit,
+}: {
+  kpi: WorkspaceKPI;
+  onAction: () => void;
+  onEdit: (kpi: WorkspaceKPI) => void;
+}) {
   const { hasPermission } = usePermissions();
   const canManage = hasPermission("ws.indicators.manage");
   const [busy, setBusy] = useState(false);
 
-  const handlePublish = async () => {
+  const handlePublish = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!confirm(`¿Publicar el KPI "${kpi.nombre}"?`)) return;
     setBusy(true);
     await WorkspaceAdminService.publishKPI(kpi.id);
@@ -70,10 +97,30 @@ function KPIRow({ kpi, onAction }: { kpi: WorkspaceKPI; onAction: () => void }) 
     onAction();
   };
 
+  const handleArchive = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`¿Archivar el KPI "${kpi.nombre}"?`)) return;
+    setBusy(true);
+    await WorkspaceAdminService.archiveKPI(kpi.id);
+    setBusy(false);
+    onAction();
+  };
+
+  const handleDuplicate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setBusy(true);
+    await WorkspaceAdminService.duplicateKPI(kpi.id);
+    setBusy(false);
+    onAction();
+  };
+
   const { label, color } = lifecycleBadge(kpi.lifecycle);
 
   return (
-    <tr className="border-b border-sse-border last:border-0 hover:bg-sse-hover/50 transition-colors">
+    <tr
+      className="border-b border-sse-border last:border-0 hover:bg-sse-shell-canvas cursor-pointer transition-colors"
+      onClick={() => onEdit(kpi)}
+    >
       <td className="py-3 px-4">
         <div>
           <p className="text-[13px] font-medium text-sse-ink">{kpi.nombre}</p>
@@ -106,14 +153,34 @@ function KPIRow({ kpi, onAction }: { kpi: WorkspaceKPI; onAction: () => void }) 
         </span>
       </td>
       <td className="py-3 px-4 text-right">
-        {canManage && kpi.lifecycle === "draft" && (
-          <button
-            onClick={handlePublish}
-            disabled={busy}
-            className="text-[11px] font-medium text-sse-primary hover:underline disabled:opacity-50"
-          >
-            Publicar
-          </button>
+        {canManage && (
+          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+            {kpi.lifecycle === "draft" && (
+              <button
+                onClick={handlePublish}
+                disabled={busy}
+                className="text-[11px] font-medium text-sse-primary hover:underline disabled:opacity-50"
+              >
+                Publicar
+              </button>
+            )}
+            {kpi.lifecycle !== "archived" && (
+              <button
+                onClick={handleArchive}
+                disabled={busy}
+                className="text-[11px] text-sse-muted hover:text-sse-ink disabled:opacity-50"
+              >
+                Archivar
+              </button>
+            )}
+            <button
+              onClick={handleDuplicate}
+              disabled={busy}
+              className="text-[11px] text-sse-muted hover:text-sse-ink disabled:opacity-50"
+            >
+              Duplicar
+            </button>
+          </div>
         )}
       </td>
     </tr>
@@ -124,6 +191,8 @@ export function WorkspaceAdminIndicators({ wsId }: { wsId: WorkspaceId }) {
   const { hasPermission } = usePermissions();
   const { data: kpis, loading, refetch } = useKPIs(wsId);
   const [filter, setFilter] = useState<ObjectLifecycle | "all">("all");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedKPI, setSelectedKPI] = useState<WorkspaceKPI | null>(null);
 
   const canManage = hasPermission("ws.indicators.manage");
 
@@ -136,8 +205,19 @@ export function WorkspaceAdminIndicators({ wsId }: { wsId: WorkspaceId }) {
     archived: (kpis ?? []).filter((k) => k.lifecycle === "archived").length,
   };
 
+  function openNew() { setSelectedKPI(null); setDrawerOpen(true); }
+  function openEdit(kpi: WorkspaceKPI) { setSelectedKPI(kpi); setDrawerOpen(true); }
+
   return (
     <div className="space-y-4">
+      <KPIDrawer
+        wsId={wsId}
+        kpi={selectedKPI}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSaved={refetch}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[17px] font-semibold text-sse-ink">Diseñador de Indicadores</h1>
@@ -146,12 +226,12 @@ export function WorkspaceAdminIndicators({ wsId }: { wsId: WorkspaceId }) {
           </p>
         </div>
         {canManage && (
-          <button className="flex items-center gap-1.5 text-[12px] font-medium bg-sse-primary text-white px-3 py-1.5 rounded-md hover:bg-sse-primary/90 transition-colors">
+          <Button variant="primary" size="sm" onClick={openNew}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Nuevo KPI
-          </button>
+          </Button>
         )}
       </div>
 
@@ -166,7 +246,7 @@ export function WorkspaceAdminIndicators({ wsId }: { wsId: WorkspaceId }) {
                 "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors " +
                 (filter === lc
                   ? "bg-sse-primary/10 text-sse-primary"
-                  : "text-sse-muted hover:bg-sse-hover hover:text-sse-ink")
+                  : "text-sse-muted hover:bg-sse-shell-canvas hover:text-sse-ink")
               }
             >
               {labels[lc]}
@@ -178,12 +258,33 @@ export function WorkspaceAdminIndicators({ wsId }: { wsId: WorkspaceId }) {
 
       <div className="bg-sse-surface rounded-md border border-sse-border overflow-x-auto">
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin w-5 h-5 border-2 border-sse-primary border-t-transparent rounded-full mx-auto" />
-          </div>
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-sse-border">
+                {["Indicador", "Categoría", "Fórmula", "Valor / Meta", "Frecuencia", "Estado", ""].map((h) => (
+                  <th key={h} className="text-[11px] font-semibold text-sse-muted uppercase tracking-wide py-2.5 px-3 first:px-4 last:px-4">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <SkeletonRows />
+            </tbody>
+          </table>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-[13px] text-sse-muted">No se encontraron indicadores.</p>
+          <div className="flex flex-col items-center gap-2 p-12 text-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-10 text-sse-border">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+            <p className="text-[13px] font-medium text-sse-muted">
+              No hay indicadores{filter !== "all" ? ` en estado "${filter}"` : ""}
+            </p>
+            {canManage && filter === "all" && (
+              <Button variant="primary" size="sm" onClick={openNew} className="mt-2">
+                Crear primer KPI
+              </Button>
+            )}
           </div>
         ) : (
           <table className="w-full text-left">
@@ -198,14 +299,13 @@ export function WorkspaceAdminIndicators({ wsId }: { wsId: WorkspaceId }) {
             </thead>
             <tbody>
               {filtered.map((kpi) => (
-                <KPIRow key={kpi.id} kpi={kpi} onAction={refetch} />
+                <KPIRow key={kpi.id} kpi={kpi} onAction={refetch} onEdit={openEdit} />
               ))}
             </tbody>
           </table>
         )}
       </div>
 
-      {/* KPI designer info */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {[
           { title: "Fórmula", desc: "Define la expresión de cálculo. El motor la evalúa contra las fuentes de datos configuradas." },

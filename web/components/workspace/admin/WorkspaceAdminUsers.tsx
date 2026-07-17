@@ -6,6 +6,9 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useWorkspaceUsers } from "@/hooks/useWorkspaceAdmin";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
 import type { WorkspaceUser, RoleCode } from "@/types/workspace-admin";
+import { UserDrawer } from "./drawers/UserDrawer";
+import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 
 const ROLE_LABELS: Record<RoleCode, string> = {
   ADMIN: "Administrador",
@@ -33,16 +36,23 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function UserRow({ user, onAction }: { user: WorkspaceUser; onAction: () => void }) {
+function UserRow({
+  user,
+  onAction,
+  onEdit,
+}: {
+  user: WorkspaceUser;
+  onAction: () => void;
+  onEdit: (user: WorkspaceUser) => void;
+}) {
   const { hasPermission } = usePermissions();
   const canManage = hasPermission("ws.users.manage");
   const [busy, setBusy] = useState(false);
   const [editingRole, setEditingRole] = useState(false);
 
-  const handleToggleActive = async () => {
-    if (!confirm(`¿${user.activo ? "Desactivar" : "Activar"} al usuario "${user.nombre}"?`)) return;
+  const handleToggleActive = async (checked: boolean) => {
     setBusy(true);
-    await WorkspaceAdminService.toggleUserActive(user.id, !user.activo);
+    await WorkspaceAdminService.toggleUserActive(user.id, checked);
     setBusy(false);
     onAction();
   };
@@ -61,7 +71,10 @@ function UserRow({ user, onAction }: { user: WorkspaceUser; onAction: () => void
     : "—";
 
   return (
-    <tr className="border-b border-sse-border last:border-0 hover:bg-sse-hover/50 transition-colors">
+    <tr
+      className="border-b border-sse-border last:border-0 hover:bg-sse-shell-canvas cursor-pointer transition-colors"
+      onClick={() => onEdit(user)}
+    >
       <td className="py-3 px-4">
         <div className="flex items-center gap-3">
           <div
@@ -76,7 +89,7 @@ function UserRow({ user, onAction }: { user: WorkspaceUser; onAction: () => void
           </div>
         </div>
       </td>
-      <td className="py-3 px-3">
+      <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
         {editingRole && canManage ? (
           <select
             defaultValue={user.rol}
@@ -108,31 +121,26 @@ function UserRow({ user, onAction }: { user: WorkspaceUser; onAction: () => void
           </button>
         )}
       </td>
-      <td className="py-3 px-3">
-        <span className={
-          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold " +
-          (user.activo ? "bg-green-50 text-green-700" : "bg-sse-hover text-sse-muted")
-        }>
+      <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
+        {canManage ? (
+          <Switch
+            checked={user.activo}
+            onCheckedChange={handleToggleActive}
+            disabled={busy}
+            label={user.activo ? "Activo" : "Inactivo"}
+          />
+        ) : (
           <span className={
-            "w-1.5 h-1.5 rounded-full " +
-            (user.activo ? "bg-green-500" : "bg-sse-muted")
-          } />
-          {user.activo ? "Activo" : "Inactivo"}
-        </span>
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold " +
+            (user.activo ? "bg-green-50 text-green-700" : "bg-sse-hover text-sse-muted")
+          }>
+            <span className={"w-1.5 h-1.5 rounded-full " + (user.activo ? "bg-green-500" : "bg-sse-muted")} />
+            {user.activo ? "Activo" : "Inactivo"}
+          </span>
+        )}
       </td>
       <td className="py-3 px-3">
         <span className="text-[12px] text-sse-muted">{lastLogin}</span>
-      </td>
-      <td className="py-3 px-4 text-right">
-        {canManage && (
-          <button
-            onClick={handleToggleActive}
-            disabled={busy}
-            className="text-[11px] text-sse-muted hover:text-sse-ink disabled:opacity-50"
-          >
-            {user.activo ? "Desactivar" : "Activar"}
-          </button>
-        )}
       </td>
     </tr>
   );
@@ -143,6 +151,8 @@ export function WorkspaceAdminUsers({ wsId }: { wsId: WorkspaceId }) {
   const { data: users, loading, refetch } = useWorkspaceUsers(wsId);
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
   const [search, setSearch] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<WorkspaceUser | null>(null);
 
   const canManage = hasPermission("ws.users.manage");
 
@@ -159,8 +169,19 @@ export function WorkspaceAdminUsers({ wsId }: { wsId: WorkspaceId }) {
     inactive: (users ?? []).filter((u) => !u.activo).length,
   };
 
+  function openNew() { setSelectedUser(null); setDrawerOpen(true); }
+  function openEdit(user: WorkspaceUser) { setSelectedUser(user); setDrawerOpen(true); }
+
   return (
     <div className="space-y-4">
+      <UserDrawer
+        wsId={wsId}
+        user={selectedUser}
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSaved={refetch}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[17px] font-semibold text-sse-ink">Gestión de Usuarios</h1>
@@ -169,12 +190,12 @@ export function WorkspaceAdminUsers({ wsId }: { wsId: WorkspaceId }) {
           </p>
         </div>
         {canManage && (
-          <button className="flex items-center gap-1.5 text-[12px] font-medium bg-sse-primary text-white px-3 py-1.5 rounded-md hover:bg-sse-primary/90 transition-colors">
+          <Button variant="primary" size="sm" onClick={openNew}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            Invitar Usuario
-          </button>
+            Nuevo Usuario
+          </Button>
         )}
       </div>
 
@@ -207,7 +228,7 @@ export function WorkspaceAdminUsers({ wsId }: { wsId: WorkspaceId }) {
                 "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors " +
                 (filter === f
                   ? "bg-sse-primary/10 text-sse-primary"
-                  : "text-sse-muted hover:bg-sse-hover hover:text-sse-ink")
+                  : "text-sse-muted hover:bg-sse-shell-canvas hover:text-sse-ink")
               }
             >
               {labels[f]}
@@ -228,19 +249,32 @@ export function WorkspaceAdminUsers({ wsId }: { wsId: WorkspaceId }) {
 
       <div className="bg-sse-surface rounded-md border border-sse-border overflow-x-auto">
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin w-5 h-5 border-2 border-sse-primary border-t-transparent rounded-full mx-auto" />
+          <div className="space-y-2 p-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-4">
+                <div className="w-8 h-8 animate-pulse rounded-full bg-sse-shell-canvas shrink-0" />
+                <div className="h-8 flex-1 animate-pulse rounded-md bg-sse-shell-canvas" />
+                <div className="h-8 w-20 animate-pulse rounded-md bg-sse-shell-canvas" />
+                <div className="h-8 w-16 animate-pulse rounded-md bg-sse-shell-canvas" />
+              </div>
+            ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-[13px] text-sse-muted">No se encontraron usuarios.</p>
+          <div className="flex flex-col items-center gap-2 p-12 text-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="size-10 text-sse-border">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+            <p className="text-[13px] font-medium text-sse-muted">No se encontraron usuarios.</p>
+            {canManage && filter === "all" && !search && (
+              <Button variant="primary" size="sm" onClick={openNew} className="mt-2">Agregar primer usuario</Button>
+            )}
           </div>
         ) : (
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-sse-border">
-                {["Usuario", "Rol", "Estado", "Último acceso", ""].map((h) => (
-                  <th key={h} className="text-[11px] font-semibold text-sse-muted uppercase tracking-wide py-2.5 px-3 first:px-4 last:px-4 last:text-right">
+                {["Usuario", "Rol", "Estado", "Último acceso"].map((h) => (
+                  <th key={h} className="text-[11px] font-semibold text-sse-muted uppercase tracking-wide py-2.5 px-3 first:px-4 last:px-4">
                     {h}
                   </th>
                 ))}
@@ -248,7 +282,7 @@ export function WorkspaceAdminUsers({ wsId }: { wsId: WorkspaceId }) {
             </thead>
             <tbody>
               {filtered.map((user) => (
-                <UserRow key={user.id} user={user} onAction={refetch} />
+                <UserRow key={user.id} user={user} onAction={refetch} onEdit={openEdit} />
               ))}
             </tbody>
           </table>

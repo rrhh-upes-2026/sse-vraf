@@ -260,7 +260,7 @@ export interface FormBlueprint {
   nombre: string;
   descripcion?: string;
   schema: Record<string, unknown>;
-  lifecyle: ObjectLifecycle;
+  lifecycle: ObjectLifecycle;
   version: number;
   history: VersionRecord[];
   createdBy: string;
