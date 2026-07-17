@@ -3,14 +3,148 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useProcesoContratacion } from "@/hooks/useContratacion";
-import { ProcesoTimeline, PASOS_PRO_TH_001, pasoDeEtapa, type PasoDefinicion } from "./ProcesoTimeline";
-import { PanelPaso } from "./PanelPaso";
+import { ProcesoTimeline, PASOS_PRO_TH_001 } from "./ProcesoTimeline";
+import { StepExecutor } from "./StepExecutor";
+import { AuditTrailPanel } from "./AuditTrailPanel";
+import { calcularCompletitud } from "@/lib/contratacion-engine";
+import { ROL_LABEL } from "@/types/proceso-engine";
+import type { StepSpec } from "@/types/proceso-engine";
+import { getStepSpec } from "@/lib/contratacion-engine";
 
-// ── Back icon ─────────────────────────────────────────────────────────────────
+// ── Vista de la columna derecha ───────────────────────────────────────────────
 
-const BACK_ICON = "M15 19l-7-7 7-7";
+type VistaPanel = "paso" | "auditoria";
 
-// ── Layout principal ──────────────────────────────────────────────────────────
+// ── Barra de resumen del proceso ──────────────────────────────────────────────
+
+function ResumenProceso({
+  pasoActual,
+  etapaActual,
+  spec,
+}: {
+  pasoActual: number;
+  etapaActual: string;
+  spec: StepSpec | undefined;
+}) {
+  const pct = calcularCompletitud(pasoActual, etapaActual);
+  const completado = etapaActual === "completado";
+  const rechazado  = etapaActual === "rechazado";
+
+  const pctColor = completado
+    ? "#22c55e"
+    : rechazado
+      ? "#ef4444"
+      : pct >= 70
+        ? "#22c55e"
+        : pct >= 40
+          ? "#E5A100"
+          : "#2E6BE6";
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 20,
+        padding: "10px 20px",
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        background: "rgba(255,255,255,0.02)",
+        flexShrink: 0,
+        flexWrap: "wrap",
+      }}
+    >
+      {/* Progreso */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 160 }}>
+        <div style={{ position: "relative", width: 36, height: 36, flexShrink: 0 }}>
+          <svg width={36} height={36} viewBox="0 0 36 36">
+            <circle
+              cx="18" cy="18" r="14"
+              fill="none"
+              stroke="rgba(255,255,255,0.08)"
+              strokeWidth="3"
+            />
+            <circle
+              cx="18" cy="18" r="14"
+              fill="none"
+              stroke={pctColor}
+              strokeWidth="3"
+              strokeDasharray={`${2 * Math.PI * 14}`}
+              strokeDashoffset={`${2 * Math.PI * 14 * (1 - pct / 100)}`}
+              strokeLinecap="round"
+              transform="rotate(-90 18 18)"
+              style={{ transition: "stroke-dashoffset 0.5s ease" }}
+            />
+          </svg>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 9,
+              fontWeight: 800,
+              color: pctColor,
+            }}
+          >
+            {pct}%
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "white" }}>
+            {completado ? "Completado" : rechazado ? "Rechazado" : `Paso ${pasoActual} / 27`}
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
+            {completado ? "Proceso cerrado" : rechazado ? "Proceso terminado" : "En progreso"}
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.07)", flexShrink: 0 }} />
+
+      {/* Responsable del paso actual */}
+      {spec && !completado && !rechazado && (
+        <>
+          <div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 2 }}>Responsable</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
+              {ROL_LABEL[spec.responsable]}
+            </div>
+          </div>
+          <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.07)", flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginBottom: 2 }}>Duración estimada</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.85)" }}>
+              {spec.duracionEstimadaDias} día{spec.duracionEstimadaDias !== 1 ? "s" : ""}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Indicador de riesgo */}
+      {!completado && !rechazado && pasoActual > 20 && (
+        <>
+          <div style={{ width: 1, height: 28, background: "rgba(255,255,255,0.07)", flexShrink: 0 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#E5A100",
+                animation: "pulse 2s ease-in-out infinite",
+              }}
+            />
+            <span style={{ fontSize: 11, color: "#E5A100", fontWeight: 600 }}>Fase de cierre</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Componente principal ──────────────────────────────────────────────────────
 
 interface ContenidoProcesoProps {
   wsId: string;
@@ -20,6 +154,7 @@ interface ContenidoProcesoProps {
 export function ContenidoProceso({ wsId, procesoId }: ContenidoProcesoProps) {
   const { data: proceso, isLoading, error } = useProcesoContratacion(procesoId);
   const [pasoSeleccionado, setPasoSeleccionado] = useState<number | null>(null);
+  const [vista, setVista] = useState<VistaPanel>("paso");
 
   if (isLoading) return <CargandoProceso />;
   if (error || !proceso) return <ErrorProceso wsId={wsId} />;
@@ -27,6 +162,7 @@ export function ContenidoProceso({ wsId, procesoId }: ContenidoProcesoProps) {
   const pasoActual = proceso.pasoActual;
   const pasoVista  = pasoSeleccionado ?? pasoActual;
   const pasoInfo   = PASOS_PRO_TH_001.find((p) => p.numero === pasoVista);
+  const spec       = getStepSpec(pasoActual);
 
   return (
     <div
@@ -44,7 +180,7 @@ export function ContenidoProceso({ wsId, procesoId }: ContenidoProcesoProps) {
           display: "flex",
           alignItems: "center",
           gap: 12,
-          padding: "14px 20px",
+          padding: "12px 20px",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
           flexShrink: 0,
         }}
@@ -63,7 +199,7 @@ export function ContenidoProceso({ wsId, procesoId }: ContenidoProcesoProps) {
           }}
         >
           <svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-            <path d={BACK_ICON} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M15 19l-7-7 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           Contratación
         </Link>
@@ -116,43 +252,87 @@ export function ContenidoProceso({ wsId, procesoId }: ContenidoProcesoProps) {
             URGENTE
           </span>
         )}
-      </div>
 
-      {/* Panel de dos columnas */}
-      <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
-        {/* ── Columna izquierda: Timeline ── */}
+        {/* Vista switcher */}
         <div
           style={{
-            width: 280,
+            display: "flex",
+            gap: 2,
+            background: "rgba(255,255,255,0.05)",
+            borderRadius: 8,
+            padding: 3,
             flexShrink: 0,
-            borderRight: "1px solid rgba(255,255,255,0.07)",
-            overflowY: "auto",
-            padding: "8px 0",
           }}
         >
-          <ProcesoTimeline
-            pasoActual={pasoActual}
-            pasoSeleccionado={pasoVista}
-            onSeleccionarPaso={(paso) => setPasoSeleccionado(paso.numero)}
-          />
-        </div>
-
-        {/* ── Columna derecha: Paso actual ── */}
-        <div style={{ flex: 1, minWidth: 0, overflowY: "auto" }}>
-          {pasoInfo ? (
-            <PanelPaso
-              paso={pasoInfo}
-              proceso={proceso}
-              wsId={wsId}
-              esActual={pasoVista === pasoActual}
-            />
-          ) : (
-            <div style={{ padding: 32, color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
-              Seleccione un paso en el timeline para ver su detalle.
-            </div>
-          )}
+          {(["paso", "auditoria"] as VistaPanel[]).map((v) => (
+            <button
+              key={v}
+              onClick={() => setVista(v)}
+              style={{
+                padding: "4px 10px",
+                borderRadius: 6,
+                fontSize: 11,
+                fontWeight: 500,
+                background: vista === v ? "rgba(255,255,255,0.1)" : "transparent",
+                color: vista === v ? "white" : "rgba(255,255,255,0.4)",
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              {v === "paso" ? "Pasos" : "Auditoría"}
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* Barra de resumen */}
+      <ResumenProceso
+        pasoActual={pasoActual}
+        etapaActual={proceso.etapaActual}
+        spec={spec}
+      />
+
+      {/* Cuerpo */}
+      {vista === "auditoria" ? (
+        <div style={{ flex: 1, overflowY: "auto", padding: "0" }}>
+          <AuditTrailPanel proceso={proceso} />
+        </div>
+      ) : (
+        <div style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}>
+          {/* ── Columna izquierda: Timeline ── */}
+          <div
+            style={{
+              width: 270,
+              flexShrink: 0,
+              borderRight: "1px solid rgba(255,255,255,0.07)",
+              overflowY: "auto",
+              padding: "8px 0",
+            }}
+          >
+            <ProcesoTimeline
+              pasoActual={pasoActual}
+              pasoSeleccionado={pasoVista}
+              onSeleccionarPaso={(paso) => setPasoSeleccionado(paso.numero)}
+            />
+          </div>
+
+          {/* ── Columna derecha: StepExecutor ── */}
+          <div style={{ flex: 1, minWidth: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+            {pasoInfo ? (
+              <StepExecutor
+                paso={pasoInfo}
+                proceso={proceso}
+                wsId={wsId}
+                esActual={pasoVista === pasoActual}
+              />
+            ) : (
+              <div style={{ padding: 32, color: "rgba(255,255,255,0.3)", fontSize: 13 }}>
+                Seleccione un paso en el timeline para ver su detalle.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -180,11 +360,7 @@ function ErrorProceso({ wsId }: { wsId: string }) {
         <div style={{ fontSize: 14, color: "#ef4444", marginBottom: 12 }}>Proceso no encontrado</div>
         <Link
           href={`/ws/${wsId}/contratacion`}
-          style={{
-            fontSize: 12,
-            color: "#2E6BE6",
-            textDecoration: "underline",
-          }}
+          style={{ fontSize: 12, color: "#2E6BE6", textDecoration: "underline" }}
         >
           Volver a la lista
         </Link>

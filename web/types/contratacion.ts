@@ -529,6 +529,115 @@ export interface FichaDocente {
   createdAt: string;
 }
 
+// ── Tarea de proceso ──────────────────────────────────────────────────────────
+
+export interface Tarea {
+  id: string;
+  procesoId: string;
+  paso: number;
+  titulo: string;
+  descripcion: string;
+  responsable: string;
+  rolResponsable: string;
+  vencimiento: string;
+  estado: 'pendiente' | 'en_progreso' | 'completada' | 'vencida';
+  prioridad: 'alta' | 'media' | 'baja';
+  createdAt: string;
+  completadaAt?: string;
+}
+
+// ── Comentario de proceso ─────────────────────────────────────────────────────
+
+export interface Comentario {
+  id: string;
+  procesoId: string;
+  contexto: string;
+  contextoId: string;
+  autor: string;
+  texto: string;
+  createdAt: string;
+  editadoAt?: string;
+  respuestas?: Comentario[];
+}
+
+// ── Evidencia de archivo (Drive upload) ───────────────────────────────────────
+
+export interface EvidenciaArchivo {
+  id: string;
+  procesoId: string;
+  paso: number;
+  evidenciaRequeridaId: string;
+  nombre: string;
+  driveId: string;
+  drivePath: string;
+  tipoMime: string;
+  tamanoBytes: number;
+  subidoPor: string;
+  createdAt: string;
+}
+
+// ── Documento versionado ──────────────────────────────────────────────────────
+
+export type EstadoDocumento = 'borrador' | 'aprobado' | 'firmado' | 'archivado';
+
+export interface DocumentoVersionado {
+  id: string;
+  procesoId: string;
+  tipo: string;
+  nombre: string;
+  version: number;
+  estado: EstadoDocumento;
+  driveId: string;
+  drivePath: string;
+  generadoAutomaticamente: boolean;
+  aprobadoPor?: string;
+  aprobadoAt?: string;
+  creadoPor: string;
+  createdAt: string;
+  versiones?: Omit<DocumentoVersionado, 'versiones'>[];
+}
+
+// ── Notificación de proceso ───────────────────────────────────────────────────
+
+export interface NotificacionProceso {
+  id: string;
+  procesoId: string;
+  destinatario: string;
+  rol: string;
+  tipo: 'tarea_asignada' | 'paso_completado' | 'aprobacion_requerida' | 'documento_generado' | 'escalacion' | 'recordatorio';
+  titulo: string;
+  mensaje: string;
+  leida: boolean;
+  createdAt: string;
+  leaidaAt?: string;
+}
+
+// ── Carpeta Drive ─────────────────────────────────────────────────────────────
+
+export interface DriveFolder {
+  id: string;
+  procesoId: string;
+  driveId: string;
+  nombre: string;
+  url: string;
+  creadaAt: string;
+  subcarpetas?: Pick<DriveFolder, 'driveId' | 'nombre' | 'url'>[];
+}
+
+// ── KPI tracking ─────────────────────────────────────────────────────────────
+
+export interface KPITracking {
+  procesoId: string;
+  diasTotales?: number;
+  diasPorEtapa: Record<string, number>;
+  candidatosEvaluados: number;
+  candidatosSeleccionados: number;
+  tasaConversionOferta: number;       // ratio 0-1
+  documentosGenerados: number;
+  evidenciasCargadas: number;
+  completadoAt?: string;
+}
+
 // ── Documento 08: Contrato de Trabajo ─────────────────────────────────────────
 
 export interface ContratoTrabajo {
