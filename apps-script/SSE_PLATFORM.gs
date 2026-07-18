@@ -2697,21 +2697,81 @@ var AuditService = {
 
 
 // ============================================================
+// SOURCE: auth/LoginAuditService.js
+// ============================================================
+
+/**
+ * LoginAuditService — append-only authentication event log.
+ *
+ * Writes every auth event (success and failure) to a Sheet named "login_audit".
+ * Creates the sheet with headers on first use if it doesn't exist.
+ * All errors are caught internally so auth flow is never blocked by a logging failure.
+ *
+ * Columns:
+ *   fecha | correo | ip | userAgent | resultado | motivo | usuarioId | rol | unidad
+ */
+var LoginAuditService = (function () {
+  var SHEET_NAME = "login_audit";
+  var HEADERS    = ["fecha", "correo", "ip", "userAgent", "resultado", "motivo", "usuarioId", "rol", "unidad"];
+
+  function getOrCreateSheet_() {
+    var ss    = SpreadsheetApp.openById(Config.spreadsheetId());
+    var sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME);
+      sheet.appendRow(HEADERS);
+      sheet.setFrozenRows(1);
+      sheet.setColumnWidth(1, 180);
+      sheet.setColumnWidth(2, 200);
+      sheet.setColumnWidth(4, 300);
+    }
+    return sheet;
+  }
+
+  return {
+    record: function (entry) {
+      try {
+        var sheet = getOrCreateSheet_();
+        sheet.appendRow([
+          new Date().toISOString(),
+          entry.email     || "",
+          entry.ip        || "",
+          entry.userAgent || "",
+          entry.resultado || "",
+          entry.motivo    || "",
+          entry.usuarioId || "",
+          entry.rol       || "",
+          entry.unidad    || "",
+        ]);
+      } catch (e) {
+        AppLogger.warn("LoginAuditService.record: failed", {
+          email: entry.email,
+          error: String(e.message || e),
+        });
+      }
+    },
+  };
+})();
+
+
+// ============================================================
 // SOURCE: auth/AuthBridge.js
 // ============================================================
 
 /**
  * Authentication bridge — institutional email + OTP flow.
  *
- * Replaces the previous Google OAuth bridge. All auth actions are
- * server-to-server: Next.js calls these endpoints with the shared secret;
- * no browser request ever reaches Apps Script directly.
+ * Security controls:
+ *   - Domain enforcement (upes.edu.sv only)
+ *   - User existence + activo check at every step
+ *   - Resend cooldown: 60 s between OTP sends; same code reused within window
+ *   - Brute-force lockout: 5 wrong codes → 15-min lockout per email
+ *   - Single-use OTP: cache key deleted on first correct verification
+ *   - Full audit trail via LoginAuditService → login_audit sheet
  *
- * Handled actions:
- *   auth.ping       — health check
- *   auth.sendOtp    — validate user, generate OTP, email it
- *   auth.verifyOtp  — validate OTP, return user payload for session creation
- *   auth.getUser    — retained for backward compatibility / admin tools
+ * CacheService keys (namespaced "sse:" by AppCacheService):
+ *   otp:{email}    { code, issuedAt }       TTL 600 s (10 min)
+ *   fails:{email}  { count, lockedUntil }   TTL 900 s (15 min)
  */
 var AuthBridge = {
   route: function (verb, params) {
@@ -2725,40 +2785,72 @@ var AuthBridge = {
     }
   },
 
-  /**
-   * Step 1 of login.
-   * Validates domain + user existence + activo, then generates a
-   * 6-digit OTP stored in CacheService (TTL = 10 min) and emails it.
-   *
-   * @param {{ email: string }} params
-   * @returns {{ sent: boolean }}
-   */
   sendOtp: function (params) {
     Validator.requireFields(params, ["email"]);
-    var email = String(params.email).trim().toLowerCase();
+    var email     = String(params.email).trim().toLowerCase();
+    var ip        = String(params.ip        || "");
+    var userAgent = String(params.userAgent || "");
 
+    // 1. Domain gate
     var domain = email.split("@")[1] || "";
     if (domain !== "upes.edu.sv") {
+      LoginAuditService.record({
+        email: email, ip: ip, userAgent: userAgent,
+        resultado: "ERROR", motivo: "domain_invalid",
+      });
       throw new Error("Acceso permitido únicamente para cuentas institucionales UPES.");
     }
 
+    // 2. User lookup
     var results = listEntities_("usuarios", { email: email });
     if (!results.items || results.items.length === 0) {
+      LoginAuditService.record({
+        email: email, ip: ip, userAgent: userAgent,
+        resultado: "ERROR", motivo: "user_not_found",
+      });
       throw new Error("Usuario no autorizado.");
     }
     var usuario = results.items[0];
     if (usuario.activo !== true) {
+      LoginAuditService.record({
+        email: email, ip: ip, userAgent: userAgent,
+        resultado: "ERROR", motivo: "user_inactive",
+        usuarioId: usuario.id, rol: usuario.rol, unidad: usuario.unidadId,
+      });
       throw new Error("Usuario no autorizado.");
     }
 
-    // 6-digit OTP: 100000–999999
-    var code = String(Math.floor(100000 + Math.random() * 900000));
-    AppCacheService.set("otp:" + email, { code: code }, 600);
+    // 3. Resend cooldown
+    var otpKey   = "otp:" + email;
+    var existing = AppCacheService.get(otpKey);
+    var now      = new Date().getTime();
+    var COOLDOWN_MS = 60 * 1000;
+    var otpCode;
 
+    if (existing) {
+      var elapsed = now - (existing.issuedAt || 0);
+      if (elapsed < COOLDOWN_MS) {
+        var waitSec = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
+        LoginAuditService.record({
+          email: email, ip: ip, userAgent: userAgent,
+          resultado: "ERROR", motivo: "cooldown_" + waitSec + "s",
+          usuarioId: usuario.id, rol: usuario.rol, unidad: usuario.unidadId,
+        });
+        throw new Error("Por favor espere " + waitSec + " segundo(s) antes de solicitar otro código.");
+      }
+      // Cooldown passed: reuse same code, refresh TTL
+      otpCode = existing.code;
+    } else {
+      otpCode = String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    AppCacheService.set(otpKey, { code: otpCode, issuedAt: now }, 600);
+
+    // 4. Email delivery
     var body =
       "<p>Su código de acceso para <strong>SSE-VRAF</strong> es:</p>" +
       "<p style=\"font-size: 36px; font-weight: bold; letter-spacing: 10px;" +
-      "    text-align: center; color: #2E6BE6; margin: 28px 0;\">" + code + "</p>" +
+      "    text-align: center; color: #2E6BE6; margin: 28px 0;\">" + otpCode + "</p>" +
       "<p>Este código vence en <strong>10&nbsp;minutos</strong> y es de un solo uso.</p>" +
       "<p style=\"color: #9e9e9e; font-size: 12px;\">Si usted no solicitó este código, ignore este mensaje.</p>";
 
@@ -2768,41 +2860,101 @@ var AuthBridge = {
       GmailService.buildPlatformEmail(body)
     );
 
+    LoginAuditService.record({
+      email: email, ip: ip, userAgent: userAgent,
+      resultado: "OK", motivo: "otp_sent",
+      usuarioId: usuario.id, rol: usuario.rol, unidad: usuario.unidadId,
+    });
     AppLogger.info("AuthBridge.sendOtp: sent", { email: email });
     return { sent: true };
   },
 
-  /**
-   * Step 2 of login.
-   * Validates the OTP, consumes it (single-use), and returns the user
-   * payload that the Next.js route will sign into a session JWT.
-   *
-   * @param {{ email: string, code: string }} params
-   * @returns {{ usuarioId, nombre, email, rol, unidadId }}
-   */
   verifyOtp: function (params) {
     Validator.requireFields(params, ["email", "code"]);
-    var email = String(params.email).trim().toLowerCase();
-    var code  = String(params.code).trim();
+    var email     = String(params.email).trim().toLowerCase();
+    var code      = String(params.code).trim();
+    var ip        = String(params.ip        || "");
+    var userAgent = String(params.userAgent || "");
 
+    var LOCK_TTL_SEC = 900;
+    var MAX_ATTEMPTS = 5;
+    var failKey   = "fails:" + email;
+    var failState = AppCacheService.get(failKey) || { count: 0, lockedUntil: 0 };
+    var now       = new Date().getTime();
+
+    // 1. Lockout check
+    if (failState.lockedUntil && now < failState.lockedUntil) {
+      var remaining = Math.ceil((failState.lockedUntil - now) / 60000);
+      LoginAuditService.record({
+        email: email, ip: ip, userAgent: userAgent,
+        resultado: "ERROR", motivo: "account_locked",
+      });
+      throw new Error("Cuenta bloqueada temporalmente. Intente nuevamente en " + remaining + " minuto(s).");
+    }
+
+    // 2. OTP presence
     var stored = AppCacheService.get("otp:" + email);
-    if (!stored || stored.code !== code) {
+    if (!stored) {
+      LoginAuditService.record({
+        email: email, ip: ip, userAgent: userAgent,
+        resultado: "ERROR", motivo: "otp_expired",
+      });
       throw new Error("Código inválido o expirado.");
     }
 
-    // Consume immediately — single use
-    AppCacheService.remove("otp:" + email);
+    // 3. Code comparison
+    if (stored.code !== code) {
+      failState.count = (failState.count || 0) + 1;
 
+      if (failState.count >= MAX_ATTEMPTS) {
+        failState.lockedUntil = now + 15 * 60 * 1000;
+        AppCacheService.set(failKey, failState, LOCK_TTL_SEC);
+        LoginAuditService.record({
+          email: email, ip: ip, userAgent: userAgent,
+          resultado: "ERROR", motivo: "max_attempts_locked",
+        });
+        throw new Error("Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.");
+      }
+
+      AppCacheService.set(failKey, failState, LOCK_TTL_SEC);
+      var left = MAX_ATTEMPTS - failState.count;
+      LoginAuditService.record({
+        email: email, ip: ip, userAgent: userAgent,
+        resultado: "ERROR", motivo: "invalid_code_attempt_" + failState.count,
+      });
+      throw new Error("Código inválido o expirado. Te quedan " + left + " intento(s).");
+    }
+
+    // 4. Correct — consume OTP and clear failure counter
+    AppCacheService.remove("otp:" + email);
+    AppCacheService.remove(failKey);
+
+    // 5. Re-validate user (activo may have changed since sendOtp)
     var results = listEntities_("usuarios", { email: email });
     if (!results.items || results.items.length === 0) {
+      LoginAuditService.record({
+        email: email, ip: ip, userAgent: userAgent,
+        resultado: "ERROR", motivo: "user_not_found_on_verify",
+      });
       throw new Error("Usuario no autorizado.");
     }
     var u = results.items[0];
     if (u.activo !== true) {
+      LoginAuditService.record({
+        email: email, ip: ip, userAgent: userAgent,
+        resultado: "ERROR", motivo: "user_inactive_on_verify",
+        usuarioId: u.id, rol: u.rol, unidad: u.unidadId,
+      });
       throw new Error("Usuario no autorizado.");
     }
 
-    AppLogger.info("AuthBridge.verifyOtp: verified", { email: email });
+    LoginAuditService.record({
+      email: email, ip: ip, userAgent: userAgent,
+      resultado: "OK", motivo: "login_success",
+      usuarioId: u.id, rol: u.rol, unidad: u.unidadId,
+    });
+    AppLogger.info("AuthBridge.verifyOtp: success", { email: email });
+
     return {
       usuarioId: u.id,
       nombre:    u.nombre,
@@ -2812,12 +2964,6 @@ var AuthBridge = {
     };
   },
 
-  /**
-   * Lookup by email — retained for admin tooling and migration scripts.
-   *
-   * @param {{ email: string }} params
-   * @returns {{ usuarioId, nombre, email, rol, unidadId, activo } | null}
-   */
   getUser: function (params) {
     Validator.requireFields(params, ["email"]);
     var results = listEntities_("usuarios", { email: params.email });

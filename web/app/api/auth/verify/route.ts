@@ -22,9 +22,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email y código son requeridos." }, { status: 400 });
   }
 
+  const ip        = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "";
+  const userAgent = req.headers.get("user-agent") ?? "";
+
   try {
     const client = getAppsScriptClient();
-    const user = await client.call<OtpVerifyResult>("auth.verifyOtp", { email, code });
+    const user = await client.call<OtpVerifyResult>("auth.verifyOtp", { email, code, ip, userAgent });
 
     const token = await createSessionToken({
       usuarioId: user.usuarioId,
@@ -55,7 +58,9 @@ export async function POST(req: NextRequest) {
     return res;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    const status = msg.includes("Código inválido") ? 401 : 502;
+    const status = msg.includes("bloqueada") || msg.includes("intentos") ? 429
+                 : msg.includes("Código inválido") ? 401
+                 : 502;
     return NextResponse.json({ error: msg }, { status });
   }
 }

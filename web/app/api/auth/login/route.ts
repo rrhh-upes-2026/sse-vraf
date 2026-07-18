@@ -19,13 +19,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const ip        = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.headers.get("x-real-ip") ?? "";
+  const userAgent = req.headers.get("user-agent") ?? "";
+
   try {
     const client = getAppsScriptClient();
-    await client.call("auth.sendOtp", { email });
+    await client.call("auth.sendOtp", { email, ip, userAgent });
     return NextResponse.json({ ok: true });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    const status = msg.includes("autorizado") || msg.includes("institucional") ? 403 : 502;
+    const status = msg.includes("espere") || msg.includes("bloqueada") ? 429
+                 : msg.includes("autorizado") || msg.includes("institucional") ? 403
+                 : 502;
     return NextResponse.json({ error: msg }, { status });
   }
 }
