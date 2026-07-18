@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 
 const GAS_URL = process.env.APPS_SCRIPT_WEB_APP_URL;
 const SECRET  = process.env.WEBHOOK_SHARED_SECRET;
@@ -16,8 +17,10 @@ const SECRET  = process.env.WEBHOOK_SHARED_SECRET;
  * This proxy sends:       POST <GAS_URL>          { action, params, userId, userEmail, secret? }
  */
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const sessionUser = token ? await verifySessionToken(token) : null;
+  if (!sessionUser) {
     return NextResponse.json(
       { success: false, errors: [{ code: "UNAUTHORIZED", message: "Not authenticated" }] },
       { status: 401 },
@@ -32,11 +35,10 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const user  = session.user as unknown as Record<string, unknown>;
   const payload = {
     ...body,
-    userId:    String(user.usuarioId ?? ""),
-    userEmail: String(user.email ?? ""),
+    userId:    sessionUser.usuarioId,
+    userEmail: sessionUser.email,
     ...(SECRET ? { secret: SECRET } : {}),
   };
 

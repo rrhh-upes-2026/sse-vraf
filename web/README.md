@@ -16,7 +16,7 @@ reinterpretation.
   `cn()`), hand-rolled rather than CLI-generated — the CLI's registry
   (`ui.shadcn.com`) wasn't reachable from this environment, and hand-rolling
   let the tokens match §14 exactly instead of a generic preset theme
-- Auth.js v5 (`next-auth@beta`) with Google Workspace OAuth
+- Institutional OTP auth — email + 6-digit code, `@upes.edu.sv` only, JWT cookie via `jose`
 - Zustand (client UI state) + TanStack Query (server-state caching)
 - **Backend-for-Frontend: Google Apps Script**, not a Node server — see
   `../apps-script/README.md`. Google Sheets is the datastore (one tab per
@@ -60,9 +60,10 @@ setting one env var — no UI/Hooks/Services code changes.
   entities (§06), 5 roles (§10), 16 events (§09) as TypeScript types.
 - **`lib/rui.ts`** — Registro Único Institucional id builders (§17). Use
   these instead of raw UUIDs for anything user-facing.
-- **`auth.ts`, `proxy.ts`** — Google Workspace sign-in and the session
-  gate. `AUTH_GOOGLE_HD` (optional) restricts sign-in to one Workspace
-  domain via Google's own `hd` claim.
+- **`lib/session.ts`, `lib/auth-client.ts`, `proxy.ts`** — JWT session
+  utilities and the middleware gate. `SESSION_COOKIE` (`sse_session`) is
+  an HTTP-only cookie signed with `AUTH_SECRET` via `jose`. `proxy.ts`
+  verifies it on every request and redirects to `/login` if absent.
 
 ### Studio/Administración navigation — read this before "fixing" it
 
@@ -78,12 +79,11 @@ original design never had.
 
 ## Dev-mode auth bypass — read before deploying
 
-`AUTH_GOOGLE_ID` being unset means Google OAuth hasn't been provisioned in
-this environment. `proxy.ts` no-ops the session redirect when
-`NODE_ENV !== "production" && !AUTH_GOOGLE_ID`, purely so foundation screens
-render without real Google credentials during development. This flag has
-no effect once `AUTH_GOOGLE_ID` is set, and none in production regardless.
-It is not a login bypass for real users — don't extend it into one.
+`NEXT_PUBLIC_SKIP_AUTH=true` makes `proxy.ts` skip the JWT session check
+entirely, so local dev works without a deployed OTP backend or real `@upes.edu.sv`
+credentials. Never set it in production — `proxy.ts` enforces the session gate
+unconditionally when the variable is absent or any other value. It is a development
+convenience, not a login bypass for real users — don't extend it into one.
 
 ## Running locally
 

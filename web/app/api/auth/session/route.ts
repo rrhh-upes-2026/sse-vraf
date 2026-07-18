@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 
 export async function GET() {
-  const session = await auth();
-  return NextResponse.json({ user: session?.user ?? null });
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const user = token ? await verifySessionToken(token) : null;
+  return NextResponse.json({ user: user ?? null });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 
 const GAS_URL = process.env.APPS_SCRIPT_WEB_APP_URL;
 const SECRET  = process.env.WEBHOOK_SHARED_SECRET;
@@ -17,8 +18,10 @@ const SECRET  = process.env.WEBHOOK_SHARED_SECRET;
  * 502 { ok: false, error: "..." }    — network / parse failure
  */
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const sessionUser = token ? await verifySessionToken(token) : null;
+  if (!sessionUser) {
     return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
   }
 

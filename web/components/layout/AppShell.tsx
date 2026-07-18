@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { cookies } from "next/headers";
+import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 import { Sidebar, type SidebarUser } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { CommandPalette } from "@/components/shell/CommandPalette";
@@ -11,16 +12,18 @@ function initialsFromName(name: string) {
 }
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+  const sessionUser = token ? await verifySessionToken(token) : null;
 
-  if (!session?.user) {
+  if (!sessionUser) {
     if (process.env.NEXT_PUBLIC_SKIP_AUTH !== "true") {
       redirect("/login");
     }
   }
 
-  const user: SidebarUser = session?.user?.name
-    ? { name: session.user.name, initials: initialsFromName(session.user.name) }
+  const user: SidebarUser = sessionUser?.name
+    ? { name: sessionUser.name, initials: initialsFromName(sessionUser.name) }
     : { name: "Dev User", initials: "DU" };
 
   return (
