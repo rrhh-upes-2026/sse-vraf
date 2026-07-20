@@ -102,7 +102,7 @@ var CONTRATACION_ENTITY_SHEETS = {
     columns: [
       "id", "procesoId", "nombre", "apellido", "email",
       "cumplePerfilCV", "enTerna", "seleccionado",
-      "notaEntrevistaPrelimininar", "notaPruebaTecnica",
+      "notaEntrevistaPreliminAr", "notaPruebaTecnica",
       "notaPruebaConductual", "notaEntrevistaRRHH", "notaEntrevistaFinal",
       "promedioGeneral", "dataJson", "createdAt",
     ],

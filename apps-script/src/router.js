@@ -84,7 +84,7 @@ function routeAction_(action, params, context) {
   }
 
   if (namespace === "contratacion") {
-    result = routeContratacionAction_(verb, params || {});
+    result = routeContratacionAction_(verb, params || {}, context);
     return { data: result, pagination: null };
   }
 
@@ -162,7 +162,33 @@ function routeAction_(action, params, context) {
  * @returns {{ data: *, pagination: null } | undefined}
  */
 function routeWorkspaceAction_(entityName, verb, params, context) {
-  var userId = context && context.userId || "";
+  var userId    = context && context.userId    || "";
+  var userEmail = context && context.userEmail || "";
+
+  // Permission enforcement — only when authenticated (userEmail present)
+  if (userEmail) {
+    var wsId = params && params.wsId;
+    if (!wsId && params && params.id) {
+      try { var _rec = getEntity_(entityName, params.id); wsId = _rec && _rec.wsId; } catch (_) {}
+    }
+    if (wsId) {
+      var _permMap = {
+        publish:         "ws.processes.manage",
+        archive:         "ws.admin.access",
+        restore:         "ws.admin.access",
+        duplicate:       "ws.admin.access",
+        toggleActive:    "ws.admin.access",
+        softDelete:      "ws.admin.access",
+        recordExecution: "ws.automations.manage",
+        recordKPIValue:  "ws.kpis.record",
+        getHistory:      "ws.admin.access",
+        uploadDocument:  "ws.documents.upload",
+        upsertByWsId:    "ws.settings.manage",
+      };
+      var _perm = _permMap[verb];
+      if (_perm) WorkspacePermissions.requirePermission(wsId, userEmail, _perm);
+    }
+  }
 
   switch (verb) {
     case "publish":
@@ -277,7 +303,24 @@ function routePlatformAction_(verb, params, context) {
  */
 function routeBuilderAction_(verb, params, context) {
   params = params || {};
-  var userId = context && context.userId || "";
+  var userId    = context && context.userId    || "";
+  var userEmail = context && context.userEmail || "";
+  var wsId      = params.wsId || "";
+
+  // Permission enforcement for builder operations
+  if (wsId && userEmail) {
+    var _builderReadVerbs  = { list: true, get: true, getVersionHistory: true,
+                                getProcessList: true, getFormList: true,
+                                getKPIList: true, getNotificationList: true };
+    var _builderWriteVerbs = { save: true, publish: true, archive: true, delete: true,
+                                duplicate: true, restoreVersion: true,
+                                saveCatalogEntry: true, deleteCatalogEntry: true };
+    if (_builderWriteVerbs[verb]) {
+      WorkspacePermissions.requirePermission(wsId, userEmail, "ws.processes.manage");
+    } else if (_builderReadVerbs[verb]) {
+      WorkspacePermissions.requirePermission(wsId, userEmail, "ws.admin.access");
+    }
+  }
 
   switch (verb) {
     case "list":             return BuilderController.list(params);

@@ -58,17 +58,8 @@ var NotificationService = {
    * @param {string} htmlBody
    */
   sendEmail: function (toEmail, subject, htmlBody) {
-    if (!Config.gmailEnabled()) {
-      AppLogger.debug("NotificationService.sendEmail: Gmail disabled, skipping", { to: toEmail });
-      return;
-    }
-    if (!toEmail) {
-      AppLogger.warn("NotificationService.sendEmail: no recipient email provided");
-      return;
-    }
     try {
-      GmailApp.sendEmail(toEmail, subject, "", { htmlBody: htmlBody });
-      AppLogger.info("NotificationService.sendEmail: sent", { to: toEmail, subject: subject });
+      GmailService.sendEmail(toEmail, subject, htmlBody);
     } catch (e) {
       AppLogger.error("NotificationService.sendEmail: failed", {
         to:    toEmail,

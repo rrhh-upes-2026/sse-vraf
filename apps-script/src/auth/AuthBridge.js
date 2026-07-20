@@ -45,7 +45,8 @@ var AuthBridge = {
 
     // 1. Domain gate — enforced before any Sheets read
     var domain = email.split("@")[1] || "";
-    if (domain !== "upes.edu.sv") {
+    var allowedDomain = Config.domain() || "upes.edu.sv";
+    if (!domain || domain !== allowedDomain) {
       LoginAuditService.record({
         email: email, ip: ip, userAgent: userAgent,
         resultado: "ERROR", motivo: "domain_invalid",

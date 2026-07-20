@@ -65,10 +65,6 @@ var ContratacionController = (function () {
     return Object.assign({}, data, { id: row.id });
   }
 
-  function genId_(prefix) {
-    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
-  }
-
   function flatForTipo_(tipo, data) {
     switch (tipo) {
       case "requisicion":
@@ -151,8 +147,10 @@ var ContratacionController = (function () {
     },
 
     crearProceso: function (params) {
+      Validator.requireFields(params, ["wsId", "nombrePuesto"]);
       var now_ = new Date().toISOString();
-      var id = genId_("PROC-RH");
+      var id = IdGen.uuid();
+      AppLogger.info("ContratacionController.crearProceso", { wsId: params.wsId, nombrePuesto: params.nombrePuesto });
       var proceso = Object.assign({
         tipoPuesto:       "plaza_existente",
         nombrePuesto:     "",
@@ -172,7 +170,7 @@ var ContratacionController = (function () {
       }, params, {
         id: id,
         historial: [{
-          id: genId_("EVT"),
+          id: IdGen.uuid(),
           fecha: now_,
           paso: 1,
           etapa: "identificacion_necesidad",
@@ -210,8 +208,8 @@ var ContratacionController = (function () {
     },
 
     avanzarEtapa: function (params) {
-      if (!params.id) throw new Error("id is required");
-      if (!params.resultado) throw new Error("resultado is required");
+      Validator.requireFields(params, ["id", "resultado"]);
+      AppLogger.info("ContratacionController.avanzarEtapa", { id: params.id, resultado: params.resultado });
 
       var now_ = new Date().toISOString();
       var row = getEntity_("contratProcesos", params.id);
@@ -225,7 +223,7 @@ var ContratacionController = (function () {
 
       var historial = Array.isArray(proceso.historial) ? proceso.historial : [];
       historial.push({
-        id:          genId_("EVT"),
+        id:          IdGen.uuid(),
         fecha:       now_,
         paso:        nuevoPaso,
         etapa:       nuevaEtapa,
@@ -255,9 +253,11 @@ var ContratacionController = (function () {
     },
 
     guardarDocumento: function (params) {
+      Validator.requireFields(params, ["tipo", "procesoId"]);
       var tipo = params.tipo;
       var entity = TIPO_ENTITY[tipo];
       if (!entity) throw new Error("Tipo de documento no reconocido: " + tipo);
+      AppLogger.info("ContratacionController.guardarDocumento", { tipo: tipo, procesoId: params.procesoId });
 
       var procesoId = params.procesoId;
       var now_ = new Date().toISOString();
@@ -278,7 +278,7 @@ var ContratacionController = (function () {
         return Object.assign({}, data, { id: existingRow.id, procesoId: procesoId });
       }
 
-      var newId = genId_(tipo.toUpperCase());
+      var newId = IdGen.uuid();
       flat.id        = newId;
       flat.createdAt = now_;
       flat.updatedAt = now_;
@@ -295,8 +295,10 @@ var ContratacionController = (function () {
     },
 
     agregarCandidato: function (params) {
+      Validator.requireFields(params, ["procesoId", "nombre"]);
       var now_ = new Date().toISOString();
-      var id = genId_("CAND");
+      var id = IdGen.uuid();
+      AppLogger.info("ContratacionController.agregarCandidato", { procesoId: params.procesoId, nombre: params.nombre });
       var data = Object.assign({ createdAt: now_ }, params, { id: id });
 
       createEntity_("contratCandidatos", {
@@ -308,7 +310,7 @@ var ContratacionController = (function () {
         cumplePerfilCV:            params.cumplePerfilCV !== undefined ? String(params.cumplePerfilCV) : "",
         enTerna:                   params.enTerna   ? "true" : "false",
         seleccionado:              params.seleccionado ? "true" : "false",
-        notaEntrevistaPrelimininar: params.notaEntrevistaPrelimininar || "",
+        notaEntrevistaPreliminAr: params.notaEntrevistaPreliminAr || "",
         notaPruebaTecnica:         params.notaPruebaTecnica          || "",
         notaPruebaConductual:      params.notaPruebaConductual       || "",
         notaEntrevistaRRHH:        params.notaEntrevistaRRHH         || "",
@@ -322,7 +324,8 @@ var ContratacionController = (function () {
     },
 
     evaluarCandidato: function (params) {
-      if (!params.id) throw new Error("id is required");
+      Validator.requireFields(params, ["id"]);
+      AppLogger.info("ContratacionController.evaluarCandidato", { id: params.id });
 
       var row = getEntity_("contratCandidatos", params.id);
       if (!row) throw new Error("Candidato " + params.id + " no encontrado");
@@ -332,7 +335,7 @@ var ContratacionController = (function () {
       var merged = Object.assign({}, existing, params);
 
       var notas = [
-        merged.notaEntrevistaPrelimininar,
+        merged.notaEntrevistaPreliminAr,
         merged.notaPruebaTecnica,
         merged.notaPruebaConductual,
         merged.notaEntrevistaRRHH,
@@ -349,7 +352,7 @@ var ContratacionController = (function () {
         cumplePerfilCV:            merged.cumplePerfilCV !== undefined ? String(merged.cumplePerfilCV) : "",
         enTerna:                   merged.enTerna   ? "true" : "false",
         seleccionado:              merged.seleccionado ? "true" : "false",
-        notaEntrevistaPrelimininar: merged.notaEntrevistaPrelimininar || "",
+        notaEntrevistaPreliminAr: merged.notaEntrevistaPreliminAr || "",
         notaPruebaTecnica:         merged.notaPruebaTecnica          || "",
         notaPruebaConductual:      merged.notaPruebaConductual       || "",
         notaEntrevistaRRHH:        merged.notaEntrevistaRRHH         || "",
@@ -367,15 +370,27 @@ var ContratacionController = (function () {
 /**
  * Route contratacion.* actions.
  */
-function routeContratacionAction_(verb, params) {
+function routeContratacionAction_(verb, params, context) {
   params = params || {};
+  var userEmail = context && context.userEmail || "";
+  var wsId      = params.wsId || "";
+
+  // Enforce manage permission for mutating verbs when authenticated
+  if (wsId && userEmail) {
+    var _mutatVerbs = { crearProceso: true, avanzarEtapa: true, guardarDocumento: true,
+                        agregarCandidato: true, evaluarCandidato: true };
+    if (_mutatVerbs[verb]) {
+      WorkspacePermissions.requirePermission(wsId, userEmail, "ws.processes.manage");
+    }
+  }
+
   switch (verb) {
-    case "listProcesos":    return ContratacionController.listProcesos(params);
-    case "getProceso":      return ContratacionController.getProceso(params);
-    case "crearProceso":    return ContratacionController.crearProceso(params);
-    case "avanzarEtapa":    return ContratacionController.avanzarEtapa(params);
-    case "guardarDocumento": return ContratacionController.guardarDocumento(params);
-    case "getDocumento":    return ContratacionController.getDocumento(params);
+    case "listProcesos":     return ContratacionController.listProcesos(params);
+    case "getProceso":       return ContratacionController.getProceso(params);
+    case "crearProceso":     return ContratacionController.crearProceso(params);
+    case "avanzarEtapa":     return ContratacionController.avanzarEtapa(params);
+    case "guardarDocumento":  return ContratacionController.guardarDocumento(params);
+    case "getDocumento":     return ContratacionController.getDocumento(params);
     case "agregarCandidato": return ContratacionController.agregarCandidato(params);
     case "evaluarCandidato": return ContratacionController.evaluarCandidato(params);
     default:
