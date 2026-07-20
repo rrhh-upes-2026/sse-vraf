@@ -60,9 +60,16 @@ export const mockUsuarios: Usuario[] = [
 export const mockPlanes: PlanEstrategico[] = [
   {
     id: "PLAN-2026-2030",
+    wsId: "vraf",
     nombre: "Plan Estratégico Institucional 2026-2030",
+    tipo: "estrategico",
+    estado: "vigente",
     periodoInicio: "2026-01-01",
     periodoFin: "2030-12-31",
+    descripcion: "Plan de desarrollo institucional quinquenal UPES",
+    avancePct: 22,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-07-01T00:00:00.000Z",
   },
 ];
 

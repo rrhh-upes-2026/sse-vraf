@@ -32,3 +32,4 @@ export const HistorialService   = createEntityService<HistorialAudit>("historial
 export * from "./hr";
 export * from "./workflow";
 export * from "./studio";
+export * from "./vraf";

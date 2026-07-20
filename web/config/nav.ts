@@ -44,6 +44,7 @@ export function getWorkspace(id: string) {
 
 export type WorkspaceSectionId =
   | "dashboard"
+  | "planes"
   | "objetivos"
   | "proyectos"
   | "procesos"
@@ -69,6 +70,11 @@ export const WORKSPACE_SECTIONS: WorkspaceSection[] = [
     id: "dashboard",
     label: "Dashboard",
     icon: "M4 20V10M10 20V4M16 20v-7M4 20h16",
+  },
+  {
+    id: "planes",
+    label: "Planes",
+    icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
   },
   {
     id: "objetivos",

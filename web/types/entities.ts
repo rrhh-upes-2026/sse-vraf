@@ -19,12 +19,31 @@ export type EstadoProceso =
 
 /** Cadena obligatoria — MASTER HANDOFF §02. Todo elemento pertenece a ella o no existe. */
 
+export type TipoPlan = "estrategico" | "operativo" | "mejora" | "accion";
+export type EstadoPlan = "borrador" | "revision" | "aprobado" | "vigente" | "cerrado";
+
 export interface PlanEstrategico {
   id: string; // RUI: no aplica patrón corto — plan institucional único por período
+  wsId: string;
   nombre: string;
+  tipo: TipoPlan;
+  estado: EstadoPlan;
   periodoInicio: string; // ISO date
   periodoFin: string; // ISO date
   descripcion?: string;
+  responsableId?: string;
+  avancePct: number; // 0-100
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VRAFDashboardResumen {
+  planes: number;
+  indicadores: number;
+  semaforoKPIs: { verde: number; amarillo: number; rojo: number };
+  proyectos: number;
+  solicitudes: number;
+  procesosActivos: number;
 }
 
 export interface ObjetivoEstrategico {
