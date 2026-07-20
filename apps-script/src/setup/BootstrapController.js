@@ -199,8 +199,25 @@ var BootstrapController = (function () {
     var logs = [];
     var userId = context && context.userId || 'system';
 
-    log_(logs, 'info', 'Instalando módulo RRHH como primer módulo operativo...');
+    // ── 1. Institutional seed data (users, workspaces, wsUsers) ──────────────
+    log_(logs, 'info', 'Instalando seed data institucional...');
+    try {
+      var seedResult = SeedInstaller.installAll(userId, []);
+      var seedLogs = seedResult.logs || [];
+      for (var si = 0; si < seedLogs.length; si++) { logs.push(seedLogs[si]); }
+      if (!seedResult.skipped) {
+        log_(logs, 'success',
+          'Seed data instalada: ' +
+          (seedResult.users || 0) + ' usuarios, ' +
+          (seedResult.workspaces || 0) + ' workspaces.'
+        );
+      }
+    } catch (e) {
+      log_(logs, 'error', 'Error instalando seed data: ' + String(e.message || e));
+    }
 
+    // ── 2. RRHH module blueprints, KPIs, forms, request types ────────────────
+    log_(logs, 'info', 'Instalando módulo RRHH...');
     try {
       var result = WorkspaceTemplateInstaller.installRRHH(userId);
 
@@ -221,7 +238,7 @@ var BootstrapController = (function () {
         );
       }
 
-      return ok_(4, logs, result);
+      return ok_(4, logs, { seed: seedResult, rrhh: result });
     } catch (e) {
       log_(logs, 'error', 'Error instalando plantillas: ' + String(e.message || e));
       return fail_(4, logs, ['TEMPLATE_INSTALL_FAILED']);

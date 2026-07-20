@@ -140,9 +140,9 @@ var VRAF_UNIT_DEF = {
   },
 
   roles: [
-    { key: "HEAD",    label: "Vicerrector Académico" },
+    { key: "HEAD",    label: "Vicerrectora Administrativa Financiera" },
     { key: "ANALYST", label: "Analista de Planificación" },
-    { key: "OPS",     label: "Coordinador de Carrera" },
+    { key: "OPS",     label: "Coordinador Administrativo" },
     { key: "AUDIT",   label: "Auditor Institucional" },
   ],
 
@@ -160,10 +160,30 @@ var VRAF_UNIT_DEF = {
     periodoArchivado:    730,
   },
 
+  // ── Domain Handlers (delegate to VRAFController) ──────────────────────────
   handlers: {
-    listPlanes:    function (p) { return listEntities_("planes",    p); },
-    listObjetivos: function (p) { return listEntities_("objetivos", p); },
-    listProyectos: function (p) { return listEntities_("proyectos", p); },
-    listIndicadores: function (p) { return listEntities_("indicadores", p); },
+    getDashboardResumen: function (p) { return VRAFController.getDashboardResumen(p); },
+    listPlanes:          function (p) { return VRAFController.listPlanes(p); },
+    getPlan:             function (p) { return VRAFController.getPlan(p); },
+    createPlan:          function (p) { return VRAFController.createPlan(p); },
+    updatePlan:          function (p) { return VRAFController.updatePlan(p); },
+    deletePlan:          function (p) { return VRAFController.deletePlan(p); },
+    listObjetivos:       function (p) { return VRAFController.listObjetivos(p); },
+    getObjetivo:         function (p) { return VRAFController.getObjetivo(p); },
+    createObjetivo:      function (p) { return VRAFController.createObjetivo(p); },
+    updateObjetivo:      function (p) { return VRAFController.updateObjetivo(p); },
+    listProyectos:       function (p) { return VRAFController.listProyectos(p); },
+    getProyecto:         function (p) { return VRAFController.getProyecto(p); },
+    createProyecto:      function (p) { return VRAFController.createProyecto(p); },
+    updateProyecto:      function (p) { return VRAFController.updateProyecto(p); },
+    listProcesos:        function (p) { return VRAFController.listProcesos(p); },
+    listActividades:     function (p) { return VRAFController.listActividades(p); },
+    listIndicadores:     function (p) { return VRAFController.listIndicadores(p); },
+    getIndicador:        function (p) { return VRAFController.getIndicador(p); },
+    createIndicador:     function (p) { return VRAFController.createIndicador(p); },
+    updateIndicador:     function (p) { return VRAFController.updateIndicador(p); },
+    listSolicitudes:     function (p) { return VRAFController.listSolicitudes(p); },
+    createSolicitud:     function (p) { return VRAFController.createSolicitud(p); },
+    updateSolicitud:     function (p) { return VRAFController.updateSolicitud(p); },
   },
 };
