@@ -377,6 +377,222 @@ export interface ComprasDashboardResumen {
   recepcionesPendientes: number;
 }
 
+// ── Contabilidad y Finanzas ────────────────────────────────────────────────────
+
+export type ContaEstadoCompromiso = "borrador" | "comprometido" | "ejecutado" | "anulado";
+export type ContaEtapaCompromiso  = "formulacion" | "aprobacion" | "ejecucion" | "cierre";
+export type ContaTipoCompromiso   = "gasto" | "inversion" | "transferencia";
+export type ContaEstadoFactura    = "pendiente" | "aprobada" | "pagada" | "rechazada" | "anulada";
+export type ContaTipoFactura      = "electronica" | "fisica" | "credito_fiscal" | "nota_debito" | "nota_credito";
+export type ContaEstadoPago       = "pendiente" | "aprobado" | "ejecutado" | "rechazado" | "anulado";
+export type ContaTipoPago         = "transferencia" | "cheque" | "efectivo" | "otros";
+export type ContaEstadoConciliacion = "abierta" | "en_proceso" | "cerrada";
+export type ContaEstadoCuentaPagar  = "pendiente" | "parcial" | "pagada" | "vencida" | "anulada";
+export type ContaEstadoCuentaCobrar = "pendiente" | "parcial" | "cobrada" | "vencida" | "anulada";
+export type ContaPrioridad          = "normal" | "urgente" | "critica";
+
+/** Compromiso Presupuestario — vincula Compras con ejecución contable */
+export interface ContaCompromiso {
+  id: string;
+  wsId: string;
+  numero?: string;
+  concepto: string;
+  tipo: ContaTipoCompromiso;
+  monto: number;
+  moneda: string;
+  cuentaPresupuestal?: string;
+  centroCosto?: string;
+  partida?: string;
+  estado: ContaEstadoCompromiso;
+  etapa: ContaEtapaCompromiso;
+  // Compras integration refs (foreign keys only — no duplication)
+  ordenCompraId?: string;
+  ordenCompraRef?: string;
+  proveedorId?: string;
+  proveedorRef?: string;
+  fechaCompromiso: string;
+  fechaVencimiento?: string;
+  montoEjecutado: number;
+  saldo: number;
+  aprobadoPorId?: string;
+  fechaAprobacion?: string;
+  observaciones?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+/** Registro Contable — asiento en el libro diario */
+export interface ContaRegistro {
+  id: string;
+  wsId: string;
+  numero?: string;
+  tipo: "ingreso" | "egreso" | "transferencia" | "ajuste";
+  descripcion: string;
+  cuentaDebito: string;
+  cuentaCredito: string;
+  monto: number;
+  moneda: string;
+  centroCosto?: string;
+  referenciaId?: string;
+  referenciaDoc?: string;
+  estado: "borrador" | "aprobado" | "anulado";
+  fechaAsiento: string;
+  periodo: string;
+  compromisoId?: string;
+  facturaId?: string;
+  pagoId?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+/** Factura — recibida de proveedor; referencia Compras sin duplicar datos */
+export interface ContaFactura {
+  id: string;
+  wsId: string;
+  numero: string;
+  serie?: string;
+  tipo: ContaTipoFactura;
+  // Compras integration refs
+  proveedorId: string;
+  proveedorRef?: string;
+  ordenCompraId?: string;
+  recepcionId?: string;
+  fechaFactura: string;
+  fechaVencimiento?: string;
+  fechaRecepcion?: string;
+  monto: number;
+  montoIva: number;
+  montoTotal: number;
+  moneda: string;
+  estado: ContaEstadoFactura;
+  metodoPago?: string;
+  cuentaPagarId?: string;
+  compromisoId?: string;
+  observaciones?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+/** Pago — ejecución de desembolso */
+export interface ContaPago {
+  id: string;
+  wsId: string;
+  numeroPago?: string;
+  tipo: ContaTipoPago;
+  facturaId?: string;
+  proveedorId?: string;
+  proveedorRef?: string;
+  monto: number;
+  moneda: string;
+  estado: ContaEstadoPago;
+  fechaSolicitud: string;
+  fechaAprobacion?: string;
+  fechaEjecucion?: string;
+  aprobadoPorId?: string;
+  ejecutadoPorId?: string;
+  referenciaBancaria?: string;
+  cuentaBancaria?: string;
+  concepto?: string;
+  registroId?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+/** Conciliación Bancaria */
+export interface ContaConciliacion {
+  id: string;
+  wsId: string;
+  periodo: string;
+  cuenta: string;
+  banco?: string;
+  saldoBanco: number;
+  saldoLibros: number;
+  diferencia: number;
+  estado: ContaEstadoConciliacion;
+  fechaInicio: string;
+  fechaCierre?: string;
+  observaciones?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+/** Cuenta por Pagar — obligación con proveedor */
+export interface ContaCuentaPagar {
+  id: string;
+  wsId: string;
+  codigo?: string;
+  proveedorId: string;
+  proveedorRef?: string;
+  facturaId?: string;
+  ordenCompraId?: string;
+  monto: number;
+  montoPagado: number;
+  saldo: number;
+  moneda: string;
+  estado: ContaEstadoCuentaPagar;
+  fechaEmision: string;
+  fechaVencimiento?: string;
+  fechaPago?: string;
+  diasPlazo: number;
+  prioridad: ContaPrioridad;
+  observaciones?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+/** Cuenta por Cobrar — estructura preparada para futuro uso */
+export interface ContaCuentaCobrar {
+  id: string;
+  wsId: string;
+  codigo?: string;
+  clienteRef: string;
+  concepto: string;
+  monto: number;
+  montoCobrado: number;
+  saldo: number;
+  moneda: string;
+  estado: ContaEstadoCuentaCobrar;
+  fechaEmision: string;
+  fechaVencimiento?: string;
+  fechaCobro?: string;
+  diasPlazo: number;
+  observaciones?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+/** KPIs del Dashboard Ejecutivo de Contabilidad */
+export interface ContaDashboardResumen {
+  compromisosActivos: number;
+  montoCometido: number;
+  montoEjecutado: number;
+  ejecucionPct: number;
+  facturasPendientes: number;
+  facturasAprobadas: number;
+  facturasPagadas: number;
+  pagosPendientes: number;
+  montoPagosPendientes: number;
+  cuentasPorPagar: number;
+  cuentasVencidas: number;
+  montoCuentasPagar: number;
+  tiempoPromedioPago: number;
+  conciliacionesAbiertas: number;
+}
+
 // ── INSERT-only — R06. Nunca UPDATE/DELETE. ───────────────────────────────────
 /** INSERT-only — R06. Nunca UPDATE/DELETE. */
 export interface HistorialAudit {

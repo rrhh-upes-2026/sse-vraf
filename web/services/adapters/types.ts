@@ -40,6 +40,14 @@ export type EntityName =
   | "comprasOrdenes"
   | "comprasRecepciones"
   | "comprasEvaluaciones"
+  // Contabilidad domain entities
+  | "contaCompromisos"
+  | "contaRegistros"
+  | "contaFacturas"
+  | "contaPagos"
+  | "contaConciliaciones"
+  | "contaCuentasPagar"
+  | "contaCuentasCobrar"
   // Workspace-admin entities (Sprint 13)
   | "wsBlueprints"
   | "wsKPIs"

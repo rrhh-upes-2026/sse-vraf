@@ -10,3 +10,4 @@
  */
 import "./rrhh";
 import "./compras";
+import "./contabilidad";
