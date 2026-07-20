@@ -15,6 +15,10 @@
  *     (publish, archive, restore, duplicate, toggleActive, recordExecution,
  *      recordKPIValue, getHistory, uploadDocument)
  *   • mergeWorkspaceAdminEntities_ called once at startup
+ *
+ * Phase 1 — Organizational Domain Framework:
+ *   • registry.* actions route to routeRegistryAction_ (unit discovery)
+ *   • Any namespace matching a registered OrgUnit routes to OrgUnitRegistry.route()
  */
 
 var WRITE_VERBS = { create: true, update: true, remove: true };
@@ -85,6 +89,17 @@ function routeAction_(action, params, context) {
 
   if (namespace === "contratacion") {
     result = routeContratacionAction_(verb, params || {}, context);
+    return { data: result, pagination: null };
+  }
+
+  if (namespace === "registry") {
+    result = routeRegistryAction_(verb, params || {}, context);
+    return { data: result, pagination: null };
+  }
+
+  // Registered organizational units route to OrgUnitRegistry
+  if (typeof OrgUnitRegistry !== "undefined" && OrgUnitRegistry.has(namespace)) {
+    result = OrgUnitRegistry.route(namespace, verb, params || {}, context);
     return { data: result, pagination: null };
   }
 
@@ -401,4 +416,67 @@ function emitWriteEvent_(entityName, verb, payload, context) {
     userId:     context && context.userId,
     requestId:  context && context.requestId,
   });
+}
+
+/**
+ * Route registry.* actions to OrgUnitRegistry discovery methods.
+ * All verbs are read-only; no permission beyond ws.admin.access is required.
+ *
+ * @param {string} verb
+ * @param {Object} params  — { unitKey?, userRole?, wsId? }
+ * @param {Object} context
+ * @returns {*}
+ */
+function routeRegistryAction_(verb, params, context) {
+  var userEmail = context && context.userEmail || "";
+  var wsId      = params && params.wsId || "";
+  var unitKey   = params && params.unitKey || "";
+  var userRole  = params && params.userRole || "";
+
+  if (wsId && userEmail) {
+    WorkspacePermissions.requirePermission(wsId, userEmail, "ws.admin.access");
+  }
+
+  switch (verb) {
+    case "listUnits":
+      return OrgUnitRegistry.list();
+
+    case "getUnit":
+      if (!unitKey) throw new Error("unitKey is required for registry.getUnit");
+      return OrgUnitRegistry.get(unitKey);
+
+    case "getNavigation":
+      if (!unitKey) throw new Error("unitKey is required for registry.getNavigation");
+      return OrgUnitRegistry.getNavigation(unitKey, userRole);
+
+    case "getAllNavigation":
+      return OrgUnitRegistry.getAllNavigation(userRole);
+
+    case "getModules":
+      if (!unitKey) throw new Error("unitKey is required for registry.getModules");
+      return OrgUnitRegistry.getModules(unitKey);
+
+    case "getWorkflows":
+      if (!unitKey) throw new Error("unitKey is required for registry.getWorkflows");
+      return OrgUnitRegistry.getWorkflows(unitKey);
+
+    case "getReports":
+      if (!unitKey) throw new Error("unitKey is required for registry.getReports");
+      return OrgUnitRegistry.getReports(unitKey, userRole);
+
+    case "getCatalogs":
+      if (!unitKey) throw new Error("unitKey is required for registry.getCatalogs");
+      return OrgUnitRegistry.getCatalogs(unitKey);
+
+    case "getPermissions":
+      if (!unitKey) throw new Error("unitKey is required for registry.getPermissions");
+      return OrgUnitRegistry.getPermissions(unitKey);
+
+    case "getSettings":
+      if (!unitKey) throw new Error("unitKey is required for registry.getSettings");
+      return OrgUnitRegistry.getSettings(unitKey);
+
+    default:
+      throw new Error("Unknown registry verb: " + verb);
+  }
 }

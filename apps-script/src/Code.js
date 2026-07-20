@@ -30,6 +30,9 @@
   try {
     mergeContratacionEntities_();
   } catch (e) {}
+  try {
+    registerAllUnits_();
+  } catch (e) {}
 })();
 
 function doPost(e) {
