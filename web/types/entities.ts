@@ -197,6 +197,187 @@ export interface Unidad {
   responsableId?: string;
 }
 
+// ── Compras domain entities ───────────────────────────────────────────────────
+
+export type ComprasPrioridad = "normal" | "urgente" | "critica";
+export type ComprasEstadoSolicitud =
+  | "pendiente" | "en_revision" | "aprobada" | "rechazada" | "archivada";
+export type ComprasEstadoOrden =
+  | "borrador" | "emitida" | "recibida" | "pagada" | "cancelada";
+export type ComprasEstadoProveedor = "activo" | "inactivo" | "suspendido";
+export type ComprasCalificacion = "A" | "B" | "C" | "D";
+
+export interface ComprasSolicitud {
+  id: string;
+  wsId: string;
+  titulo: string;
+  tipo: string;
+  descripcion?: string;
+  solicitanteId: string;
+  unidadSolicitante?: string;
+  prioridad: ComprasPrioridad;
+  estado: ComprasEstadoSolicitud;
+  etapaActual: string;
+  requisicionId?: string;
+  monto?: number;
+  montoAprobado?: number;
+  fechaSolicitud: string;
+  fechaRequerida?: string;
+  notas?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface ComprasRequisicion {
+  id: string;
+  wsId: string;
+  solicitudId: string;
+  codigo?: string;
+  descripcion: string;
+  especificaciones?: string;
+  cantidad?: number;
+  unidadMedida?: string;
+  presupuestoEstimado?: number;
+  cuentaPresupuestal?: string;
+  estado: "pendiente" | "aprobada" | "rechazada" | "completada";
+  aprobadoPorId?: string;
+  fechaAprobacion?: string;
+  cotizacionId?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface ComprasCotizacion {
+  id: string;
+  wsId: string;
+  requisicionId: string;
+  proveedorId: string;
+  codigoCotizacion?: string;
+  monto: number;
+  moneda: string;
+  plazoEntregaDias?: number;
+  formaPago?: string;
+  garantia?: string;
+  vigenciaDias?: number;
+  estado: "pendiente" | "evaluada" | "seleccionada" | "rechazada";
+  seleccionada: boolean;
+  notasTecnicas?: string;
+  notasEvaluacion?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface ComprasProveedor {
+  id: string;
+  wsId: string;
+  razonSocial: string;
+  nombreComercial?: string;
+  nit?: string;
+  nrc?: string;
+  tipoProveedor?: string;
+  categoria?: string;
+  contactoNombre?: string;
+  contactoEmail?: string;
+  contactoTel?: string;
+  direccion?: string;
+  pais?: string;
+  calificacion?: ComprasCalificacion;
+  estado: ComprasEstadoProveedor;
+  observaciones?: string;
+  ultimaCompraFecha?: string;
+  totalCompras?: number;
+  cantidadOrdenes?: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface ComprasOrden {
+  id: string;
+  wsId: string;
+  codigo?: string;
+  requisicionId: string;
+  proveedorId: string;
+  cotizacionSeleccionadaId?: string;
+  monto: number;
+  moneda: string;
+  plazoEntregaDias?: number;
+  fechaEmision: string;
+  fechaEntregaEsperada?: string;
+  fechaEntregaReal?: string;
+  estado: ComprasEstadoOrden;
+  autorizadoPorId?: string;
+  fechaAutorizacion?: string;
+  formaPago?: string;
+  terminosEntrega?: string;
+  facturaNro?: string;
+  montoFactura?: number;
+  fechaFactura?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface ComprasRecepcion {
+  id: string;
+  wsId: string;
+  ordenId: string;
+  codigo?: string;
+  cantidadRecibida: number;
+  cantidadSolicitada?: number;
+  unidadMedida?: string;
+  condicion: "buena" | "regular" | "rechazada";
+  observaciones?: string;
+  receptorId: string;
+  fechaRecepcion: string;
+  actaRecepcionId?: string;
+  estado: "registrada" | "validada" | "con_observaciones";
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface ComprasEvaluacion {
+  id: string;
+  wsId: string;
+  proveedorId: string;
+  ordenId: string;
+  periodo?: string;
+  calidadPuntaje: number;
+  tiempoEntregaPuntaje: number;
+  cumplimientoPuntaje: number;
+  comunicacionPuntaje: number;
+  precioCompetitividadPuntaje: number;
+  puntajeTotal: number;
+  calificacionGlobal: ComprasCalificacion;
+  recomendacion?: string;
+  observaciones?: string;
+  evaluadorId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ComprasDashboardResumen {
+  solicitudesActivas: number;
+  solicitudesUrgentes: number;
+  ordenesAbiertas: number;
+  ordenesCerradas: number;
+  proveedoresActivos: number;
+  cotizacionesPendientes: number;
+  montoEjecutado: number;
+  recepcionesPendientes: number;
+}
+
+// ── INSERT-only — R06. Nunca UPDATE/DELETE. ───────────────────────────────────
 /** INSERT-only — R06. Nunca UPDATE/DELETE. */
 export interface HistorialAudit {
   id: string;

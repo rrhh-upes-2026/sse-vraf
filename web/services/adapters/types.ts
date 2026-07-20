@@ -32,6 +32,14 @@ export type EntityName =
   // Runtime Studio (Sprint 6)
   | "blueprintRegistry"
   | "instanceSummaries"
+  // Compras domain entities
+  | "comprasSolicitudes"
+  | "comprasRequisiciones"
+  | "comprasCotizaciones"
+  | "comprasProveedores"
+  | "comprasOrdenes"
+  | "comprasRecepciones"
+  | "comprasEvaluaciones"
   // Workspace-admin entities (Sprint 13)
   | "wsBlueprints"
   | "wsKPIs"

@@ -31,6 +31,9 @@
     mergeContratacionEntities_();
   } catch (e) {}
   try {
+    mergeComprasEntities_();
+  } catch (e) {}
+  try {
     registerAllUnits_();
   } catch (e) {}
 })();

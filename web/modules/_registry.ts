@@ -9,3 +9,4 @@
  * No other Core file needs to change.
  */
 import "./rrhh";
+import "./compras";
