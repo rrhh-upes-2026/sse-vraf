@@ -593,6 +593,271 @@ export interface ContaDashboardResumen {
   conciliacionesAbiertas: number;
 }
 
+// ── Mantenimiento e Infraestructura ──────────────────────────────────────────
+
+export type MantoEstadoActivo = "operativo" | "inactivo" | "mantenimiento" | "baja";
+export type MantoCategoriaActivo = "equipo" | "infraestructura" | "vehiculo" | "mobiliario" | "tecnologia" | "otro";
+export type MantoTipoMantenimiento = "preventivo" | "correctivo" | "predictivo" | "emergencia";
+export type MantoEstadoOrden = "emitida" | "asignada" | "en_proceso" | "completada" | "cancelada";
+export type MantoEtapaOrden = "solicitud" | "evaluacion" | "asignacion" | "ejecucion" | "inspeccion" | "completado";
+export type MantoEstadoSolicitud = "pendiente" | "aprobada" | "rechazada" | "en_proceso" | "completada";
+export type MantoEstadoInspeccion = "programada" | "en_proceso" | "completada" | "cancelada";
+export type MantoCondicionActivo = "buena" | "regular" | "deficiente" | "critica";
+export type MantoPrioridad = "baja" | "normal" | "alta" | "critica";
+export type MantoEstadoPlan = "borrador" | "activo" | "pausado" | "completado";
+export type MantoFrecuencia = "diaria" | "semanal" | "mensual" | "trimestral" | "semestral" | "anual";
+export type MantoEstadoInventario = "disponible" | "agotado" | "reservado" | "descontinuado";
+
+export interface MantoActivo {
+  id: string;
+  wsId: string;
+  codigo: string;
+  nombre: string;
+  categoria: MantoCategoriaActivo;
+  tipo?: string;
+  marca?: string;
+  modelo?: string;
+  serie?: string;
+  descripcion?: string;
+  ubicacionId?: string;
+  ubicacionRef?: string;
+  responsableId?: string;
+  estado: MantoEstadoActivo;
+  fechaAdquisicion?: string;
+  vidaUtilAnios?: number;
+  valorAdquisicion?: number;
+  valorActual?: number;
+  proveedorId?: string;
+  proveedorRef?: string;
+  ordenCompraRef?: string;
+  garantiaFecha?: string;
+  garantiaDetalles?: string;
+  ultimoMantenimientoFecha?: string;
+  proximoMantenimientoFecha?: string;
+  observaciones?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface MantoUbicacion {
+  id: string;
+  wsId: string;
+  codigo: string;
+  nombre: string;
+  tipo: string;
+  descripcion?: string;
+  area?: string;
+  responsableId?: string;
+  estado: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface MantoPlan {
+  id: string;
+  wsId: string;
+  codigo: string;
+  nombre: string;
+  tipo: MantoTipoMantenimiento;
+  activoId: string;
+  activoRef?: string;
+  frecuencia: MantoFrecuencia;
+  descripcion?: string;
+  procedimiento?: string;
+  duracionHoras?: number;
+  costoEstimado?: number;
+  tecnicoAsignadoId?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  estado: MantoEstadoPlan;
+  cumplimientoPct: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface MantoSolicitud {
+  id: string;
+  wsId: string;
+  codigo: string;
+  solicitanteId: string;
+  unidadSolicitante?: string;
+  tipo: MantoTipoMantenimiento;
+  prioridad: MantoPrioridad;
+  titulo: string;
+  descripcion?: string;
+  activoId?: string;
+  activoRef?: string;
+  ubicacionId?: string;
+  ubicacionRef?: string;
+  estado: MantoEstadoSolicitud;
+  fechaSolicitud: string;
+  fechaRequerida?: string;
+  aprobadoPorId?: string;
+  fechaAprobacion?: string;
+  ordenTrabajoId?: string;
+  notas?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface MantoOrdenTrabajo {
+  id: string;
+  wsId: string;
+  codigo: string;
+  solicitudId?: string;
+  planId?: string;
+  tipo: MantoTipoMantenimiento;
+  prioridad: MantoPrioridad;
+  titulo: string;
+  descripcion?: string;
+  activoId?: string;
+  activoRef?: string;
+  ubicacionId?: string;
+  ubicacionRef?: string;
+  tecnicoAsignadoId?: string;
+  tecnicoRef?: string;
+  estado: MantoEstadoOrden;
+  etapaActual: MantoEtapaOrden;
+  fechaEmision: string;
+  fechaEstimadaFin?: string;
+  fechaInicio?: string;
+  fechaCierre?: string;
+  horasEstimadas?: number;
+  horasReales?: number;
+  diagnostico?: string;
+  solucion?: string;
+  costoManoObra?: number;
+  costoMateriales?: number;
+  costoTotal?: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface MantoInspeccion {
+  id: string;
+  wsId: string;
+  codigo: string;
+  activoId: string;
+  activoRef?: string;
+  ubicacionId?: string;
+  ubicacionRef?: string;
+  tipo: string;
+  estado: MantoEstadoInspeccion;
+  tecnicoId?: string;
+  tecnicoRef?: string;
+  fechaProgramada: string;
+  fechaEjecucion?: string;
+  hallazgos?: string;
+  recomendaciones?: string;
+  condicion?: MantoCondicionActivo;
+  requiereOrden?: boolean;
+  ordenGeneradaId?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface MantoHistorial {
+  id: string;
+  wsId: string;
+  activoId: string;
+  tipo: string;
+  descripcion: string;
+  ordenId?: string;
+  inspeccionId?: string;
+  tecnicoId?: string;
+  fecha: string;
+  costo?: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MantoCosto {
+  id: string;
+  wsId: string;
+  ordenId?: string;
+  activoId?: string;
+  activoRef?: string;
+  tipo: string;
+  concepto: string;
+  monto: number;
+  moneda: string;
+  compromisoId?: string;
+  facturaId?: string;
+  proveedor?: string;
+  fecha: string;
+  aprobado?: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface MantoInventarioTecnico {
+  id: string;
+  wsId: string;
+  codigo: string;
+  nombre: string;
+  descripcion?: string;
+  categoria: string;
+  unidadMedida: string;
+  stockActual: number;
+  stockMinimo: number;
+  ubicacionAlmacen?: string;
+  activoId?: string;
+  ordenCompraId?: string;
+  proveedorId?: string;
+  estado: MantoEstadoInventario;
+  valorUnitario?: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface MantoDashboardResumen {
+  activos: {
+    total: number;
+    operativos: number;
+    inactivos: number;
+    enManto: number;
+  };
+  ordenes: {
+    total: number;
+    abiertas: number;
+    enProceso: number;
+    completadas: number;
+  };
+  solicitudes: {
+    pendientes: number;
+  };
+  inspecciones: {
+    total: number;
+  };
+  costos: {
+    total: number;
+  };
+  inventario: {
+    itemsBajoStock: number;
+  };
+  preventivo: {
+    planesActivos: number;
+    cumplimientoPct: number;
+  };
+}
+
 // ── INSERT-only — R06. Nunca UPDATE/DELETE. ───────────────────────────────────
 /** INSERT-only — R06. Nunca UPDATE/DELETE. */
 export interface HistorialAudit {

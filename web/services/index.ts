@@ -35,3 +35,4 @@ export * from "./studio";
 export * from "./vraf";
 export * from "./compras";
 export * from "./contabilidad";
+export * from "./mantenimiento";

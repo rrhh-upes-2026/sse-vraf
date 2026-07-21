@@ -37,6 +37,9 @@
     mergeContabilidadEntities_();
   } catch (e) {}
   try {
+    mergeMantenimientoEntities_();
+  } catch (e) {}
+  try {
     registerAllUnits_();
   } catch (e) {}
 })();

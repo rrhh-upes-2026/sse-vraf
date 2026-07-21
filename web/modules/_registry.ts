@@ -11,3 +11,4 @@
 import "./rrhh";
 import "./compras";
 import "./contabilidad";
+import "./mantenimiento";

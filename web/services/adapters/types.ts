@@ -48,6 +48,16 @@ export type EntityName =
   | "contaConciliaciones"
   | "contaCuentasPagar"
   | "contaCuentasCobrar"
+  // Mantenimiento domain entities
+  | "mantoActivos"
+  | "mantoUbicaciones"
+  | "mantoPlanes"
+  | "mantoSolicitudes"
+  | "mantoOrdenesTrabajo"
+  | "mantoInspecciones"
+  | "mantoHistorial"
+  | "mantoCostos"
+  | "mantoInventarioTecnico"
   // Workspace-admin entities (Sprint 13)
   | "wsBlueprints"
   | "wsKPIs"

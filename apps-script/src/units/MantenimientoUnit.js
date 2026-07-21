@@ -132,7 +132,11 @@ var MANTENIMIENTO_UNIT_DEF = {
     { key: "AUDIT",   label: "Auditor" },
   ],
 
-  entities: [],
+  entities: [
+    "mantoActivos", "mantoUbicaciones", "mantoPlanes", "mantoSolicitudes",
+    "mantoOrdenesTrabajo", "mantoInspecciones", "mantoHistorial",
+    "mantoCostos", "mantoInventarioTecnico",
+  ],
 
   settings: {
     diasRespuestaEstandar:  3,
@@ -143,5 +147,65 @@ var MANTENIMIENTO_UNIT_DEF = {
     periodoArchivado:       1095,
   },
 
-  handlers: {},
+  handlers: {
+    // Activos
+    listActivos:          function(p, c) { return routeMantenimientoAction_("listActivos",          p, c); },
+    getActivo:            function(p, c) { return routeMantenimientoAction_("getActivo",            p, c); },
+    createActivo:         function(p, c) { return routeMantenimientoAction_("createActivo",         p, c); },
+    updateActivo:         function(p, c) { return routeMantenimientoAction_("updateActivo",         p, c); },
+    cambiarEstadoActivo:  function(p, c) { return routeMantenimientoAction_("cambiarEstadoActivo",  p, c); },
+    darBajaActivo:        function(p, c) { return routeMantenimientoAction_("darBajaActivo",        p, c); },
+    // Ubicaciones
+    listUbicaciones:      function(p, c) { return routeMantenimientoAction_("listUbicaciones",      p, c); },
+    getUbicacion:         function(p, c) { return routeMantenimientoAction_("getUbicacion",         p, c); },
+    createUbicacion:      function(p, c) { return routeMantenimientoAction_("createUbicacion",      p, c); },
+    updateUbicacion:      function(p, c) { return routeMantenimientoAction_("updateUbicacion",      p, c); },
+    // Planes
+    listPlanes:           function(p, c) { return routeMantenimientoAction_("listPlanes",           p, c); },
+    getPlan:              function(p, c) { return routeMantenimientoAction_("getPlan",              p, c); },
+    createPlan:           function(p, c) { return routeMantenimientoAction_("createPlan",           p, c); },
+    updatePlan:           function(p, c) { return routeMantenimientoAction_("updatePlan",           p, c); },
+    activarPlan:          function(p, c) { return routeMantenimientoAction_("activarPlan",          p, c); },
+    // Solicitudes
+    listSolicitudes:      function(p, c) { return routeMantenimientoAction_("listSolicitudes",      p, c); },
+    getSolicitud:         function(p, c) { return routeMantenimientoAction_("getSolicitud",         p, c); },
+    createSolicitud:      function(p, c) { return routeMantenimientoAction_("createSolicitud",      p, c); },
+    updateSolicitud:      function(p, c) { return routeMantenimientoAction_("updateSolicitud",      p, c); },
+    aprobarSolicitud:     function(p, c) { return routeMantenimientoAction_("aprobarSolicitud",     p, c); },
+    // Órdenes de Trabajo
+    listOrdenes:          function(p, c) { return routeMantenimientoAction_("listOrdenes",          p, c); },
+    getOrden:             function(p, c) { return routeMantenimientoAction_("getOrden",             p, c); },
+    createOrden:          function(p, c) { return routeMantenimientoAction_("createOrden",          p, c); },
+    updateOrden:          function(p, c) { return routeMantenimientoAction_("updateOrden",          p, c); },
+    asignarTecnico:       function(p, c) { return routeMantenimientoAction_("asignarTecnico",       p, c); },
+    cerrarOrden:          function(p, c) { return routeMantenimientoAction_("cerrarOrden",          p, c); },
+    cancelarOrden:        function(p, c) { return routeMantenimientoAction_("cancelarOrden",        p, c); },
+    // Inspecciones
+    listInspecciones:     function(p, c) { return routeMantenimientoAction_("listInspecciones",     p, c); },
+    getInspeccion:        function(p, c) { return routeMantenimientoAction_("getInspeccion",        p, c); },
+    createInspeccion:     function(p, c) { return routeMantenimientoAction_("createInspeccion",     p, c); },
+    updateInspeccion:     function(p, c) { return routeMantenimientoAction_("updateInspeccion",     p, c); },
+    cerrarInspeccion:     function(p, c) { return routeMantenimientoAction_("cerrarInspeccion",     p, c); },
+    // Historial
+    listHistorial:        function(p, c) { return routeMantenimientoAction_("listHistorial",        p, c); },
+    getHistorialItem:     function(p, c) { return routeMantenimientoAction_("getHistorialItem",     p, c); },
+    createHistorial:      function(p, c) { return routeMantenimientoAction_("createHistorial",      p, c); },
+    // Costos
+    listCostos:           function(p, c) { return routeMantenimientoAction_("listCostos",           p, c); },
+    getCosto:             function(p, c) { return routeMantenimientoAction_("getCosto",             p, c); },
+    createCosto:          function(p, c) { return routeMantenimientoAction_("createCosto",          p, c); },
+    updateCosto:          function(p, c) { return routeMantenimientoAction_("updateCosto",          p, c); },
+    // Inventario Técnico
+    listInventario:           function(p, c) { return routeMantenimientoAction_("listInventario",           p, c); },
+    getInventarioItem:        function(p, c) { return routeMantenimientoAction_("getInventarioItem",        p, c); },
+    createInventarioItem:     function(p, c) { return routeMantenimientoAction_("createInventarioItem",     p, c); },
+    updateInventarioItem:     function(p, c) { return routeMantenimientoAction_("updateInventarioItem",     p, c); },
+    // Dashboard y Reportes
+    getDashboardResumen:           function(p, c) { return routeMantenimientoAction_("getDashboardResumen",           p, c); },
+    reporteEstadoActivos:          function(p, c) { return routeMantenimientoAction_("reporteEstadoActivos",          p, c); },
+    reporteOrdenesPeriodo:         function(p, c) { return routeMantenimientoAction_("reporteOrdenesPeriodo",         p, c); },
+    reporteCostosActivo:           function(p, c) { return routeMantenimientoAction_("reporteCostosActivo",           p, c); },
+    reporteCumplimientoPreventivo: function(p, c) { return routeMantenimientoAction_("reporteCumplimientoPreventivo", p, c); },
+    reporteOrdenesTecnico:         function(p, c) { return routeMantenimientoAction_("reporteOrdenesTecnico",         p, c); },
+  },
 };
