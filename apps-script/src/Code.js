@@ -40,6 +40,9 @@
     mergeMantenimientoEntities_();
   } catch (e) {}
   try {
+    mergeSSOEntities_();
+  } catch (e) {}
+  try {
     registerAllUnits_();
   } catch (e) {}
 })();

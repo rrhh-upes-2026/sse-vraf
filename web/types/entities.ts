@@ -858,6 +858,338 @@ export interface MantoDashboardResumen {
   };
 }
 
+// ── SSO — Salud y Seguridad Ocupacional ──────────────────────────────────────
+
+export type SSOGravedad        = "leve" | "moderado" | "grave" | "fatal";
+export type SSOEstado          = "abierto" | "en_proceso" | "cerrado" | "cancelado";
+export type SSOClasificacion   = "bajo" | "medio" | "alto" | "critico";
+export type SSOTipoAccion      = "correctiva" | "preventiva" | "mejora";
+export type SSOEstadoAccion    = "pendiente" | "en_proceso" | "verificada" | "cerrada" | "vencida";
+export type SSOEstadoEPP       = "activo" | "vencido" | "deteriorado" | "baja";
+export type SSOEstadoCapac     = "programada" | "en_proceso" | "completada" | "cancelada";
+export type SSOEstadoComite    = "programada" | "realizada" | "cancelada";
+export type SSOEstadoAuditoria = "programada" | "en_proceso" | "completada" | "cancelada";
+export type SSOEstadoCumpl     = "cumple" | "parcial" | "no_cumple" | "no_aplica";
+
+export interface SSOIncidente {
+  id: string;
+  wsId: string;
+  codigo: string;
+  titulo: string;
+  descripcion: string;
+  tipo: string;
+  area: string;
+  proceso: string;
+  empleadoId: string;
+  empleadoRef: string;
+  fechaIncidente: string;
+  horaIncidente: string;
+  ubicacion: string;
+  activoId?: string;
+  gravedad: SSOGravedad;
+  estado: SSOEstado;
+  etapa: string;
+  investigadorId?: string;
+  fechaInvestigacion?: string;
+  causaRaiz?: string;
+  accionesGeneradas?: string;
+  diasPerdidos?: number;
+  costoEstimado?: number;
+  compromisoId?: string;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOAccidente {
+  id: string;
+  wsId: string;
+  codigo: string;
+  incidenteId?: string;
+  empleadoId: string;
+  empleadoRef: string;
+  tipo: string;
+  area: string;
+  proceso: string;
+  fechaAccidente: string;
+  horaAccidente: string;
+  descripcion: string;
+  causas: string;
+  lesionTipo: string;
+  parteCuerpo: string;
+  gravedad: SSOGravedad;
+  testigos?: string;
+  diasIncapacidad?: number;
+  costosAtencion?: number;
+  compromisoId?: string;
+  estado: SSOEstado;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOInspeccion {
+  id: string;
+  wsId: string;
+  codigo: string;
+  titulo: string;
+  tipo: string;
+  area: string;
+  proceso: string;
+  inspectorId: string;
+  inspectorRef: string;
+  fechaProgramada: string;
+  fechaEjecucion?: string;
+  hallazgos?: string;
+  observaciones?: string;
+  numHallazgos?: number;
+  numConformes?: number;
+  numNoConformes?: number;
+  estado: string;
+  accionesGeneradas?: string;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOPeligro {
+  id: string;
+  wsId: string;
+  codigo: string;
+  area: string;
+  proceso: string;
+  actividad: string;
+  tipo: string;
+  descripcion: string;
+  fuente: string;
+  personasExpuestas?: number;
+  controlesExistentes?: string;
+  estado: string;
+  activoId?: string;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSORiesgo {
+  id: string;
+  wsId: string;
+  codigo: string;
+  peligroId: string;
+  area: string;
+  proceso: string;
+  actividad: string;
+  peligroDesc: string;
+  probabilidad: number;
+  impacto: number;
+  nivelRiesgo: number;
+  clasificacion: SSOClasificacion;
+  controlesExistentes?: string;
+  accionesRecomendadas?: string;
+  responsableId?: string;
+  fechaRevision?: string;
+  estado: string;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOAccion {
+  id: string;
+  wsId: string;
+  codigo: string;
+  tipo: SSOTipoAccion;
+  origen: string;
+  origenId: string;
+  titulo: string;
+  descripcion: string;
+  responsableId: string;
+  responsableRef: string;
+  area: string;
+  prioridad: string;
+  fechaAsignacion: string;
+  fechaLimite: string;
+  fechaCierre?: string;
+  progresoPct?: number;
+  verificadoPorId?: string;
+  fechaVerificacion?: string;
+  estado: SSOEstadoAccion;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOEPP {
+  id: string;
+  wsId: string;
+  codigo: string;
+  nombre: string;
+  descripcion: string;
+  categoria: string;
+  empleadoId: string;
+  empleadoRef: string;
+  tipo: string;
+  talla?: string;
+  marca?: string;
+  modelo?: string;
+  fechaEntrega: string;
+  fechaVencimiento?: string;
+  cantidad: number;
+  unidadMedida: string;
+  estado: SSOEstadoEPP;
+  proveedorId?: string;
+  ordenCompraRef?: string;
+  costo?: number;
+  compromisoId?: string;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOCapacitacion {
+  id: string;
+  wsId: string;
+  codigo: string;
+  titulo: string;
+  tipo: string;
+  modalidad: string;
+  instructor: string;
+  entidad?: string;
+  fechaInicio: string;
+  fechaFin?: string;
+  duracionHoras: number;
+  participantesIds?: string;
+  numParticipantes?: number;
+  numAprobados?: number;
+  tematica: string;
+  objetivo: string;
+  estado: SSOEstadoCapac;
+  costo?: number;
+  compromisoId?: string;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOComite {
+  id: string;
+  wsId: string;
+  codigo: string;
+  tipo: string;
+  numero: number;
+  fecha: string;
+  lugar: string;
+  presidenteId: string;
+  secretarioId: string;
+  miembros?: string;
+  numAsistentes?: number;
+  agenda?: string;
+  acuerdos?: string;
+  compromisos?: string;
+  estado: SSOEstadoComite;
+  proximaFecha?: string;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOAuditoria {
+  id: string;
+  wsId: string;
+  codigo: string;
+  titulo: string;
+  tipo: string;
+  normaRef?: string;
+  auditorId: string;
+  auditorRef: string;
+  fechaProgramada: string;
+  fechaEjecucion?: string;
+  alcance?: string;
+  metodologia?: string;
+  hallazgos?: string;
+  noConformidades?: string;
+  numHallazgos?: number;
+  numNC?: number;
+  planAccion?: string;
+  estado: SSOEstadoAuditoria;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSOCumplimiento {
+  id: string;
+  wsId: string;
+  codigo: string;
+  norma: string;
+  articulo: string;
+  descripcion: string;
+  tipo: string;
+  responsableId?: string;
+  fechaVigencia?: string;
+  fechaRevision?: string;
+  evidencia?: string;
+  estado: SSOEstadoCumpl;
+  observaciones?: string;
+  dataJson?: Record<string, unknown>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
+export interface SSODashboardResumen {
+  incidentes: {
+    total: number;
+    abiertos: number;
+    accidentes: number;
+  };
+  inspecciones: {
+    realizadas: number;
+    pendientes: number;
+  };
+  riesgos: {
+    criticos: number;
+    altos: number;
+    medios: number;
+    bajos: number;
+  };
+  acciones: {
+    correctivasAbiertas: number;
+    preventivasAbiertas: number;
+  };
+  capacitaciones: {
+    ejecutadas: number;
+  };
+  comite: {
+    sesionesRealizadas: number;
+  };
+  cumplimiento: {
+    pct: number;
+  };
+  tiempoPromedioCierreIncidentes: number;
+}
+
 // ── INSERT-only — R06. Nunca UPDATE/DELETE. ───────────────────────────────────
 /** INSERT-only — R06. Nunca UPDATE/DELETE. */
 export interface HistorialAudit {

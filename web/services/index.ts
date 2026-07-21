@@ -36,3 +36,4 @@ export * from "./vraf";
 export * from "./compras";
 export * from "./contabilidad";
 export * from "./mantenimiento";
+export * from "./sso";

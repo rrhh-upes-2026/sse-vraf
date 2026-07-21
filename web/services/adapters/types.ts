@@ -58,6 +58,18 @@ export type EntityName =
   | "mantoHistorial"
   | "mantoCostos"
   | "mantoInventarioTecnico"
+  // SSO entities
+  | "ssoIncidentes"
+  | "ssoAccidentes"
+  | "ssoInspecciones"
+  | "ssoPeligros"
+  | "ssoRiesgos"
+  | "ssoAcciones"
+  | "ssoEPP"
+  | "ssoCapacitaciones"
+  | "ssoComite"
+  | "ssoAuditorias"
+  | "ssoCumplimiento"
   // Workspace-admin entities (Sprint 13)
   | "wsBlueprints"
   | "wsKPIs"

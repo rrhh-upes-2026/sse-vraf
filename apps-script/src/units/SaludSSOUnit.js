@@ -158,7 +158,10 @@ var SALUD_SSO_UNIT_DEF = {
     { key: "AUDIT",   label: "Auditor SSO" },
   ],
 
-  entities: [],
+  entities: [
+    "ssoIncidentes", "ssoAccidentes", "ssoInspecciones", "ssoPeligros", "ssoRiesgos",
+    "ssoAcciones", "ssoEPP", "ssoCapacitaciones", "ssoComite", "ssoAuditorias", "ssoCumplimiento",
+  ],
 
   settings: {
     horasNotifIncidenteGrave:  0,
@@ -170,5 +173,76 @@ var SALUD_SSO_UNIT_DEF = {
     periodoArchivado:          3650,
   },
 
-  handlers: {},
+  handlers: {
+    // Incidentes
+    listIncidentes:       function(p, c) { return routeSSOAction_("listIncidentes",       p, c); },
+    getIncidente:         function(p, c) { return routeSSOAction_("getIncidente",         p, c); },
+    createIncidente:      function(p, c) { return routeSSOAction_("createIncidente",      p, c); },
+    updateIncidente:      function(p, c) { return routeSSOAction_("updateIncidente",      p, c); },
+    clasificarIncidente:  function(p, c) { return routeSSOAction_("clasificarIncidente",  p, c); },
+    cerrarIncidente:      function(p, c) { return routeSSOAction_("cerrarIncidente",      p, c); },
+    // Accidentes
+    listAccidentes:       function(p, c) { return routeSSOAction_("listAccidentes",       p, c); },
+    getAccidente:         function(p, c) { return routeSSOAction_("getAccidente",         p, c); },
+    createAccidente:      function(p, c) { return routeSSOAction_("createAccidente",      p, c); },
+    updateAccidente:      function(p, c) { return routeSSOAction_("updateAccidente",      p, c); },
+    cerrarAccidente:      function(p, c) { return routeSSOAction_("cerrarAccidente",      p, c); },
+    // Inspecciones
+    listInspeccionesSso:  function(p, c) { return routeSSOAction_("listInspeccionesSso",  p, c); },
+    getInspeccionSso:     function(p, c) { return routeSSOAction_("getInspeccionSso",     p, c); },
+    createInspeccionSso:  function(p, c) { return routeSSOAction_("createInspeccionSso",  p, c); },
+    updateInspeccionSso:  function(p, c) { return routeSSOAction_("updateInspeccionSso",  p, c); },
+    cerrarInspeccionSso:  function(p, c) { return routeSSOAction_("cerrarInspeccionSso",  p, c); },
+    // Peligros
+    listPeligros:         function(p, c) { return routeSSOAction_("listPeligros",         p, c); },
+    getPeligro:           function(p, c) { return routeSSOAction_("getPeligro",           p, c); },
+    createPeligro:        function(p, c) { return routeSSOAction_("createPeligro",        p, c); },
+    updatePeligro:        function(p, c) { return routeSSOAction_("updatePeligro",        p, c); },
+    // Riesgos
+    listRiesgos:          function(p, c) { return routeSSOAction_("listRiesgos",          p, c); },
+    getRiesgo:            function(p, c) { return routeSSOAction_("getRiesgo",            p, c); },
+    createRiesgo:         function(p, c) { return routeSSOAction_("createRiesgo",         p, c); },
+    updateRiesgo:         function(p, c) { return routeSSOAction_("updateRiesgo",         p, c); },
+    // Acciones CAPA
+    listAccionesSso:      function(p, c) { return routeSSOAction_("listAccionesSso",      p, c); },
+    getAccionSso:         function(p, c) { return routeSSOAction_("getAccionSso",         p, c); },
+    createAccionSso:      function(p, c) { return routeSSOAction_("createAccionSso",      p, c); },
+    updateAccionSso:      function(p, c) { return routeSSOAction_("updateAccionSso",      p, c); },
+    verificarAccion:      function(p, c) { return routeSSOAction_("verificarAccion",      p, c); },
+    cerrarAccionSso:      function(p, c) { return routeSSOAction_("cerrarAccionSso",      p, c); },
+    // EPP
+    listEPP:              function(p, c) { return routeSSOAction_("listEPP",              p, c); },
+    getEPPItem:           function(p, c) { return routeSSOAction_("getEPPItem",           p, c); },
+    createEPPItem:        function(p, c) { return routeSSOAction_("createEPPItem",        p, c); },
+    updateEPPItem:        function(p, c) { return routeSSOAction_("updateEPPItem",        p, c); },
+    // Capacitaciones
+    listCapacitacionesSso:    function(p, c) { return routeSSOAction_("listCapacitacionesSso",    p, c); },
+    getCapacitacionSso:       function(p, c) { return routeSSOAction_("getCapacitacionSso",       p, c); },
+    createCapacitacionSso:    function(p, c) { return routeSSOAction_("createCapacitacionSso",    p, c); },
+    updateCapacitacionSso:    function(p, c) { return routeSSOAction_("updateCapacitacionSso",    p, c); },
+    finalizarCapacitacionSso: function(p, c) { return routeSSOAction_("finalizarCapacitacionSso", p, c); },
+    // Comité
+    listActasComite:      function(p, c) { return routeSSOAction_("listActasComite",      p, c); },
+    getActaComite:        function(p, c) { return routeSSOAction_("getActaComite",        p, c); },
+    createActaComite:     function(p, c) { return routeSSOAction_("createActaComite",     p, c); },
+    updateActaComite:     function(p, c) { return routeSSOAction_("updateActaComite",     p, c); },
+    // Auditorías
+    listAuditoriasSSO:    function(p, c) { return routeSSOAction_("listAuditoriasSSO",    p, c); },
+    getAuditoriaSSO:      function(p, c) { return routeSSOAction_("getAuditoriaSSO",      p, c); },
+    createAuditoriaSSO:   function(p, c) { return routeSSOAction_("createAuditoriaSSO",   p, c); },
+    updateAuditoriaSSO:   function(p, c) { return routeSSOAction_("updateAuditoriaSSO",   p, c); },
+    cerrarAuditoriaSSO:   function(p, c) { return routeSSOAction_("cerrarAuditoriaSSO",   p, c); },
+    // Cumplimiento Legal
+    listCumplimiento:     function(p, c) { return routeSSOAction_("listCumplimiento",     p, c); },
+    getCumplimiento:      function(p, c) { return routeSSOAction_("getCumplimiento",      p, c); },
+    createCumplimiento:   function(p, c) { return routeSSOAction_("createCumplimiento",   p, c); },
+    updateCumplimiento:   function(p, c) { return routeSSOAction_("updateCumplimiento",   p, c); },
+    // Dashboard + Reportes
+    getDashboardResumen:              function(p, c) { return routeSSOAction_("getDashboardResumen",              p, c); },
+    reporteIncidentesPeriodo:         function(p, c) { return routeSSOAction_("reporteIncidentesPeriodo",         p, c); },
+    reporteAccidentesArea:            function(p, c) { return routeSSOAction_("reporteAccidentesArea",            p, c); },
+    reporteAccionesPendientes:        function(p, c) { return routeSSOAction_("reporteAccionesPendientes",        p, c); },
+    reporteIndicadoresAccidentalidad: function(p, c) { return routeSSOAction_("reporteIndicadoresAccidentalidad", p, c); },
+    reporteCumplimientoLegal:         function(p, c) { return routeSSOAction_("reporteCumplimientoLegal",         p, c); },
+  },
 };
