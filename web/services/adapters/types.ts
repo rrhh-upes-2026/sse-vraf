@@ -100,7 +100,12 @@ export type EntityName =
   // EME — Evidence Management Engine
   | "emeEvidencias"
   | "emeCatalogos"
-  | "emeHistorial";
+  | "emeHistorial"
+  // CPE — Compliance & Performance Engine
+  | "cpeSnapshots"
+  | "cpePlanesMejora"
+  | "cpeHistorial"
+  | "cpeCatalogos";
 
 /**
  * Query parameters for list operations.
