@@ -1,0 +1,37 @@
+/**
+ * ISP — Identity & Security Platform Unit Definition.
+ */
+var ISP_UNIT_DEF = {
+  key: "isp",
+  label: "Identity & Security Platform",
+  enabled: true,
+  handlers: {
+    getDashboard:         function (p) { return ISPController.getDashboard(p); },
+    getUsers:             function (p) { return ISPController.getUsers(p); },
+    getUser:              function (p) { return ISPController.getUser(p); },
+    createUser:           function (p) { return ISPController.createUser(p); },
+    updateUser:           function (p) { return ISPController.updateUser(p); },
+    setUserStatus:        function (p) { return ISPController.setUserStatus(p); },
+    getRoles:             function (p) { return ISPController.getRoles(p); },
+    getRole:              function (p) { return ISPController.getRole(p); },
+    createRole:           function (p) { return ISPController.createRole(p); },
+    updateRole:           function (p) { return ISPController.updateRole(p); },
+    deleteRole:           function (p) { return ISPController.deleteRole(p); },
+    duplicateRole:        function (p) { return ISPController.duplicateRole(p); },
+    getPermissions:       function (p) { return ISPController.getPermissions(p); },
+    getRolePermissions:   function (p) { return ISPController.getRolePermissions(p); },
+    assignPermissions:    function (p) { return ISPController.assignPermissions(p); },
+    checkPermission:      function (p) { return ISPController.checkPermission(p); },
+    getPermissionMatrix:  function (p) { return ISPController.getPermissionMatrix(p); },
+    getSessions:          function (p) { return ISPController.getSessions(p); },
+    closeSession:         function (p) { return ISPController.closeSession(p); },
+    closeAllUserSessions: function (p) { return ISPController.closeAllUserSessions(p); },
+    login:                function (p) { return ISPController.login(p); },
+    logout:               function (p) { return ISPController.logout(p); },
+    validateSession:      function (p) { return ISPController.validateSession(p); },
+    renewSession:         function (p) { return ISPController.renewSession(p); },
+    getAuditLogs:         function (p) { return ISPController.getAuditLogs(p); },
+    getConfig:            function (p) { return ISPController.getConfig(p); },
+    updateConfig:         function (p) { return ISPController.updateConfig(p); },
+  },
+};

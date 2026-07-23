@@ -73,6 +73,9 @@
     mergeNCEEntities_();
   } catch (e) {}
   try {
+    mergeISPEntities_();
+  } catch (e) {}
+  try {
     bootstrapDashboardAdapters_();
   } catch (e) {}
   try {
@@ -116,6 +119,9 @@
   } catch (e) {}
   try {
     if (typeof NCE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(NCE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof ISP_UNIT_DEF !== "undefined") OrgUnitRegistry.register(ISP_UNIT_DEF);
   } catch (e) {}
 })();
 

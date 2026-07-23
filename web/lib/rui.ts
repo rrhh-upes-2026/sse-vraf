@@ -23,6 +23,7 @@ const UNIT_CODE: Record<WorkspaceId, string> = {
   ioe: "IOE",
   aue: "AUE",
   nce: "NCE",
+  isp: "ISP",
 };
 
 function pad(n: number, width: number) {
