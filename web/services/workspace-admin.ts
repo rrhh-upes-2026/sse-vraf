@@ -766,6 +766,21 @@ const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
     updatedAt: "2026-07-23T10:00:00Z",
     updatedBy: "admin@upes.edu.sv",
   },
+  nce: {
+    wsId: "nce",
+    nombre: "Notification & Communication Engine",
+    nombreCorto: "NCE",
+    descripcion: "Motor de Notificaciones institucional. Consume eventos del AUE, aplica templates con sustitución {{variable}}, gestiona preferencias por usuario, horario de silencio y genera digests periódicos. Canal interno habilitado; correo y Google Chat como contratos.",
+    responsableId: "USR-VRAF-001",
+    color: "#0369A1",
+    colorFondo: "#F0F9FF",
+    icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9",
+    slaDiasDefault: 0,
+    zonaHoraria: "America/El_Salvador",
+    idioma: "es-SV",
+    updatedAt: "2026-07-23T10:00:00Z",
+    updatedBy: "admin@upes.edu.sv",
+  },
 };
 
 // ── Audit Records ─────────────────────────────────────────────────────────────

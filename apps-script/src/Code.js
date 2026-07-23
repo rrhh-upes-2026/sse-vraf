@@ -70,6 +70,9 @@
     mergeAUEEntities_();
   } catch (e) {}
   try {
+    mergeNCEEntities_();
+  } catch (e) {}
+  try {
     bootstrapDashboardAdapters_();
   } catch (e) {}
   try {
@@ -110,6 +113,9 @@
   } catch (e) {}
   try {
     if (typeof AUE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(AUE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof NCE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(NCE_UNIT_DEF);
   } catch (e) {}
 })();
 
