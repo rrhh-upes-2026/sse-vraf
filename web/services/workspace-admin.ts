@@ -751,6 +751,21 @@ const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
     updatedAt: "2026-07-23T10:00:00Z",
     updatedBy: "admin@upes.edu.sv",
   },
+  aue: {
+    wsId: "aue",
+    nombre: "Automation & Event Engine",
+    nombreCorto: "AUE",
+    descripcion: "Event Bus institucional transversal. Registra eventos de cualquier motor, evalúa reglas WHEN/IF/THEN de forma determinista y despacha acciones declarativas. Infraestructura para automatizaciones e integraciones futuras.",
+    responsableId: "USR-VRAF-001",
+    color: "#7C3AED",
+    colorFondo: "#F5F3FF",
+    icon: "M13 10V3L4 14h7v7l9-11h-7z",
+    slaDiasDefault: 0,
+    zonaHoraria: "America/El_Salvador",
+    idioma: "es-SV",
+    updatedAt: "2026-07-23T10:00:00Z",
+    updatedBy: "admin@upes.edu.sv",
+  },
 };
 
 // ── Audit Records ─────────────────────────────────────────────────────────────
