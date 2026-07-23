@@ -736,6 +736,21 @@ const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
     updatedAt: "2026-07-01T10:00:00Z",
     updatedBy: "admin@upes.edu.sv",
   },
+  ioe: {
+    wsId: "ioe",
+    nombre: "Institutional Orchestration Engine",
+    nombreCorto: "IOE",
+    descripcion: "Motor de orquestación institucional. Convierte diagnósticos, brechas y alertas en planes de acción ejecutables con hitos, tareas, decisiones y seguimiento trazable.",
+    responsableId: "USR-VRAF-001",
+    color: "#0F766E",
+    colorFondo: "#F0FDFA",
+    icon: "M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2",
+    slaDiasDefault: 0,
+    zonaHoraria: "America/El_Salvador",
+    idioma: "es-SV",
+    updatedAt: "2026-07-23T10:00:00Z",
+    updatedBy: "admin@upes.edu.sv",
+  },
 };
 
 // ── Audit Records ─────────────────────────────────────────────────────────────
