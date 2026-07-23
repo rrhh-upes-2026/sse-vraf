@@ -79,6 +79,14 @@
     mergeGWPEntities_();
   } catch (e) {}
   try {
+    mergeIIAEntities_();
+  } catch (e) {}
+  try {
+    if (typeof IIAController !== "undefined" && typeof IIAController.bootstrap === "function") {
+      IIAController.bootstrap();
+    }
+  } catch (e) {}
+  try {
     bootstrapDashboardAdapters_();
   } catch (e) {}
   try {
@@ -128,6 +136,9 @@
   } catch (e) {}
   try {
     if (typeof GWP_UNIT_DEF !== "undefined") OrgUnitRegistry.register(GWP_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof IIA_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IIA_UNIT_DEF);
   } catch (e) {}
 })();
 
