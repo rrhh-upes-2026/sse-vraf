@@ -27,3 +27,4 @@ import "./nce";
 import "./isp";
 import "./gwp";
 import "./iia";
+import "./fmi";

@@ -826,6 +826,21 @@ const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
     updatedAt: "2026-07-23T10:00:00Z",
     updatedBy: "admin@upes.edu.sv",
   },
+  fmi: {
+    wsId: "fmi",
+    nombre: "Framework Maestro de Indicadores",
+    nombreCorto: "FMI",
+    descripcion: "Infraestructura institucional para la administración, cálculo, seguimiento y evaluación de todos los indicadores estratégicos, tácticos y operativos. Catálogos base: Objetivos, Dimensiones, Unidades de Medida, Frecuencias, Polaridad, Fórmulas y Rangos.",
+    responsableId: "USR-VRAF-001",
+    color: "#0D9488",
+    colorFondo: "#F0FDFA",
+    icon: "M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z",
+    slaDiasDefault: 0,
+    zonaHoraria: "America/El_Salvador",
+    idioma: "es-SV",
+    updatedAt: "2026-07-23T10:00:00Z",
+    updatedBy: "admin@upes.edu.sv",
+  },
 };
 
 // ── Audit Records ─────────────────────────────────────────────────────────────

@@ -52,3 +52,4 @@ export * from "./nce";
 export * from "./isp";
 export * from "./gwp";
 export * from "./iia";
+export * from "./fmi";

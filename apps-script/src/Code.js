@@ -82,8 +82,16 @@
     mergeIIAEntities_();
   } catch (e) {}
   try {
+    mergeFMIEntities_();
+  } catch (e) {}
+  try {
     if (typeof IIAController !== "undefined" && typeof IIAController.bootstrap === "function") {
       IIAController.bootstrap();
+    }
+  } catch (e) {}
+  try {
+    if (typeof FMIController !== "undefined" && typeof FMIController.bootstrap === "function") {
+      FMIController.bootstrap();
     }
   } catch (e) {}
   try {
@@ -139,6 +147,9 @@
   } catch (e) {}
   try {
     if (typeof IIA_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IIA_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof FMI_UNIT_DEF !== "undefined") OrgUnitRegistry.register(FMI_UNIT_DEF);
   } catch (e) {}
 })();
 
