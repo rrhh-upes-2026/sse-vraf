@@ -89,7 +89,10 @@ export type EntityName =
   | "pmeProcedimientos"
   | "pmeActividades"
   | "pmeCatalogos"
-  | "pmeHistorial";
+  | "pmeHistorial"
+  // APE — Activity Planning Engine
+  | "apePlanes"
+  | "apeHistorial";
 
 /**
  * Query parameters for list operations.

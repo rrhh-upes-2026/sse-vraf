@@ -646,6 +646,21 @@ const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
     updatedAt: "2026-07-01T10:00:00Z",
     updatedBy: "admin@upes.edu.sv",
   },
+  ape: {
+    wsId: "ape",
+    nombre: "Planificación Institucional",
+    nombreCorto: "APE",
+    descripcion: "Motor de planificación de actividades institucionales.",
+    responsableId: "USR-VRAF-001",
+    color: "#0369A1",
+    colorFondo: "#E0F2FE",
+    icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z",
+    slaDiasDefault: 0,
+    zonaHoraria: "America/El_Salvador",
+    idioma: "es-SV",
+    updatedAt: "2026-07-01T10:00:00Z",
+    updatedBy: "admin@upes.edu.sv",
+  },
 };
 
 // ── Audit Records ─────────────────────────────────────────────────────────────

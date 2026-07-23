@@ -49,6 +49,9 @@
     mergePMEEntities_();
   } catch (e) {}
   try {
+    mergeAPEEntities_();
+  } catch (e) {}
+  try {
     bootstrapDashboardAdapters_();
   } catch (e) {}
   try {
@@ -65,6 +68,9 @@
   } catch (e) {}
   try {
     if (typeof PME_UNIT_DEF !== "undefined") OrgUnitRegistry.register(PME_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof APE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(APE_UNIT_DEF);
   } catch (e) {}
 })();
 
