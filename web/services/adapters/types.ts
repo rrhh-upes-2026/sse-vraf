@@ -96,7 +96,11 @@ export type EntityName =
   // AEE — Activity Execution Engine
   | "aeeEjecuciones"
   | "aeeCatalogos"
-  | "aeeHistorial";
+  | "aeeHistorial"
+  // EME — Evidence Management Engine
+  | "emeEvidencias"
+  | "emeCatalogos"
+  | "emeHistorial";
 
 /**
  * Query parameters for list operations.
