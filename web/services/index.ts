@@ -44,3 +44,4 @@ export * from "./ape";
 export * from "./aee";
 export * from "./eme";
 export * from "./cpe";
+export * from "./eip";

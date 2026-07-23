@@ -19,3 +19,4 @@ import "./ape";
 import "./aee";
 import "./eme";
 import "./cpe";
+import "./eip";

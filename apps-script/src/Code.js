@@ -90,6 +90,9 @@
   try {
     if (typeof CPE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(CPE_UNIT_DEF);
   } catch (e) {}
+  try {
+    if (typeof EIP_UNIT_DEF !== "undefined") OrgUnitRegistry.register(EIP_UNIT_DEF);
+  } catch (e) {}
 })();
 
 function doPost(e) {
