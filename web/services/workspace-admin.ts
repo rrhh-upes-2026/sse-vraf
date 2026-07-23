@@ -631,6 +631,21 @@ const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
     updatedAt: "2026-07-01T10:00:00Z",
     updatedBy: "admin@upes.edu.sv",
   },
+  pme: {
+    wsId: "pme",
+    nombre: "Gestión de Procesos",
+    nombreCorto: "PME",
+    descripcion: "Motor de procesos, procedimientos y actividades institucionales.",
+    responsableId: "USR-VRAF-001",
+    color: "#0F766E",
+    colorFondo: "#CCFBF1",
+    icon: "M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
+    slaDiasDefault: 0,
+    zonaHoraria: "America/El_Salvador",
+    idioma: "es-SV",
+    updatedAt: "2026-07-01T10:00:00Z",
+    updatedBy: "admin@upes.edu.sv",
+  },
 };
 
 // ── Audit Records ─────────────────────────────────────────────────────────────

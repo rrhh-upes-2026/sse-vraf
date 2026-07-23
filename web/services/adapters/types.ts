@@ -83,7 +83,13 @@ export type EntityName =
   // IME — Indicator Management Engine
   | "imeIndicadores"
   | "imeCatalogos"
-  | "imeHistorial";
+  | "imeHistorial"
+  // PME — Process Management Engine
+  | "pmeProcesos"
+  | "pmeProcedimientos"
+  | "pmeActividades"
+  | "pmeCatalogos"
+  | "pmeHistorial";
 
 /**
  * Query parameters for list operations.

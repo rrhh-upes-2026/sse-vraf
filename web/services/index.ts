@@ -39,3 +39,4 @@ export * from "./mantenimiento";
 export * from "./sso";
 export * from "./executiveDashboard";
 export * from "./ime";
+export * from "./pme";

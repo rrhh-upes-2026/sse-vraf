@@ -19,7 +19,8 @@ export type WorkspaceId =
   | "compras"
   | "mant"
   | "salud"
-  | "ime";
+  | "ime"
+  | "pme";
 
 /** VRAF is the Core's built-in workspace — always available, no module required. */
 export const VRAF_WORKSPACE = {

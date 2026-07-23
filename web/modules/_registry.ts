@@ -14,3 +14,4 @@ import "./contabilidad";
 import "./mantenimiento";
 import "./sso";
 import "./ime";
+import "./pme";
