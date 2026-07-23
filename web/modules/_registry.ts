@@ -13,3 +13,4 @@ import "./compras";
 import "./contabilidad";
 import "./mantenimiento";
 import "./sso";
+import "./ime";

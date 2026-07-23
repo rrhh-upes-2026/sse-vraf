@@ -12,6 +12,7 @@ const UNIT_CODE: Record<WorkspaceId, string> = {
   compras: "COMP",
   mant: "MANT",
   salud: "SSO",
+  ime: "IME",
 };
 
 function pad(n: number, width: number) {

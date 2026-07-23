@@ -79,7 +79,11 @@ export type EntityName =
   | "wsForms"
   | "wsDocuments"
   | "wsNotifRules"
-  | "wsSettings";
+  | "wsSettings"
+  // IME — Indicator Management Engine
+  | "imeIndicadores"
+  | "imeCatalogos"
+  | "imeHistorial";
 
 /**
  * Query parameters for list operations.

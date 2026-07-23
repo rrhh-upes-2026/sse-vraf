@@ -43,6 +43,9 @@
     mergeSSOEntities_();
   } catch (e) {}
   try {
+    mergeIMEEntities_();
+  } catch (e) {}
+  try {
     bootstrapDashboardAdapters_();
   } catch (e) {}
   try {
@@ -50,6 +53,12 @@
   } catch (e) {}
   try {
     registerAllUnits_();
+  } catch (e) {}
+  try {
+    if (typeof EJECUTIVO_UNIT_DEF !== "undefined") OrgUnitRegistry.register(EJECUTIVO_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof IME_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IME_UNIT_DEF);
   } catch (e) {}
 })();
 
