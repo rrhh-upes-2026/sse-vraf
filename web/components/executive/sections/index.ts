@@ -1,0 +1,10 @@
+export { ExecResumenEjecutivo }         from "./ExecResumenEjecutivo";
+export { ExecIndicadoresGlobales }       from "./ExecIndicadoresGlobales";
+export { ExecAlertasInstitucionales }    from "./ExecAlertasInstitucionales";
+export { ExecSemaforos }                 from "./ExecSemaforos";
+export { ExecTendencias }               from "./ExecTendencias";
+export { ExecActividadReciente }         from "./ExecActividadReciente";
+export { ExecEstadoUnidades }            from "./ExecEstadoUnidades";
+export { ExecCumplimientoInstitucional } from "./ExecCumplimientoInstitucional";
+export { ExecResumenFinanciero }         from "./ExecResumenFinanciero";
+export { ExecResumenOperativo }          from "./ExecResumenOperativo";

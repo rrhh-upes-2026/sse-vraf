@@ -1,13 +1,5 @@
-import { PlaceholderScreen } from "@/components/shared/PlaceholderScreen";
-import { ADMIN_TOOLS } from "@/config/nav";
+import { WorkspaceExecutiveDashboard } from "@/components/executive/WorkspaceExecutiveDashboard";
 
 export default function DashboardEjecutivoPage() {
-  const tool = ADMIN_TOOLS.find((t) => t.slug === "dashboard-ejecutivo")!;
-  return (
-    <PlaceholderScreen
-      eyebrow="Administración"
-      title={tool.label}
-      description={tool.description}
-    />
-  );
+  return <WorkspaceExecutiveDashboard wsId="__global__" />;
 }

@@ -43,6 +43,12 @@
     mergeSSOEntities_();
   } catch (e) {}
   try {
+    bootstrapDashboardAdapters_();
+  } catch (e) {}
+  try {
+    bootstrapKPIAdapters_();
+  } catch (e) {}
+  try {
     registerAllUnits_();
   } catch (e) {}
 })();
