@@ -19,6 +19,7 @@ const UNIT_CODE: Record<WorkspaceId, string> = {
   eme: "EME",
   cpe: "CPE",
   eip: "EIP",
+  iie: "IIE",
 };
 
 function pad(n: number, width: number) {
