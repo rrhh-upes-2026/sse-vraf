@@ -24,6 +24,7 @@ const UNIT_CODE: Record<WorkspaceId, string> = {
   aue: "AUE",
   nce: "NCE",
   isp: "ISP",
+  gwp: "GWP",
 };
 
 function pad(n: number, width: number) {

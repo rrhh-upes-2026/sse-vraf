@@ -25,3 +25,4 @@ import "./ioe";
 import "./aue";
 import "./nce";
 import "./isp";
+import "./gwp";

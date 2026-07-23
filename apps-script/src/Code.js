@@ -76,6 +76,9 @@
     mergeISPEntities_();
   } catch (e) {}
   try {
+    mergeGWPEntities_();
+  } catch (e) {}
+  try {
     bootstrapDashboardAdapters_();
   } catch (e) {}
   try {
@@ -122,6 +125,9 @@
   } catch (e) {}
   try {
     if (typeof ISP_UNIT_DEF !== "undefined") OrgUnitRegistry.register(ISP_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof GWP_UNIT_DEF !== "undefined") OrgUnitRegistry.register(GWP_UNIT_DEF);
   } catch (e) {}
 })();
 

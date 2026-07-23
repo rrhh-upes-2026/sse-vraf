@@ -50,3 +50,4 @@ export * from "./ioe";
 export * from "./aue";
 export * from "./nce";
 export * from "./isp";
+export * from "./gwp";

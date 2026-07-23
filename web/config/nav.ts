@@ -30,7 +30,8 @@ export type WorkspaceId =
   | "ioe"
   | "aue"
   | "nce"
-  | "isp";
+  | "isp"
+  | "gwp";
 
 /** VRAF is the Core's built-in workspace — always available, no module required. */
 export const VRAF_WORKSPACE = {
