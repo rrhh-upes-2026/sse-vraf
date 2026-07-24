@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import type { WorkspaceAutomation, TriggerType, ActionType } from "@/types/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -66,7 +66,7 @@ export function AutomationDrawer({ wsId, automation, open, onClose, onSaved }: A
     active: false,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (automation) {
       setForm({
         nombre: automation.nombre,

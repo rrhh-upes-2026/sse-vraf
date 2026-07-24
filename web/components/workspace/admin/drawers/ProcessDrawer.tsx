@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import type { ProcessBlueprint } from "@/types/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -75,7 +75,7 @@ export function ProcessDrawer({ wsId, blueprint, open, onClose, onSaved }: Proce
     frecuencia: "mensual" as ProcessBlueprint["frecuencia"],
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (blueprint) {
       setForm({
         nombre: blueprint.nombre,

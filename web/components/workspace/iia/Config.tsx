@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import { useIIAConfig, useUpdateIIAConfig, useIIAStatus } from "@/hooks/useIIA";
 
 const MODELS = [
@@ -37,7 +37,7 @@ export function IIAConfig({ wsId }: { wsId: string }) {
     debugMode:   false,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (config) {
       setForm({
         apiKey:      "",

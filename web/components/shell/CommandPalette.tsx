@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCommandPaletteStore } from "@/hooks/useCommandPalette";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -120,7 +120,7 @@ export function CommandPalette() {
   }, [isOpen, open, close]);
 
   // Reset highlight when query changes
-  useEffect(() => {
+  useLayoutEffect(() => {
     setHighlighted(0);
   }, [query, isOpen]);
 
@@ -133,25 +133,22 @@ export function CommandPalette() {
 
   // ── Keyboard navigation inside palette ──────────────────────────────────────
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        setHighlighted((h) => Math.min(h + 1, flatItems.length - 1));
-      } else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        setHighlighted((h) => Math.max(h - 1, 0));
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        const item = flatItems[highlighted];
-        if (item) {
-          router.push(item.href);
-          close();
-        }
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlighted((h) => Math.min(h + 1, flatItems.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlighted((h) => Math.max(h - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const item = flatItems[highlighted];
+      if (item) {
+        router.push(item.href);
+        close();
       }
-    },
-    [flatItems, highlighted, router, close],
-  );
+    }
+  }
 
   // Scroll highlighted item into view
   useEffect(() => {

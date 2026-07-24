@@ -21,47 +21,20 @@ import { FormError } from "@/components/ui/form-error";
 import { HistorialSection } from "@/components/ui/historial-section";
 import { Dropzone } from "@/components/ui/dropzone";
 import { fmtShortDate } from "@/lib/utils";
+import {
+  ESTADO_EVIDENCIA_BADGE,
+  ESTADO_EVIDENCIA_LABEL,
+  ESTADO_REVISION_BADGE,
+  ESTADO_REVISION_LABEL,
+  ESTADO_REVISION_OPTIONS,
+  TIPO_EVIDENCIA_OPTIONS,
+} from "@/lib/catalogs";
 
 interface WorkspaceEvidenceProps {
   wsId: WorkspaceId;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
-
-const ESTADO_BADGE = {
-  pendiente: "warning",
-  cargada:   "info",
-  validada:  "success",
-  rechazada: "danger",
-} as const;
-
-const ESTADO_LABEL: Record<Evidencia["estado"], string> = {
-  pendiente: "Pendiente",
-  cargada:   "Cargada",
-  validada:  "Validada",
-  rechazada: "Rechazada",
-};
-
-const REVISION_BADGE = {
-  pendiente:   "gray",
-  en_revision: "warning",
-  aprobada:    "success",
-  rechazada:   "danger",
-} as const;
-
-const REVISION_LABEL: Record<NonNullable<Evidencia["estadoRevision"]>, string> = {
-  pendiente:   "Pendiente",
-  en_revision: "En revisión",
-  aprobada:    "Aprobada",
-  rechazada:   "Rechazada",
-};
-
-const REVISION_OPTIONS = [
-  { value: "pendiente",   label: "Pendiente" },
-  { value: "en_revision", label: "En revisión" },
-  { value: "aprobada",    label: "Aprobada" },
-  { value: "rechazada",   label: "Rechazada" },
-];
 
 const TIPO_ICON: Record<TipoEvidencia, string> = {
   documento:   "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
@@ -76,18 +49,6 @@ const TIPO_ICON: Record<TipoEvidencia, string> = {
   otro:        "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z",
 };
 
-const TIPO_OPTIONS: { value: TipoEvidencia; label: string }[] = [
-  { value: "documento",   label: "Documento" },
-  { value: "formulario",  label: "Formulario" },
-  { value: "archivo",     label: "Archivo" },
-  { value: "registro",    label: "Registro" },
-  { value: "fotografia",  label: "Fotografía" },
-  { value: "acta",        label: "Acta" },
-  { value: "contrato",    label: "Contrato" },
-  { value: "informe",     label: "Informe" },
-  { value: "comprobante", label: "Comprobante" },
-  { value: "otro",        label: "Otro" },
-];
 
 function TipoIcon({ tipo }: { tipo: TipoEvidencia }) {
   return (
@@ -156,12 +117,12 @@ function EvidenciaRow({
 
       <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
         {evidencia.estadoRevision && (
-          <Badge variant={REVISION_BADGE[evidencia.estadoRevision]}>
-            {REVISION_LABEL[evidencia.estadoRevision]}
+          <Badge variant={ESTADO_REVISION_BADGE[evidencia.estadoRevision]}>
+            {ESTADO_REVISION_LABEL[evidencia.estadoRevision]}
           </Badge>
         )}
-        <Badge variant={ESTADO_BADGE[evidencia.estado]}>
-          {ESTADO_LABEL[evidencia.estado]}
+        <Badge variant={ESTADO_EVIDENCIA_BADGE[evidencia.estado]}>
+          {ESTADO_EVIDENCIA_LABEL[evidencia.estado]}
         </Badge>
         {canUpload && evidencia.estado === "pendiente" && (
           <Button size="sm" variant="secondary" onClick={() => onUpload(evidencia)}>
@@ -387,7 +348,7 @@ export function WorkspaceEvidence({ wsId: _wsId }: WorkspaceEvidenceProps) {
             <Select
               value={form.tipo}
               onValueChange={(v) => setField("tipo", v as TipoEvidencia)}
-              options={TIPO_OPTIONS}
+              options={TIPO_EVIDENCIA_OPTIONS}
             />
           </DrawerField>
         </DrawerSection>
@@ -432,7 +393,7 @@ export function WorkspaceEvidence({ wsId: _wsId }: WorkspaceEvidenceProps) {
             <Select
               value={form.estadoRevision}
               onValueChange={(v) => setField("estadoRevision", v as NonNullable<Evidencia["estadoRevision"]>)}
-              options={REVISION_OPTIONS}
+              options={ESTADO_REVISION_OPTIONS}
             />
           </DrawerField>
 

@@ -22,6 +22,21 @@ const STATUS_COLORS: Record<string, string> = {
 
 type SortKey = "fecha" | "prioridad" | "proceso" | "procedimiento" | "actividad";
 
+function SortBtn({ k, label, sortKey, setSortKey }: { k: SortKey; label: string; sortKey: SortKey; setSortKey: (k: SortKey) => void }) {
+  return (
+    <button
+      onClick={() => setSortKey(k)}
+      className={`px-3 py-1 rounded text-[12px] font-medium transition-colors ${
+        sortKey === k
+          ? "bg-sse-primary text-white"
+          : "bg-sse-surface border border-sse-border text-sse-muted hover:text-sse-ink"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export function MisActividades({ wsId, userId, year }: Props) {
   const currentYear = year ?? new Date().getFullYear().toString();
   const [sortKey, setSortKey] = useState<SortKey>("fecha");
@@ -54,29 +69,16 @@ export function MisActividades({ wsId, userId, year }: Props) {
     );
   }
 
-  const SortBtn = ({ k, label }: { k: SortKey; label: string }) => (
-    <button
-      onClick={() => setSortKey(k)}
-      className={`px-3 py-1 rounded text-[12px] font-medium transition-colors ${
-        sortKey === k
-          ? "bg-sse-primary text-white"
-          : "bg-sse-surface border border-sse-border text-sse-muted hover:text-sse-ink"
-      }`}
-    >
-      {label}
-    </button>
-  );
-
   return (
     <div className="space-y-4">
       {/* Sort controls */}
       <div className="flex flex-wrap gap-2 items-center">
         <span className="text-[12px] text-sse-muted">Ordenar:</span>
-        <SortBtn k="fecha"        label="Fecha" />
-        <SortBtn k="prioridad"    label="Prioridad" />
-        <SortBtn k="proceso"      label="Proceso" />
-        <SortBtn k="procedimiento"label="Procedimiento" />
-        <SortBtn k="actividad"    label="Actividad" />
+        <SortBtn k="fecha"        label="Fecha"         sortKey={sortKey} setSortKey={setSortKey} />
+        <SortBtn k="prioridad"    label="Prioridad"     sortKey={sortKey} setSortKey={setSortKey} />
+        <SortBtn k="proceso"      label="Proceso"       sortKey={sortKey} setSortKey={setSortKey} />
+        <SortBtn k="procedimiento"label="Procedimiento" sortKey={sortKey} setSortKey={setSortKey} />
+        <SortBtn k="actividad"    label="Actividad"     sortKey={sortKey} setSortKey={setSortKey} />
       </div>
 
       {sorted.length === 0 ? (

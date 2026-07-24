@@ -16,7 +16,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useFormState } from "@/hooks/useFormState";
 import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 import { Badge } from "@/components/ui/badge";
-import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -29,37 +28,13 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/ui/drawer";
 import { cn, fmtShortDate } from "@/lib/utils";
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-const ESTADO_VARIANT: Record<EstadoPlan, BadgeVariant> = {
-  borrador: "gray",
-  revision: "warning",
-  aprobado: "success",
-  vigente:  "success",
-  cerrado:  "default",
-};
-
-const ESTADO_LABEL: Record<EstadoPlan, string> = {
-  borrador: "Borrador",
-  revision: "En revisión",
-  aprobado: "Aprobado",
-  vigente:  "Vigente",
-  cerrado:  "Cerrado",
-};
-
-const TIPO_LABEL: Record<string, string> = {
-  estrategico: "Estratégico",
-  operativo:   "Operativo",
-  mejora:      "Mejora",
-  accion:      "Acción",
-};
-
-function avanceColor(pct: number): "success" | "warning" | "danger" {
-  if (pct >= 70) return "success";
-  if (pct >= 40) return "warning";
-  return "danger";
-}
+import {
+  ESTADO_PLAN_BADGE,
+  ESTADO_PLAN_LABEL,
+  TIPO_PLAN_LABEL,
+  TIPO_PLAN_OPTIONS,
+  avanceColor,
+} from "@/lib/catalogs";
 
 // ── Plan card ─────────────────────────────────────────────────────────────────
 
@@ -108,7 +83,7 @@ function PlanCard({
             {plan.nombre}
           </p>
           <p className="text-[11px] text-sse-muted mt-0.5">
-            {TIPO_LABEL[plan.tipo] ?? plan.tipo}
+            {TIPO_PLAN_LABEL[plan.tipo] ?? plan.tipo}
           </p>
           {plan.responsableId && (
             <p className="text-[11px] text-sse-muted mt-0.5 truncate">
@@ -116,8 +91,8 @@ function PlanCard({
             </p>
           )}
         </div>
-        <Badge variant={ESTADO_VARIANT[estado]} className="shrink-0 text-[10px]">
-          {ESTADO_LABEL[estado] ?? estado}
+        <Badge variant={ESTADO_PLAN_BADGE[estado]} className="shrink-0 text-[10px]">
+          {ESTADO_PLAN_LABEL[estado] ?? estado}
         </Badge>
       </div>
 
@@ -202,13 +177,6 @@ const ESTADOS: Array<{ value: EstadoPlan | "todos"; label: string }> = [
   { value: "cerrado",  label: "Cerrados" },
 ];
 
-const TIPO_OPTIONS = [
-  { value: "estrategico", label: "Estratégico" },
-  { value: "operativo",   label: "Operativo" },
-  { value: "mejora",      label: "Mejora" },
-  { value: "accion",      label: "Acción" },
-];
-
 const ESTADO_OPTIONS = [
   { value: "borrador",  label: "Borrador" },
   { value: "revision",  label: "En revisión" },
@@ -268,14 +236,13 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
   const [editing, setEditing]           = useState<PlanEstrategico | null>(null);
 
   const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateForm);
+  const actions = usePlanesActions();
   const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
     useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { data: planes,    isLoading: planesLoading }    = usePlanes({ wsId });
   const { data: objetivos, isLoading: objetivosLoading } = useObjetivos();
   const { data: proyectos, isLoading: proyectosLoading } = useProyectos({ unidadId: wsId });
-
-  const actions = usePlanesActions();
   const { hasPermission } = usePermissions();
   const canEdit = hasPermission("process.edit");
 
@@ -373,7 +340,7 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-sse-border bg-sse-surface text-[11px]"
               >
                 <span className="font-semibold text-sse-ink">{resumen[e]}</span>
-                <span className="text-sse-muted">{ESTADO_LABEL[e]}</span>
+                <span className="text-sse-muted">{ESTADO_PLAN_LABEL[e]}</span>
               </div>
             ) : null,
           )}
@@ -414,7 +381,7 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
           description={
             estadoFilter === "todos"
               ? "Esta unidad no tiene planes registrados."
-              : `No hay planes en estado "${ESTADO_LABEL[estadoFilter as EstadoPlan]}".`
+              : `No hay planes en estado "${ESTADO_PLAN_LABEL[estadoFilter as EstadoPlan]}".`
           }
           action={
             canEdit && estadoFilter === "todos" ? (
@@ -496,7 +463,7 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
               <Select
                 value={form.tipo}
                 onValueChange={(v) => setField("tipo", v as TipoPlan)}
-                options={TIPO_OPTIONS}
+                options={TIPO_PLAN_OPTIONS}
               />
               <FormError message={errors.tipo} />
             </DrawerField>

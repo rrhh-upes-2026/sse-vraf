@@ -5,7 +5,6 @@ import type { WorkspaceId } from "@/config/nav";
 import type {
   ComprasSolicitud,
   ComprasOrden,
-  ComprasEstadoOrden,
 } from "@/types/entities";
 import {
   useComprasDashboard,
@@ -14,50 +13,16 @@ import {
 } from "@/hooks/useCompras";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { BadgeVariant } from "@/components/ui/badge";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn, fmtShortDate } from "@/lib/utils";
-
-// ── helpers ───────────────────────────────────────────────────────────────────
-
-const PRIORIDAD_VARIANT: Record<string, BadgeVariant> = {
-  normal:  "default",
-  urgente: "warning",
-  critica: "danger",
-};
-
-const ESTADO_SOL_VARIANT: Record<string, BadgeVariant> = {
-  pendiente:   "warning",
-  en_revision: "info",
-  aprobada:    "success",
-  rechazada:   "danger",
-  archivada:   "gray",
-};
-
-const ESTADO_OC_VARIANT: Record<ComprasEstadoOrden, BadgeVariant> = {
-  borrador:  "gray",
-  emitida:   "info",
-  recibida:  "success",
-  pagada:    "success",
-  cancelada: "danger",
-};
-
-const ESTADO_SOL_LABEL: Record<string, string> = {
-  pendiente:   "Pendiente",
-  en_revision: "En revisión",
-  aprobada:    "Aprobada",
-  rechazada:   "Rechazada",
-  archivada:   "Archivada",
-};
-
-const ESTADO_OC_LABEL: Record<ComprasEstadoOrden, string> = {
-  borrador:  "Borrador",
-  emitida:   "Emitida",
-  recibida:  "Recibida",
-  pagada:    "Pagada",
-  cancelada: "Cancelada",
-};
+import {
+  COMPRAS_PRIORIDAD_BADGE,
+  COMPRAS_ESTADO_SOL_BADGE,
+  COMPRAS_ESTADO_SOL_LABEL,
+  COMPRAS_ESTADO_OC_BADGE,
+  COMPRAS_ESTADO_OC_LABEL,
+} from "@/lib/catalogs";
 
 function fmtCurrency(value: number): string {
   return new Intl.NumberFormat("es-SV", {
@@ -114,12 +79,12 @@ function SolicitudRow({ sol, wsId }: { sol: ComprasSolicitud; wsId: WorkspaceId 
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         {sol.prioridad !== "normal" && (
-          <Badge variant={PRIORIDAD_VARIANT[sol.prioridad]} className="text-[10px]">
+          <Badge variant={COMPRAS_PRIORIDAD_BADGE[sol.prioridad]} className="text-[10px]">
             {sol.prioridad}
           </Badge>
         )}
-        <Badge variant={ESTADO_SOL_VARIANT[sol.estado] ?? "default"} className="text-[10px]">
-          {ESTADO_SOL_LABEL[sol.estado] ?? sol.estado}
+        <Badge variant={COMPRAS_ESTADO_SOL_BADGE[sol.estado] ?? "default"} className="text-[10px]">
+          {COMPRAS_ESTADO_SOL_LABEL[sol.estado] ?? sol.estado}
         </Badge>
       </div>
     </div>
@@ -140,8 +105,8 @@ function OrdenRow({ orden }: { orden: ComprasOrden }) {
           {` · ${fmtCurrency(orden.monto)}`}
         </p>
       </div>
-      <Badge variant={ESTADO_OC_VARIANT[orden.estado]} className="shrink-0 text-[10px]">
-        {ESTADO_OC_LABEL[orden.estado]}
+      <Badge variant={COMPRAS_ESTADO_OC_BADGE[orden.estado]} className="shrink-0 text-[10px]">
+        {COMPRAS_ESTADO_OC_LABEL[orden.estado]}
       </Badge>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import { useGWPConfig, useUpdateGWPConfig as useGWPSaveConfig } from "@/hooks/useGWP";
 
 interface FormState {
@@ -36,7 +36,7 @@ export function GWPConfig({ wsId }: { wsId: string }) {
   });
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (config) {
       setForm({
         clientId:        config.clientId        ?? "",

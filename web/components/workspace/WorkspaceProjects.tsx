@@ -8,7 +8,6 @@ import { useObjetivos } from "@/hooks/useObjetivos";
 import { useProcesos } from "@/hooks/useProcesos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
-import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -21,33 +20,15 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/ui/drawer";
 import { useFormState } from "@/hooks/useFormState";
 import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
+import {
+  ESTADO_PROYECTO_BADGE,
+  ESTADO_PROYECTO_LABEL,
+  ESTADO_PROYECTO_OPTIONS,
+} from "@/lib/catalogs";
 
 interface WorkspaceProjectsProps {
   wsId: WorkspaceId;
 }
-
-// ── constants ──────────────────────────────────────────────────────────────────
-
-const ESTADO_OPTIONS = [
-  { value: "activo",     label: "Activo" },
-  { value: "pausado",    label: "Pausado" },
-  { value: "completado", label: "Completado" },
-  { value: "cancelado",  label: "Cancelado" },
-];
-
-const ESTADO_BADGE: Record<NonNullable<ProyectoEstrategico["estado"]>, BadgeVariant> = {
-  activo:     "success",
-  pausado:    "warning",
-  completado: "success",
-  cancelado:  "danger",
-};
-
-const ESTADO_LABEL: Record<NonNullable<ProyectoEstrategico["estado"]>, string> = {
-  activo:     "Activo",
-  pausado:    "Pausado",
-  completado: "Completado",
-  cancelado:  "Cancelado",
-};
 
 const EMPTY_FORM = {
   nombre:               "",
@@ -111,8 +92,8 @@ function ProjectCard({
   canEdit:         boolean;
 }) {
   const isConfirming  = confirmDeleteId === proyecto.id;
-  const estadoVariant = proyecto.estado ? ESTADO_BADGE[proyecto.estado] : "gray";
-  const estadoLabel   = proyecto.estado ? ESTADO_LABEL[proyecto.estado] : null;
+  const estadoVariant = proyecto.estado ? ESTADO_PROYECTO_BADGE[proyecto.estado] : "gray";
+  const estadoLabel   = proyecto.estado ? ESTADO_PROYECTO_LABEL[proyecto.estado] : null;
 
   return (
     <div className="bg-sse-surface rounded-md border border-sse-border p-4 flex flex-col gap-2">
@@ -405,7 +386,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
               onValueChange={(v) =>
                 setField("estado", v as NonNullable<ProyectoEstrategico["estado"]>)
               }
-              options={ESTADO_OPTIONS}
+              options={ESTADO_PROYECTO_OPTIONS}
             />
           </DrawerField>
 

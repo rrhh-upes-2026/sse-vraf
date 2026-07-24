@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePMEProceso, usePMEProcesoActions, usePMECatalogosPorTipo } from "@/hooks/usePME";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,7 @@ export function ProcesoEditForm({ wsId, procesoId }: Props) {
   const [form, setForm] = useState<Partial<PMEProceso> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (proceso && !form) setForm({ ...proceso });
   }, [proceso, form]);
 

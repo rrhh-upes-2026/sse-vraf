@@ -22,6 +22,21 @@ const STATUS_COLORS: Record<EMEStatus, string> = {
 
 type SortKey = "fecha" | "titulo" | "estado" | "tipo";
 
+function SortBtn({ k, label, sortKey, setSortKey }: { k: SortKey; label: string; sortKey: SortKey; setSortKey: (k: SortKey) => void }) {
+  return (
+    <button
+      onClick={() => setSortKey(k)}
+      className={`px-3 py-1 rounded text-[12px] font-medium transition-colors ${
+        sortKey === k
+          ? "bg-sse-primary text-white"
+          : "bg-sse-surface border border-sse-border text-sse-muted hover:text-sse-ink"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
 export function MisEvidencias({ wsId, userId }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("fecha");
   const [statusFilter, setStatus] = useState<EMEStatus | "">("");
@@ -42,19 +57,6 @@ export function MisEvidencias({ wsId, userId }: Props) {
     }
   });
 
-  const SortBtn = ({ k, label }: { k: SortKey; label: string }) => (
-    <button
-      onClick={() => setSortKey(k)}
-      className={`px-3 py-1 rounded text-[12px] font-medium transition-colors ${
-        sortKey === k
-          ? "bg-sse-primary text-white"
-          : "bg-sse-surface border border-sse-border text-sse-muted hover:text-sse-ink"
-      }`}
-    >
-      {label}
-    </button>
-  );
-
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -69,10 +71,10 @@ export function MisEvidencias({ wsId, userId }: Props) {
       <div className="flex flex-wrap gap-2 items-center justify-between">
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-[12px] text-sse-muted">Ordenar:</span>
-          <SortBtn k="fecha"  label="Fecha" />
-          <SortBtn k="titulo" label="Título" />
-          <SortBtn k="estado" label="Estado" />
-          <SortBtn k="tipo"   label="Tipo" />
+          <SortBtn k="fecha"  label="Fecha"   sortKey={sortKey} setSortKey={setSortKey} />
+          <SortBtn k="titulo" label="Título"  sortKey={sortKey} setSortKey={setSortKey} />
+          <SortBtn k="estado" label="Estado"  sortKey={sortKey} setSortKey={setSortKey} />
+          <SortBtn k="tipo"   label="Tipo"    sortKey={sortKey} setSortKey={setSortKey} />
         </div>
         <select
           value={statusFilter}

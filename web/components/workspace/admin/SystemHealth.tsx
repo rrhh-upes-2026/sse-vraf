@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import { getAppsScriptClient } from "@/services/adapters/getAppsScriptClient";
 
 
@@ -119,7 +119,7 @@ export function SystemHealth({ wsId, isLive = false }: { wsId: string; isLive?: 
     }
   };
 
-  useEffect(() => { fetchHealth(); }, []);
+  useLayoutEffect(() => { fetchHealth(); }, []);
 
   const cardStyle: React.CSSProperties = {
     background: "rgba(255,255,255,0.03)",

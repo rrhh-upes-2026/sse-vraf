@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import Link from "next/link";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -93,7 +93,7 @@ export function GlobalSearch({ open, onClose }: GlobalSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (open) {
       setQuery("");
       setResults([]);
@@ -175,7 +175,7 @@ export function GlobalSearch({ open, onClose }: GlobalSearchProps) {
 
             {query && results.length === 0 && !loading && (
               <div className="flex flex-col items-center gap-1 p-8 text-center">
-                <p className="text-[14px] font-medium text-sse-muted">Sin resultados para "{query}"</p>
+                <p className="text-[14px] font-medium text-sse-muted">Sin resultados para &ldquo;{query}&rdquo;</p>
                 <p className="text-[12px] text-sse-muted">Intenta con otro término</p>
               </div>
             )}

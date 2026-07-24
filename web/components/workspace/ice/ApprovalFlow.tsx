@@ -33,7 +33,7 @@ function ApprovalTimeline({ captureId }: { captureId: string }) {
           <div className="pb-3">
             <p className="font-medium text-sse-ink">{LEVEL_LABEL[a.level] ?? `Nivel ${a.level}`}</p>
             <p className="text-sse-muted">{a.approverEmail} · {a.createdAt ? new Date(a.createdAt).toLocaleDateString("es-SV") : "—"}</p>
-            {a.comments && <p className="text-sse-muted italic mt-0.5">"{a.comments}"</p>}
+            {a.comments && <p className="text-sse-muted italic mt-0.5">&ldquo;{a.comments}&rdquo;</p>}
           </div>
         </div>
       ))}

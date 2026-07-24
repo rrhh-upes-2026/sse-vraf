@@ -11,7 +11,7 @@
  *   V.   Firmas
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { useRequisicion, useGuardarRequisicion } from "@/hooks/useContratacion";
 import type { RequisicionPersonal, MatrizCompetencias } from "@/types/contratacion";
 
@@ -239,7 +239,7 @@ export function FormRequisicion({ procesoId, wsId, soloLectura = false }: FormRe
   const [guardado, setGuardado] = useState(false);
 
   // Poblar desde datos existentes cuando llegan
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (requisicion) {
       setForm(requisicion);
     }

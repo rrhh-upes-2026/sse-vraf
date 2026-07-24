@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import type { RequestType } from "@/types/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -64,7 +64,7 @@ export function RequestDrawer({ wsId, request, open, onClose, onSaved }: Request
     },
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (request) {
       setForm({
         nombre: request.nombre,

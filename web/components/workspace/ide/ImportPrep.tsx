@@ -283,7 +283,7 @@ export function IDEImportPrep({ wsId }: { wsId: string }) {
               </p>
               <p className="text-[11px] text-amber-700">
                 La importación masiva estará disponible en la siguiente versión del motor. Por ahora, crea los indicadores
-                válidos manualmente desde "Nuevo Indicador".
+                válidos manualmente desde &ldquo;Nuevo Indicador&rdquo;.
               </p>
             </div>
           )}

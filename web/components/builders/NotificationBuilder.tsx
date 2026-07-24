@@ -5,7 +5,7 @@
  * Two-panel layout: template editor (55%) + live preview (45%).
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import {
   NotificationConfig,
   CanalNotificacion,
@@ -484,7 +484,7 @@ export function NotificationBuilder({ wsId }: { wsId: string }) {
   const selectedItem = (items ?? []).find((i) => i.id === selectedId);
 
   // Sync selected item → draft
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (selectedItem) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { createdAt, updatedAt, ...rest } = selectedItem;

@@ -481,7 +481,7 @@ function TabMatriz({
   if (config.roles.length === 0) {
     return (
       <div style={{ textAlign: "center", padding: "40px 20px", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>
-        Crea roles en la pestaña "Roles" primero.
+        Crea roles en la pestaña &ldquo;Roles&rdquo; primero.
       </div>
     );
   }

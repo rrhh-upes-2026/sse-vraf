@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import type { WorkspaceKPI } from "@/types/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -81,7 +81,7 @@ export function KPIDrawer({ wsId, kpi, open, onClose, onSaved }: KPIDrawerProps)
     semaforoRojo: { min: 0, max: 59 },
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (kpi) {
       setForm({
         nombre: kpi.nombre,

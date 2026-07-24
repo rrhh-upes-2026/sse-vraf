@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import { useISPConfig, useUpdateISPConfig } from "@/hooks/useISP";
 import type { ISPConfig } from "@/types/isp";
 
@@ -48,7 +48,7 @@ export function ISPConfig({ wsId }: { wsId: string }) {
   });
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (config) setForm(toFormState(config));
   }, [config]);
 

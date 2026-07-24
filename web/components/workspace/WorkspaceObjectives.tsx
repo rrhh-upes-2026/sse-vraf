@@ -11,7 +11,6 @@ import { useFormState } from "@/hooks/useFormState";
 import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -22,54 +21,18 @@ import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/u
 import { FormError } from "@/components/ui/form-error";
 import { HistorialSection } from "@/components/ui/historial-section";
 import { EntitySelector } from "@/components/ui/entity-selector";
+import {
+  PRIORIDAD_BADGE,
+  PRIORIDAD_LABEL,
+  PRIORIDAD_OPTIONS,
+  ESTADO_OBJETIVO_BADGE,
+  ESTADO_OBJETIVO_LABEL,
+  ESTADO_OBJETIVO_OPTIONS,
+} from "@/lib/catalogs";
 
 interface WorkspaceObjectivesProps {
   wsId: WorkspaceId;
 }
-
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const ESTADO_OPTIONS = [
-  { value: "borrador",   label: "Borrador" },
-  { value: "vigente",    label: "Vigente" },
-  { value: "completado", label: "Completado" },
-  { value: "cancelado",  label: "Cancelado" },
-];
-
-const PRIORIDAD_OPTIONS = [
-  { value: "baja",    label: "Baja" },
-  { value: "media",   label: "Media" },
-  { value: "alta",    label: "Alta" },
-  { value: "critica", label: "Crítica" },
-];
-
-const ESTADO_BADGE: Record<NonNullable<ObjetivoEstrategico["estado"]>, BadgeVariant> = {
-  borrador:   "gray",
-  vigente:    "success",
-  completado: "info",
-  cancelado:  "danger",
-};
-
-const ESTADO_LABEL: Record<NonNullable<ObjetivoEstrategico["estado"]>, string> = {
-  borrador:   "Borrador",
-  vigente:    "Vigente",
-  completado: "Completado",
-  cancelado:  "Cancelado",
-};
-
-const PRIORIDAD_BADGE: Record<NonNullable<ObjetivoEstrategico["prioridad"]>, BadgeVariant> = {
-  baja:    "gray",
-  media:   "info",
-  alta:    "warning",
-  critica: "danger",
-};
-
-const PRIORIDAD_LABEL: Record<NonNullable<ObjetivoEstrategico["prioridad"]>, string> = {
-  baja:    "Baja",
-  media:   "Media",
-  alta:    "Alta",
-  critica: "Crítica",
-};
 
 // ── Empty form state ──────────────────────────────────────────────────────────
 
@@ -125,8 +88,8 @@ function ObjetivoRow({
 
       <div className="shrink-0 flex items-center gap-2 flex-wrap justify-end">
         {objetivo.estado && (
-          <Badge variant={ESTADO_BADGE[objetivo.estado]}>
-            {ESTADO_LABEL[objetivo.estado]}
+          <Badge variant={ESTADO_OBJETIVO_BADGE[objetivo.estado]}>
+            {ESTADO_OBJETIVO_LABEL[objetivo.estado]}
           </Badge>
         )}
         {objetivo.prioridad && (
@@ -387,7 +350,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
               <Select
                 value={form.estado}
                 onValueChange={(v) => setField("estado", v as NonNullable<ObjetivoEstrategico["estado"]>)}
-                options={ESTADO_OPTIONS}
+                options={ESTADO_OBJETIVO_OPTIONS}
               />
             </DrawerField>
             <DrawerField label="Prioridad">

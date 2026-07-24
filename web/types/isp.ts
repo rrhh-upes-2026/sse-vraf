@@ -257,4 +257,4 @@ export interface ISPLoginParams {
   userAgent?: string;
 }
 
-export interface ISPUpdateConfigParams extends Partial<ISPConfig> {}
+export type ISPUpdateConfigParams = Partial<ISPConfig>;

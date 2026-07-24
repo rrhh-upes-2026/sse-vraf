@@ -22,6 +22,13 @@ import { FormError } from "@/components/ui/form-error";
 import { HistorialSection } from "@/components/ui/historial-section";
 import { SparklineChart } from "@/components/ui/sparkline-chart";
 import { cn, fmtDate } from "@/lib/utils";
+import {
+  SEMAFORO_DOT,
+  SEMAFORO_TEXT,
+  SEMAFORO_BADGE,
+  FRECUENCIA_LABEL,
+  FRECUENCIA_OPTIONS,
+} from "@/lib/catalogs";
 
 interface WorkspaceIndicatorsProps {
   wsId: WorkspaceId;
@@ -29,49 +36,11 @@ interface WorkspaceIndicatorsProps {
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-const SEMAPHORE_DOT: Record<SemaforoColor, string> = {
-  verde:    "bg-sse-sem-green-fg",
-  amarillo: "bg-sse-sem-amber-fg",
-  rojo:     "bg-sse-sem-red-fg",
-};
-
-const SEMAPHORE_BAR: Record<SemaforoColor, string> = {
-  verde:    "bg-sse-sem-green-fg",
-  amarillo: "bg-sse-sem-amber-fg",
-  rojo:     "bg-sse-sem-red-fg",
-};
-
-const SEMAPHORE_TEXT: Record<SemaforoColor, string> = {
-  verde:    "text-sse-sem-green-fg",
-  amarillo: "text-sse-sem-amber-fg",
-  rojo:     "text-sse-sem-red-fg",
-};
-
-const SEMAPHORE_BADGE_VARIANT = {
-  verde:    "success",
-  amarillo: "warning",
-  rojo:     "danger",
-} as const;
-
 const SEMAPHORE_COLOR: Record<SemaforoColor, string> = {
   verde:    "#16A34A",
   amarillo: "#E5A100",
   rojo:     "#DC2626",
 };
-
-const FRECUENCIA_LABEL: Record<Indicador["frecuencia"], string> = {
-  mensual:     "Mensual",
-  trimestral:  "Trimestral",
-  semestral:   "Semestral",
-  anual:       "Anual",
-};
-
-const FRECUENCIA_OPTIONS = [
-  { value: "mensual",    label: "Mensual" },
-  { value: "trimestral", label: "Trimestral" },
-  { value: "semestral",  label: "Semestral" },
-  { value: "anual",      label: "Anual" },
-];
 
 const CATEGORIA_OPTIONS = [
   { value: "gestion",    label: "Gestión" },
@@ -144,15 +113,15 @@ function IndicadorCard({
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <TrendIcon tendencia={indicador.tendencia} />
-          <Badge variant={SEMAPHORE_BADGE_VARIANT[indicador.semaforo]}>
-            <span className={cn("w-1.5 h-1.5 rounded-full", SEMAPHORE_DOT[indicador.semaforo])} />
+          <Badge variant={SEMAFORO_BADGE[indicador.semaforo]}>
+            <span className={cn("w-1.5 h-1.5 rounded-full", SEMAFORO_DOT[indicador.semaforo])} />
             {indicador.semaforo}
           </Badge>
         </div>
       </div>
 
       <div className="flex items-end gap-2">
-        <span className={cn("text-[26px] font-bold leading-none", SEMAPHORE_TEXT[indicador.semaforo])}>
+        <span className={cn("text-[26px] font-bold leading-none", SEMAFORO_TEXT[indicador.semaforo])}>
           {indicador.valorActual}
         </span>
         <span className="text-[12px] text-sse-muted mb-0.5">{indicador.unidadMedida}</span>
@@ -161,7 +130,7 @@ function IndicadorCard({
       <div className="space-y-1">
         <div className="h-2 w-full rounded-full bg-sse-border overflow-hidden">
           <div
-            className={cn("h-full rounded-full transition-all", SEMAPHORE_BAR[indicador.semaforo])}
+            className={cn("h-full rounded-full transition-all", SEMAFORO_DOT[indicador.semaforo])}
             style={{ width: `${Math.min(pct, 100)}%` }}
           />
         </div>
@@ -395,7 +364,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
               {(["verde", "amarillo", "rojo"] as SemaforoColor[]).map((c) =>
                 semStats[c] ? (
                   <div key={c} className="flex items-center gap-1">
-                    <span className={cn("w-2 h-2 rounded-full", SEMAPHORE_DOT[c])} />
+                    <span className={cn("w-2 h-2 rounded-full", SEMAFORO_DOT[c])} />
                     <span className="text-[12px] text-sse-muted">{semStats[c]}</span>
                   </div>
                 ) : null,

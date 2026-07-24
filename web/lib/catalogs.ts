@@ -1,5 +1,5 @@
 /**
- * Centralized badge/label maps for all shared domain enums.
+ * Centralized badge/label/options maps for all shared domain enums.
  * Single source of truth — workspace modules import from here,
  * never define local maps for these values.
  */
@@ -9,6 +9,10 @@ import type {
   EstadoProceso,
   EstadoPlan,
   TipoPlan,
+  TipoEvidencia,
+  ComprasPrioridad,
+  ComprasEstadoSolicitud,
+  ComprasEstadoOrden,
 } from "@/types/entities";
 
 // ── Prioridad (baja | media | alta | critica) ─────────────────────────────────
@@ -113,6 +117,191 @@ export const TIPO_PLAN_OPTIONS: { value: TipoPlan; label: string }[] = [
   { value: "mejora",      label: "Mejora" },
   { value: "accion",      label: "Acción" },
 ];
+
+// ── EstadoObjetivo ────────────────────────────────────────────────────────────
+
+export type EstadoObjetivo = "borrador" | "vigente" | "completado" | "cancelado";
+
+export const ESTADO_OBJETIVO_BADGE: Record<EstadoObjetivo, BadgeVariant> = {
+  borrador:   "gray",
+  vigente:    "success",
+  completado: "info",
+  cancelado:  "danger",
+};
+
+export const ESTADO_OBJETIVO_LABEL: Record<EstadoObjetivo, string> = {
+  borrador:   "Borrador",
+  vigente:    "Vigente",
+  completado: "Completado",
+  cancelado:  "Cancelado",
+};
+
+export const ESTADO_OBJETIVO_OPTIONS: { value: EstadoObjetivo; label: string }[] = [
+  { value: "borrador",   label: "Borrador" },
+  { value: "vigente",    label: "Vigente" },
+  { value: "completado", label: "Completado" },
+  { value: "cancelado",  label: "Cancelado" },
+];
+
+// ── EstadoProyecto ────────────────────────────────────────────────────────────
+
+export type EstadoProyecto = "activo" | "pausado" | "completado" | "cancelado";
+
+export const ESTADO_PROYECTO_BADGE: Record<EstadoProyecto, BadgeVariant> = {
+  activo:     "success",
+  pausado:    "warning",
+  completado: "success",
+  cancelado:  "danger",
+};
+
+export const ESTADO_PROYECTO_LABEL: Record<EstadoProyecto, string> = {
+  activo:     "Activo",
+  pausado:    "Pausado",
+  completado: "Completado",
+  cancelado:  "Cancelado",
+};
+
+export const ESTADO_PROYECTO_OPTIONS: { value: EstadoProyecto; label: string }[] = [
+  { value: "activo",     label: "Activo" },
+  { value: "pausado",    label: "Pausado" },
+  { value: "completado", label: "Completado" },
+  { value: "cancelado",  label: "Cancelado" },
+];
+
+// ── EstadoEvidencia ───────────────────────────────────────────────────────────
+
+export type EstadoEvidencia = "pendiente" | "cargada" | "validada" | "rechazada";
+
+export const ESTADO_EVIDENCIA_BADGE: Record<EstadoEvidencia, BadgeVariant> = {
+  pendiente: "warning",
+  cargada:   "info",
+  validada:  "success",
+  rechazada: "danger",
+};
+
+export const ESTADO_EVIDENCIA_LABEL: Record<EstadoEvidencia, string> = {
+  pendiente: "Pendiente",
+  cargada:   "Cargada",
+  validada:  "Validada",
+  rechazada: "Rechazada",
+};
+
+// ── EstadoRevisionEvidencia ───────────────────────────────────────────────────
+
+export type EstadoRevisionEvidencia = "pendiente" | "en_revision" | "aprobada" | "rechazada";
+
+export const ESTADO_REVISION_BADGE: Record<EstadoRevisionEvidencia, BadgeVariant> = {
+  pendiente:   "gray",
+  en_revision: "warning",
+  aprobada:    "success",
+  rechazada:   "danger",
+};
+
+export const ESTADO_REVISION_LABEL: Record<EstadoRevisionEvidencia, string> = {
+  pendiente:   "Pendiente",
+  en_revision: "En revisión",
+  aprobada:    "Aprobada",
+  rechazada:   "Rechazada",
+};
+
+export const ESTADO_REVISION_OPTIONS: { value: EstadoRevisionEvidencia; label: string }[] = [
+  { value: "pendiente",   label: "Pendiente" },
+  { value: "en_revision", label: "En revisión" },
+  { value: "aprobada",    label: "Aprobada" },
+  { value: "rechazada",   label: "Rechazada" },
+];
+
+// ── FrecuenciaIndicador ───────────────────────────────────────────────────────
+
+export type FrecuenciaIndicador = "mensual" | "trimestral" | "semestral" | "anual";
+
+export const FRECUENCIA_LABEL: Record<FrecuenciaIndicador, string> = {
+  mensual:    "Mensual",
+  trimestral: "Trimestral",
+  semestral:  "Semestral",
+  anual:      "Anual",
+};
+
+export const FRECUENCIA_OPTIONS: { value: FrecuenciaIndicador; label: string }[] = [
+  { value: "mensual",    label: "Mensual" },
+  { value: "trimestral", label: "Trimestral" },
+  { value: "semestral",  label: "Semestral" },
+  { value: "anual",      label: "Anual" },
+];
+
+// ── TipoEvidencia ─────────────────────────────────────────────────────────────
+
+export const TIPO_EVIDENCIA_LABEL: Record<TipoEvidencia, string> = {
+  documento:   "Documento",
+  formulario:  "Formulario",
+  archivo:     "Archivo",
+  registro:    "Registro",
+  fotografia:  "Fotografía",
+  acta:        "Acta",
+  contrato:    "Contrato",
+  informe:     "Informe",
+  comprobante: "Comprobante",
+  otro:        "Otro",
+};
+
+export const TIPO_EVIDENCIA_OPTIONS: { value: TipoEvidencia; label: string }[] = [
+  { value: "documento",   label: "Documento" },
+  { value: "formulario",  label: "Formulario" },
+  { value: "archivo",     label: "Archivo" },
+  { value: "registro",    label: "Registro" },
+  { value: "fotografia",  label: "Fotografía" },
+  { value: "acta",        label: "Acta" },
+  { value: "contrato",    label: "Contrato" },
+  { value: "informe",     label: "Informe" },
+  { value: "comprobante", label: "Comprobante" },
+  { value: "otro",        label: "Otro" },
+];
+
+// ── Compras ───────────────────────────────────────────────────────────────────
+
+export const COMPRAS_PRIORIDAD_BADGE: Record<ComprasPrioridad, BadgeVariant> = {
+  normal:  "default",
+  urgente: "warning",
+  critica: "danger",
+};
+
+export const COMPRAS_PRIORIDAD_LABEL: Record<ComprasPrioridad, string> = {
+  normal:  "Normal",
+  urgente: "Urgente",
+  critica: "Crítica",
+};
+
+export const COMPRAS_ESTADO_SOL_BADGE: Record<ComprasEstadoSolicitud, BadgeVariant> = {
+  pendiente:   "warning",
+  en_revision: "info",
+  aprobada:    "success",
+  rechazada:   "danger",
+  archivada:   "gray",
+};
+
+export const COMPRAS_ESTADO_SOL_LABEL: Record<ComprasEstadoSolicitud, string> = {
+  pendiente:   "Pendiente",
+  en_revision: "En revisión",
+  aprobada:    "Aprobada",
+  rechazada:   "Rechazada",
+  archivada:   "Archivada",
+};
+
+export const COMPRAS_ESTADO_OC_BADGE: Record<ComprasEstadoOrden, BadgeVariant> = {
+  borrador:  "gray",
+  emitida:   "info",
+  recibida:  "success",
+  pagada:    "success",
+  cancelada: "danger",
+};
+
+export const COMPRAS_ESTADO_OC_LABEL: Record<ComprasEstadoOrden, string> = {
+  borrador:  "Borrador",
+  emitida:   "Emitida",
+  recibida:  "Recibida",
+  pagada:    "Pagada",
+  cancelada: "Cancelada",
+};
 
 // ── Avance color helper ───────────────────────────────────────────────────────
 

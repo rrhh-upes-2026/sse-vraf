@@ -4,7 +4,7 @@ import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
 import type { RoleCode } from "@/types/roles";
 import type { WorkspaceId } from "@/config/nav";
-import type { ProcesoInstitucional, SemaforoColor, EstadoProceso } from "@/types/entities";
+import type { ProcesoInstitucional } from "@/types/entities";
 import { useProcesos, useProcesosActions } from "@/hooks/useProcesos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
@@ -13,27 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { fmtShortDate } from "@/lib/utils";
-
-const SEMAPHORE_BADGE: Record<SemaforoColor, "success" | "warning" | "danger"> = {
-  verde: "success",
-  amarillo: "warning",
-  rojo: "danger",
-};
-
-const ESTADO_LABEL: Record<EstadoProceso, string> = {
-  borrador: "Borrador",
-  activo: "Activo",
-  en_riesgo: "En riesgo",
-  completado: "Completado",
-  archivado: "Archivado",
-};
-
-const PRIORIDAD_BADGE: Record<ProcesoInstitucional["prioridad"], "info" | "default" | "warning" | "danger"> = {
-  baja: "default",
-  media: "info",
-  alta: "warning",
-  critica: "danger",
-};
+import {
+  SEMAFORO_BADGE,
+  PRIORIDAD_BADGE,
+  ESTADO_PROCESO_LABEL,
+} from "@/lib/catalogs";
 
 function daysDiff(fechaLimite: string) {
   const diff = new Date(fechaLimite).getTime() - Date.now();
@@ -63,7 +47,7 @@ function ProcesoCard({ proceso }: { proceso: ProcesoInstitucional }) {
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-[14px] line-clamp-2 flex-1">{proceso.nombre}</CardTitle>
-          <Badge variant={SEMAPHORE_BADGE[proceso.semaforo]} className="shrink-0">
+          <Badge variant={SEMAFORO_BADGE[proceso.semaforo]} className="shrink-0">
             <span
               className="w-1.5 h-1.5 rounded-full"
               style={{
@@ -75,7 +59,7 @@ function ProcesoCard({ proceso }: { proceso: ProcesoInstitucional }) {
                     : "var(--sse-sem-red-fg)",
               }}
             />
-            {ESTADO_LABEL[proceso.estado]}
+            {ESTADO_PROCESO_LABEL[proceso.estado]}
           </Badge>
         </div>
         <div className="flex items-center gap-2 mt-1.5">

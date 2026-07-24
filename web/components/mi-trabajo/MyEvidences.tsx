@@ -5,24 +5,11 @@ import type { Evidencia } from "@/types/entities";
 import { useEvidencias, useEvidenciasActions } from "@/hooks/useEvidencias";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import { Badge, type BadgeVariant } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fmtShortDate } from "@/lib/utils";
-
-const ESTADO_BADGE: Record<Evidencia["estado"], BadgeVariant> = {
-  pendiente:  "warning",
-  cargada:    "info",
-  validada:   "success",
-  rechazada:  "danger",
-};
-
-const ESTADO_LABEL: Record<Evidencia["estado"], string> = {
-  pendiente: "Pendiente",
-  cargada:   "Cargada",
-  validada:  "Validada",
-  rechazada: "Rechazada",
-};
+import { ESTADO_EVIDENCIA_BADGE, ESTADO_EVIDENCIA_LABEL } from "@/lib/catalogs";
 
 const TIPO_ICON: Record<string, string> = {
   documento:    "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
@@ -73,7 +60,7 @@ function EvidenceRow({ evidencia }: { evidencia: Evidencia }) {
       </div>
 
       <div className="flex items-center gap-1.5 shrink-0">
-        <Badge variant={ESTADO_BADGE[evidencia.estado]}>{ESTADO_LABEL[evidencia.estado]}</Badge>
+        <Badge variant={ESTADO_EVIDENCIA_BADGE[evidencia.estado]}>{ESTADO_EVIDENCIA_LABEL[evidencia.estado]}</Badge>
         {canUpload && evidencia.estado === "pendiente" && (
           <Button variant="secondary" size="sm" title="Cargar evidencia">
             <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">

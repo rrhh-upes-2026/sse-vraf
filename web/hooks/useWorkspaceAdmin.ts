@@ -29,7 +29,7 @@ function useAsync<T>(fetcher: () => Promise<T>, deps: unknown[]) {
       .then(setData)
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
   }, deps);
 
   useEffect(() => { run(); }, [run]);
