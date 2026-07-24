@@ -227,13 +227,14 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
   const [editing, setEditing]       = useState<ProyectoEstrategico | null>(null);
 
   const { form, errors, setField, reset, validate: validateForm } = useFormState(EMPTY_FORM, validate);
-  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
-    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { data: proyectos, isLoading: loadingProy } = useProyectos({ unidadId: wsId });
   const { data: objetivos }                          = useObjetivos();
   const { data: procesos }                           = useProcesos({ unidadId: wsId });
   const actions                                      = useProyectosActions();
+
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
   const { hasPermission }                            = usePermissions();
   const canEdit                                      = hasPermission("process.edit");
 

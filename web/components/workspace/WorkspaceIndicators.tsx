@@ -312,11 +312,12 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
   const [editing, setEditing]       = useState<Indicador | null>(null);
 
   const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateIndicator);
-  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
-    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { data: indicadores, isLoading } = useIndicadores();
   const actions = useIndicadoresActions();
+
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
   const { hasPermission } = usePermissions();
   const canEdit = hasPermission("indicator.edit");
 

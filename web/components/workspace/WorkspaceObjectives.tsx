@@ -191,13 +191,14 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
   const [editing, setEditing]       = useState<ObjetivoEstrategico | null>(null);
 
   const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateObjectives);
-  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
-    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { data: objetivos, isLoading } = useObjetivos();
   const { data: planes }               = usePlanes({ wsId });
   const { data: proyectos }            = useProyectos({ unidadId: wsId });
   const actions                        = useObjetivosActions();
+
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
   const { hasPermission }              = usePermissions();
   const canEdit                        = hasPermission("process.edit");
 

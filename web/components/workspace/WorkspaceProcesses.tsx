@@ -6,7 +6,6 @@ import type { ProcesoInstitucional, SemaforoColor, EstadoProceso } from "@/types
 import type { ProcessInstance } from "@/types/workflow";
 import { useProcesos, useProcesosActions } from "@/hooks/useProcesos";
 import { useProcessInstances } from "@/hooks/useWorkflow";
-import { useProyectos } from "@/hooks/useProyectos";
 import { useActividades } from "@/hooks/useActividades";
 import { useEvidencias } from "@/hooks/useEvidencias";
 import { useSolicitudes } from "@/hooks/useSolicitudes";
@@ -389,8 +388,6 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
   const [editing, setEditing]       = useState<ProcesoInstitucional | null>(null);
 
   const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateForm);
-  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
-    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { hasPermission } = usePermissions();
   const canEdit = hasPermission("process.edit");
@@ -402,6 +399,9 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
   const { data: indicadores  }                    = useIndicadores();
 
   const actions = useProcesosActions();
+
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const tabsWithCounts = TABS.map((t) => ({
     ...t,

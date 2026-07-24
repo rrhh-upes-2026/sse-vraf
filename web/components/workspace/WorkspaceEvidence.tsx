@@ -211,7 +211,7 @@ function validateEvidence(form: typeof EMPTY_FORM): Partial<Record<keyof typeof 
   return errs;
 }
 
-export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
+export function WorkspaceEvidence({ wsId: _wsId }: WorkspaceEvidenceProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing]       = useState<Evidencia | null>(null);
 
