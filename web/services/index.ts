@@ -54,3 +54,4 @@ export * from "./gwp";
 export * from "./iia";
 export * from "./fmi";
 export * from "./ide";
+export * from "./oim";

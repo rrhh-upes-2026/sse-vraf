@@ -856,6 +856,21 @@ const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
     updatedAt: "2026-07-24T10:00:00Z",
     updatedBy: "admin@upes.edu.sv",
   },
+  oim: {
+    wsId: "oim",
+    nombre: "Official Indicator Migration",
+    nombreCorto: "OIM",
+    descripcion: "Motor de migración oficial de indicadores VRAF. Normaliza, versiona y valida los indicadores institucionales contra el catálogo FMI. Sprint 017.",
+    responsableId: "USR-VRAF-001",
+    color: "#6366F1",
+    colorFondo: "#EEF2FF",
+    icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12",
+    slaDiasDefault: 0,
+    zonaHoraria: "America/El_Salvador",
+    idioma: "es-SV",
+    updatedAt: "2026-07-24T10:00:00Z",
+    updatedBy: "admin@upes.edu.sv",
+  },
 };
 
 // ── Audit Records ─────────────────────────────────────────────────────────────

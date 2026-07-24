@@ -28,6 +28,7 @@ const UNIT_CODE: Record<WorkspaceId, string> = {
   iia: "IIA",
   fmi: "FMI",
   ide: "IDE",
+  oim: "OIM",
 };
 
 function pad(n: number, width: number) {

@@ -103,6 +103,11 @@
     }
   } catch (e) {}
   try {
+    if (typeof VRAFMigration !== "undefined" && typeof VRAFMigration.bootstrap === "function") {
+      VRAFMigration.bootstrap();
+    }
+  } catch (e) {}
+  try {
     bootstrapDashboardAdapters_();
   } catch (e) {}
   try {
@@ -161,6 +166,9 @@
   } catch (e) {}
   try {
     if (typeof IDE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IDE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof OIM_UNIT_DEF !== "undefined") OrgUnitRegistry.register(OIM_UNIT_DEF);
   } catch (e) {}
 })();
 
