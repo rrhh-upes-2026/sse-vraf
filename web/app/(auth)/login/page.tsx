@@ -3,139 +3,90 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-type Step = "email" | "otp";
-
 function LoginFlow() {
-  const router = useRouter();
+  const router      = useRouter();
   const searchParams = useSearchParams();
 
-  const [step, setStep]   = useState<Step>("email");
-  const [email, setEmail] = useState("");
-  const [code, setCode]   = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email,    setEmail]    = useState("");
+  const [password, setPassword] = useState("");
+  const [error,    setError]    = useState("");
+  const [loading,  setLoading]  = useState(false);
 
-  async function handleSendOtp(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
       const res = await fetch("/api/auth/login", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body:    JSON.stringify({ email, password }),
       });
-      const data = await res.json() as { ok?: boolean; error?: string };
+      const data = await res.json() as { ok?: boolean; error?: string; mustChangePassword?: boolean };
       if (!res.ok) {
-        setError(data.error ?? "Error al enviar el código.");
+        setError(data.error ?? "Credenciales inválidas.");
         return;
       }
-      setStep("otp");
+      if (data.mustChangePassword) {
+        router.push("/change-password");
+      } else {
+        const callbackUrl = searchParams.get("callbackUrl") ?? "/mi-trabajo";
+        router.push(callbackUrl);
+      }
     } catch {
       setError("Error de conexión. Intente nuevamente.");
     } finally {
       setLoading(false);
     }
-  }
-
-  async function handleVerifyOtp(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code }),
-      });
-      const data = await res.json() as { ok?: boolean; error?: string };
-      if (!res.ok) {
-        setError(data.error ?? "Código inválido o expirado.");
-        return;
-      }
-      const callbackUrl = searchParams.get("callbackUrl") ?? "/mi-trabajo";
-      router.push(callbackUrl);
-    } catch {
-      setError("Error de conexión. Intente nuevamente.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (step === "otp") {
-    return (
-      <form className="mt-7" onSubmit={handleVerifyOtp}>
-        <p className="text-[12px] text-sse-muted mb-4 text-center leading-relaxed">
-          Enviamos un código de 6 dígitos a<br />
-          <strong className="text-sse-ink">{email}</strong>
-        </p>
-        <label className="block text-[12px] font-semibold text-sse-ink mb-1.5" htmlFor="code">
-          Código de verificación
-        </label>
-        <input
-          id="code"
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]{6}"
-          maxLength={6}
-          required
-          autoFocus
-          autoComplete="one-time-code"
-          placeholder="123456"
-          value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          className="w-full rounded-[9px] border border-sse-shell-border bg-white px-3.5 py-2.5 text-[15px] font-semibold tracking-[0.35em] text-sse-ink placeholder:text-sse-muted placeholder:tracking-normal focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-        />
-        {error && (
-          <p className="mt-2 text-[11.5px] font-medium text-red-600">{error}</p>
-        )}
-        <button
-          type="submit"
-          disabled={loading || code.length !== 6}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#2E6BE6] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#2558c4] disabled:opacity-60"
-        >
-          {loading ? "Verificando…" : "Ingresar"}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setStep("email");
-            setCode("");
-            setError("");
-          }}
-          className="mt-3 w-full text-center text-[11.5px] text-sse-muted hover:text-sse-ink transition"
-        >
-          ← Cambiar correo
-        </button>
-      </form>
-    );
   }
 
   return (
-    <form className="mt-7" onSubmit={handleSendOtp}>
-      <label className="block text-[12px] font-semibold text-sse-ink mb-1.5" htmlFor="email">
-        Correo institucional
-      </label>
-      <input
-        id="email"
-        type="email"
-        required
-        autoFocus
-        autoComplete="email"
-        placeholder="usuario@upes.edu.sv"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full rounded-[9px] border border-sse-shell-border bg-white px-3.5 py-2.5 text-[13px] text-sse-ink placeholder:text-sse-muted focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-      />
+    <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
+      <div>
+        <label className="block text-[12px] font-semibold text-sse-ink mb-1.5" htmlFor="email">
+          Correo institucional
+        </label>
+        <input
+          id="email"
+          type="email"
+          required
+          autoFocus
+          autoComplete="email"
+          placeholder="usuario@upes.edu.sv"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full rounded-[9px] border border-sse-shell-border bg-white px-3.5 py-2.5 text-[13px] text-sse-ink placeholder:text-sse-muted focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+
+      <div>
+        <label className="block text-[12px] font-semibold text-sse-ink mb-1.5" htmlFor="password">
+          Contraseña
+        </label>
+        <input
+          id="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full rounded-[9px] border border-sse-shell-border bg-white px-3.5 py-2.5 text-[13px] text-sse-ink placeholder:text-sse-muted focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+
       {error && (
-        <p className="mt-2 text-[11.5px] font-medium text-red-600">{error}</p>
+        <p className="rounded-[8px] bg-red-50 border border-red-100 px-3 py-2 text-[12px] font-medium text-red-700">
+          {error}
+        </p>
       )}
+
       <button
         type="submit"
         disabled={loading}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#2E6BE6] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#2558c4] disabled:opacity-60"
+        className="mt-1 flex w-full items-center justify-center gap-2 rounded-[9px] bg-[#2E6BE6] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#2558c4] disabled:opacity-60"
       >
-        {loading ? "Enviando código…" : "Enviar código"}
+        {loading ? "Verificando…" : "Iniciar sesión"}
       </button>
     </form>
   );

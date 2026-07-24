@@ -1,30 +1,192 @@
 /**
- * Authentication bridge — institutional email + OTP flow.
+ * Authentication bridge — institutional email + password flow.
  *
  * Security controls:
  *   - Domain enforcement (upes.edu.sv only)
- *   - User existence + activo check at every step
- *   - Resend cooldown: 60 s between OTP sends; same code reused within the window
- *   - Brute-force lockout: 5 wrong codes → 15-min lockout per email
- *   - Single-use OTP: cache key deleted on first correct verification
+ *   - User existence + activo check
+ *   - Brute-force lockout: 5 wrong passwords → 15-min lockout per email
+ *   - Passwords stored as SHA-256(salt:password) — never in plaintext
  *   - Full audit trail via LoginAuditService → login_audit sheet
+ *   - mustChangePassword flag forces password change on first login
  *
  * CacheService keys (namespaced "sse:" by AppCacheService):
- *   otp:{email}    { code, issuedAt }            TTL 600 s (10 min)
- *   fails:{email}  { count, lockedUntil }         TTL 900 s (15 min)
+ *   fails:{email}  { count, lockedUntil }   TTL 900 s (15 min)
  *
- * Handled actions: auth.ping | auth.sendOtp | auth.verifyOtp | auth.getUser
+ * Handled actions: auth.ping | auth.login | auth.changePassword | auth.getUser
+ *   (auth.sendOtp / auth.verifyOtp retained for backward compatibility)
  */
+
+// ── Password helpers (module-level, shared across AuthBridge methods) ─────────
+
+function hashPassword_(password, salt) {
+  var raw = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    salt + ":" + password,
+    Utilities.Charset.UTF_8
+  );
+  return raw.map(function(b) {
+    return (b < 0 ? b + 256 : b).toString(16).padStart(2, "0");
+  }).join("");
+}
+
+function generateSalt_() {
+  return Utilities.getUuid().replace(/-/g, "");
+}
+
+function generateTempPassword_() {
+  // 12-char alphanumeric, excluding ambiguous chars (0/O, 1/I/l)
+  var chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  var result = "";
+  for (var i = 0; i < 12; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
+// ── AuthBridge ────────────────────────────────────────────────────────────────
+
 var AuthBridge = {
   route: function (verb, params) {
     switch (verb) {
-      case "ping":      return AuthBridge.ping();
-      case "sendOtp":   return AuthBridge.sendOtp(params);
-      case "verifyOtp": return AuthBridge.verifyOtp(params);
-      case "getUser":   return AuthBridge.getUser(params);
+      case "ping":           return AuthBridge.ping();
+      case "login":          return AuthBridge.login(params);
+      case "changePassword": return AuthBridge.changePassword(params);
+      case "getUser":        return AuthBridge.getUser(params);
+      // Legacy OTP — kept for backward compatibility
+      case "sendOtp":        return AuthBridge.sendOtp(params);
+      case "verifyOtp":      return AuthBridge.verifyOtp(params);
       default:
         throw new Error("Unknown auth action: auth." + verb);
     }
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // PRIMARY — email + password login
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * Validates email + password. Returns user payload on success.
+   *
+   * @param {{ email: string, password: string, ip?: string, userAgent?: string }} params
+   * @returns {{ usuarioId, nombre, email, rol, unidadId, mustChangePassword }}
+   */
+  login: function (params) {
+    Validator.requireFields(params, ["email", "password"]);
+    var email     = String(params.email).trim().toLowerCase();
+    var password  = String(params.password);
+    var ip        = String(params.ip        || "");
+    var userAgent = String(params.userAgent || "");
+
+    // Domain gate
+    var domain        = email.split("@")[1] || "";
+    var allowedDomain = Config.domain() || "upes.edu.sv";
+    if (!domain || domain !== allowedDomain) {
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "domain_invalid" });
+      throw new Error("Acceso permitido únicamente para cuentas institucionales UPES.");
+    }
+
+    // Brute-force lockout check
+    var failKey   = "fails:" + email;
+    var failState = AppCacheService.get(failKey) || { count: 0, lockedUntil: 0 };
+    var now       = new Date().getTime();
+    var LOCK_TTL  = 900; // 15 min in seconds
+    var MAX_ATTEMPTS = 5;
+
+    if (failState.lockedUntil && now < failState.lockedUntil) {
+      var remaining = Math.ceil((failState.lockedUntil - now) / 60000);
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "account_locked" });
+      throw new Error("Cuenta bloqueada temporalmente. Intente nuevamente en " + remaining + " minuto(s).");
+    }
+
+    // User lookup
+    var results = listEntities_("usuarios", { email: email });
+    if (!results.items || results.items.length === 0) {
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "user_not_found" });
+      throw new Error("Credenciales inválidas.");
+    }
+    var u = results.items[0];
+    if (u.activo !== true) {
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "user_inactive", usuarioId: u.id });
+      throw new Error("Credenciales inválidas.");
+    }
+
+    // Password check
+    if (!u.passwordHash || !u.passwordSalt) {
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "no_password_set", usuarioId: u.id });
+      throw new Error("Credenciales inválidas. Contacte al administrador.");
+    }
+    var expectedHash = hashPassword_(password, u.passwordSalt);
+    if (expectedHash !== u.passwordHash) {
+      failState.count = (failState.count || 0) + 1;
+      if (failState.count >= MAX_ATTEMPTS) {
+        failState.lockedUntil = now + 15 * 60 * 1000;
+        AppCacheService.set(failKey, failState, LOCK_TTL);
+        LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "max_attempts_locked", usuarioId: u.id });
+        throw new Error("Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.");
+      }
+      AppCacheService.set(failKey, failState, LOCK_TTL);
+      var left = MAX_ATTEMPTS - failState.count;
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "invalid_password_attempt_" + failState.count, usuarioId: u.id });
+      throw new Error("Credenciales inválidas. Te quedan " + left + " intento(s).");
+    }
+
+    // Success — clear failure counter
+    AppCacheService.remove(failKey);
+    var mustChange = u.mustChangePassword === true || u.mustChangePassword === "true";
+
+    LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "OK", motivo: "login_success", usuarioId: u.id, rol: u.rol, unidad: u.unidadId });
+    AppLogger.info("AuthBridge.login: success", { email: email });
+
+    return {
+      usuarioId:          u.id,
+      nombre:             u.nombre,
+      email:              u.email,
+      rol:                u.rol,
+      unidadId:           u.unidadId,
+      mustChangePassword: mustChange,
+    };
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // Change password (first-login mandatory change or self-service)
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * @param {{ email: string, newPassword: string }} params
+   * @returns {{ changed: boolean }}
+   */
+  changePassword: function (params) {
+    Validator.requireFields(params, ["email", "newPassword"]);
+    var email       = String(params.email).trim().toLowerCase();
+    var newPassword = String(params.newPassword);
+
+    if (newPassword.length < 8) {
+      throw new Error("La contraseña debe tener al menos 8 caracteres.");
+    }
+
+    var results = listEntities_("usuarios", { email: email });
+    if (!results.items || results.items.length === 0) {
+      throw new Error("Usuario no encontrado.");
+    }
+    var u    = results.items[0];
+    var salt = generateSalt_();
+    var hash = hashPassword_(newPassword, salt);
+
+    updateEntity_("usuarios", u.id, {
+      passwordHash:       hash,
+      passwordSalt:       salt,
+      mustChangePassword: false,
+      updatedAt:          new Date().toISOString(),
+    });
+
+    AuditService.record({
+      accion:      "auth.changePassword",
+      entidadTipo: "usuarios",
+      entidadId:   u.id,
+      usuarioId:   u.id,
+      resultado:   "ok",
+    });
+
+    AppLogger.info("AuthBridge.changePassword: success", { email: email });
+    return { changed: true };
   },
 
   // ─────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   getPlatformStatus,
   runStep,
@@ -171,6 +172,7 @@ function LogPanel({ logs, loading }: { logs: StepLog[]; loading: boolean }) {
 // ── Main wizard ───────────────────────────────────────────────────────────────
 
 export function InstallationWizard() {
+  const router = useRouter();
   const [platformStatus, setPlatformStatus] = useState<PlatformStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [running, setRunning] = useState(false);
@@ -185,10 +187,16 @@ export function InstallationWizard() {
 
   useEffect(() => {
     getPlatformStatus()
-      .then(setPlatformStatus)
+      .then((s) => {
+        setPlatformStatus(s);
+        // Platform already installed — redirect away from the wizard
+        if (s.installed) {
+          router.replace("/ws/vraf/dashboard");
+        }
+      })
       .catch(() => setPlatformStatus({ installed: false, version: null, installDate: null }))
       .finally(() => setLoadingStatus(false));
-  }, []);
+  }, [router]);
 
   const appendLogs = useCallback((newLogs: StepLog[]) => {
     setAllLogs((prev) => [...prev, ...newLogs]);
@@ -251,7 +259,7 @@ export function InstallationWizard() {
     }
     setRunning(false);
     setCurrentStep(-1);
-  }, [appendLogs, setStepStatus]);
+  }, [appendLogs, setStepStatus, router]);
 
   const retryFromStep = useCallback(async (fromIndex: number) => {
     abortRef.current = false;
@@ -587,14 +595,25 @@ export function InstallationWizard() {
                   }}>
                     <Icon d={ICONS.check} size={17} strokeWidth={2.5} color="#22c55e" />
                   </div>
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: "#22c55e" }}>
                       ¡Plataforma instalada correctamente!
                     </div>
                     <div style={{ fontSize: 12, color: "rgba(34,197,94,0.7)", marginTop: 2 }}>
-                      SSE-VRAF v1.0.0 lista para operar. Navega a cualquier workspace para comenzar.
+                      SSE-VRAF v1.0.0 lista para operar. Inicia sesión con las credenciales del administrador.
                     </div>
                   </div>
+                  <button
+                    onClick={() => router.push("/login")}
+                    style={{
+                      padding: "8px 16px", borderRadius: 8,
+                      background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.3)",
+                      color: "#22c55e", fontSize: 12, fontWeight: 700, cursor: "pointer",
+                      whiteSpace: "nowrap", flexShrink: 0,
+                    }}
+                  >
+                    Ir a inicio de sesión →
+                  </button>
                 </div>
               )}
 

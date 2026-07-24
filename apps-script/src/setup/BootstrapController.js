@@ -306,6 +306,43 @@ var BootstrapController = (function () {
       'Administrador configurado: ' + created + ' creado(s), ' + existing + ' actualizado(s)'
     );
 
+    // ── Create / update the admin record in the auth table (usuarios) ──────────
+    var tempPassword = generateTempPassword_();
+    var salt         = generateSalt_();
+    var hash         = hashPassword_(tempPassword, salt);
+    var adminNow     = now_();
+    try {
+      var authLookup = listEntities_("usuarios", { email: adminEmail });
+      if (authLookup.items && authLookup.items.length > 0) {
+        updateEntity_("usuarios", authLookup.items[0].id, {
+          passwordHash:       hash,
+          passwordSalt:       salt,
+          mustChangePassword: true,
+          activo:             true,
+          updatedAt:          adminNow,
+        });
+        log_(logs, 'info', 'Contraseña temporal actualizada para el administrador');
+      } else {
+        createEntity_("usuarios", {
+          nombre:             adminName,
+          email:              adminEmail,
+          unidadId:           'vraf',
+          rol:                'ADMIN',
+          activo:             true,
+          passwordHash:       hash,
+          passwordSalt:       salt,
+          mustChangePassword: true,
+          avatarInitials:     adminName.split(' ').slice(0, 2).map(function(w) { return w[0] || ''; }).join('').toUpperCase(),
+          createdAt:          adminNow,
+          updatedAt:          adminNow,
+        });
+        log_(logs, 'success', 'Usuario administrador creado en tabla de autenticación');
+      }
+      log_(logs, 'success', 'Contraseña temporal del administrador: ' + tempPassword + ' — cámbiela en el primer inicio de sesión');
+    } catch (e) {
+      log_(logs, 'warn', 'No se pudo crear el usuario en tabla de auth: ' + String(e.message || e));
+    }
+
     AuditService.record({
       accion:      'platform.createAdmin',
       entidadTipo: 'wsUsers',
@@ -316,11 +353,13 @@ var BootstrapController = (function () {
     });
 
     return ok_(5, logs, {
-      email:      adminEmail,
-      name:       adminName,
-      workspaces: WORKSPACES,
-      created:    created,
-      updated:    existing,
+      email:           adminEmail,
+      name:            adminName,
+      workspaces:      WORKSPACES,
+      created:         created,
+      updated:         existing,
+      tempPassword:    tempPassword, // shown in wizard UI; user must change on first login
+      mustChangePw:    true,
     });
   }
 

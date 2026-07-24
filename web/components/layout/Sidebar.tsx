@@ -19,6 +19,7 @@ import { demoRoleLabel } from "@/types/roles";
 export interface SidebarUser {
   name: string;
   initials: string;
+  isAdmin?: boolean;
 }
 
 interface SidebarProps {
@@ -81,17 +82,19 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
           )}
         </Link>
 
-        <Link
-          href="/system/platform/wizard"
-          className={`mt-1 flex w-full items-center gap-[11px] rounded-[10px] p-2.5 text-[13px] font-bold font-sans ${
-            isSistema
-              ? "bg-[rgba(46,107,230,.20)] text-white shadow-[inset_3px_0_0_#5B8DEF]"
-              : "bg-white/4 text-sse-sidebar-text-bright"
-          }`}
-        >
-          <GlyphIcon d={SISTEMA_ICON} size={18} />
-          <span className="flex-1 text-left">Sistema</span>
-        </Link>
+        {user.isAdmin && (
+          <Link
+            href="/system/platform/wizard"
+            className={`mt-1 flex w-full items-center gap-[11px] rounded-[10px] p-2.5 text-[13px] font-bold font-sans ${
+              isSistema
+                ? "bg-[rgba(46,107,230,.20)] text-white shadow-[inset_3px_0_0_#5B8DEF]"
+                : "bg-white/4 text-sse-sidebar-text-bright"
+            }`}
+          >
+            <GlyphIcon d={SISTEMA_ICON} size={18} />
+            <span className="flex-1 text-left">Sistema</span>
+          </Link>
+        )}
 
         <WorkspaceSwitcher currentId={wsId} />
 

@@ -200,6 +200,28 @@ export class MockAppsScriptAdapter implements IAppsScriptClient {
         if (verb === "getStatus") return getPlatformStatus() as Promise<T>;
         return runStep(verb, params) as Promise<T>;
       }
+      // Auth actions — return mock session data for dev/test
+      case "login":
+        return {
+          usuarioId:          "USR-DEV-001",
+          nombre:             "Administrador Demo",
+          email:              params?.email ?? "admin@upes.edu.sv",
+          rol:                "ADMIN",
+          unidadId:           "vraf",
+          mustChangePassword: false,
+        } as unknown as T;
+      case "changePassword":
+        return { changed: true } as unknown as T;
+      case "sendOtp":
+        return { sent: true } as unknown as T;
+      case "verifyOtp":
+        return {
+          usuarioId: "USR-DEV-001",
+          nombre:    "Administrador Demo",
+          email:     params?.email ?? "admin@upes.edu.sv",
+          rol:       "ADMIN",
+          unidadId:  "vraf",
+        } as unknown as T;
       default:
         throw new Error(`MockAppsScriptAdapter: unknown action ${action}`);
     }

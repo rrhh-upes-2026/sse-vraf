@@ -9,6 +9,7 @@ export interface SessionUser {
   email: string;
   rol: RoleCode;
   unidadId: WorkspaceId;
+  mustChangePassword?: boolean;
 }
 
 export const SESSION_COOKIE = "sse_session";
