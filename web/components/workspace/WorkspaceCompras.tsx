@@ -11,9 +11,8 @@ import {
   useSolicitudesCompra,
   useOrdenesCompra,
 } from "@/hooks/useCompras";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn, fmtShortDate } from "@/lib/utils";
 import {
@@ -67,7 +66,7 @@ function KpiTile({ label, value, sub, accent = "default", icon }: KpiTileProps) 
 
 // ── Solicitud row ─────────────────────────────────────────────────────────────
 
-function SolicitudRow({ sol, wsId }: { sol: ComprasSolicitud; wsId: WorkspaceId }) {
+function SolicitudRow({ sol, wsId: _wsId }: { sol: ComprasSolicitud; wsId: WorkspaceId }) {
   return (
     <div className="flex items-center justify-between gap-2 py-2.5 border-b border-sse-border last:border-0">
       <div className="flex-1 min-w-0">
@@ -126,7 +125,7 @@ export function WorkspaceCompras({ wsId }: WorkspaceComprasProps) {
   const solicitudesUrgentes = (solicitudes ?? []).filter(
     (s) => s.prioridad === "urgente" || s.prioridad === "critica",
   );
-  const ordenesAbiertas = (ordenes ?? []).filter(
+  const _ordenesAbiertas = (ordenes ?? []).filter(
     (o) => o.estado === "borrador" || o.estado === "emitida",
   );
 

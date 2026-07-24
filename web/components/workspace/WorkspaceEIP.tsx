@@ -37,7 +37,7 @@ const TREND_ICON: Record<string, string> = {
   stable: "→",
 };
 
-const TREND_COLOR: Record<string, string> = {
+const _TREND_COLOR: Record<string, string> = {
   up:     "text-emerald-600",
   down:   "text-red-500",
   stable: "text-sse-muted",

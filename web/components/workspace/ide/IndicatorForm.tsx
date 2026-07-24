@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   useCreateIDEIndicator, useUpdateIDEIndicator,
@@ -130,7 +130,8 @@ export function IDEIndicatorForm({ wsId, initialData }: { wsId: string; initialD
   const isPending = create.isPending || update.isPending;
 
   // Reset errors when form changes
-  useLayoutEffect(() => { if (errors.length > 0) setErrors([]); }, [form]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { if (errors.length > 0) setErrors([]); }, [form]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function set(field: keyof FormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));

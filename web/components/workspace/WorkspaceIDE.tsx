@@ -14,7 +14,7 @@ const PILLARS = [
   { label: "Detector de Duplicados", desc: "Detecta código repetido, nombre idéntico e indicadores equivalentes antes de guardar o importar.", icon: "M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z", color: "text-red-700 bg-red-50 border-red-200" },
 ];
 
-function IDEStats({ wsId }: { wsId: string }) {
+function IDEStats({ wsId: _wsId }: { wsId: string }) {
   const all      = useIDEIndicators();
   const draft    = useIDEIndicators({ status: "borrador" });
   const review   = useIDEIndicators({ status: "en_revision" });

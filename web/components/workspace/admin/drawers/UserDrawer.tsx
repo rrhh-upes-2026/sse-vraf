@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import type { WorkspaceUser, RoleCode } from "@/types/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -39,8 +39,9 @@ export function UserDrawer({ wsId, user, open, onClose, onSaved }: UserDrawerPro
     activo: true,
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({ nombre: user.nombre, email: user.email, rol: user.rol, activo: user.activo });
     } else {
       setForm({ nombre: "", email: "", rol: "OPS", activo: true });

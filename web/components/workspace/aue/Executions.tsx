@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAUEExecutions, useRetryAUEExecution } from "@/hooks/useAUE";
 import type { AUEExecutionStatus } from "@/types/aue";
 
-const PURPLE = "#7C3AED";
+const _PURPLE = "#7C3AED";
 
 const STATUS_CHIP: Record<string, string> = {
   pendiente:    "bg-gray-100 text-gray-700",

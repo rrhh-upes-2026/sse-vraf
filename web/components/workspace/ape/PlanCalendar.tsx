@@ -33,11 +33,11 @@ function plansForMonth(plans: APEPlan[], month: number) {
   return plans.filter((p) => Number(p.plannedMonth) === month);
 }
 
-function plansForQuarter(plans: APEPlan[], quarter: number) {
+function _plansForQuarter(plans: APEPlan[], quarter: number) {
   return plans.filter((p) => Number(p.plannedQuarter) === quarter);
 }
 
-function plansForSemester(plans: APEPlan[], semester: number) {
+function _plansForSemester(plans: APEPlan[], semester: number) {
   return plans.filter((p) => Number(p.plannedSemester) === semester);
 }
 

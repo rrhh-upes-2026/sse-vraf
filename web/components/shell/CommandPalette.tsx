@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCommandPaletteStore } from "@/hooks/useCommandPalette";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -120,7 +120,8 @@ export function CommandPalette() {
   }, [isOpen, open, close]);
 
   // Reset highlight when query changes
-  useLayoutEffect(() => {
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHighlighted(0);
   }, [query, isOpen]);
 

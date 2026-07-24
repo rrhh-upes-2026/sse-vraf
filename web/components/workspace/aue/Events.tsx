@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAUEEvents, useProcessAUEEvent } from "@/hooks/useAUE";
-import type { AUEEventStatus, AUEEventPriority, AUESourceEngine, AUEEventType } from "@/types/aue";
+import type { AUEEventStatus, AUEEventPriority, AUESourceEngine } from "@/types/aue";
 
 const PURPLE = "#7C3AED";
 

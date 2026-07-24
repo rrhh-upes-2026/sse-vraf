@@ -25,7 +25,7 @@ const ENTITY_LABEL: Record<string, string> = {
   ICE_Locks:            "Bloqueo",
 };
 
-export function AuditTrailView({ wsId }: { wsId: string }) {
+export function AuditTrailView({ wsId: _wsId }: { wsId: string }) {
   const [entityId, setEntityId] = useState("");
   const [search,   setSearch]   = useState(entityId);
 

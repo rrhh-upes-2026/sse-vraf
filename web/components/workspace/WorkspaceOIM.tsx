@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useOIMReports } from "@/hooks/useOIM";
 
-function OIMStats({ wsId }: { wsId: string }) {
+function OIMStats({ wsId: _wsId }: { wsId: string }) {
   const { data: reports } = useOIMReports();
 
   const last = reports?.[0];

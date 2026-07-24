@@ -2,7 +2,6 @@
 
 import type { WorkspaceId } from "@/config/nav";
 import { useContabilidadDashboard } from "@/hooks/useContabilidad";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 function KpiTile({

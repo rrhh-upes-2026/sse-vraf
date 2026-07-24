@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { useIIAConfig, useUpdateIIAConfig, useIIAStatus } from "@/hooks/useIIA";
 
 const MODELS = [
@@ -37,8 +37,9 @@ export function IIAConfig({ wsId }: { wsId: string }) {
     debugMode:   false,
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (config) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         apiKey:      "",
         model:       config.model       ?? "gemini-1.5-pro",

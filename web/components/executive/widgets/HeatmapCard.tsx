@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { HeatmapCardProps } from "@/types/executive";
 
 function interpolateColor(valor: number, min: number, max: number, from: string, to: string): string {

@@ -3,14 +3,14 @@
 import { useEmpleado } from "@/hooks/useEmpleados";
 import { useCapacitaciones } from "@/hooks/useCapacitaciones";
 import { useEvaluaciones } from "@/hooks/useEvaluaciones";
-import type { Empleado, EmpleadoEstado, EmpleadoCategoria, TipoContrato, CapacitacionEmpleado, EvaluacionDesempeno, EvaluacionNivel } from "@/types/hr";
+import type { Empleado, EmpleadoEstado, EmpleadoCategoria, TipoContrato, CapacitacionEmpleado, EvaluacionNivel } from "@/types/hr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Tabs } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { cn, fmtDate } from "@/lib/utils";
+import { fmtDate } from "@/lib/utils";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

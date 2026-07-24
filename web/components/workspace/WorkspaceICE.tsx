@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useICEPeriods, useICECapturas, useICEMyIndicators } from "@/hooks/useICE";
 
-function ICEStats({ wsId }: { wsId: string }) {
+function ICEStats({ wsId: _wsId }: { wsId: string }) {
   const { data: open }    = useICEPeriods({ estado: "abierto" });
   const { data: closed }  = useICEPeriods({ estado: "cerrado" });
   const { data: pending } = useICECapturas({ status: "enviada" });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNCEPreference, useUpdateNCEPreference } from "@/hooks/useNCE";
 import type { NCEChannel, NCETemplateType, NCEDigestFrequency } from "@/types/nce";
 
@@ -37,8 +37,9 @@ export function NCEPreferences({ wsId }: { wsId: string }) {
   const [digestFreq, setDigestFreq]     = useState<NCEDigestFrequency>("diario");
   const [saved, setSaved]               = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!pref) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setChannels(pref.enabledChannels ?? ["interna"]);
     setTypes(pref.enabledTypes ?? ALL_TYPES.map((t) => t.key));
     setQuietStart(pref.quietHoursStart ?? "");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import type { ProcessBlueprint } from "@/types/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -75,8 +75,9 @@ export function ProcessDrawer({ wsId, blueprint, open, onClose, onSaved }: Proce
     frecuencia: "mensual" as ProcessBlueprint["frecuencia"],
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (blueprint) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         nombre: blueprint.nombre,
         descripcion: blueprint.descripcion,

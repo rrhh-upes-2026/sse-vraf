@@ -52,7 +52,7 @@ function QuickLink({ label, href, icon }: { label: string; href: string; icon: s
 export function WorkspaceSSO({ wsId }: { wsId: WorkspaceId }) {
   const { data, isLoading } = useSSODashboard(wsId);
 
-  const riesgosCriticosYAltos = data ? data.riesgos.criticos + data.riesgos.altos : 0;
+  const _riesgosCriticosYAltos = data ? data.riesgos.criticos + data.riesgos.altos : 0;
 
   return (
     <div className="space-y-6">

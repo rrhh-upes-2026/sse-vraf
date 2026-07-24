@@ -6,7 +6,7 @@ import type { ComprasSolicitud, ComprasEstadoSolicitud, ComprasPrioridad } from 
 import { useSolicitudesCompra } from "@/hooks/useCompras";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
-import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn, fmtShortDate } from "@/lib/utils";
 

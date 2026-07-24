@@ -3,10 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useProcesosContratacion } from "@/hooks/useContratacion";
-import type { ProcesoContratacion, EtapaContratacion } from "@/types/contratacion";
-import { SkeletonCard } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
-import { cn } from "@/lib/utils";
+import type { ProcesoContratacion } from "@/types/contratacion";
 
 // ── Etiquetas y colores ───────────────────────────────────────────────────────
 
@@ -58,7 +55,7 @@ const ETAPA_COLOR: Record<string, string> = {
   suspendido:               "#6b7280",
 };
 
-const PRIORIDAD_COLOR: Record<string, string> = {
+const _PRIORIDAD_COLOR: Record<string, string> = {
   urgente: "#ef4444",
   normal:  "rgba(255,255,255,0.3)",
 };

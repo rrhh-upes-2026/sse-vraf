@@ -11,7 +11,7 @@
  *   V.   Firmas
  */
 
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState } from "react";
 import { useRequisicion, useGuardarRequisicion } from "@/hooks/useContratacion";
 import type { RequisicionPersonal, MatrizCompetencias } from "@/types/contratacion";
 
@@ -226,7 +226,7 @@ interface FormRequisicionProps {
   soloLectura?: boolean;
 }
 
-export function FormRequisicion({ procesoId, wsId, soloLectura = false }: FormRequisicionProps) {
+export function FormRequisicion({ procesoId, wsId: _wsId, soloLectura = false }: FormRequisicionProps) {
   const { data: requisicion, isLoading } = useRequisicion(procesoId);
   const guardar = useGuardarRequisicion(procesoId);
 
@@ -239,8 +239,9 @@ export function FormRequisicion({ procesoId, wsId, soloLectura = false }: FormRe
   const [guardado, setGuardado] = useState(false);
 
   // Poblar desde datos existentes cuando llegan
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (requisicion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm(requisicion);
     }
   }, [requisicion]);

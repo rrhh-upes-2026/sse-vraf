@@ -11,7 +11,7 @@ const ESTADO_CONFIG: Record<DashboardEstado, {
   critical: { dot: "bg-red-500",     bg: "bg-red-50 dark:bg-red-950/30",         border: "border-red-200 dark:border-red-800",         text: "text-red-700 dark:text-red-400",       label: "Crítico" },
 };
 
-export function StatusCard({ unitKey, label, estado, estadoRazon, cumplimientoPct, color, icon }: StatusCardProps) {
+export function StatusCard({ unitKey: _unitKey, label, estado, estadoRazon, cumplimientoPct, color: _color, icon: _icon }: StatusCardProps) {
   const cfg = ESTADO_CONFIG[estado];
 
   return (

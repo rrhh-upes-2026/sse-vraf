@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import type { RequestType } from "@/types/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -64,8 +64,9 @@ export function RequestDrawer({ wsId, request, open, onClose, onSaved }: Request
     },
   });
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (request) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         nombre: request.nombre,
         descripcion: request.descripcion,

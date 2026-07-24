@@ -7,7 +7,6 @@ import type { ProcesoInstitucional, Indicador, SemaforoColor } from "@/types/ent
 import { useProcesos } from "@/hooks/useProcesos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { IndicadoresService } from "@/services";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -157,7 +156,7 @@ interface WorkspaceDashboardProps {
   unitName: string;
 }
 
-export function WorkspaceDashboard({ wsId, unitColor, unitName }: WorkspaceDashboardProps) {
+export function WorkspaceDashboard({ wsId, unitColor: _unitColor, unitName }: WorkspaceDashboardProps) {
   const { hasPermission, isLoaded } = usePermissions();
 
   const { data: procesos, isLoading: loadingProcesos } = useProcesos({ unidadId: wsId });

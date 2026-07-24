@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { ExecutiveDashboardResumen } from "@/types/executive";
 import { GaugeCard } from "../widgets/GaugeCard";
 import { TrendCard }  from "../widgets/TrendCard";

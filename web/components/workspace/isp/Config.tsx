@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { useISPConfig, useUpdateISPConfig } from "@/hooks/useISP";
 import type { ISPConfig } from "@/types/isp";
 
@@ -48,7 +48,8 @@ export function ISPConfig({ wsId }: { wsId: string }) {
   });
   const [saved, setSaved] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (config) setForm(toFormState(config));
   }, [config]);
 

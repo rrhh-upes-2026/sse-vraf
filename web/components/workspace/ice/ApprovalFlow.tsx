@@ -5,7 +5,7 @@ import {
   useICECapturas, useICEApprovals,
   useApproveICECaptura, useRejectICECaptura, useReopenICECaptura,
 } from "@/hooks/useICE";
-import type { ICECaptura, ICEApproval } from "@/types/ice";
+import type { ICECaptura } from "@/types/ice";
 
 const LEVEL_LABEL: Record<number, string> = {
   1: "Jefatura",
@@ -41,7 +41,7 @@ function ApprovalTimeline({ captureId }: { captureId: string }) {
   );
 }
 
-function CaptureApprovalCard({ capture, wsId }: { capture: ICECaptura; wsId: string }) {
+function CaptureApprovalCard({ capture, wsId: _wsId }: { capture: ICECaptura; wsId: string }) {
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState("");
   const [action, setAction]     = useState<"approve" | "reject" | null>(null);

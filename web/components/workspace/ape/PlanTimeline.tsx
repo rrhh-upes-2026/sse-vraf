@@ -61,7 +61,7 @@ export function PlanTimeline({ wsId, year }: Props) {
   }
 
   const monthPositions = MONTH_NAMES_SHORT.map((name, i) => {
-    const d = new Date(numYear, i, 1);
+    const _d = new Date(numYear, i, 1);
     return { name, left: pct(`${currentYear}-${String(i + 1).padStart(2, "0")}-01`, total) };
   });
 

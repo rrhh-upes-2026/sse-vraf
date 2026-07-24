@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { useGWPConfig, useUpdateGWPConfig as useGWPSaveConfig } from "@/hooks/useGWP";
 
 interface FormState {
@@ -36,8 +36,9 @@ export function GWPConfig({ wsId }: { wsId: string }) {
   });
   const [saved, setSaved] = useState(false);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (config) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         clientId:        config.clientId        ?? "",
         clientSecret:    "",

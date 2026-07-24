@@ -2,10 +2,8 @@
 
 import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
-import type { RoleCode } from "@/types/roles";
-import type { WorkspaceId } from "@/config/nav";
 import type { ProcesoInstitucional } from "@/types/entities";
-import { useProcesos, useProcesosActions } from "@/hooks/useProcesos";
+import { useProcesos } from "@/hooks/useProcesos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

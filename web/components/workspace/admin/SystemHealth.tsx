@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { getAppsScriptClient } from "@/services/adapters/getAppsScriptClient";
 
 
@@ -119,7 +119,8 @@ export function SystemHealth({ wsId, isLive = false }: { wsId: string; isLive?: 
     }
   };
 
-  useLayoutEffect(() => { fetchHealth(); }, []);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { fetchHealth(); }, []);
 
   const cardStyle: React.CSSProperties = {
     background: "rgba(255,255,255,0.03)",

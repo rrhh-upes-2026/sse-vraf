@@ -5,7 +5,7 @@
  * Visual flow: Trigger → Conditions → Actions → Retry Policy → Test
  */
 
-import { useState, useEffect, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   AutomationConfig,
   TipoTrigger,
@@ -790,10 +790,11 @@ export function AutomationBuilder({ wsId }: { wsId: string }) {
   const selectedItem = (items ?? []).find((i) => i.id === selectedId);
 
   // Sync selected item → draft
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (selectedItem) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { createdAt, updatedAt, ...rest } = selectedItem;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDraft(rest);
       setTestResult(null);
       setDeleteConfirm(false);

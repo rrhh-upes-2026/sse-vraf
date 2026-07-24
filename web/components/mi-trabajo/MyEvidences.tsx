@@ -2,7 +2,7 @@
 
 import { useSession } from "@/lib/auth-client";
 import type { Evidencia } from "@/types/entities";
-import { useEvidencias, useEvidenciasActions } from "@/hooks/useEvidencias";
+import { useEvidencias } from "@/hooks/useEvidencias";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

@@ -71,7 +71,7 @@ function StepIndicador({ periodId, onSelect }: { periodId: string; onSelect: (id
   const [query, setQuery] = useState("");
 
   // context may have available indicators; fall back to a list message
-  const indicators = useMemo(() => {
+  const _indicators = useMemo(() => {
     if (!context) return [];
     // context is per indicator — but here we need the list; use a different approach
     return [];
@@ -176,7 +176,7 @@ function StepVariables({
 }
 
 // Step 4 — Evidence links (EME refs)
-function StepEvidencias({ captureId, onNext }: { captureId: string; onNext: () => void }) {
+function StepEvidencias({ captureId: _captureId, onNext }: { captureId: string; onNext: () => void }) {
   const [ref, setRef] = useState("");
   const [refs, setRefs] = useState<string[]>([]);
 

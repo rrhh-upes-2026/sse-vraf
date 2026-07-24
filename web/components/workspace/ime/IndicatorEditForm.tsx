@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useLayoutEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useIMEIndicador, useIMEIndicadorActions, useIMECatalogosPorTipo } from "@/hooks/useIME";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,8 @@ export function IndicatorEditForm({ wsId, indicadorId }: Props) {
   const [form, setForm] = useState<Partial<IMEIndicador> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (ind && !form) setForm({ ...ind });
   }, [ind, form]);
 
