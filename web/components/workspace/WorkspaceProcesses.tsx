@@ -102,7 +102,7 @@ function ActiveInstances({ wsId }: { wsId: string }) {
 
 const SEMAPHORE_DOT: Record<SemaforoColor, string> = {
   verde:    "bg-sse-sem-green-fg",
-  amarillo: "bg-[#E5A100]",
+  amarillo: "bg-sse-sem-amber-fg",
   rojo:     "bg-sse-sem-red-fg",
 };
 
@@ -390,7 +390,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
   const [errors, setErrors]               = useState<FormErrors>({});
 
   const { hasPermission } = usePermissions();
-  const canEdit = hasPermission("process.create");
+  const canEdit = hasPermission("process.edit");
 
   const { data: procesos,    isLoading, isError } = useProcesos({ unidadId: wsId });
   const { data: actividades  }                    = useActividades({ unidadId: wsId });

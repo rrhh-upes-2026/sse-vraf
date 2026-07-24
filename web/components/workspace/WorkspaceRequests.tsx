@@ -19,7 +19,7 @@ import { Drawer, DrawerSection, DrawerField, DrawerTabs } from "@/components/ui/
 import { TimelineSection } from "@/components/ui/timeline-section";
 import type { TimelineEntry } from "@/components/ui/timeline-section";
 import { FormError } from "@/components/ui/form-error";
-import { cn, fmtShortDate } from "@/lib/utils";
+import { cn, fmtShortDate, fmtRelative } from "@/lib/utils";
 
 interface WorkspaceRequestsProps {
   wsId: WorkspaceId;
@@ -74,21 +74,10 @@ function fmtTiempoRespuesta(horas: number): string {
   return remaining > 0 ? `${days}d ${remaining}h` : `${days}d`;
 }
 
-function fmtRelative(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "ahora";
-  if (mins < 60) return `hace ${mins}m`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `hace ${hrs}h`;
-  const days = Math.floor(hrs / 24);
-  if (days < 7) return `hace ${days}d`;
-  return fmtShortDate(iso);
-}
-
 function mapBitacora(sol: Solicitud): TimelineEntry[] {
-  if (!sol.bitacora) return [];
-  return sol.bitacora.map((entry) => {
+  const entries = sol.historial ?? sol.bitacora ?? [];
+  if (!entries.length) return [];
+  return entries.map((entry) => {
     let variant: BadgeVariant | undefined;
     if (entry.accion === "creado") variant = "success";
     else if (entry.accion === "estado_cambiado") variant = "warning";

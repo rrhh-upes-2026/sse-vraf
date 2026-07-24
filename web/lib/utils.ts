@@ -5,19 +5,5 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Full date: "12 jul 2026" */
-export function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-SV", {
-    day:   "numeric",
-    month: "short",
-    year:  "numeric",
-  });
-}
-
-/** Short date without year: "12 jul" */
-export function fmtShortDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-SV", {
-    day:   "numeric",
-    month: "short",
-  });
-}
+// Re-export from format.ts — single source of truth for date/time formatting.
+export { fmtDate, fmtShortDate, fmtDateTime, fmtDateTimeMedium, fmtRelative } from "./format";

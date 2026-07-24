@@ -147,3 +147,43 @@ export function DrawerField({
     </div>
   );
 }
+
+// ── DrawerFooter ──────────────────────────────────────────────────────────────
+// Standard Cancelar / Guardar footer used by all workspace drawers.
+
+import { Button } from "@/components/ui/button";
+
+interface DrawerFooterProps {
+  onCancel: () => void;
+  onSave: () => void;
+  isPending?: boolean;
+  isEditing?: boolean;
+  disabled?: boolean;
+  saveLabel?: string;
+}
+
+export function DrawerFooter({
+  onCancel,
+  onSave,
+  isPending = false,
+  isEditing = false,
+  disabled = false,
+  saveLabel,
+}: DrawerFooterProps) {
+  const label = saveLabel ?? (isPending
+    ? "Guardando…"
+    : isEditing
+    ? "Guardar cambios"
+    : "Crear");
+
+  return (
+    <>
+      <Button variant="outline" onClick={onCancel}>
+        Cancelar
+      </Button>
+      <Button onClick={onSave} disabled={disabled || isPending}>
+        {label}
+      </Button>
+    </>
+  );
+}

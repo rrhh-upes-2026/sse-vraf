@@ -44,6 +44,11 @@ export interface EntitySelectorProps {
   disabled?: boolean;
   allowEmpty?: boolean;
   emptyLabel?: string;
+  /** Field used as the option label (default: "nombre") */
+  labelKey?: string;
+  /** Override the service lookup (for entity types not in SERVICE_MAP) */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  service?: EntityService<any>;
 }
 
 export function EntitySelector({
@@ -55,14 +60,18 @@ export function EntitySelector({
   disabled,
   allowEmpty,
   emptyLabel = "(ninguno)",
+  labelKey = "nombre",
+  service,
 }: EntitySelectorProps) {
-  const { data, isLoading } = useEntityList(entityType, SERVICE_MAP[entityType], query);
+  const resolvedService = service ?? SERVICE_MAP[entityType];
+  const { data, isLoading } = useEntityList(entityType, resolvedService, query);
 
   const options = [
     ...(allowEmpty ? [{ value: "", label: emptyLabel }] : []),
-    ...(data ?? []).map((item: { id: string; nombre: string }) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ...(data ?? []).map((item: any) => ({
       value: item.id,
-      label: item.nombre,
+      label: (item[labelKey] as string) ?? item.nombre ?? item.id,
     })),
   ];
 

@@ -7,6 +7,10 @@
  */
 
 import type { WorkspaceId } from "@/config/nav";
+import type { SemaforoColor } from "./entities";
+import type { RoleCode } from "./roles";
+
+export type { SemaforoColor, RoleCode };
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
@@ -113,8 +117,6 @@ export interface ProcedureBlueprint {
 export type KPICategory = "gestion" | "desempeno" | "calidad" | "eficiencia" | "satisfaccion";
 export type KPIFrequency = "diaria" | "semanal" | "mensual" | "trimestral" | "semestral" | "anual";
 export type KPIVisualization = "gauge" | "line" | "bar" | "number" | "table" | "pie";
-export type SemaforoColor = "verde" | "amarillo" | "rojo";
-
 export interface KPISemaphore {
   verde: { min: number; max: number };
   amarillo: { min: number; max: number };
@@ -444,8 +446,6 @@ export interface WorkspaceTemplate {
 }
 
 // ── Workspace User (scoped) ───────────────────────────────────────────────────
-
-export type RoleCode = "ADMIN" | "HEAD" | "ANALYST" | "OPS" | "AUDIT";
 
 export interface WorkspaceUser {
   id: string;                   // USR-[UNIT]-[SEQ]

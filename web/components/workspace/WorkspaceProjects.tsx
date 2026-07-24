@@ -233,7 +233,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
   const { data: procesos }                           = useProcesos({ unidadId: wsId });
   const actions                                      = useProyectosActions();
   const { hasPermission }                            = usePermissions();
-  const canEdit                                      = hasPermission("process.create");
+  const canEdit                                      = hasPermission("process.edit");
 
   const objetivoMap: Record<string, ObjetivoEstrategico> = {};
   (objetivos ?? []).forEach((o) => { objetivoMap[o.id] = o; });

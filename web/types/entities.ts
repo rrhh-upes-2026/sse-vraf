@@ -258,6 +258,8 @@ export interface Solicitud {
   tiempoRespuestaHoras?: number;
   satisfaccion?: number; // 1-5
   comentarios?: ComentarioItem[];
+  historial?: HistorialEntry[];
+  /** @deprecated Use `historial` — kept for GAS schema backward compatibility */
   bitacora?: HistorialEntry[];
   adjuntos?: string[];
 }

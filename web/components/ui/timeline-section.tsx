@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { fmtDateTime } from "@/lib/format";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { Badge } from "@/components/ui/badge";
 
@@ -15,9 +16,6 @@ interface TimelineSectionProps {
   title?: string;
 }
 
-function fmtDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("es-SV", { dateStyle: "short", timeStyle: "short" });
-}
 
 export function TimelineSection({ entries, title = "Bitácora" }: TimelineSectionProps) {
   if (entries.length === 0) {
@@ -41,7 +39,7 @@ export function TimelineSection({ entries, title = "Bitácora" }: TimelineSectio
                 "mt-0.5 w-3.5 h-3.5 rounded-full border-2 shrink-0 z-10",
                 e.variant === "success" ? "border-sse-sem-green-fg bg-sse-sem-green-bg" :
                 e.variant === "danger"  ? "border-sse-sem-red-fg bg-sse-sem-red-bg" :
-                e.variant === "warning" ? "border-[#E5A100] bg-[#FFF3CD]" :
+                e.variant === "warning" ? "border-sse-sem-amber-fg bg-sse-sem-amber-bg" :
                 "border-sse-primary bg-sse-pill-blue-bg",
               )} />
               <div className="flex-1 min-w-0 -mt-0.5">

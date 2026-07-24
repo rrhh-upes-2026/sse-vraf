@@ -29,19 +29,19 @@ interface WorkspaceIndicatorsProps {
 
 const SEMAPHORE_DOT: Record<SemaforoColor, string> = {
   verde:    "bg-sse-sem-green-fg",
-  amarillo: "bg-[#E5A100]",
+  amarillo: "bg-sse-sem-amber-fg",
   rojo:     "bg-sse-sem-red-fg",
 };
 
 const SEMAPHORE_BAR: Record<SemaforoColor, string> = {
   verde:    "bg-sse-sem-green-fg",
-  amarillo: "bg-[#E5A100]",
+  amarillo: "bg-sse-sem-amber-fg",
   rojo:     "bg-sse-sem-red-fg",
 };
 
 const SEMAPHORE_TEXT: Record<SemaforoColor, string> = {
   verde:    "text-sse-sem-green-fg",
-  amarillo: "text-[#E5A100]",
+  amarillo: "text-sse-sem-amber-fg",
   rojo:     "text-sse-sem-red-fg",
 };
 
@@ -304,7 +304,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
   const { data: indicadores, isLoading } = useIndicadores();
   const actions = useIndicadoresActions();
   const { hasPermission } = usePermissions();
-  const canEdit = hasPermission("indicator.view");
+  const canEdit = hasPermission("indicator.edit");
 
   const semStats = (indicadores ?? []).reduce(
     (acc, ind) => {
