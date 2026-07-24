@@ -841,6 +841,21 @@ const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
     updatedAt: "2026-07-23T10:00:00Z",
     updatedBy: "admin@upes.edu.sv",
   },
+  ide: {
+    wsId: "ide",
+    nombre: "Indicator Definition Engine",
+    nombreCorto: "IDE",
+    descripcion: "Motor institucional para la creación, validación, simulación e importación de indicadores. Consume el FMI como infraestructura. Estándar para todas las unidades de la institución.",
+    responsableId: "USR-VRAF-001",
+    color: "#D97706",
+    colorFondo: "#FFFBEB",
+    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+    slaDiasDefault: 0,
+    zonaHoraria: "America/El_Salvador",
+    idioma: "es-SV",
+    updatedAt: "2026-07-24T10:00:00Z",
+    updatedBy: "admin@upes.edu.sv",
+  },
 };
 
 // ── Audit Records ─────────────────────────────────────────────────────────────

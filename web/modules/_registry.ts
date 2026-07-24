@@ -28,3 +28,4 @@ import "./isp";
 import "./gwp";
 import "./iia";
 import "./fmi";
+import "./ide";

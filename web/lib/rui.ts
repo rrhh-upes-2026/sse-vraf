@@ -27,6 +27,7 @@ const UNIT_CODE: Record<WorkspaceId, string> = {
   gwp: "GWP",
   iia: "IIA",
   fmi: "FMI",
+  ide: "IDE",
 };
 
 function pad(n: number, width: number) {

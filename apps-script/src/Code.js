@@ -85,6 +85,9 @@
     mergeFMIEntities_();
   } catch (e) {}
   try {
+    mergeIDEEntities_();
+  } catch (e) {}
+  try {
     if (typeof IIAController !== "undefined" && typeof IIAController.bootstrap === "function") {
       IIAController.bootstrap();
     }
@@ -92,6 +95,11 @@
   try {
     if (typeof FMIController !== "undefined" && typeof FMIController.bootstrap === "function") {
       FMIController.bootstrap();
+    }
+  } catch (e) {}
+  try {
+    if (typeof IDEController !== "undefined" && typeof IDEController.bootstrap === "function") {
+      IDEController.bootstrap();
     }
   } catch (e) {}
   try {
@@ -150,6 +158,9 @@
   } catch (e) {}
   try {
     if (typeof FMI_UNIT_DEF !== "undefined") OrgUnitRegistry.register(FMI_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof IDE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IDE_UNIT_DEF);
   } catch (e) {}
 })();
 
