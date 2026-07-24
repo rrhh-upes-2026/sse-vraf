@@ -2,8 +2,16 @@
 
 import { useState } from "react";
 import type { WorkspaceId } from "@/config/nav";
-import type { PlanEstrategico, EstadoPlan, TipoPlan } from "@/types/entities";
+import type {
+  PlanEstrategico,
+  EstadoPlan,
+  TipoPlan,
+  ObjetivoEstrategico,
+  ProyectoEstrategico,
+} from "@/types/entities";
 import { usePlanes, usePlanesActions } from "@/hooks/usePlanes";
+import { useObjetivos } from "@/hooks/useObjetivos";
+import { useProyectos } from "@/hooks/useProyectos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
@@ -12,8 +20,10 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { EntitySelector } from "@/components/ui/entity-selector";
+import { FormError } from "@/components/ui/form-error";
+import { HistorialSection } from "@/components/ui/historial-section";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
 import { cn, fmtShortDate } from "@/lib/utils";
@@ -21,19 +31,19 @@ import { cn, fmtShortDate } from "@/lib/utils";
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 const ESTADO_VARIANT: Record<EstadoPlan, BadgeVariant> = {
-  borrador:  "gray",
-  revision:  "warning",
-  aprobado:  "success",
-  vigente:   "success",
-  cerrado:   "default",
+  borrador: "gray",
+  revision: "warning",
+  aprobado: "success",
+  vigente:  "success",
+  cerrado:  "default",
 };
 
 const ESTADO_LABEL: Record<EstadoPlan, string> = {
-  borrador:  "Borrador",
-  revision:  "En revisión",
-  aprobado:  "Aprobado",
-  vigente:   "Vigente",
-  cerrado:   "Cerrado",
+  borrador: "Borrador",
+  revision: "En revisión",
+  aprobado: "Aprobado",
+  vigente:  "Vigente",
+  cerrado:  "Cerrado",
 };
 
 const TIPO_LABEL: Record<string, string> = {
@@ -53,6 +63,8 @@ function avanceColor(pct: number): "success" | "warning" | "danger" {
 
 function PlanCard({
   plan,
+  objetivos,
+  proyectos,
   onEdit,
   onDelete,
   confirmDeleteId,
@@ -61,6 +73,8 @@ function PlanCard({
   canEdit,
 }: {
   plan: PlanEstrategico;
+  objetivos: ObjetivoEstrategico[];
+  proyectos: ProyectoEstrategico[];
   onEdit: (plan: PlanEstrategico) => void;
   onDelete: (id: string) => void;
   confirmDeleteId: string | null;
@@ -71,26 +85,46 @@ function PlanCard({
   const estado = plan.estado as EstadoPlan;
   const isConfirming = confirmDeleteId === plan.id;
 
+  const objetivosCount = objetivos.filter((o) => o.planId === plan.id).length;
+  const proyectosCount = proyectos.filter((p) =>
+    objetivos.some((o) => o.planId === plan.id && o.id === p.objetivoId),
+  ).length;
+
   return (
     <div className="bg-sse-surface rounded-md border border-sse-border p-4 flex flex-col gap-3 hover:border-sse-primary/40 transition-colors">
+      {/* Title row */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
+          {(plan.codigo || plan.version) && (
+            <p className="text-[10px] text-sse-muted font-mono mb-0.5">
+              {plan.codigo ?? ""}
+              {plan.codigo && plan.version ? " · " : ""}
+              {plan.version ? `v${plan.version}` : ""}
+            </p>
+          )}
           <p className="text-[13px] font-semibold text-sse-ink leading-snug line-clamp-2">
             {plan.nombre}
           </p>
           <p className="text-[11px] text-sse-muted mt-0.5">
             {TIPO_LABEL[plan.tipo] ?? plan.tipo}
           </p>
+          {plan.responsableId && (
+            <p className="text-[11px] text-sse-muted mt-0.5 truncate">
+              {plan.responsableId}
+            </p>
+          )}
         </div>
         <Badge variant={ESTADO_VARIANT[estado]} className="shrink-0 text-[10px]">
           {ESTADO_LABEL[estado] ?? estado}
         </Badge>
       </div>
 
+      {/* Description */}
       {plan.descripcion && (
         <p className="text-[12px] text-sse-muted line-clamp-2">{plan.descripcion}</p>
       )}
 
+      {/* Progress */}
       <div className="space-y-1">
         <div className="flex justify-between items-center">
           <span className="text-[11px] text-sse-muted">Avance</span>
@@ -99,6 +133,19 @@ function PlanCard({
         <Progress value={plan.avancePct ?? 0} color={avanceColor(plan.avancePct ?? 0)} />
       </div>
 
+      {/* Related counts */}
+      <div className="flex gap-4 text-[11px] text-sse-muted">
+        <span>
+          <span className="font-semibold text-sse-ink">{objetivosCount}</span>{" "}
+          {objetivosCount === 1 ? "objetivo" : "objetivos"}
+        </span>
+        <span>
+          <span className="font-semibold text-sse-ink">{proyectosCount}</span>{" "}
+          {proyectosCount === 1 ? "proyecto" : "proyectos"}
+        </span>
+      </div>
+
+      {/* Footer: period + actions */}
       <div className="flex items-center justify-between text-[11px] text-sse-muted">
         <span>
           {plan.periodoInicio ? fmtShortDate(plan.periodoInicio) : "—"}
@@ -143,7 +190,7 @@ function PlanCard({
   );
 }
 
-// ── Filter bar ────────────────────────────────────────────────────────────────
+// ── Filter bar options ────────────────────────────────────────────────────────
 
 const ESTADOS: Array<{ value: EstadoPlan | "todos"; label: string }> = [
   { value: "todos",    label: "Todos" },
@@ -168,17 +215,44 @@ const ESTADO_OPTIONS = [
   { value: "cerrado",   label: "Cerrado" },
 ];
 
-// ── empty form state ──────────────────────────────────────────────────────────
+// ── Empty form state ──────────────────────────────────────────────────────────
 
 const EMPTY_FORM = {
-  nombre: "",
-  tipo: "estrategico" as TipoPlan,
-  estado: "borrador" as EstadoPlan,
-  periodoInicio: "",
-  periodoFin: "",
-  descripcion: "",
-  responsableId: "",
+  codigo:          "",
+  nombre:          "",
+  version:         "",
+  tipo:            "estrategico" as TipoPlan,
+  estado:          "borrador" as EstadoPlan,
+  periodoInicio:   "",
+  periodoFin:      "",
+  fechaAprobacion: "",
+  fechaRevision:   "",
+  responsableId:   "",
+  documentoUrl:    "",
+  descripcion:     "",
+  observaciones:   "",
 };
+
+type FormState = typeof EMPTY_FORM;
+
+// ── Validation ────────────────────────────────────────────────────────────────
+
+function validateForm(form: FormState): Record<string, string> {
+  const errs: Record<string, string> = {};
+  if (!form.nombre.trim()) {
+    errs.nombre = "El nombre del plan es requerido.";
+  }
+  if (!form.tipo) {
+    errs.tipo = "El tipo es requerido.";
+  }
+  if (!form.estado) {
+    errs.estado = "El estado es requerido.";
+  }
+  if (form.periodoFin && form.periodoInicio && form.periodoFin < form.periodoInicio) {
+    errs.periodoFin = "La fecha de fin no puede ser anterior a la fecha de inicio.";
+  }
+  return errs;
+}
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -188,15 +262,21 @@ interface WorkspacePlanesProps {
 
 export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
   const [estadoFilter, setEstadoFilter] = useState<EstadoPlan | "todos">("todos");
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editing, setEditing] = useState<PlanEstrategico | null>(null);
+  const [drawerOpen, setDrawerOpen]     = useState(false);
+  const [editing, setEditing]           = useState<PlanEstrategico | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm]     = useState<FormState>(EMPTY_FORM);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { data: planes, isLoading } = usePlanes({ wsId });
+  const { data: planes,    isLoading: planesLoading }    = usePlanes({ wsId });
+  const { data: objetivos, isLoading: objetivosLoading } = useObjetivos();
+  const { data: proyectos, isLoading: proyectosLoading } = useProyectos({ unidadId: wsId });
+
   const actions = usePlanesActions();
   const { hasPermission } = usePermissions();
   const canEdit = hasPermission("process.edit");
+
+  const isLoading = planesLoading || objetivosLoading || proyectosLoading;
 
   const filtered = (planes ?? []).filter((p) =>
     estadoFilter === "todos" ? true : p.estado === estadoFilter,
@@ -211,28 +291,55 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
     {} as Partial<Record<EstadoPlan, number>>,
   );
 
+  // ── form helpers ────────────────────────────────────────────────────────────
+
+  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+    }
+  }
+
   function openCreate() {
     setEditing(null);
+    setErrors({});
     setForm(EMPTY_FORM);
     setDrawerOpen(true);
   }
 
   function openEdit(plan: PlanEstrategico) {
     setEditing(plan);
+    setErrors({});
     setForm({
-      nombre:        plan.nombre,
-      tipo:          plan.tipo,
-      estado:        plan.estado,
-      periodoInicio: plan.periodoInicio ?? "",
-      periodoFin:    plan.periodoFin ?? "",
-      descripcion:   plan.descripcion ?? "",
-      responsableId: plan.responsableId ?? "",
+      codigo:          plan.codigo          ?? "",
+      nombre:          plan.nombre,
+      version:         plan.version         ?? "",
+      tipo:            plan.tipo,
+      estado:          plan.estado,
+      periodoInicio:   plan.periodoInicio   ?? "",
+      periodoFin:      plan.periodoFin      ?? "",
+      fechaAprobacion: plan.fechaAprobacion ?? "",
+      fechaRevision:   plan.fechaRevision   ?? "",
+      responsableId:   plan.responsableId   ?? "",
+      documentoUrl:    plan.documentoUrl    ?? "",
+      descripcion:     plan.descripcion     ?? "",
+      observaciones:   plan.observaciones   ?? "",
     });
     setDrawerOpen(true);
   }
 
   async function handleSave() {
-    const payload = {
+    const errs = validateForm(form);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
+    const payload: Partial<PlanEstrategico> = {
       ...form,
       wsId,
       avancePct: editing?.avancePct ?? 0,
@@ -240,7 +347,7 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
     if (editing) {
       await actions.update.mutateAsync({ id: editing.id, patch: payload });
     } else {
-      await actions.create.mutateAsync(payload as Partial<PlanEstrategico>);
+      await actions.create.mutateAsync(payload);
     }
     setDrawerOpen(false);
   }
@@ -264,8 +371,13 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
         </div>
         {canEdit && (
           <Button size="sm" variant="primary" onClick={openCreate}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-              className="w-3.5 h-3.5">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              className="w-3.5 h-3.5"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Nuevo plan
@@ -278,7 +390,10 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
         <div className="flex flex-wrap gap-2">
           {(["vigente", "revision", "borrador", "cerrado"] as EstadoPlan[]).map((e) =>
             resumen[e] ? (
-              <div key={e} className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-sse-border bg-sse-surface text-[11px]">
+              <div
+                key={e}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-sse-border bg-sse-surface text-[11px]"
+              >
                 <span className="font-semibold text-sse-ink">{resumen[e]}</span>
                 <span className="text-sse-muted">{ESTADO_LABEL[e]}</span>
               </div>
@@ -308,7 +423,9 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
       {/* Grid */}
       {isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} className="h-[200px]" />)}
+          {[0, 1, 2, 3].map((i) => (
+            <SkeletonCard key={i} className="h-[220px]" />
+          ))}
         </div>
       )}
 
@@ -335,6 +452,8 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
             <PlanCard
               key={plan.id}
               plan={plan}
+              objetivos={objetivos ?? []}
+              proyectos={proyectos ?? []}
               onEdit={openEdit}
               onDelete={(id) => setConfirmDeleteId(id)}
               confirmDeleteId={confirmDeleteId}
@@ -352,77 +471,169 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
         onClose={() => setDrawerOpen(false)}
         title={editing ? "Editar plan" : "Nuevo plan"}
         subtitle={editing ? editing.nombre : "Registra un nuevo plan institucional"}
-        width="md"
+        width="lg"
         footer={
           <>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={!form.nombre || isPending}>
+            <Button variant="outline" onClick={() => setDrawerOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={isPending}>
               {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear plan"}
             </Button>
           </>
         }
       >
-        <DrawerSection>
+        {/* ── Identificación ─────────────────────────────────────────────── */}
+        <DrawerSection title="Identificación" className="border-b border-sse-border">
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Código del plan">
+              <Input
+                value={form.codigo}
+                onChange={(e) => setField("codigo", e.target.value)}
+                placeholder="Ej. PEI-2024"
+              />
+            </DrawerField>
+            <DrawerField label="Versión">
+              <Input
+                value={form.version}
+                onChange={(e) => setField("version", e.target.value)}
+                placeholder="Ej. 1.0"
+              />
+            </DrawerField>
+          </div>
+
           <DrawerField label="Nombre del plan" required>
             <Input
               value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              onChange={(e) => setField("nombre", e.target.value)}
               placeholder="Ej. Plan Estratégico Institucional 2024-2028"
             />
+            <FormError message={errors.nombre} />
           </DrawerField>
+        </DrawerSection>
 
-          <DrawerField label="Tipo" required>
-            <Select
-              value={form.tipo}
-              onValueChange={(v) => setForm({ ...form, tipo: v as TipoPlan })}
-              options={TIPO_OPTIONS}
-            />
-          </DrawerField>
+        {/* ── Clasificación ──────────────────────────────────────────────── */}
+        <DrawerSection title="Clasificación" className="border-b border-sse-border">
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Tipo" required>
+              <Select
+                value={form.tipo}
+                onValueChange={(v) => setField("tipo", v as TipoPlan)}
+                options={TIPO_OPTIONS}
+              />
+              <FormError message={errors.tipo} />
+            </DrawerField>
 
-          <DrawerField label="Estado" required>
-            <Select
-              value={form.estado}
-              onValueChange={(v) => setForm({ ...form, estado: v as EstadoPlan })}
-              options={ESTADO_OPTIONS}
-            />
-          </DrawerField>
+            <DrawerField label="Estado" required>
+              <Select
+                value={form.estado}
+                onValueChange={(v) => setField("estado", v as EstadoPlan)}
+                options={ESTADO_OPTIONS}
+              />
+              <FormError message={errors.estado} />
+            </DrawerField>
+          </div>
+        </DrawerSection>
 
+        {/* ── Período ────────────────────────────────────────────────────── */}
+        <DrawerSection title="Período" className="border-b border-sse-border">
           <div className="grid grid-cols-2 gap-3">
             <DrawerField label="Inicio del período">
               <Input
                 type="date"
                 value={form.periodoInicio}
-                onChange={(e) => setForm({ ...form, periodoInicio: e.target.value })}
+                onChange={(e) => setField("periodoInicio", e.target.value)}
               />
             </DrawerField>
             <DrawerField label="Fin del período">
               <Input
                 type="date"
                 value={form.periodoFin}
-                onChange={(e) => setForm({ ...form, periodoFin: e.target.value })}
+                onChange={(e) => setField("periodoFin", e.target.value)}
               />
+              <FormError message={errors.periodoFin} />
             </DrawerField>
           </div>
 
-          <DrawerField label="Descripción">
-            <Textarea
-              value={form.descripcion}
-              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-              rows={3}
-              placeholder="Descripción o alcance del plan…"
-            />
-          </DrawerField>
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Fecha de aprobación">
+              <Input
+                type="date"
+                value={form.fechaAprobacion}
+                onChange={(e) => setField("fechaAprobacion", e.target.value)}
+              />
+            </DrawerField>
+            <DrawerField label="Fecha de revisión">
+              <Input
+                type="date"
+                value={form.fechaRevision}
+                onChange={(e) => setField("fechaRevision", e.target.value)}
+              />
+            </DrawerField>
+          </div>
+        </DrawerSection>
 
-          <DrawerField label="Responsable">
+        {/* ── Responsable ────────────────────────────────────────────────── */}
+        <DrawerSection title="Responsable" className="border-b border-sse-border">
+          <DrawerField label="Responsable del plan">
             <EntitySelector
               entityType="usuarios"
               value={form.responsableId}
-              onValueChange={(v) => setForm({ ...form, responsableId: v })}
+              onValueChange={(v) => setField("responsableId", v)}
               placeholder="Seleccionar responsable…"
               allowEmpty
             />
           </DrawerField>
         </DrawerSection>
+
+        {/* ── Documento ──────────────────────────────────────────────────── */}
+        <DrawerSection title="Documento oficial" className="border-b border-sse-border">
+          <DrawerField label="URL del documento">
+            <Input
+              value={form.documentoUrl}
+              onChange={(e) => setField("documentoUrl", e.target.value)}
+              placeholder="https://…"
+            />
+          </DrawerField>
+        </DrawerSection>
+
+        {/* ── Descripción ────────────────────────────────────────────────── */}
+        <DrawerSection title="Descripción" className="border-b border-sse-border">
+          <DrawerField label="Descripción o alcance">
+            <Textarea
+              value={form.descripcion}
+              onChange={(e) => setField("descripcion", e.target.value)}
+              rows={3}
+              placeholder="Descripción o alcance del plan…"
+            />
+          </DrawerField>
+        </DrawerSection>
+
+        {/* ── Observaciones ──────────────────────────────────────────────── */}
+        <DrawerSection
+          title="Observaciones"
+          className={editing ? "border-b border-sse-border" : ""}
+        >
+          <DrawerField label="Observaciones adicionales">
+            <Textarea
+              value={form.observaciones}
+              onChange={(e) => setField("observaciones", e.target.value)}
+              rows={3}
+              placeholder="Notas u observaciones sobre el plan…"
+            />
+          </DrawerField>
+        </DrawerSection>
+
+        {/* ── Historial (edit only) ──────────────────────────────────────── */}
+        {editing && (
+          <DrawerSection title="Historial">
+            <HistorialSection
+              historial={editing.historial}
+              createdAt={editing.createdAt}
+              updatedAt={editing.updatedAt}
+            />
+          </DrawerSection>
+        )}
       </Drawer>
     </div>
   );

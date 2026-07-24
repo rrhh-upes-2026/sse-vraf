@@ -10,6 +10,29 @@ import type { WorkspaceId } from "@/config/nav";
 
 export type SemaforoColor = "verde" | "amarillo" | "rojo";
 
+export interface HistorialEntry {
+  fecha: string;
+  usuarioId: string;
+  usuarioNombre: string;
+  accion: "creado" | "modificado" | "estado_cambiado" | "comentario" | "adjunto" | "aprobado" | "rechazado";
+  detalle?: string;
+}
+
+export interface CapturaKPI {
+  fecha: string;
+  valor: number;
+  registradoPor: string;
+  observaciones?: string;
+}
+
+export interface ComentarioItem {
+  id: string;
+  fecha: string;
+  usuarioId: string;
+  usuarioNombre: string;
+  texto: string;
+}
+
 export type EstadoProceso =
   | "borrador"
   | "activo"
@@ -23,18 +46,26 @@ export type TipoPlan = "estrategico" | "operativo" | "mejora" | "accion";
 export type EstadoPlan = "borrador" | "revision" | "aprobado" | "vigente" | "cerrado";
 
 export interface PlanEstrategico {
-  id: string; // RUI: no aplica patrón corto — plan institucional único por período
+  id: string;
   wsId: string;
   nombre: string;
   tipo: TipoPlan;
   estado: EstadoPlan;
-  periodoInicio: string; // ISO date
-  periodoFin: string; // ISO date
+  periodoInicio: string;
+  periodoFin: string;
   descripcion?: string;
   responsableId?: string;
   avancePct: number; // 0-100
   createdAt: string;
   updatedAt: string;
+  // Extended fields
+  codigo?: string;
+  version?: string;
+  documentoUrl?: string;
+  fechaAprobacion?: string;
+  fechaRevision?: string;
+  observaciones?: string;
+  historial?: HistorialEntry[];
 }
 
 export interface VRAFDashboardResumen {
@@ -52,7 +83,16 @@ export interface ObjetivoEstrategico {
   nombre: string;
   descripcion?: string;
   resultadoEsperado?: string;
-  unidadResponsableId?: string; // -> Unidad
+  justificacion?: string;
+  responsableId?: string;
+  unidadResponsableId?: string;
+  prioridad?: "baja" | "media" | "alta" | "critica";
+  indicadorPrincipalId?: string;
+  metaGeneral?: string;
+  fechaObjetivo?: string;
+  estado?: "borrador" | "vigente" | "completado" | "cancelado";
+  observaciones?: string;
+  historial?: HistorialEntry[];
 }
 
 export interface ProyectoEstrategico {
@@ -61,11 +101,17 @@ export interface ProyectoEstrategico {
   nombre: string;
   descripcion?: string;
   unidadId: WorkspaceId;
-  responsableId?: string; // -> Usuario
+  responsableId?: string;
   estado?: "activo" | "pausado" | "completado" | "cancelado";
   fechaInicio?: string;
   fechaFin?: string;
   presupuesto?: number;
+  fuenteFinanciamiento?: string;
+  riesgos?: string;
+  dependencias?: string;
+  beneficiosEsperados?: string;
+  observaciones?: string;
+  historial?: HistorialEntry[];
 }
 
 /** NÚCLEO del sistema — objeto inteligente central. No sustituir por "tarea". */
@@ -91,6 +137,13 @@ export interface ProcesoInstitucional {
   ultimaActualizacion: string;
   createdAt: string;
   deletedAt: string | null; // soft-delete — R06
+  // Extended fields
+  area?: string;
+  criticidad?: "baja" | "media" | "alta" | "critica";
+  riesgos?: string;
+  dependencias?: string;
+  observaciones?: string;
+  historial?: HistorialEntry[];
 }
 
 /** Toda actividad pertenece obligatoriamente a un Proceso — R02. Nunca aislada. */
@@ -128,11 +181,20 @@ export interface Evidencia {
   tipo: TipoEvidencia;
   obligatoria: boolean;
   estado: "pendiente" | "cargada" | "validada" | "rechazada";
-  driveFileId?: string; // metadata only — el archivo vive en Drive, nunca en Sheets
+  driveFileId?: string;
   version: number;
   responsableId: string;
   fechaCarga?: string;
   observaciones?: string;
+  // Extended fields
+  documentoRelacionadoId?: string;
+  fechaEmision?: string;
+  fechaVencimiento?: string;
+  estadoRevision?: "pendiente" | "en_revision" | "aprobada" | "rechazada";
+  revisorId?: string;
+  comentarios?: string;
+  historial?: HistorialEntry[];
+  firmaDigital?: { reservado: true }; // arquitectura para firma futura
 }
 
 export interface Indicador {
@@ -157,6 +219,12 @@ export interface Indicador {
   semaforo: SemaforoColor;
   tendencia: "sube" | "baja" | "estable";
   ultimaActualizacion: string;
+  // Extended fields
+  sentido?: "mayor_mejor" | "menor_mejor" | "neutro";
+  lineaBase?: number;
+  observaciones?: string;
+  capturas?: CapturaKPI[];
+  historial?: HistorialEntry[];
 }
 
 /** JSON Schema — R07. FormRenderer lo interpreta dinámicamente, sin código nuevo. */
@@ -189,6 +257,9 @@ export interface Solicitud {
   fechaCierre?: string;
   tiempoRespuestaHoras?: number;
   satisfaccion?: number; // 1-5
+  comentarios?: ComentarioItem[];
+  bitacora?: HistorialEntry[];
+  adjuntos?: string[];
 }
 
 export interface Usuario {

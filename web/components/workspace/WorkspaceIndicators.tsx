@@ -16,6 +16,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { FormError } from "@/components/ui/form-error";
+import { HistorialSection } from "@/components/ui/historial-section";
+import { SparklineChart } from "@/components/ui/sparkline-chart";
 import { cn, fmtDate } from "@/lib/utils";
 
 interface WorkspaceIndicatorsProps {
@@ -48,6 +51,12 @@ const SEMAPHORE_BADGE_VARIANT = {
   rojo:     "danger",
 } as const;
 
+const SEMAPHORE_COLOR: Record<SemaforoColor, string> = {
+  verde:    "#16A34A",
+  amarillo: "#E5A100",
+  rojo:     "#DC2626",
+};
+
 const FRECUENCIA_LABEL: Record<Indicador["frecuencia"], string> = {
   mensual:     "Mensual",
   trimestral:  "Trimestral",
@@ -65,6 +74,12 @@ const FRECUENCIA_OPTIONS = [
 const CATEGORIA_OPTIONS = [
   { value: "gestion",    label: "Gestión" },
   { value: "desempeno",  label: "Desempeño" },
+];
+
+const SENTIDO_OPTIONS = [
+  { value: "mayor_mejor", label: "Mayor es mejor" },
+  { value: "menor_mejor", label: "Menor es mejor" },
+  { value: "neutro",      label: "Neutro" },
 ];
 
 // ── trend icon ────────────────────────────────────────────────────────────────
@@ -155,6 +170,16 @@ function IndicadorCard({
           <span className="text-[11px] font-semibold text-sse-ink">{pct}%</span>
         </div>
       </div>
+
+      {indicador.capturas && indicador.capturas.length >= 2 && (
+        <SparklineChart
+          data={indicador.capturas.map((c) => ({ fecha: c.fecha, valor: c.valor }))}
+          meta={indicador.meta}
+          color={SEMAPHORE_COLOR[indicador.semaforo]}
+          height={36}
+          width={120}
+        />
+      )}
 
       <div className="flex items-center justify-between pt-1 border-t border-sse-border">
         <Badge variant="gray">{FRECUENCIA_LABEL[indicador.frecuencia]}</Badge>
@@ -264,6 +289,9 @@ const EMPTY_FORM = {
   responsableId: "",
   fuenteInformacion: "",
   procesoId: "",
+  sentido: "mayor_mejor" as "mayor_mejor" | "menor_mejor" | "neutro",
+  lineaBase: "",
+  observaciones: "",
 };
 
 export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
@@ -271,6 +299,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
   const [editing, setEditing] = useState<Indicador | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { data: indicadores, isLoading } = useIndicadores();
   const actions = useIndicadoresActions();
@@ -285,14 +314,22 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
     {} as Record<SemaforoColor, number>,
   );
 
+  function clearError(field: string) {
+    if (errors[field]) {
+      setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
+    }
+  }
+
   function openCreate() {
     setEditing(null);
+    setErrors({});
     setForm(EMPTY_FORM);
     setDrawerOpen(true);
   }
 
   function openEdit(ind: Indicador) {
     setEditing(ind);
+    setErrors({});
     setForm({
       nombre: ind.nombre,
       descripcion: ind.descripcion,
@@ -305,16 +342,35 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
       responsableId: ind.responsableId,
       fuenteInformacion: ind.fuenteInformacion,
       procesoId: ind.procesoId,
+      sentido: ind.sentido ?? "mayor_mejor",
+      lineaBase: String(ind.lineaBase ?? ""),
+      observaciones: ind.observaciones ?? "",
     });
     setDrawerOpen(true);
   }
 
+  function validate(): boolean {
+    const next: Record<string, string> = {};
+    if (!form.nombre.trim()) next.nombre = "El nombre es requerido";
+    if (!form.unidadMedida.trim()) next.unidadMedida = "La unidad de medida es requerida";
+    const metaNum = Number(form.meta);
+    if (form.meta === "" || isNaN(metaNum) || metaNum < 0) {
+      next.meta = "La meta debe ser un número mayor o igual a 0";
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
   async function handleSave() {
+    if (!validate()) return;
     const now = new Date().toISOString();
     const payload = {
       ...form,
       meta: Number(form.meta),
       valorActual: Number(form.valorActual),
+      sentido: form.sentido,
+      lineaBase: Number(form.lineaBase) || undefined,
+      observaciones: form.observaciones,
       semaforo: editing?.semaforo ?? "verde" as SemaforoColor,
       tendencia: editing?.tendencia ?? "estable" as Indicador["tendencia"],
       ultimaActualizacion: now,
@@ -409,19 +465,21 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
         footer={
           <>
             <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={!form.nombre || isPending}>
+            <Button onClick={handleSave} disabled={isPending}>
               {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear indicador"}
             </Button>
           </>
         }
       >
-        <DrawerSection>
+        {/* Section 1: Definición */}
+        <DrawerSection title="Definición" className="border-b border-sse-border">
           <DrawerField label="Nombre del indicador" required>
             <Input
               value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              onChange={(e) => { setForm({ ...form, nombre: e.target.value }); clearError("nombre"); }}
               placeholder="Ej. Tasa de aprobación estudiantil"
             />
+            <FormError message={errors.nombre} />
           </DrawerField>
 
           <DrawerField label="Descripción">
@@ -449,7 +507,10 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
               />
             </DrawerField>
           </div>
+        </DrawerSection>
 
+        {/* Section 2: Fórmula y medición */}
+        <DrawerSection title="Fórmula y medición" className="border-b border-sse-border">
           <DrawerField label="Fórmula de cálculo">
             <Input
               value={form.formula}
@@ -462,17 +523,19 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
             <DrawerField label="Unidad de medida" required>
               <Input
                 value={form.unidadMedida}
-                onChange={(e) => setForm({ ...form, unidadMedida: e.target.value })}
+                onChange={(e) => { setForm({ ...form, unidadMedida: e.target.value }); clearError("unidadMedida"); }}
                 placeholder="Ej. %"
               />
+              <FormError message={errors.unidadMedida} />
             </DrawerField>
             <DrawerField label="Meta">
               <Input
                 type="number"
                 value={form.meta}
-                onChange={(e) => setForm({ ...form, meta: e.target.value })}
+                onChange={(e) => { setForm({ ...form, meta: e.target.value }); clearError("meta"); }}
                 placeholder="0"
               />
+              <FormError message={errors.meta} />
             </DrawerField>
             <DrawerField label="Valor actual">
               <Input
@@ -484,6 +547,27 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
             </DrawerField>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Línea base">
+              <Input
+                type="number"
+                value={form.lineaBase}
+                onChange={(e) => setForm({ ...form, lineaBase: e.target.value })}
+                placeholder="0"
+              />
+            </DrawerField>
+            <DrawerField label="Sentido del indicador">
+              <Select
+                value={form.sentido}
+                onValueChange={(v) => setForm({ ...form, sentido: v as typeof form.sentido })}
+                options={SENTIDO_OPTIONS}
+              />
+            </DrawerField>
+          </div>
+        </DrawerSection>
+
+        {/* Section 3: Fuente y responsable */}
+        <DrawerSection title="Fuente y responsable" className="border-b border-sse-border">
           <DrawerField label="Fuente de información">
             <Input
               value={form.fuenteInformacion}
@@ -512,6 +596,25 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
             />
           </DrawerField>
         </DrawerSection>
+
+        {/* Section 4: Observaciones */}
+        <DrawerSection title="Observaciones" className={editing ? "border-b border-sse-border" : ""}>
+          <DrawerField label="Observaciones">
+            <Textarea
+              value={form.observaciones}
+              onChange={(e) => setForm({ ...form, observaciones: e.target.value })}
+              rows={2}
+              placeholder="Observaciones adicionales…"
+            />
+          </DrawerField>
+        </DrawerSection>
+
+        {/* Section 5: Historial (edit-only) */}
+        {editing && (
+          <DrawerSection title="Historial">
+            <HistorialSection historial={editing.historial} />
+          </DrawerSection>
+        )}
       </Drawer>
     </div>
   );

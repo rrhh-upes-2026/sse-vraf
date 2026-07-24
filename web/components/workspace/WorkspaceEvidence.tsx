@@ -16,6 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { FormError } from "@/components/ui/form-error";
+import { HistorialSection } from "@/components/ui/historial-section";
+import { Dropzone } from "@/components/ui/dropzone";
 import { fmtShortDate } from "@/lib/utils";
 
 interface WorkspaceEvidenceProps {
@@ -37,6 +40,27 @@ const ESTADO_LABEL: Record<Evidencia["estado"], string> = {
   validada:  "Validada",
   rechazada: "Rechazada",
 };
+
+const REVISION_BADGE = {
+  pendiente:   "gray",
+  en_revision: "warning",
+  aprobada:    "success",
+  rechazada:   "danger",
+} as const;
+
+const REVISION_LABEL: Record<NonNullable<Evidencia["estadoRevision"]>, string> = {
+  pendiente:   "Pendiente",
+  en_revision: "En revisión",
+  aprobada:    "Aprobada",
+  rechazada:   "Rechazada",
+};
+
+const REVISION_OPTIONS = [
+  { value: "pendiente",   label: "Pendiente" },
+  { value: "en_revision", label: "En revisión" },
+  { value: "aprobada",    label: "Aprobada" },
+  { value: "rechazada",   label: "Rechazada" },
+];
 
 const TIPO_ICON: Record<TipoEvidencia, string> = {
   documento:   "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
@@ -84,6 +108,11 @@ function EvidenciaRow({
   canUpload: boolean;
   onUpload: (e: Evidencia) => void;
 }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const isVencida = evidencia.fechaVencimiento
+    ? evidencia.fechaVencimiento < today
+    : false;
+
   return (
     <div className="flex items-center gap-3 py-3 border-b border-sse-border last:border-b-0">
       <TipoIcon tipo={evidencia.tipo} />
@@ -91,16 +120,15 @@ function EvidenciaRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-[13px] font-medium text-sse-ink truncate">{evidencia.nombre}</p>
+          <span className="text-[11px] font-mono text-sse-muted">v{evidencia.version}</span>
           {evidencia.obligatoria && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[10px] font-semibold bg-sse-sem-red-bg text-sse-sem-red-fg">
               Obligatoria
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
           <span className="text-[11px] text-sse-muted capitalize">{evidencia.tipo}</span>
-          <span className="text-sse-muted text-[11px]">·</span>
-          <span className="text-[11px] text-sse-muted">v{evidencia.version}</span>
           {evidencia.fechaCarga && (
             <>
               <span className="text-sse-muted text-[11px]">·</span>
@@ -109,10 +137,28 @@ function EvidenciaRow({
               </span>
             </>
           )}
+          {evidencia.fechaVencimiento && (
+            <>
+              <span className="text-sse-muted text-[11px]">·</span>
+              <span className={`text-[11px] flex items-center gap-1 ${isVencida ? "text-sse-sem-red-fg font-semibold" : "text-sse-muted"}`}>
+                Vence: {fmtShortDate(evidencia.fechaVencimiento)}
+                {isVencida && (
+                  <span className="inline-flex items-center px-1 py-0.5 rounded-sm text-[9px] font-bold bg-sse-sem-red-bg text-sse-sem-red-fg uppercase">
+                    Vencida
+                  </span>
+                )}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+        {evidencia.estadoRevision && (
+          <Badge variant={REVISION_BADGE[evidencia.estadoRevision]}>
+            {REVISION_LABEL[evidencia.estadoRevision]}
+          </Badge>
+        )}
         <Badge variant={ESTADO_BADGE[evidencia.estado]}>
           {ESTADO_LABEL[evidencia.estado]}
         </Badge>
@@ -149,12 +195,20 @@ const EMPTY_FORM = {
   actividadId: "",
   responsableId: "",
   observaciones: "",
+  documentoRelacionadoId: "",
+  fechaEmision: "",
+  fechaVencimiento: "",
+  estadoRevision: "pendiente" as NonNullable<Evidencia["estadoRevision"]>,
+  revisorId: "",
+  comentariosTexto: "",
+  archivoNombre: "",
 };
 
 export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing] = useState<Evidencia | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { hasPermission } = usePermissions();
   const canUpload = hasPermission("evidence.upload");
@@ -169,14 +223,21 @@ export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
       : undefined,
   }));
 
+  function setField<K extends keyof typeof EMPTY_FORM>(key: K, value: typeof EMPTY_FORM[K]) {
+    setForm(prev => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
+  }
+
   function openCreate() {
     setEditing(null);
+    setErrors({});
     setForm(EMPTY_FORM);
     setDrawerOpen(true);
   }
 
   function openUpload(e: Evidencia) {
     setEditing(e);
+    setErrors({});
     setForm({
       nombre: e.nombre,
       tipo: e.tipo,
@@ -184,24 +245,60 @@ export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
       actividadId: e.actividadId,
       responsableId: e.responsableId,
       observaciones: e.observaciones ?? "",
+      documentoRelacionadoId: e.documentoRelacionadoId ?? "",
+      fechaEmision: e.fechaEmision ?? "",
+      fechaVencimiento: e.fechaVencimiento ?? "",
+      estadoRevision: e.estadoRevision ?? "pendiente",
+      revisorId: e.revisorId ?? "",
+      comentariosTexto: e.comentarios ?? "",
+      archivoNombre: "",
     });
     setDrawerOpen(true);
   }
 
   async function handleSave() {
+    const newErrors: Record<string, string> = {};
+    if (!form.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     if (editing) {
       await actions.update.mutateAsync({
         id: editing.id,
         patch: {
-          ...form,
+          nombre: form.nombre,
+          tipo: form.tipo,
+          obligatoria: form.obligatoria,
+          actividadId: form.actividadId,
+          responsableId: form.responsableId,
+          observaciones: form.observaciones,
           estado: "cargada",
           version: editing.version + 1,
           fechaCarga: new Date().toISOString(),
+          documentoRelacionadoId: form.documentoRelacionadoId,
+          fechaEmision: form.fechaEmision,
+          fechaVencimiento: form.fechaVencimiento,
+          estadoRevision: form.estadoRevision,
+          revisorId: form.revisorId,
+          comentarios: form.comentariosTexto,
         },
       });
     } else {
       await actions.create.mutateAsync({
-        ...form,
+        nombre: form.nombre,
+        tipo: form.tipo,
+        obligatoria: form.obligatoria,
+        actividadId: form.actividadId,
+        responsableId: form.responsableId,
+        observaciones: form.observaciones,
+        documentoRelacionadoId: form.documentoRelacionadoId,
+        fechaEmision: form.fechaEmision,
+        fechaVencimiento: form.fechaVencimiento,
+        estadoRevision: form.estadoRevision,
+        revisorId: form.revisorId,
+        comentarios: form.comentariosTexto,
         estado: "pendiente",
         version: 1,
       } as Partial<Evidencia>);
@@ -268,69 +365,173 @@ export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
       <Drawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        title={editing ? "Cargar evidencia" : "Nueva evidencia"}
+        title={editing ? "Actualizar evidencia" : "Nueva evidencia"}
         subtitle={editing ? `Actualizando: ${editing.nombre}` : undefined}
-        width="md"
+        width="lg"
         footer={
           <>
             <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={!form.nombre || isPending}>
-              {isPending ? "Guardando…" : editing ? "Marcar como cargada" : "Registrar"}
+            <Button onClick={handleSave} disabled={isPending}>
+              {isPending ? "Guardando…" : editing ? "Actualizar" : "Registrar"}
             </Button>
           </>
         }
       >
-        <DrawerSection>
+        {/* Section 1 — Identificación */}
+        <DrawerSection title="Identificación">
           <DrawerField label="Nombre de la evidencia" required>
             <Input
               value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              onChange={(e) => setField("nombre", e.target.value)}
               placeholder="Ej. Acta de reunión 2024-01"
             />
+            <FormError message={errors.nombre} />
           </DrawerField>
 
           <DrawerField label="Tipo" required>
             <Select
               value={form.tipo}
-              onValueChange={(v) => setForm({ ...form, tipo: v as TipoEvidencia })}
+              onValueChange={(v) => setField("tipo", v as TipoEvidencia)}
               options={TIPO_OPTIONS}
             />
           </DrawerField>
+        </DrawerSection>
 
+        {/* Section 2 — Archivo */}
+        <DrawerSection title="Archivo">
+          <DrawerField label="Archivo adjunto">
+            <Dropzone
+              fileName={form.archivoNombre}
+              onFileSelect={(n) => setField("archivoNombre", n)}
+              accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg"
+            />
+          </DrawerField>
+        </DrawerSection>
+
+        {/* Section 3 — Relaciones */}
+        <DrawerSection title="Relaciones">
           <DrawerField label="Actividad vinculada">
             <EntitySelector
               entityType="actividades"
               value={form.actividadId}
-              onValueChange={(v) => setForm({ ...form, actividadId: v })}
+              onValueChange={(v) => setField("actividadId", v)}
               placeholder="Seleccionar actividad…"
               allowEmpty
             />
           </DrawerField>
 
-          <DrawerField label="Responsable">
+          <DrawerField label="Documento relacionado">
+            <EntitySelector
+              entityType="actividades"
+              value={form.documentoRelacionadoId}
+              onValueChange={(v) => setField("documentoRelacionadoId", v)}
+              placeholder="Seleccionar documento…"
+              allowEmpty
+            />
+          </DrawerField>
+        </DrawerSection>
+
+        {/* Section 4 — Revisión */}
+        <DrawerSection title="Revisión">
+          <DrawerField label="Estado de revisión">
+            <Select
+              value={form.estadoRevision}
+              onValueChange={(v) => setField("estadoRevision", v as NonNullable<Evidencia["estadoRevision"]>)}
+              options={REVISION_OPTIONS}
+            />
+          </DrawerField>
+
+          <DrawerField label="Revisor">
             <EntitySelector
               entityType="usuarios"
-              value={form.responsableId}
-              onValueChange={(v) => setForm({ ...form, responsableId: v })}
-              placeholder="Seleccionar responsable…"
+              value={form.revisorId}
+              onValueChange={(v) => setField("revisorId", v)}
+              placeholder="Seleccionar revisor…"
               allowEmpty
             />
           </DrawerField>
 
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Fecha de emisión">
+              <Input
+                type="date"
+                value={form.fechaEmision}
+                onChange={(e) => setField("fechaEmision", e.target.value)}
+              />
+            </DrawerField>
+
+            <DrawerField label="Fecha de vencimiento">
+              <Input
+                type="date"
+                value={form.fechaVencimiento}
+                onChange={(e) => setField("fechaVencimiento", e.target.value)}
+              />
+            </DrawerField>
+          </div>
+        </DrawerSection>
+
+        {/* Section 5 — Responsable */}
+        <DrawerSection title="Responsable">
+          <DrawerField label="Responsable">
+            <EntitySelector
+              entityType="usuarios"
+              value={form.responsableId}
+              onValueChange={(v) => setField("responsableId", v)}
+              placeholder="Seleccionar responsable…"
+              allowEmpty
+            />
+          </DrawerField>
+        </DrawerSection>
+
+        {/* Section 6 — Observaciones */}
+        <DrawerSection title="Observaciones">
           <DrawerField label="Observaciones">
             <Textarea
               value={form.observaciones}
-              onChange={(e) => setForm({ ...form, observaciones: e.target.value })}
+              onChange={(e) => setField("observaciones", e.target.value)}
               rows={3}
               placeholder="Notas adicionales…"
             />
           </DrawerField>
 
+          <DrawerField label="Comentarios internos">
+            <Textarea
+              value={form.comentariosTexto}
+              onChange={(e) => setField("comentariosTexto", e.target.value)}
+              rows={2}
+              placeholder="Comentarios internos…"
+            />
+          </DrawerField>
+        </DrawerSection>
+
+        {/* Section 7 — Obligatoria */}
+        <DrawerSection title="Obligatoria">
           <Switch
             checked={form.obligatoria}
-            onCheckedChange={(v) => setForm({ ...form, obligatoria: v })}
+            onCheckedChange={(v) => setField("obligatoria", v)}
             label="Evidencia obligatoria"
           />
+        </DrawerSection>
+
+        {/* Section 8 — Historial (edit only) */}
+        {editing && (
+          <DrawerSection title="Historial">
+            <HistorialSection historial={editing.historial} />
+          </DrawerSection>
+        )}
+
+        {/* Section 9 — Firma digital (always, disabled visually) */}
+        <DrawerSection title="Firma digital">
+          <div className="flex items-center gap-3 rounded-md border border-sse-border bg-sse-surface/50 px-4 py-3 opacity-60 cursor-not-allowed">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}
+              className="w-5 h-5 text-sse-muted shrink-0">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <p className="text-[12px] text-sse-muted">
+              Firma digital — disponible en una próxima versión
+            </p>
+          </div>
         </DrawerSection>
       </Drawer>
     </div>
