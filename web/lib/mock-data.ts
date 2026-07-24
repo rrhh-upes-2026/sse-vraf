@@ -55,6 +55,15 @@ export const mockUsuarios: Usuario[] = [
     activo: true,
     avatarInitials: "JR",
   },
+  {
+    id: "USR-RRHH-ADMIN",
+    nombre: "Administrador RRHH",
+    email: "rrhh@upes.edu.sv",
+    unidadId: "rrhh",
+    rol: "ADMIN",
+    activo: true,
+    avatarInitials: "AR",
+  },
 ];
 
 export const mockPlanes: PlanEstrategico[] = [

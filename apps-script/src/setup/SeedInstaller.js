@@ -32,6 +32,14 @@ var SeedInstaller = (function () {
       rol:       "GENERAL_ADMIN",
     },
     {
+      id:        "usr-rrhh-admin",
+      email:     "rrhh@upes.edu.sv",
+      nombre:    "Administrador RRHH",
+      cargo:     "Administrador General",
+      unidadKey: "rrhh",
+      rol:       "GENERAL_ADMIN",
+    },
+    {
       id:        "usr-oscar-flores",
       email:     "oscar.flores@upes.edu.sv",
       nombre:    "Oscar Gilberto Flores",
