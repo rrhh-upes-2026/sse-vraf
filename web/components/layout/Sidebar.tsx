@@ -7,6 +7,7 @@ import {
   MY_WORK_ICON,
   SISTEMA_ICON,
   WORKSPACE_SECTIONS,
+  ORG_WORKSPACE_IDS,
   isWorkspaceId,
 } from "@/config/nav";
 import { moduleRegistry } from "@/lib/sdk/registry";
@@ -119,11 +120,13 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
           })}
         </div>
 
-        {/* Workspace-specific extra sections contributed by modules */}
-        {moduleRegistry.getNavigationExtensions(wsId).length > 0 && (
+        {/* Workspace-specific quick links — only for org unit workspaces.
+            Engine module workspaces (fmi, ide, ice, etc.) are intentionally hidden;
+            their tools are surfaced through Indicadores, Evidencias, and Administración. */}
+        {ORG_WORKSPACE_IDS.has(wsId) && moduleRegistry.getNavigationExtensions(wsId).length > 0 && (
           <div className="my-2 h-px bg-white/8" />
         )}
-        {moduleRegistry.getNavigationExtensions(wsId).map((ext) => {
+        {ORG_WORKSPACE_IDS.has(wsId) && moduleRegistry.getNavigationExtensions(wsId).map((ext) => {
           const active = !isMyWork && section === ext.id;
           return (
             <Link

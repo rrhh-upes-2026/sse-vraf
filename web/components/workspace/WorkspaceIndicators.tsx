@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import type { WorkspaceId } from "@/config/nav";
 import type { Indicador, SemaforoColor } from "@/types/entities";
 import { IndicadoresService } from "@/services";
+import { useICEMyIndicators, useICEPeriods, useICECapturas } from "@/hooks/useICE";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -133,6 +135,55 @@ function IndicadorCard({ indicador }: { indicador: Indicador }) {
   );
 }
 
+// ── capture quick-actions bar ─────────────────────────────────────────────────
+
+function CaptureBar({ wsId }: { wsId: string }) {
+  const { data: myItems } = useICEMyIndicators();
+  const { data: openPeriods } = useICEPeriods({ estado: "abierto" });
+  const { data: pending } = useICECapturas({ status: "enviada" });
+
+  const pendingCount = myItems?.filter(
+    (i) => !i.captura || i.captura.status === "borrador" || i.captura.status === "rechazada"
+  ).length ?? 0;
+
+  return (
+    <div className="rounded-xl border border-sse-border bg-sse-surface p-4">
+      <div className="flex flex-wrap items-center gap-3 mb-3">
+        <div className="flex-1">
+          <p className="text-[12px] font-semibold text-sse-ink">Captura de indicadores</p>
+          <p className="text-[11px] text-sse-muted mt-0.5">
+            {openPeriods?.length ? `${openPeriods.length} período${openPeriods.length > 1 ? "s" : ""} abierto${openPeriods.length > 1 ? "s" : ""}` : "Sin períodos abiertos"}
+            {pendingCount > 0 && <> · <span className="text-amber-600 font-medium">{pendingCount} pendiente{pendingCount > 1 ? "s" : ""} de captura</span></>}
+          </p>
+        </div>
+        {pending && pending.length > 0 && (
+          <span className="text-[10px] font-medium rounded-full px-2.5 py-0.5 bg-amber-100 text-amber-700">
+            {pending.length} en revisión
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Link href={`/ws/${wsId}/ice-capturar`}
+          className="text-[11px] px-3 py-1.5 rounded-md bg-sky-600 text-white hover:bg-sky-700 font-medium">
+          + Capturar
+        </Link>
+        <Link href={`/ws/${wsId}/ice-mis-indicadores`}
+          className="text-[11px] px-3 py-1.5 rounded-md border border-sse-border text-sse-ink hover:bg-sse-hover">
+          Mis indicadores
+        </Link>
+        <Link href={`/ws/${wsId}/ice-historial`}
+          className="text-[11px] px-3 py-1.5 rounded-md border border-sse-border text-sse-ink hover:bg-sse-hover">
+          Historial
+        </Link>
+        <Link href={`/ws/${wsId}/ice-aprobaciones`}
+          className="text-[11px] px-3 py-1.5 rounded-md border border-sse-border text-sse-ink hover:bg-sse-hover">
+          Aprobaciones
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 // ── main component ────────────────────────────────────────────────────────────
 
 export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
@@ -151,9 +202,11 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
 
   return (
     <div className="space-y-4">
+      <CaptureBar wsId={wsId} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-[17px] font-semibold text-sse-ink">Indicadores de gestión</h1>
+        <h1 className="text-[17px] font-semibold text-sse-ink">Estado de indicadores</h1>
         {indicadores && indicadores.length > 0 && (
           <div className="flex items-center gap-3">
             {(["verde", "amarillo", "rojo"] as SemaforoColor[]).map((c) =>

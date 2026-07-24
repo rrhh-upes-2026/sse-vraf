@@ -210,6 +210,42 @@ export function WorkspaceAdminOverview({ wsId }: WorkspaceAdminOverviewProps) {
         </div>
       </div>
 
+      {/* Technical engine tools — admin only.
+          These are surfaced here so administrators can reach them
+          without engine modules appearing as separate workspaces. */}
+      {hasPermission("ws.template.export") && (
+        <div>
+          <h2 className="text-[12px] font-semibold uppercase tracking-wider text-sse-muted mb-3">
+            Herramientas técnicas
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {[
+              { label: "Definición de indicadores",  sub: "Motor IDE — catálogo institucional",      href: `ide-dashboard`,   color: "#D97706", icon: "M4 6h16M4 10h16M4 14h7" },
+              { label: "Captura e historial",         sub: "Motor ICE — períodos y auditoría",        href: `ice-dashboard`,   color: "#0284C7", icon: "M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" },
+              { label: "Migración de indicadores",    sub: "Motor OIM — importación VRAF",            href: `oim-dashboard`,   color: "#6366F1", icon: "M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" },
+              { label: "Fórmulas y rangos",           sub: "Motor FMI — FormulaEngine y RangeEngine", href: `fmi-framework`,   color: "#0D9488", icon: "M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 20h16a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z" },
+              { label: "Identidad y permisos",        sub: "Motor ISP — usuarios y roles",            href: `isp-dashboard`,   color: "#1E3A8A", icon: "M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" },
+              { label: "Automatizaciones",            sub: "Motor AUE — eventos y reglas",            href: `aue-dashboard`,   color: "#7C3AED", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+            ].map((t) => (
+              <Link key={t.href} href={`/ws/${wsId}/${t.href}`}
+                className="flex items-start gap-3 rounded-lg border border-sse-border bg-white px-4 py-3 hover:border-sse-primary/30 hover:bg-sse-surface transition-colors">
+                <div className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 mt-0.5"
+                  style={{ backgroundColor: `${t.color}18` }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}
+                    className="w-4 h-4" style={{ color: t.color }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d={t.icon} />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[12px] font-semibold text-sse-ink">{t.label}</p>
+                  <p className="text-[11px] text-sse-muted">{t.sub}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Sprint-11 compliance badge */}
       <div className="bg-sse-hover rounded-md border border-sse-border px-4 py-3 flex items-center gap-3">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}

@@ -38,6 +38,23 @@ export type WorkspaceId =
   | "oim"
   | "ice";
 
+/**
+ * Workspaces that represent real organizational units visible to end users.
+ * Engine and framework modules (fmi, ide, oim, ice, iia, etc.) are internal —
+ * their functionality surfaces through the standard section pages (Indicadores,
+ * Evidencias, Administración, etc.) and must not appear in the workspace switcher.
+ */
+export const ORG_WORKSPACE_IDS: ReadonlySet<string> = new Set([
+  "vraf",
+  "rrhh",
+  "compras",
+  "contabilidad", // manifest id; "conta" is the WorkspaceId alias
+  "conta",
+  "mantenimiento", // manifest id; "mant" is the WorkspaceId alias
+  "mant",
+  "salud",
+]);
+
 /** VRAF is the Core's built-in workspace — always available, no module required. */
 export const VRAF_WORKSPACE = {
   id: "vraf" as WorkspaceId,

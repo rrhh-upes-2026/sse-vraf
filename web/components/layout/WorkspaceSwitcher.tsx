@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { GlyphIcon } from "@/components/layout/GlyphIcon";
-import { VRAF_WORKSPACE, getWorkspace, type WorkspaceId } from "@/config/nav";
+import { VRAF_WORKSPACE, ORG_WORKSPACE_IDS, getWorkspace, type WorkspaceId } from "@/config/nav";
 import { moduleRegistry } from "@/lib/sdk/registry";
 
 interface WorkspaceSwitcherProps {
@@ -15,8 +15,13 @@ export function WorkspaceSwitcher({ currentId }: WorkspaceSwitcherProps) {
   const [open, setOpen] = useState(false);
   const current = getWorkspace(currentId) ?? VRAF_WORKSPACE;
 
-  // VRAF is always first; enabled modules follow in registration order.
-  const workspaces = [VRAF_WORKSPACE, ...moduleRegistry.getWorkspaceUnits()];
+  // VRAF is always first; only organizational unit workspaces follow.
+  // Engine modules (fmi, ide, ice, oim, etc.) are intentionally excluded —
+  // their tools surface inside the standard section pages (Indicadores, Admin, etc.).
+  const workspaces = [
+    VRAF_WORKSPACE,
+    ...moduleRegistry.getWorkspaceUnits().filter((w) => ORG_WORKSPACE_IDS.has(w.id)),
+  ];
 
   function select(id: string) {
     setOpen(false);
