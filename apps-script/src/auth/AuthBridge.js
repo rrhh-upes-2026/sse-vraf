@@ -48,13 +48,14 @@ function generateTempPassword_() {
 var AuthBridge = {
   route: function (verb, params) {
     switch (verb) {
-      case "ping":           return AuthBridge.ping();
-      case "login":          return AuthBridge.login(params);
-      case "changePassword": return AuthBridge.changePassword(params);
-      case "getUser":        return AuthBridge.getUser(params);
+      case "ping":              return AuthBridge.ping();
+      case "login":             return AuthBridge.login(params);
+      case "changePassword":    return AuthBridge.changePassword(params);
+      case "setGlobalPassword": return AuthBridge.setGlobalPassword(params);
+      case "getUser":           return AuthBridge.getUser(params);
       // Legacy OTP — kept for backward compatibility
-      case "sendOtp":        return AuthBridge.sendOtp(params);
-      case "verifyOtp":      return AuthBridge.verifyOtp(params);
+      case "sendOtp":           return AuthBridge.sendOtp(params);
+      case "verifyOtp":         return AuthBridge.verifyOtp(params);
       default:
         throw new Error("Unknown auth action: auth." + verb);
     }
@@ -109,10 +110,41 @@ var AuthBridge = {
       throw new Error("Credenciales inválidas.");
     }
 
-    // Password check
+    // Password check — personal hash first, then global password fallback
     if (!u.passwordHash || !u.passwordSalt) {
-      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "no_password_set", usuarioId: u.id });
-      throw new Error("Credenciales inválidas. Contacte al administrador.");
+      var props      = PropertiesService.getScriptProperties();
+      var globalHash = props.getProperty("GLOBAL_PASSWORD_HASH");
+      var globalSalt = props.getProperty("GLOBAL_PASSWORD_SALT");
+      if (!globalHash || !globalSalt) {
+        LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "no_password_set", usuarioId: u.id });
+        throw new Error("Credenciales inválidas. Contacte al administrador.");
+      }
+      var globalExpected = hashPassword_(password, globalSalt);
+      if (globalExpected !== globalHash) {
+        failState.count = (failState.count || 0) + 1;
+        if (failState.count >= MAX_ATTEMPTS) {
+          failState.lockedUntil = now + 15 * 60 * 1000;
+          AppCacheService.set(failKey, failState, LOCK_TTL);
+          LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "max_attempts_locked", usuarioId: u.id });
+          throw new Error("Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.");
+        }
+        AppCacheService.set(failKey, failState, LOCK_TTL);
+        var leftG = MAX_ATTEMPTS - failState.count;
+        LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "invalid_global_password_attempt_" + failState.count, usuarioId: u.id });
+        throw new Error("Credenciales inválidas. Te quedan " + leftG + " intento(s).");
+      }
+      // Global password matched — user must set a personal password
+      AppCacheService.remove(failKey);
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "OK", motivo: "login_global_password", usuarioId: u.id, rol: u.rol, unidad: u.unidadId });
+      AppLogger.info("AuthBridge.login: success via global password", { email: email });
+      return {
+        usuarioId:          u.id,
+        nombre:             u.nombre,
+        email:              u.email,
+        rol:                u.rol,
+        unidadId:           u.unidadId,
+        mustChangePassword: true,
+      };
     }
     var expectedHash = hashPassword_(password, u.passwordSalt);
     if (expectedHash !== u.passwordHash) {
@@ -144,6 +176,29 @@ var AuthBridge = {
       unidadId:           u.unidadId,
       mustChangePassword: mustChange,
     };
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // Set or update the global (shared) platform password — ADMIN only
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * @param {{ password: string }} params
+   * @returns {{ updated: boolean }}
+   */
+  setGlobalPassword: function (params) {
+    Validator.requireFields(params, ["password"]);
+    var password = String(params.password);
+    if (password.length < 8) {
+      throw new Error("La contraseña debe tener al menos 8 caracteres.");
+    }
+    var salt = generateSalt_();
+    var hash = hashPassword_(password, salt);
+    PropertiesService.getScriptProperties().setProperties({
+      "GLOBAL_PASSWORD_HASH": hash,
+      "GLOBAL_PASSWORD_SALT": salt,
+    }, false);
+    AppLogger.info("AuthBridge.setGlobalPassword: updated");
+    return { updated: true };
   },
 
   // ─────────────────────────────────────────────────────────────

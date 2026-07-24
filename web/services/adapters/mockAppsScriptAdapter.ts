@@ -201,7 +201,11 @@ export class MockAppsScriptAdapter implements IAppsScriptClient {
         return runStep(verb, params) as Promise<T>;
       }
       // Auth actions — return mock session data for dev/test
-      case "login":
+      case "login": {
+        const defaultPw = process.env.DEFAULT_PASSWORD;
+        if (defaultPw && params?.password !== defaultPw) {
+          throw new Error("Credenciales inválidas.");
+        }
         return {
           usuarioId:          "USR-DEV-001",
           nombre:             "Administrador Demo",
@@ -210,6 +214,7 @@ export class MockAppsScriptAdapter implements IAppsScriptClient {
           unidadId:           "vraf",
           mustChangePassword: false,
         } as unknown as T;
+      }
       case "changePassword":
         return { changed: true } as unknown as T;
       case "sendOtp":

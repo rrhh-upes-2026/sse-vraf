@@ -448,6 +448,24 @@ var BootstrapController = (function () {
       log_(logs, 'warn', 'No se pudieron guardar propiedades: ' + String(e.message || e));
     }
 
+    // Set default global password (only if not already configured)
+    try {
+      var existingGlobalHash = PropertiesService.getScriptProperties().getProperty('GLOBAL_PASSWORD_HASH');
+      if (!existingGlobalHash) {
+        var globalSalt = generateSalt_();
+        var globalHash = hashPassword_('Upes2024*', globalSalt);
+        PropertiesService.getScriptProperties().setProperties({
+          'GLOBAL_PASSWORD_HASH': globalHash,
+          'GLOBAL_PASSWORD_SALT': globalSalt,
+        }, false);
+        log_(logs, 'success', 'Contraseña general configurada: Upes2024* — cámbiela desde el wizard después de instalar');
+      } else {
+        log_(logs, 'info', 'Contraseña general ya configurada — sin cambios');
+      }
+    } catch (e) {
+      log_(logs, 'warn', 'No se pudo configurar contraseña general: ' + String(e.message || e));
+    }
+
     log_(logs, 'success',
       'Configuración aplicada: ' + created + ' workspace(s) nuevo(s), ' + updated + ' actualizado(s)'
     );
