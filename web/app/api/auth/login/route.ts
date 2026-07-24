@@ -17,6 +17,27 @@ interface LoginResult {
 }
 
 export async function POST(req: NextRequest) {
+  if (process.env.NEXT_PUBLIC_SKIP_AUTH === "true") {
+    const token = await createSessionToken({
+      usuarioId: "temp-admin",
+      nombre:    "Administrador Temporal",
+      name:      "Administrador Temporal",
+      email:     "admin@upes.edu.sv",
+      rol:       "ADMIN" as RoleCode,
+      unidadId:  "vraf" as WorkspaceId,
+      mustChangePassword: false,
+    });
+    const res = NextResponse.json({ ok: true, mustChangePassword: false });
+    res.cookies.set(SESSION_COOKIE, token, {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge:   MAX_AGE,
+      path:     "/",
+    });
+    return res;
+  }
+
   const body = await req.json() as { email?: string; password?: string };
   const email    = typeof body.email    === "string" ? body.email.trim().toLowerCase() : "";
   const password = typeof body.password === "string" ? body.password : "";

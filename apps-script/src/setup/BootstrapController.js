@@ -53,11 +53,10 @@ var BootstrapController = (function () {
 
     log_(logs, 'info', 'Iniciando validación del entorno de la plataforma...');
 
-    // Spreadsheet
+    // Spreadsheet — auto-created in step 2 if not pre-configured
     var spreadsheetId = Config.spreadsheetId();
     if (!spreadsheetId) {
-      log_(logs, 'error', 'Propiedad SPREADSHEET_ID no configurada en Script Properties');
-      errors.push('PROP_MISSING_SPREADSHEET_ID');
+      log_(logs, 'warn', 'SPREADSHEET_ID no configurada — se creará automáticamente en el paso 2 (Inicializar base de datos)');
     } else {
       try {
         var ss = SpreadsheetApp.openById(spreadsheetId);
@@ -68,11 +67,10 @@ var BootstrapController = (function () {
       }
     }
 
-    // Drive root
+    // Drive root — auto-created in step 3 if not pre-configured
     var driveFolderId = Config.driveFolderRootId();
     if (!driveFolderId) {
-      log_(logs, 'error', 'Propiedad DRIVE_FOLDER_ROOT_ID no configurada');
-      errors.push('PROP_MISSING_DRIVE_FOLDER_ROOT_ID');
+      log_(logs, 'warn', 'DRIVE_FOLDER_ROOT_ID no configurada — se creará automáticamente en el paso 3 (Inicializar Drive)');
     } else {
       try {
         var folder = DriveApp.getFolderById(driveFolderId);
@@ -120,13 +118,17 @@ var BootstrapController = (function () {
       log_(logs, 'warn', 'CacheService no disponible: ' + String(e.message || e));
     }
 
-    log_(logs, errors.length ? 'error' : 'success',
+    var hasWarnings = !spreadsheetId || !driveFolderId;
+    log_(logs, errors.length ? 'error' : hasWarnings ? 'warn' : 'success',
       errors.length
         ? 'Validación completada con ' + errors.length + ' error(es) bloqueante(s)'
-        : 'Entorno validado correctamente — listo para instalación'
+        : hasWarnings
+          ? 'Validación completada con advertencias — los recursos faltantes se crearán en los pasos siguientes'
+          : 'Entorno validado correctamente — listo para instalación'
     );
 
     if (errors.length) return fail_(1, logs, errors);
+    if (hasWarnings) return warn_(1, logs, { spreadsheetId: spreadsheetId || '(se creará)', driveFolderId: driveFolderId || '(se creará)' });
     return ok_(1, logs, { spreadsheetId: spreadsheetId, driveFolderId: driveFolderId });
   }
 

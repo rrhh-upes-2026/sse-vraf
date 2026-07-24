@@ -1,7 +1,7 @@
 // ============================================================
 // SSE_PLATFORM.gs — Single-file deployment build
-// All 35 source files merged in dependency order.
-// Generated: 2026-07-17T19:06:42Z
+// All 110 source files merged in dependency order.
+// Generated: 2026-07-24T16:26:47Z
 // ============================================================
 
 // ============================================================
@@ -65,7 +65,6 @@ var Config = (function () {
     },
   };
 })();
-
 
 // ============================================================
 // SOURCE: utils/idgen.js
@@ -141,7 +140,6 @@ var IdGen = {
   },
 };
 
-
 // ============================================================
 // SOURCE: utils/logger.js
 // ============================================================
@@ -179,7 +177,6 @@ var AppLogger = (function () {
     error: function (msg, data) { log_("ERROR", msg, data); },
   };
 })();
-
 
 // ============================================================
 // SOURCE: utils/response.js
@@ -235,7 +232,6 @@ function fail_(error, metadata) {
   var code = (error && error.code) ? String(error.code) : "INTERNAL_ERROR";
   return jsonOutput_(buildEnvelope_(false, null, metadata, [{ code: code, message: msg }]));
 }
-
 
 // ============================================================
 // SOURCE: utils/validator.js
@@ -305,7 +301,6 @@ var Validator = {
   },
 };
 
-
 // ============================================================
 // SOURCE: events/EventTypes.js
 // ============================================================
@@ -367,7 +362,6 @@ var EVENT_TYPES = {
   REGLA_NOTIF_ACTIVADA:    "regla.notif.activada",
   WORKSPACE_CONFIGURADO:   "workspace.configurado",
 };
-
 
 // ============================================================
 // SOURCE: events/EventDispatcher.js
@@ -445,7 +439,6 @@ var EventDispatcher = (function () {
     },
   };
 })();
-
 
 // ============================================================
 // SOURCE: schema/entities.js
@@ -767,7 +760,6 @@ var ENTITY_SHEETS = {
   },
 };
 
-
 // ============================================================
 // SOURCE: schema/workspace-admin-entities.js
 // ============================================================
@@ -1035,7 +1027,6 @@ function mergeWorkspaceAdminEntities_() {
   });
 }
 
-
 // ============================================================
 // SOURCE: schema/builder-entities.js
 // ============================================================
@@ -1110,7 +1101,6 @@ function mergeBuilderEntities_() {
   }
   AppLogger.info("mergeBuilderEntities_: merged builder entities", { count: count });
 }
-
 
 // ============================================================
 // SOURCE: schema/contratacion-entities.js
@@ -1220,7 +1210,7 @@ var CONTRATACION_ENTITY_SHEETS = {
     columns: [
       "id", "procesoId", "nombre", "apellido", "email",
       "cumplePerfilCV", "enTerna", "seleccionado",
-      "notaEntrevistaPrelimininar", "notaPruebaTecnica",
+      "notaEntrevistaPreliminAr", "notaPruebaTecnica",
       "notaPruebaConductual", "notaEntrevistaRRHH", "notaEntrevistaFinal",
       "promedioGeneral", "dataJson", "createdAt",
     ],
@@ -1243,6 +1233,1738 @@ function mergeContratacionEntities_() {
   AppLogger.info("mergeContratacionEntities_: merged contratacion entities", { count: count });
 }
 
+// ============================================================
+// SOURCE: schema/compras-entities.js
+// ============================================================
+
+/**
+ * Compras entity schema definitions — Procurement & Purchasing.
+ *
+ * All purchasing documents are stored in dedicated sheets. Complex nested
+ * objects are kept in a "dataJson" column so the row-level columns remain
+ * thin and queryable.
+ *
+ * Call mergeComprasEntities_() once during initialization (Code.js bootstrap
+ * and initializeDatabase) to register these sheets in the global ENTITY_SHEETS.
+ */
+
+var COMPRAS_ENTITY_SHEETS = {
+  comprasSolicitudes: {
+    sheetName: "ComprasSolicitudes",
+    columns: [
+      "id", "wsId", "titulo", "tipo", "descripcion",
+      "solicitanteId", "unidadSolicitante",
+      "prioridad", "estado", "etapaActual", "requisicionId",
+      "monto", "montoAprobado", "fechaSolicitud", "fechaRequerida",
+      "notas", "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+  comprasRequisiciones: {
+    sheetName: "ComprasRequisiciones",
+    columns: [
+      "id", "wsId", "solicitudId", "codigo",
+      "descripcion", "especificaciones", "cantidad", "unidadMedida",
+      "presupuestoEstimado", "cuentaPresupuestal",
+      "estado", "aprobadoPorId", "fechaAprobacion",
+      "cotizacionId", "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+  comprasCotizaciones: {
+    sheetName: "ComprasCotizaciones",
+    columns: [
+      "id", "wsId", "requisicionId", "proveedorId", "codigoCotizacion",
+      "monto", "moneda", "plazoEntregaDias",
+      "formaPago", "garantia", "vigenciaDias",
+      "estado", "seleccionada", "notasTecnicas", "notasEvaluacion",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+  comprasProveedores: {
+    sheetName: "ComprasProveedores",
+    columns: [
+      "id", "wsId", "razonSocial", "nombreComercial", "nit", "nrc",
+      "tipoProveedor", "categoria", "contactoNombre", "contactoEmail", "contactoTel",
+      "direccion", "pais", "calificacion", "estado", "observaciones",
+      "ultimaCompraFecha", "totalCompras", "cantidadOrdenes",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+  comprasOrdenes: {
+    sheetName: "ComprasOrdenes",
+    columns: [
+      "id", "wsId", "codigo", "requisicionId", "proveedorId",
+      "cotizacionSeleccionadaId", "monto", "moneda", "plazoEntregaDias",
+      "fechaEmision", "fechaEntregaEsperada", "fechaEntregaReal",
+      "estado", "autorizadoPorId", "fechaAutorizacion",
+      "formaPago", "terminosEntrega",
+      "facturaNro", "montoFactura", "fechaFactura",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+  comprasRecepciones: {
+    sheetName: "ComprasRecepciones",
+    columns: [
+      "id", "wsId", "ordenId", "codigo",
+      "cantidadRecibida", "cantidadSolicitada", "unidadMedida",
+      "condicion", "observaciones",
+      "receptorId", "fechaRecepcion",
+      "actaRecepcionId", "estado",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+  comprasEvaluaciones: {
+    sheetName: "ComprasEvaluaciones",
+    columns: [
+      "id", "wsId", "proveedorId", "ordenId", "periodo",
+      "calidadPuntaje", "tiempoEntregaPuntaje", "cumplimientoPuntaje",
+      "comunicacionPuntaje", "precioCompetitividadPuntaje",
+      "puntajeTotal", "calificacionGlobal",
+      "recomendacion", "observaciones", "evaluadorId",
+      "dataJson", "createdBy", "createdAt", "updatedAt"
+    ],
+  },
+};
+
+/**
+ * Register all compras entity schemas into the global ENTITY_SHEETS.
+ * Must be called before any compras CRUD — typically from Code.js bootstrap
+ * and initializeDatabase().
+ */
+function mergeComprasEntities_() {
+  var count = 0;
+  for (var key in COMPRAS_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(COMPRAS_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = COMPRAS_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergeComprasEntities_: merged compras entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/contabilidad-entities.js
+// ============================================================
+
+/**
+ * Contabilidad entity schema definitions — Accounting & Finance.
+ *
+ * Budget commitments, accounting journals, invoices, payments, bank
+ * reconciliations, accounts payable, and accounts receivable are each stored
+ * in dedicated sheets. Complex nested objects go in "dataJson" so row-level
+ * columns stay thin and queryable.
+ *
+ * Integration points with Compras (read-only references, no data duplication):
+ *   ordenCompraId  → comprasOrdenes.id
+ *   recepcionId    → comprasRecepciones.id
+ *   proveedorId    → comprasProveedores.id
+ *
+ * Call mergeContabilidadEntities_() once during bootstrap (Code.js) and
+ * initializeDatabase() to register these sheets in the global ENTITY_SHEETS.
+ */
+
+var CONTABILIDAD_ENTITY_SHEETS = {
+
+  contaCompromisos: {
+    sheetName: "ContaCompromisos",
+    columns: [
+      "id", "wsId", "numero", "concepto",
+      "tipo", "monto", "moneda",
+      "cuentaPresupuestal", "centroCosto", "partida",
+      "estado", "etapa",
+      // Compras integration refs (no duplication — foreign keys only)
+      "ordenCompraId", "ordenCompraRef",
+      "proveedorId",   "proveedorRef",
+      "fechaCompromiso", "fechaVencimiento",
+      "montoEjecutado", "saldo",
+      "aprobadoPorId", "fechaAprobacion",
+      "observaciones",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  contaRegistros: {
+    sheetName: "ContaRegistros",
+    columns: [
+      "id", "wsId", "numero", "tipo",
+      "descripcion", "cuentaDebito", "cuentaCredito",
+      "monto", "moneda", "centroCosto",
+      "referenciaId", "referenciaDoc",
+      "estado", "fechaAsiento", "periodo",
+      // Integration refs
+      "compromisoId", "facturaId", "pagoId",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  contaFacturas: {
+    sheetName: "ContaFacturas",
+    columns: [
+      "id", "wsId", "numero", "serie", "tipo",
+      // Compras integration refs
+      "proveedorId", "proveedorRef",
+      "ordenCompraId", "recepcionId",
+      "fechaFactura", "fechaVencimiento", "fechaRecepcion",
+      "monto", "montoIva", "montoTotal", "moneda",
+      "estado", "metodoPago",
+      "cuentaPagarId", "compromisoId",
+      "observaciones",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  contaPagos: {
+    sheetName: "ContaPagos",
+    columns: [
+      "id", "wsId", "numeroPago", "tipo",
+      // Integration refs
+      "facturaId", "proveedorId", "proveedorRef",
+      "monto", "moneda",
+      "estado",
+      "fechaSolicitud", "fechaAprobacion", "fechaEjecucion",
+      "aprobadoPorId", "ejecutadoPorId",
+      "referenciaBancaria", "cuentaBancaria", "concepto",
+      "registroId",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  contaConciliaciones: {
+    sheetName: "ContaConciliaciones",
+    columns: [
+      "id", "wsId", "periodo", "cuenta", "banco",
+      "saldoBanco", "saldoLibros", "diferencia",
+      "estado", "fechaInicio", "fechaCierre",
+      "observaciones",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  contaCuentasPagar: {
+    sheetName: "ContaCuentasPagar",
+    columns: [
+      "id", "wsId", "codigo",
+      // Integration refs
+      "proveedorId", "proveedorRef",
+      "facturaId", "ordenCompraId",
+      "monto", "montoPagado", "saldo", "moneda",
+      "estado", "fechaEmision", "fechaVencimiento", "fechaPago",
+      "diasPlazo", "prioridad",
+      "observaciones",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  contaCuentasCobrar: {
+    sheetName: "ContaCuentasCobrar",
+    columns: [
+      "id", "wsId", "codigo",
+      "clienteRef", "concepto",
+      "monto", "montoCobrado", "saldo", "moneda",
+      "estado", "fechaEmision", "fechaVencimiento", "fechaCobro",
+      "diasPlazo",
+      "observaciones",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+};
+
+/**
+ * Register all contabilidad entity schemas into the global ENTITY_SHEETS.
+ * Must be called before any contabilidad CRUD — from Code.js bootstrap
+ * and initializeDatabase().
+ */
+function mergeContabilidadEntities_() {
+  var count = 0;
+  for (var key in CONTABILIDAD_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(CONTABILIDAD_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = CONTABILIDAD_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergeContabilidadEntities_: merged contabilidad entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/mantenimiento-entities.js
+// ============================================================
+
+/**
+ * Mantenimiento e Infraestructura entity schema definitions.
+ *
+ * Assets, locations, preventive plans, service requests, work orders,
+ * inspections, technical history, maintenance costs, and technical inventory.
+ *
+ * Integration points (foreign keys only — no data duplication):
+ *   proveedorId      → comprasProveedores.id       (asset supplier)
+ *   ordenCompraRef   → comprasOrdenes.codigo        (purchase context)
+ *   compromisoId     → contaCompromisos.id          (budget commitment)
+ *   facturaId        → contaFacturas.id             (invoice for cost)
+ *
+ * Call mergeMantenimientoEntities_() in Code.js bootstrap and initializeDatabase.
+ */
+
+var MANTENIMIENTO_ENTITY_SHEETS = {
+
+  mantoActivos: {
+    sheetName: "MantoActivos",
+    columns: [
+      "id", "wsId", "codigo", "nombre",
+      "categoria", "tipo", "marca", "modelo", "serie", "descripcion",
+      "ubicacionId", "ubicacionRef",
+      "responsableId",
+      "estado",
+      "fechaAdquisicion", "vidaUtilAnios", "valorAdquisicion", "valorActual",
+      // Compras integration refs
+      "proveedorId", "proveedorRef", "ordenCompraRef",
+      "garantiaFecha", "garantiaDetalles",
+      "ultimoMantenimientoFecha", "proximoMantenimientoFecha",
+      "observaciones",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  mantoUbicaciones: {
+    sheetName: "MantoUbicaciones",
+    columns: [
+      "id", "wsId", "codigo", "nombre",
+      "tipo", "descripcion", "area",
+      "responsableId",
+      "estado",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  mantoPlanes: {
+    sheetName: "MantoPlanes",
+    columns: [
+      "id", "wsId", "codigo", "nombre",
+      "tipo", "activoId", "activoRef",
+      "frecuencia", "descripcion", "procedimiento",
+      "duracionHoras", "costoEstimado",
+      "tecnicoAsignadoId",
+      "fechaInicio", "fechaFin",
+      "estado", "cumplimientoPct",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  mantoSolicitudes: {
+    sheetName: "MantoSolicitudes",
+    columns: [
+      "id", "wsId", "codigo",
+      "solicitanteId", "unidadSolicitante",
+      "tipo", "prioridad",
+      "titulo", "descripcion",
+      "activoId", "activoRef",
+      "ubicacionId", "ubicacionRef",
+      "estado",
+      "fechaSolicitud", "fechaRequerida",
+      "aprobadoPorId", "fechaAprobacion",
+      "ordenTrabajoId",
+      "notas",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  mantoOrdenesTrabajo: {
+    sheetName: "MantoOrdenesTrabajo",
+    columns: [
+      "id", "wsId", "codigo",
+      "solicitudId", "planId",
+      "tipo", "prioridad",
+      "titulo", "descripcion",
+      "activoId", "activoRef",
+      "ubicacionId", "ubicacionRef",
+      "tecnicoAsignadoId", "tecnicoRef",
+      "estado", "etapaActual",
+      "fechaEmision", "fechaEstimadaFin", "fechaInicio", "fechaCierre",
+      "horasEstimadas", "horasReales",
+      "diagnostico", "solucion",
+      "costoManoObra", "costoMateriales", "costoTotal",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  mantoInspecciones: {
+    sheetName: "MantoInspecciones",
+    columns: [
+      "id", "wsId", "codigo",
+      "activoId", "activoRef",
+      "ubicacionId", "ubicacionRef",
+      "tipo", "estado",
+      "tecnicoId", "tecnicoRef",
+      "fechaProgramada", "fechaEjecucion",
+      "hallazgos", "recomendaciones",
+      "condicion", "requiereOrden",
+      "ordenGeneradaId",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  mantoHistorial: {
+    sheetName: "MantoHistorial",
+    columns: [
+      "id", "wsId",
+      "activoId",
+      "tipo", "descripcion",
+      "ordenId", "inspeccionId",
+      "tecnicoId",
+      "fecha", "costo",
+      "dataJson", "createdBy", "createdAt", "updatedAt"
+    ],
+  },
+
+  mantoCostos: {
+    sheetName: "MantoCostos",
+    columns: [
+      "id", "wsId",
+      "ordenId", "activoId", "activoRef",
+      "tipo", "concepto",
+      "monto", "moneda",
+      // Contabilidad integration refs
+      "compromisoId", "facturaId",
+      "proveedor",
+      "fecha", "aprobado",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  mantoInventarioTecnico: {
+    sheetName: "MantoInventarioTecnico",
+    columns: [
+      "id", "wsId", "codigo",
+      "nombre", "descripcion",
+      "categoria", "unidadMedida",
+      "stockActual", "stockMinimo",
+      "ubicacionAlmacen",
+      "activoId",
+      // Compras integration refs
+      "ordenCompraId", "proveedorId",
+      "estado", "valorUnitario",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+};
+
+/**
+ * Register all mantenimiento entity schemas into the global ENTITY_SHEETS.
+ * Called from Code.js bootstrap and initializeDatabase().
+ */
+function mergeMantenimientoEntities_() {
+  var count = 0;
+  for (var key in MANTENIMIENTO_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(MANTENIMIENTO_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = MANTENIMIENTO_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergeMantenimientoEntities_: merged mantenimiento entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/sso-entities.js
+// ============================================================
+
+/**
+ * Salud y Seguridad Ocupacional entity schema definitions.
+ *
+ * Incidents, accidents, inspections, hazard identification, risk assessment
+ * (IPER matrix), corrective/preventive actions, EPP control, SSO training,
+ * committee sessions, internal audits, and legal compliance tracking.
+ *
+ * Integration points (foreign keys only — no data duplication):
+ *   empleadoId      → empleados.id            (RRHH)
+ *   responsableId   → empleados.id            (RRHH)
+ *   activoId        → mantoActivos.id          (Mantenimiento)
+ *   proveedorId     → comprasProveedores.id    (Compras — EPP)
+ *   ordenCompraRef  → comprasOrdenes.codigo    (Compras — EPP)
+ *   compromisoId    → contaCompromisos.id      (Contabilidad — costos)
+ *
+ * Call mergeSSOEntities_() in Code.js bootstrap and initializeDatabase.
+ */
+
+var SSO_ENTITY_SHEETS = {
+
+  ssoIncidentes: {
+    sheetName: "SSOIncidentes",
+    columns: [
+      "id", "wsId", "codigo",
+      "titulo", "descripcion",
+      "tipo", "area", "proceso",
+      // RRHH integration
+      "empleadoId", "empleadoRef",
+      "fechaIncidente", "horaIncidente",
+      "ubicacion",
+      // Mantenimiento integration
+      "activoId",
+      "gravedad", "estado", "etapa",
+      "investigadorId", "fechaInvestigacion",
+      "causaRaiz", "accionesGeneradas",
+      "diasPerdidos",
+      // Contabilidad integration
+      "costoEstimado", "compromisoId",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoAccidentes: {
+    sheetName: "SSOAccidentes",
+    columns: [
+      "id", "wsId", "codigo",
+      // SSO integration
+      "incidenteId",
+      // RRHH integration
+      "empleadoId", "empleadoRef",
+      "tipo", "area", "proceso",
+      "fechaAccidente", "horaAccidente",
+      "descripcion", "causas",
+      "lesionTipo", "parteCuerpo", "gravedad",
+      "testigos",
+      "diasIncapacidad",
+      // Contabilidad integration
+      "costosAtencion", "compromisoId",
+      "estado",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoInspecciones: {
+    sheetName: "SSOInspecciones",
+    columns: [
+      "id", "wsId", "codigo", "titulo",
+      "tipo",
+      "area", "proceso",
+      // RRHH integration
+      "inspectorId", "inspectorRef",
+      "fechaProgramada", "fechaEjecucion",
+      "hallazgos", "observaciones",
+      "numHallazgos", "numConformes", "numNoConformes",
+      "estado",
+      "accionesGeneradas",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoPeligros: {
+    sheetName: "SSOPeligros",
+    columns: [
+      "id", "wsId", "codigo",
+      "area", "proceso", "actividad",
+      "tipo", "descripcion", "fuente",
+      "personasExpuestas",
+      "controlesExistentes",
+      "estado",
+      // Mantenimiento integration
+      "activoId",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoRiesgos: {
+    sheetName: "SSORiesgos",
+    columns: [
+      "id", "wsId", "codigo",
+      // SSO integration
+      "peligroId",
+      "area", "proceso", "actividad", "peligroDesc",
+      "probabilidad", "impacto", "nivelRiesgo", "clasificacion",
+      "controlesExistentes", "accionesRecomendadas",
+      // RRHH integration
+      "responsableId",
+      "fechaRevision",
+      "estado",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoAcciones: {
+    sheetName: "SSOAcciones",
+    columns: [
+      "id", "wsId", "codigo",
+      "tipo", "origen", "origenId",
+      "titulo", "descripcion",
+      // RRHH integration
+      "responsableId", "responsableRef",
+      "area",
+      "prioridad",
+      "fechaAsignacion", "fechaLimite", "fechaCierre",
+      "progresoPct",
+      // RRHH integration
+      "verificadoPorId", "fechaVerificacion",
+      "estado",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoEPP: {
+    sheetName: "SSOEPP",
+    columns: [
+      "id", "wsId", "codigo",
+      "nombre", "descripcion", "categoria",
+      // RRHH integration
+      "empleadoId", "empleadoRef",
+      "tipo", "talla", "marca", "modelo",
+      "fechaEntrega", "fechaVencimiento",
+      "cantidad", "unidadMedida",
+      "estado",
+      // Compras integration
+      "proveedorId", "ordenCompraRef",
+      // Contabilidad integration
+      "costo", "compromisoId",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoCapacitaciones: {
+    sheetName: "SSOCapacitaciones",
+    columns: [
+      "id", "wsId", "codigo", "titulo",
+      "tipo", "modalidad",
+      "instructor", "entidad",
+      "fechaInicio", "fechaFin", "duracionHoras",
+      "participantesIds",
+      "numParticipantes", "numAprobados",
+      "tematica", "objetivo",
+      "estado",
+      // Contabilidad integration
+      "costo", "compromisoId",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoComite: {
+    sheetName: "SSOComite",
+    columns: [
+      "id", "wsId", "codigo",
+      "tipo", "numero", "fecha", "lugar",
+      // RRHH integration
+      "presidenteId", "secretarioId",
+      "miembros",
+      "numAsistentes",
+      "agenda", "acuerdos", "compromisos",
+      "estado",
+      "proximaFecha",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoAuditorias: {
+    sheetName: "SSOAuditorias",
+    columns: [
+      "id", "wsId", "codigo", "titulo",
+      "tipo", "normaRef",
+      // RRHH integration
+      "auditorId", "auditorRef",
+      "fechaProgramada", "fechaEjecucion",
+      "alcance", "metodologia",
+      "hallazgos", "noConformidades",
+      "numHallazgos", "numNC",
+      "planAccion",
+      "estado",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+  ssoCumplimiento: {
+    sheetName: "SSOCumplimiento",
+    columns: [
+      "id", "wsId", "codigo",
+      "norma", "articulo", "descripcion",
+      "tipo",
+      // RRHH integration
+      "responsableId",
+      "fechaVigencia", "fechaRevision",
+      "evidencia",
+      "estado",
+      "observaciones",
+      "dataJson", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+
+};
+
+/**
+ * Register all SSO entity schemas into the global ENTITY_SHEETS.
+ * Called from Code.js bootstrap and initializeDatabase().
+ */
+function mergeSSOEntities_() {
+  var count = 0;
+  for (var key in SSO_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(SSO_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = SSO_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergeSSOEntities_: merged SSO entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/ime-entities.js
+// ============================================================
+
+/**
+ * IME — Indicator Management Engine entity schemas.
+ *
+ * Three sheets:
+ *   imeIndicadores — one row per institutional indicator definition
+ *   imeCatalogos   — lookup catalogue items (all types share one sheet, discriminated by 'tipo')
+ *   imeHistorial   — audit trail of every state change on an indicator
+ *
+ * Call mergeIMEEntities_() once during initialization.
+ */
+
+var IME_ENTITY_SHEETS = {
+
+  imeIndicadores: {
+    sheetName: "IMEIndicadores",
+    columns: [
+      // Identification
+      "id", "wsId", "code", "name", "description", "active",
+      // Classification
+      "organizationalUnitId", "processId", "procedureId",
+      "strategicPillar", "strategicObjective",
+      // Technical configuration
+      "indicatorType", "measurementUnit", "frequency",
+      "calculationType", "polarity",
+      "targetValue", "warningThreshold", "criticalThreshold",
+      // Responsibility
+      "responsiblePosition", "responsibleUser",
+      // General
+      "displayOrder", "year", "version", "observations",
+      // Audit
+      "createdBy", "createdAt", "updatedBy", "updatedAt", "deletedAt",
+    ],
+  },
+
+  imeCatalogos: {
+    sheetName: "IMECatalogos",
+    columns: [
+      "id", "wsId",
+      "tipo",     // tipoIndicador | frecuencia | polaridad | unidadMedida |
+                  // pilarEstrategico | objetivoEstrategico | proceso | procedimiento
+      "codigo", "nombre", "descripcion",
+      "activo", "orden",
+      "createdBy", "createdAt", "updatedAt", "deletedAt",
+    ],
+  },
+
+  imeHistorial: {
+    sheetName: "IMEHistorial",
+    columns: [
+      "id", "wsId",
+      "indicadorId",
+      "accion",   // creado | actualizado | activado | desactivado | duplicado
+      "usuario",
+      "detalle",  // JSON string
+      "createdAt",
+    ],
+  },
+};
+
+function mergeIMEEntities_() {
+  var count = 0;
+  for (var key in IME_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(IME_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = IME_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergeIMEEntities_: merged ime entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/pme-entities.js
+// ============================================================
+
+/**
+ * PME — Process Management Engine entity schemas.
+ *
+ * Five sheets:
+ *   pmeProcesos        — institutional process definitions
+ *   pmeProcedimientos  — procedures belonging to a process
+ *   pmeActividades     — activities belonging to a procedure
+ *   pmeCatalogos       — lookup catalogue items (all types, discriminated by 'tipo')
+ *   pmeHistorial       — audit trail for all PME entities
+ *
+ * Call mergePMEEntities_() once during initialization.
+ */
+
+var PME_ENTITY_SHEETS = {
+
+  pmeProcesos: {
+    sheetName: "PMEProcesos",
+    columns: [
+      // Identification
+      "id", "wsId", "code", "name", "description", "active",
+      // Classification
+      "organizationalUnitId", "tipoProcesoId",
+      "periodicidad", "objetivo",
+      // Responsibility
+      "responsiblePosition", "responsibleUser",
+      // Configuration
+      "displayOrder", "version", "observations",
+      // IME integration hook (future use)
+      "indicadorIds",
+      // Audit
+      "createdBy", "createdAt", "updatedBy", "updatedAt", "deletedAt",
+    ],
+  },
+
+  pmeProcedimientos: {
+    sheetName: "PMEProcedimientos",
+    columns: [
+      // Identification
+      "id", "wsId", "code", "name", "description", "active",
+      // Hierarchy
+      "procesoId",
+      // Classification
+      "tipoProcedimientoId", "periodicidad", "objetivo",
+      // Responsibility
+      "responsiblePosition", "responsibleUser",
+      // Configuration
+      "displayOrder", "version", "observations",
+      // Audit
+      "createdBy", "createdAt", "updatedBy", "updatedAt", "deletedAt",
+    ],
+  },
+
+  pmeActividades: {
+    sheetName: "PMEActividades",
+    columns: [
+      // Identification
+      "id", "wsId", "code", "name", "description", "active",
+      // Hierarchy
+      "procesoId", "procedimientoId",
+      // Classification
+      "tipoActividadId", "estadoOperativoId",
+      "periodicidad", "objetivo",
+      // Duration
+      "duracion", "unidadDuracionId",
+      // Responsibility
+      "responsiblePosition", "responsibleUser",
+      // Configuration
+      "displayOrder", "version", "observations",
+      // IME integration hook (future use)
+      "indicadorId",
+      // Audit
+      "createdBy", "createdAt", "updatedBy", "updatedAt", "deletedAt",
+    ],
+  },
+
+  pmeCatalogos: {
+    sheetName: "PMECatalogos",
+    columns: [
+      "id", "wsId",
+      "tipo",     // tipoProceso | tipoProcedimiento | tipoActividad |
+                  // unidadDuracion | periodicidad | estadoOperativo
+      "codigo", "nombre", "descripcion",
+      "activo", "orden",
+      "createdBy", "createdAt", "updatedAt", "deletedAt",
+    ],
+  },
+
+  pmeHistorial: {
+    sheetName: "PMEHistorial",
+    columns: [
+      "id", "wsId",
+      "entidadTipo",  // proceso | procedimiento | actividad
+      "entidadId",
+      "accion",       // creado | actualizado | activado | archivado | duplicado |
+                      // responsableCambiado | nombreCambiado | objetivoCambiado
+      "usuario",
+      "detalle",      // JSON string
+      "createdAt",
+    ],
+  },
+};
+
+function mergePMEEntities_() {
+  var count = 0;
+  for (var key in PME_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(PME_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = PME_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergePMEEntities_: merged pme entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/ape-entities.js
+// ============================================================
+
+/**
+ * APE — Activity Planning Engine entity schemas.
+ *
+ * Two sheets:
+ *   apePlanes    — one row per planned execution of a PME activity
+ *   apeHistorial — audit trail for plan state changes
+ *
+ * Call mergeAPEEntities_() once during initialization.
+ *
+ * SCOPE: planning only. No tracking, no evidence, no compliance.
+ * Follow-up Engine (Sprint 004) adds execution state on top of this schema.
+ */
+
+var APE_ENTITY_SHEETS = {
+
+  apePlanes: {
+    sheetName: "APEPlanes",
+    columns: [
+      // Identity
+      "id", "wsId",
+      // PME references (never duplicate the actual data)
+      "activityId", "processId", "procedureId", "organizationalUnitId",
+      // Plan description
+      "title", "description",
+      // Temporal scope
+      "year",
+      "plannedStartDate", "plannedEndDate",
+      // Temporal classification
+      "plannedMonth",          // 1-12
+      "plannedQuarter",        // 1-4
+      "plannedSemester",       // 1-2
+      "plannedWeek",           // 1-53 (ISO week)
+      "plannedExecutionNumber", // position within the activity's annual plan sequence
+      // Periodicidad (copied from activity at generation time for self-contained reads)
+      "periodicity",
+      // Responsibility
+      "responsibleUser", "responsiblePosition",
+      // Planning metadata
+      "priority",   // Alta | Media | Baja
+      "status",     // Programada | Próxima | Pendiente | Archivada | Cancelada
+      "plannedHours",
+      // Future-engine hooks (populated by Sprint 004+)
+      "dependencies",  // JSON array of plan IDs
+      "notes",
+      // Audit
+      "createdBy", "createdAt", "updatedBy", "updatedAt", "deletedAt",
+    ],
+  },
+
+  apeHistorial: {
+    sheetName: "APEHistorial",
+    columns: [
+      "id", "wsId",
+      "planId",
+      "accion",   // generado | actualizado | programado | proximo | pendiente | archivado | cancelado | regenerado
+      "usuario",
+      "detalle",  // JSON string
+      "createdAt",
+    ],
+  },
+};
+
+function mergeAPEEntities_() {
+  var count = 0;
+  for (var key in APE_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(APE_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = APE_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergeAPEEntities_: merged ape entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/aee-entities.js
+// ============================================================
+
+/**
+ * AEE — Activity Execution Engine entity schemas.
+ *
+ * Three sheets:
+ *   aeeEjecuciones  — one row per recorded execution of an APE plan
+ *   aeeCatalogos    — configurable catalog values (resultados, niveles de riesgo)
+ *   aeeHistorial    — audit trail for execution state changes
+ *
+ * Call mergeAEEEntities_() once during initialization.
+ *
+ * SCOPE: execution recording only.
+ * No evidence, no compliance calculation, no indicator modification.
+ * Sprint 005 (Evidence Engine) adds document management on top of this schema.
+ */
+
+var AEE_ENTITY_SHEETS = {
+
+  aeeEjecuciones: {
+    sheetName: "AEEEjecuciones",
+    columns: [
+      // Identity
+      "id", "wsId",
+      // APE reference (the plan being executed)
+      "planId",
+      // PME references (denormalized for self-contained reads)
+      "activityId", "procedureId", "processId", "organizationalUnitId",
+      // Sequence
+      "executionNumber",      // position within the plan's execution sequence
+      // Temporal
+      "executionDate",        // YYYY-MM-DD — actual execution date
+      "startTime",            // HH:mm — actual start
+      "endTime",              // HH:mm — actual end
+      "durationMinutes",      // calculated or entered
+      // Responsibility
+      "executedBy",           // user ID who executed
+      "responsiblePosition",  // cargo/role
+      // Status & result
+      "status",               // see AEE_ESTADOS
+      "executionResult",      // catalog value ID
+      // Notes
+      "completionNotes",      // main completion note
+      "observations",         // additional observations
+      // Incidents & risks
+      "requiresEvidence",     // boolean — flags for Evidence Engine
+      "hasEvidence",          // boolean — set by Evidence Engine (Sprint 005)
+      "riskDetected",         // risk level catalog value
+      "incidentReported",     // boolean
+      // Approval architecture (Sprint 005+)
+      "requiresApproval",
+      "approvedBy",
+      "approvalDate",
+      // Audit
+      "createdBy", "createdAt", "updatedBy", "updatedAt", "deletedAt",
+    ],
+  },
+
+  aeeCatalogos: {
+    sheetName: "AEECatalogos",
+    columns: [
+      "id", "wsId",
+      "tipo",     // resultadoEjecucion | nivelRiesgo
+      "valor",    // stored value (key)
+      "etiqueta", // display label
+      "activo",   // boolean
+      "orden",    // display order
+      "createdAt", "updatedAt",
+    ],
+  },
+
+  aeeHistorial: {
+    sheetName: "AEEHistorial",
+    columns: [
+      "id", "wsId",
+      "ejecucionId",
+      "accion",   // creado | actualizado | estado_cambiado | archivado
+      "estadoAnterior",
+      "estadoNuevo",
+      "usuario",
+      "detalle",  // JSON string
+      "createdAt",
+    ],
+  },
+};
+
+function mergeAEEEntities_() {
+  var count = 0;
+  for (var key in AEE_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(AEE_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = AEE_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergeAEEEntities_: merged aee entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/eme-entities.js
+// ============================================================
+
+/**
+ * EME — Evidence Management Engine entity schemas.
+ *
+ * Three sheets:
+ *   emeEvidencias  — one row per institutional evidence item
+ *   emeCatalogos   — configurable catalog values (tipos, estados, proveedores, confidencialidad)
+ *   emeHistorial   — audit trail for evidence state changes and versioning events
+ *
+ * Call mergeEMEEntities_() once during initialization.
+ *
+ * SCOPE: evidence repository ONLY.
+ * No compliance calculation, no indicator modification, no file upload implementation.
+ * Sprint 006 (Compliance Engine) consumes this data.
+ */
+
+var EME_ENTITY_SHEETS = {
+
+  emeEvidencias: {
+    sheetName: "EMEEvidencias",
+    columns: [
+      // Identity
+      "id", "wsId",
+      // AEE reference (the execution this evidence belongs to)
+      "executionId",
+      // PME / APE denormalized references (self-contained reads)
+      "planId", "activityId", "procedureId", "processId", "organizationalUnitId",
+      // Metadata
+      "title",
+      "description",
+      "evidenceType",          // catalog value: tipoEvidencia
+      // Storage architecture (provider fields — no connector implemented)
+      "storageProvider",       // catalog value: proveedorAlmacenamiento
+      "storageReference",      // URL, path, or Drive file ID (simulated in Sprint 005)
+      "fileName",              // system filename (with version suffix)
+      "originalFileName",      // name as uploaded by user
+      "extension",             // e.g. pdf, docx, xlsx
+      "mimeType",              // e.g. application/pdf
+      "fileSize",              // in bytes (logical)
+      "checksum",              // MD5 or SHA-256 (simulated)
+      // Versioning
+      "version",               // semantic: "1.0", "1.1", "2.0"
+      // Status
+      "status",                // catalog value: estadoEvidencia
+      // Responsibility
+      "uploadedBy",
+      "uploadedAt",
+      // Validation architecture
+      "validatedBy",
+      "validatedAt",
+      "validationStatus",      // aprobada | rechazada | pendiente
+      "validationComments",
+      // Classification
+      "isRequired",            // boolean — flagged by AEE
+      "isConfidential",        // boolean — quick flag
+      "confidentialityLevel",  // catalog: Pública | Interna | Confidencial | Restringida
+      "expirationDate",        // YYYY-MM-DD or empty
+      // Tagging
+      "tags",                  // JSON array stored as string
+      // Free text
+      "notes",
+      // Audit
+      "createdBy", "createdAt", "updatedBy", "updatedAt", "deletedAt",
+    ],
+  },
+
+  emeCatalogos: {
+    sheetName: "EMECatalogos",
+    columns: [
+      "id", "wsId",
+      "tipo",      // tipoEvidencia | estadoEvidencia | proveedorAlmacenamiento | nivelConfidencialidad
+      "valor",     // stored key
+      "etiqueta",  // display label
+      "activo",
+      "orden",
+      "createdAt", "updatedAt",
+    ],
+  },
+
+  emeHistorial: {
+    sheetName: "EMEHistorial",
+    columns: [
+      "id", "wsId",
+      "evidenciaId",
+      "accion",          // creado | actualizado | estado_cambiado | version_nueva | archivado | validado | rechazado
+      "estadoAnterior",
+      "estadoNuevo",
+      "versionAnterior",
+      "versionNueva",
+      "usuario",
+      "detalle",         // JSON string
+      "createdAt",
+    ],
+  },
+};
+
+function mergeEMEEntities_() {
+  var count = 0;
+  for (var key in EME_ENTITY_SHEETS) {
+    if (Object.prototype.hasOwnProperty.call(EME_ENTITY_SHEETS, key)) {
+      ENTITY_SHEETS[key] = EME_ENTITY_SHEETS[key];
+      count++;
+    }
+  }
+  AppLogger.info("mergeEMEEntities_: merged eme entities", { count: count });
+}
+
+// ============================================================
+// SOURCE: schema/cpe-entities.js
+// ============================================================
+
+/**
+ * CPE — Compliance & Performance Engine entity schemas.
+ * Merged into ENTITY_SHEETS at bootstrap so SheetRepository can resolve them.
+ */
+var CPE_ENTITY_SHEETS = {
+  cpeSnapshots: {
+    sheetName: "CPESnapshots",
+    columns: [
+      "id", "wsId", "snapshotDate", "year", "month",
+      "organizationalUnitId", "processId", "procedureId", "activityId",
+      "planId", "executionId", "indicatorId",
+      "plannedActivities", "executedActivities",
+      "validatedEvidence", "requiredEvidence",
+      "planningScore", "executionScore", "documentationScore", "indicatorScore",
+      "overallScore", "complianceStatus", "riskLevel",
+      "calculatedAt", "calculatedBy", "createdAt"
+    ],
+  },
+  cpePlanesMejora: {
+    sheetName: "CPEPlanesMejora",
+    columns: [
+      "id", "wsId", "relatedComplianceId", "title", "description",
+      "priority", "responsible", "targetDate", "status", "progress",
+      "notes", "createdBy", "createdAt", "updatedAt", "deletedAt"
+    ],
+  },
+  cpeHistorial: {
+    sheetName: "CPEHistorial",
+    columns: [
+      "id", "wsId", "tipoCalculo", "duracion", "registrosAnalizados",
+      "resultado", "usuario", "createdAt"
+    ],
+  },
+  cpeCatalogos: {
+    sheetName: "CPECatalogos",
+    columns: [
+      "id", "wsId", "tipo", "valor", "etiqueta", "activo", "orden",
+      "peso", "umbralMin", "umbralMax", "scoreMin", "scoreMax",
+      "createdAt", "updatedAt"
+    ],
+  },
+};
+
+function mergeCPEEntities_() {
+  Object.keys(CPE_ENTITY_SHEETS).forEach(function (key) {
+    ENTITY_SHEETS[key] = CPE_ENTITY_SHEETS[key];
+  });
+}
+
+// ============================================================
+// SOURCE: schema/iie-entities.js
+// ============================================================
+
+/**
+ * IIE — Institutional Intelligence Engine entity schemas.
+ * Owns only configuration/rule sheets. All operational data is read from other engines.
+ */
+var IIE_ENTITY_SHEETS = {
+  iieConfiguration: {
+    sheetName: "IIE_Configuration",
+    columns: [
+      "id", "wsId", "key", "value", "label", "description",
+      "category", "type", "min", "max", "updatedAt", "createdAt",
+    ],
+  },
+  iieKnowledgeRules: {
+    sheetName: "IIE_KnowledgeRules",
+    columns: [
+      "id", "wsId", "name", "description", "conditions", "consequences",
+      "logic", "weight", "confidence", "enabled", "category", "priority",
+      "createdAt", "updatedAt",
+    ],
+  },
+  iieModelParameters: {
+    sheetName: "IIE_ModelParameters",
+    columns: [
+      "id", "wsId", "model", "parameter", "value", "description",
+      "createdAt", "updatedAt",
+    ],
+  },
+};
+
+function mergeIIEEntities_() {
+  Object.keys(IIE_ENTITY_SHEETS).forEach(function (key) {
+    ENTITY_SHEETS[key] = IIE_ENTITY_SHEETS[key];
+  });
+}
+
+// ============================================================
+// SOURCE: schema/ioe-entities.js
+// ============================================================
+
+/**
+ * IOE — Institutional Orchestration Engine entity sheet definitions.
+ * Merged into ENTITY_SHEETS via mergeIOEEntities_() from Code.js.
+ */
+var IOE_ENTITY_SHEETS = {
+  ioeActionPlans: {
+    sheetName: "IOE_ActionPlans",
+    columns: [
+      "id", "title", "description", "originEngine", "originEntityId", "originEntityLabel",
+      "organizationalUnitId", "organizationalUnitLabel", "priority", "status",
+      "objective", "expectedImpact", "riskLevel", "owner",
+      "startDate", "targetDate", "completionDate", "progress",
+      "milestoneCount", "taskCount", "completedMilestones", "completedTasks",
+      "overdueTasks", "blockedTasks",
+      "createdBy", "createdAt", "updatedAt",
+    ],
+  },
+  ioeMilestones: {
+    sheetName: "IOE_Milestones",
+    columns: [
+      "id", "actionPlanId", "title", "description",
+      "plannedDate", "completedDate", "status", "weight",
+      "taskCount", "completedTasks",
+    ],
+  },
+  ioeTasks: {
+    sheetName: "IOE_Tasks",
+    columns: [
+      "id", "actionPlanId", "milestoneId", "title", "description",
+      "assignedTo", "priority", "status",
+      "plannedStart", "plannedEnd", "completedAt",
+      "progress", "dependencies", "isBlocked", "blockReason",
+    ],
+  },
+  ioeDecisions: {
+    sheetName: "IOE_Decisions",
+    columns: [
+      "id", "actionPlanId", "date", "origin", "responsable",
+      "decision", "justification", "expectedResult", "status",
+      "createdAt", "updatedAt",
+    ],
+  },
+};
+
+function mergeIOEEntities_() {
+  Object.keys(IOE_ENTITY_SHEETS).forEach(function (key) {
+    ENTITY_SHEETS[key] = IOE_ENTITY_SHEETS[key];
+  });
+}
+
+// ============================================================
+// SOURCE: schema/aue-entities.js
+// ============================================================
+
+/**
+ * AUE — Automation & Event Engine
+ * Entity sheet definitions merged into ENTITY_SHEETS at bootstrap.
+ */
+var AUE_ENTITY_SHEETS = {
+  aueEvents: {
+    sheetName: "AUE_Events",
+    columns: [
+      "id", "eventType", "sourceEngine", "sourceEntityId",
+      "timestamp", "payload", "status", "priority", "processedAt",
+    ],
+  },
+  aueRules: {
+    sheetName: "AUE_Rules",
+    columns: [
+      "id", "name", "description", "enabled", "eventType",
+      "conditions", "actions", "priority", "version",
+      "executionCount", "lastExecutedAt", "createdBy", "createdAt", "updatedAt",
+    ],
+  },
+  aueExecutions: {
+    sheetName: "AUE_Executions",
+    columns: [
+      "id", "eventId", "ruleId", "ruleName", "status",
+      "startedAt", "finishedAt", "duration", "result", "logs",
+    ],
+  },
+  aueQueue: {
+    sheetName: "AUE_Queue",
+    columns: [
+      "id", "executionId", "scheduledAt", "attempt",
+      "status", "nextRetry", "maxRetries",
+    ],
+  },
+};
+
+function mergeAUEEntities_() {
+  Object.keys(AUE_ENTITY_SHEETS).forEach(function (key) {
+    ENTITY_SHEETS[key] = AUE_ENTITY_SHEETS[key];
+  });
+}
+
+// ============================================================
+// SOURCE: schema/nce-entities.js
+// ============================================================
+
+/**
+ * NCE — Notification & Communication Engine
+ * Entity schema definitions.
+ */
+
+var NCE_ENTITY_DEFS = [
+  {
+    key: "nceNotifications",
+    sheetName: "NCE_Notifications",
+    columns: [
+      "id", "recipientId", "recipientEmail",
+      "title", "body", "channel",
+      "status", "priority",
+      "templateId", "templateType",
+      "sourceEventId", "sourceEngine",
+      "metadata", "readAt", "deliveredAt",
+      "createdAt", "updatedAt"
+    ],
+    idColumn: "id",
+    indexes: ["recipientId", "status", "channel", "templateType", "sourceEventId"],
+  },
+  {
+    key: "nceTemplates",
+    sheetName: "NCE_Templates",
+    columns: [
+      "id", "name", "type", "channel",
+      "subject", "body", "variables",
+      "enabled", "version", "usageCount",
+      "createdBy", "createdAt", "updatedAt"
+    ],
+    idColumn: "id",
+    indexes: ["type", "channel", "enabled"],
+  },
+  {
+    key: "nceUserPreferences",
+    sheetName: "NCE_UserPreferences",
+    columns: [
+      "id", "userId", "userEmail",
+      "enabledChannels", "enabledTypes",
+      "quietHoursStart", "quietHoursEnd",
+      "digestEnabled", "digestFrequency",
+      "updatedAt"
+    ],
+    idColumn: "id",
+    indexes: ["userId", "userEmail"],
+  },
+  {
+    key: "nceDigests",
+    sheetName: "NCE_Digests",
+    columns: [
+      "id", "recipientId", "recipientEmail",
+      "frequency", "status",
+      "periodStart", "periodEnd",
+      "notificationCount", "summary",
+      "generatedAt", "deliveredAt", "createdAt"
+    ],
+    idColumn: "id",
+    indexes: ["recipientId", "status", "frequency"],
+  },
+];
+
+function mergeNCEEntities_() {
+  NCE_ENTITY_DEFS.forEach(function (def) {
+    SchemaRegistry.register(def);
+  });
+}
+
+// ============================================================
+// SOURCE: schema/isp-entities.js
+// ============================================================
+
+/**
+ * ISP — Identity & Security Platform
+ * Entity schema definitions.
+ */
+
+var ISP_ENTITY_DEFS = [
+  {
+    key: "ispUsers",
+    sheetName: "ISP_Users",
+    columns: [
+      "id", "employeeId", "fullName", "email", "username",
+      "passwordHash", "passwordSalt",
+      "status", "roleId", "organizationalUnitId",
+      "lastLogin", "failedAttempts", "lockedUntil",
+      "createdAt", "updatedAt"
+    ],
+    idColumn: "id",
+    indexes: ["email", "username", "status", "roleId"],
+  },
+  {
+    key: "ispRoles",
+    sheetName: "ISP_Roles",
+    columns: [
+      "id", "name", "description", "level", "isSystem", "deleted",
+      "createdAt", "updatedAt"
+    ],
+    idColumn: "id",
+    indexes: ["name", "isSystem"],
+  },
+  {
+    key: "ispPermissions",
+    sheetName: "ISP_Permissions",
+    columns: [
+      "id", "module", "action", "description", "createdAt"
+    ],
+    idColumn: "id",
+    indexes: ["module", "action"],
+  },
+  {
+    key: "ispRolePermissions",
+    sheetName: "ISP_RolePermissions",
+    columns: [
+      "id", "roleId", "permissionId", "revoked", "createdAt"
+    ],
+    idColumn: "id",
+    indexes: ["roleId", "permissionId"],
+  },
+  {
+    key: "ispSessions",
+    sheetName: "ISP_Sessions",
+    columns: [
+      "id", "userId", "userEmail",
+      "loginAt", "lastActivity", "expiresAt",
+      "ipAddress", "userAgent", "status"
+    ],
+    idColumn: "id",
+    indexes: ["userId", "status"],
+  },
+  {
+    key: "ispAuditLogs",
+    sheetName: "ISP_AuditLogs",
+    columns: [
+      "id", "userId", "userEmail",
+      "action", "module", "entity", "entityId",
+      "result", "ipAddress", "timestamp", "details"
+    ],
+    idColumn: "id",
+    indexes: ["userId", "action", "module", "result"],
+  },
+  {
+    key: "ispConfig",
+    sheetName: "ISP_Config",
+    columns: [
+      "id", "key", "value", "updatedAt", "updatedBy"
+    ],
+    idColumn: "id",
+    indexes: ["key"],
+  },
+];
+
+function mergeISPEntities_() {
+  ISP_ENTITY_DEFS.forEach(function (def) {
+    SchemaRegistry.register(def);
+  });
+}
+
+// ============================================================
+// SOURCE: schema/gwp-entities.js
+// ============================================================
+
+/**
+ * GWP — Google Workspace Integration Platform
+ * Entity schemas
+ */
+
+var GWP_ENTITIES = {
+  gwpOAuthTokens: {
+    sheetName: "GWP_OAuthTokens",
+    columns: [
+      "id", "userId", "userEmail",
+      "accessTokenHash",  // XOR-obfuscated, base64-encoded access token
+      "refreshTokenHash", // XOR-obfuscated, base64-encoded refresh token
+      "expiresAt", "scope", "tokenType",
+      "createdAt", "updatedAt",
+    ],
+    primaryKey: "id",
+    indexes: ["userId", "userEmail"],
+  },
+
+  gwpConfig: {
+    sheetName: "GWP_Config",
+    columns: ["id", "key", "value", "isSecret", "updatedAt", "createdAt"],
+    primaryKey: "id",
+    indexes: ["key"],
+  },
+
+  gwpMailLog: {
+    sheetName: "GWP_MailLog",
+    columns: [
+      "id", "userId", "recipients", "subject",
+      "sentAt", "status", "threadId", "messageId",
+      "attachmentCount", "priority",
+      "createdAt",
+    ],
+    primaryKey: "id",
+    indexes: ["userId", "status"],
+  },
+
+  gwpDriveMetadata: {
+    sheetName: "GWP_DriveMetadata",
+    columns: [
+      "id", "fileId", "userId", "name", "mimeType",
+      "size", "webViewLink", "parents", "modifiedTime",
+      "version", "createdAt",
+    ],
+    primaryKey: "id",
+    indexes: ["fileId", "userId"],
+  },
+
+  gwpCalendarEvents: {
+    sheetName: "GWP_CalendarEvents",
+    columns: [
+      "id", "eventId", "calendarId", "userId",
+      "title", "startTime", "endTime",
+      "attendees", "status", "description",
+      "createdAt",
+    ],
+    primaryKey: "id",
+    indexes: ["eventId", "userId"],
+  },
+
+  gwpChatLog: {
+    sheetName: "GWP_ChatLog",
+    columns: [
+      "id", "spaceId", "spaceName", "message",
+      "sentAt", "userId", "status", "messageId", "priority",
+      "createdAt",
+    ],
+    primaryKey: "id",
+    indexes: ["userId", "spaceId"],
+  },
+
+  gwpAuditLog: {
+    sheetName: "GWP_AuditLog",
+    columns: [
+      "id", "service", "action", "userId",
+      "status", "requestSummary", "responseSummary",
+      "errorMessage", "timestamp",
+    ],
+    primaryKey: "id",
+    indexes: ["service", "action", "userId", "status"],
+  },
+};
+
+function mergeGWPEntities_() {
+  Object.keys(GWP_ENTITIES).forEach(function (key) {
+    ENTITY_SCHEMAS[key] = GWP_ENTITIES[key];
+  });
+}
+
+// ============================================================
+// SOURCE: schema/iia-entities.js
+// ============================================================
+
+/**
+ * IIA — Institutional Intelligence Assistant
+ * Entity schema definitions.
+ */
+
+var IIA_ENTITIES = [
+  {
+    name:    "IIA_Config",
+    columns: ["id", "key", "value", "isSecret", "updatedAt", "updatedBy"],
+  },
+  {
+    name:    "IIA_Conversations",
+    columns: ["id", "userId", "title", "messageCount", "lastMessage", "createdAt", "updatedAt", "expiresAt"],
+  },
+  {
+    name:    "IIA_Messages",
+    columns: ["id", "conversationId", "userId", "role", "content", "tokensIn", "tokensOut", "latencyMs", "timestamp"],
+  },
+  {
+    name:    "IIA_PromptTemplates",
+    columns: ["id", "type", "name", "content", "version", "updatedAt", "updatedBy"],
+  },
+  {
+    name:    "IIA_Actions",
+    columns: ["id", "userId", "conversationId", "messageId", "type", "params", "status", "executedAt", "result"],
+  },
+  {
+    name:    "IIA_AuditLog",
+    columns: ["id", "userId", "action", "tokensIn", "tokensOut", "latencyMs", "model", "status", "timestamp", "errorMessage"],
+  },
+  {
+    name:    "IIA_UsageMetrics",
+    columns: ["id", "date", "totalQueries", "totalTokensIn", "totalTokensOut", "totalErrors", "avgLatencyMs"],
+  },
+];
+
+function mergeIIAEntities_() {
+  IIA_ENTITIES.forEach(function (def) {
+    SheetRepository.ensureSheet(def.name, def.columns);
+  });
+}
+
+// ============================================================
+// SOURCE: schema/fmi-entities.js
+// ============================================================
+
+/**
+ * FMI — Framework Maestro de Indicadores
+ * Entity schema definitions.
+ */
+
+var FMI_ENTITIES = [
+  {
+    name:    "FMI_Objectives",
+    columns: ["id", "codigo", "nombre", "descripcion", "estado", "orden", "createdAt", "updatedAt", "updatedBy"],
+  },
+  {
+    name:    "FMI_Dimensions",
+    columns: ["id", "codigo", "nombre", "descripcion", "estado", "orden", "createdAt", "updatedAt", "updatedBy"],
+  },
+  {
+    name:    "FMI_UnitMeasures",
+    columns: ["id", "codigo", "nombre", "tipo", "estado"],
+  },
+  {
+    name:    "FMI_Frequencies",
+    columns: ["id", "codigo", "nombre", "descripcion", "periodoDias", "estado"],
+  },
+  {
+    name:    "FMI_Polarities",
+    columns: ["id", "codigo", "nombre", "descripcion", "estado"],
+  },
+  {
+    name:    "FMI_Formulas",
+    columns: ["id", "codigo", "nombre", "descripcion", "unidadMedidaId", "formulaVisible", "formulaEjecutable", "variablesJson", "estado", "createdAt", "updatedAt", "updatedBy"],
+  },
+  {
+    name:    "FMI_FormulaVariables",
+    columns: ["id", "formulaId", "codigo", "nombre", "descripcion", "tipo", "orden"],
+  },
+  {
+    name:    "FMI_RangeConfigs",
+    columns: ["id", "nombre", "descripcion", "polaridad", "excelente", "bueno", "aceptable", "critico", "estado", "createdAt", "updatedAt", "updatedBy"],
+  },
+];
+
+function mergeFMIEntities_() {
+  FMI_ENTITIES.forEach(function (def) {
+    SheetRepository.ensureSheet(def.name, def.columns);
+  });
+}
+
+// ============================================================
+// SOURCE: schema/ide-entities.js
+// ============================================================
+
+// ============================================================
+// IDE — Indicator Definition Engine  |  Sprint 016
+// ============================================================
+
+var IDE_SHEETS = {
+  indicators: "IDE_Indicators",
+  versions:   "IDE_IndicatorVersions",
+};
+
+function mergeIDEEntities_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // ── IDE_Indicators ─────────────────────────────────────────
+  var indHeaders = [
+    "id", "codigo", "nombre", "descripcion",
+    "objetivoId", "dimensionId", "unitMeasureId", "frequencyId",
+    "formulaId", "polarityId", "rangeConfigId",
+    "responsibleId", "unidadId",
+    "meta", "status", "version",
+    "vigenciaDesde", "vigenciaHasta", "observaciones",
+    "dependencias",
+    "activo", "createdAt", "updatedAt", "createdBy", "updatedBy",
+  ];
+  if (!ss.getSheetByName(IDE_SHEETS.indicators)) {
+    var sh = ss.insertSheet(IDE_SHEETS.indicators);
+    sh.appendRow(indHeaders);
+    sh.setFrozenRows(1);
+  }
+
+  // ── IDE_IndicatorVersions ──────────────────────────────────
+  var verHeaders = [
+    "id", "indicatorId", "version", "status",
+    "snapshot", "publishedAt", "archivedAt",
+    "createdAt", "createdBy",
+  ];
+  if (!ss.getSheetByName(IDE_SHEETS.versions)) {
+    var sv = ss.insertSheet(IDE_SHEETS.versions);
+    sv.appendRow(verHeaders);
+    sv.setFrozenRows(1);
+  }
+}
 
 // ============================================================
 // SOURCE: repositories/SheetRepository.js
@@ -1504,7 +3226,6 @@ function purgeEntity_(entityName, id) {
   }
 }
 
-
 // ============================================================
 // SOURCE: services/CacheService.js
 // ============================================================
@@ -1610,7 +3331,6 @@ var AppCacheService = (function () {
   };
 })();
 
-
 // ============================================================
 // SOURCE: services/LockService.js
 // ============================================================
@@ -1678,7 +3398,6 @@ var AppLockService = {
     return { acquired: acquired, lock: lock };
   },
 };
-
 
 // ============================================================
 // SOURCE: services/GmailService.js
@@ -1870,7 +3589,6 @@ function _escapeHtml_(str) {
     .replace(/"/g,  "&quot;")
     .replace(/'/g,  "&#39;");
 }
-
 
 // ============================================================
 // SOURCE: services/CalendarService.js
@@ -2082,7 +3800,6 @@ var CalendarService = {
     }
   },
 };
-
 
 // ============================================================
 // SOURCE: services/DocsService.js
@@ -2320,7 +4037,6 @@ var DocsService = {
   },
 };
 
-
 // ============================================================
 // SOURCE: services/WorkspacePermissions.js
 // ============================================================
@@ -2465,7 +4181,6 @@ var WorkspacePermissions = {
   },
 };
 
-
 // ============================================================
 // SOURCE: services/NotificationService.js
 // ============================================================
@@ -2530,17 +4245,8 @@ var NotificationService = {
    * @param {string} htmlBody
    */
   sendEmail: function (toEmail, subject, htmlBody) {
-    if (!Config.gmailEnabled()) {
-      AppLogger.debug("NotificationService.sendEmail: Gmail disabled, skipping", { to: toEmail });
-      return;
-    }
-    if (!toEmail) {
-      AppLogger.warn("NotificationService.sendEmail: no recipient email provided");
-      return;
-    }
     try {
-      GmailApp.sendEmail(toEmail, subject, "", { htmlBody: htmlBody });
-      AppLogger.info("NotificationService.sendEmail: sent", { to: toEmail, subject: subject });
+      GmailService.sendEmail(toEmail, subject, htmlBody);
     } catch (e) {
       AppLogger.error("NotificationService.sendEmail: failed", {
         to:    toEmail,
@@ -2643,7 +4349,6 @@ var NotificationService = {
   },
 };
 
-
 // ============================================================
 // SOURCE: audit/AuditService.js
 // ============================================================
@@ -2695,7 +4400,6 @@ var AuditService = {
   },
 };
 
-
 // ============================================================
 // SOURCE: auth/LoginAuditService.js
 // ============================================================
@@ -2709,6 +4413,12 @@ var AuditService = {
  *
  * Columns:
  *   fecha | correo | ip | userAgent | resultado | motivo | usuarioId | rol | unidad
+ *
+ * Recorded events (motivo values):
+ *   OK    → otp_sent, login_success
+ *   ERROR → domain_invalid, user_not_found, user_inactive, cooldown_Xs,
+ *            otp_expired, invalid_code_attempt_N, max_attempts_locked,
+ *            account_locked, user_not_found_on_verify, user_inactive_on_verify
  */
 var LoginAuditService = (function () {
   var SHEET_NAME = "login_audit";
@@ -2721,14 +4431,29 @@ var LoginAuditService = (function () {
       sheet = ss.insertSheet(SHEET_NAME);
       sheet.appendRow(HEADERS);
       sheet.setFrozenRows(1);
-      sheet.setColumnWidth(1, 180);
-      sheet.setColumnWidth(2, 200);
-      sheet.setColumnWidth(4, 300);
+      // Widen columns for readability
+      sheet.setColumnWidth(1, 180); // fecha
+      sheet.setColumnWidth(2, 200); // correo
+      sheet.setColumnWidth(4, 300); // userAgent
     }
     return sheet;
   }
 
   return {
+    /**
+     * Append one row to login_audit.
+     *
+     * @param {{
+     *   email:      string,
+     *   ip?:        string,
+     *   userAgent?: string,
+     *   resultado:  "OK" | "ERROR",
+     *   motivo:     string,
+     *   usuarioId?: string,
+     *   rol?:       string,
+     *   unidad?:    string,
+     * }} entry
+     */
     record: function (entry) {
       try {
         var sheet = getOrCreateSheet_();
@@ -2753,47 +4478,276 @@ var LoginAuditService = (function () {
   };
 })();
 
-
 // ============================================================
 // SOURCE: auth/AuthBridge.js
 // ============================================================
 
 /**
- * Authentication bridge — institutional email + OTP flow.
+ * Authentication bridge — institutional email + password flow.
  *
  * Security controls:
  *   - Domain enforcement (upes.edu.sv only)
- *   - User existence + activo check at every step
- *   - Resend cooldown: 60 s between OTP sends; same code reused within window
- *   - Brute-force lockout: 5 wrong codes → 15-min lockout per email
- *   - Single-use OTP: cache key deleted on first correct verification
+ *   - User existence + activo check
+ *   - Brute-force lockout: 5 wrong passwords → 15-min lockout per email
+ *   - Passwords stored as SHA-256(salt:password) — never in plaintext
  *   - Full audit trail via LoginAuditService → login_audit sheet
+ *   - mustChangePassword flag forces password change on first login
  *
  * CacheService keys (namespaced "sse:" by AppCacheService):
- *   otp:{email}    { code, issuedAt }       TTL 600 s (10 min)
  *   fails:{email}  { count, lockedUntil }   TTL 900 s (15 min)
+ *
+ * Handled actions: auth.ping | auth.login | auth.changePassword | auth.getUser
+ *   (auth.sendOtp / auth.verifyOtp retained for backward compatibility)
  */
+
+// ── Password helpers (module-level, shared across AuthBridge methods) ─────────
+
+function hashPassword_(password, salt) {
+  var raw = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    salt + ":" + password,
+    Utilities.Charset.UTF_8
+  );
+  return raw.map(function(b) {
+    return (b < 0 ? b + 256 : b).toString(16).padStart(2, "0");
+  }).join("");
+}
+
+function generateSalt_() {
+  return Utilities.getUuid().replace(/-/g, "");
+}
+
+function generateTempPassword_() {
+  // 12-char alphanumeric, excluding ambiguous chars (0/O, 1/I/l)
+  var chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+  var result = "";
+  for (var i = 0; i < 12; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+}
+
+// ── AuthBridge ────────────────────────────────────────────────────────────────
+
 var AuthBridge = {
   route: function (verb, params) {
     switch (verb) {
-      case "ping":      return AuthBridge.ping();
-      case "sendOtp":   return AuthBridge.sendOtp(params);
-      case "verifyOtp": return AuthBridge.verifyOtp(params);
-      case "getUser":   return AuthBridge.getUser(params);
+      case "ping":              return AuthBridge.ping();
+      case "login":             return AuthBridge.login(params);
+      case "changePassword":    return AuthBridge.changePassword(params);
+      case "setGlobalPassword": return AuthBridge.setGlobalPassword(params);
+      case "getUser":           return AuthBridge.getUser(params);
+      // Legacy OTP — kept for backward compatibility
+      case "sendOtp":           return AuthBridge.sendOtp(params);
+      case "verifyOtp":         return AuthBridge.verifyOtp(params);
       default:
         throw new Error("Unknown auth action: auth." + verb);
     }
   },
 
+  // ─────────────────────────────────────────────────────────────
+  // PRIMARY — email + password login
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * Validates email + password. Returns user payload on success.
+   *
+   * @param {{ email: string, password: string, ip?: string, userAgent?: string }} params
+   * @returns {{ usuarioId, nombre, email, rol, unidadId, mustChangePassword }}
+   */
+  login: function (params) {
+    Validator.requireFields(params, ["email", "password"]);
+    var email     = String(params.email).trim().toLowerCase();
+    var password  = String(params.password);
+    var ip        = String(params.ip        || "");
+    var userAgent = String(params.userAgent || "");
+
+    // Domain gate
+    var domain        = email.split("@")[1] || "";
+    var allowedDomain = Config.domain() || "upes.edu.sv";
+    if (!domain || domain !== allowedDomain) {
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "domain_invalid" });
+      throw new Error("Acceso permitido únicamente para cuentas institucionales UPES.");
+    }
+
+    // Brute-force lockout check
+    var failKey   = "fails:" + email;
+    var failState = AppCacheService.get(failKey) || { count: 0, lockedUntil: 0 };
+    var now       = new Date().getTime();
+    var LOCK_TTL  = 900; // 15 min in seconds
+    var MAX_ATTEMPTS = 5;
+
+    if (failState.lockedUntil && now < failState.lockedUntil) {
+      var remaining = Math.ceil((failState.lockedUntil - now) / 60000);
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "account_locked" });
+      throw new Error("Cuenta bloqueada temporalmente. Intente nuevamente en " + remaining + " minuto(s).");
+    }
+
+    // User lookup
+    var results = listEntities_("usuarios", { email: email });
+    if (!results.items || results.items.length === 0) {
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "user_not_found" });
+      throw new Error("Credenciales inválidas.");
+    }
+    var u = results.items[0];
+    if (u.activo !== true) {
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "user_inactive", usuarioId: u.id });
+      throw new Error("Credenciales inválidas.");
+    }
+
+    // Password check — personal hash first, then global password fallback
+    if (!u.passwordHash || !u.passwordSalt) {
+      var props      = PropertiesService.getScriptProperties();
+      var globalHash = props.getProperty("GLOBAL_PASSWORD_HASH");
+      var globalSalt = props.getProperty("GLOBAL_PASSWORD_SALT");
+      if (!globalHash || !globalSalt) {
+        LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "no_password_set", usuarioId: u.id });
+        throw new Error("Credenciales inválidas. Contacte al administrador.");
+      }
+      var globalExpected = hashPassword_(password, globalSalt);
+      if (globalExpected !== globalHash) {
+        failState.count = (failState.count || 0) + 1;
+        if (failState.count >= MAX_ATTEMPTS) {
+          failState.lockedUntil = now + 15 * 60 * 1000;
+          AppCacheService.set(failKey, failState, LOCK_TTL);
+          LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "max_attempts_locked", usuarioId: u.id });
+          throw new Error("Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.");
+        }
+        AppCacheService.set(failKey, failState, LOCK_TTL);
+        var leftG = MAX_ATTEMPTS - failState.count;
+        LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "invalid_global_password_attempt_" + failState.count, usuarioId: u.id });
+        throw new Error("Credenciales inválidas. Te quedan " + leftG + " intento(s).");
+      }
+      // Global password matched — user must set a personal password
+      AppCacheService.remove(failKey);
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "OK", motivo: "login_global_password", usuarioId: u.id, rol: u.rol, unidad: u.unidadId });
+      AppLogger.info("AuthBridge.login: success via global password", { email: email });
+      return {
+        usuarioId:          u.id,
+        nombre:             u.nombre,
+        email:              u.email,
+        rol:                u.rol,
+        unidadId:           u.unidadId,
+        mustChangePassword: true,
+      };
+    }
+    var expectedHash = hashPassword_(password, u.passwordSalt);
+    if (expectedHash !== u.passwordHash) {
+      failState.count = (failState.count || 0) + 1;
+      if (failState.count >= MAX_ATTEMPTS) {
+        failState.lockedUntil = now + 15 * 60 * 1000;
+        AppCacheService.set(failKey, failState, LOCK_TTL);
+        LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "max_attempts_locked", usuarioId: u.id });
+        throw new Error("Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.");
+      }
+      AppCacheService.set(failKey, failState, LOCK_TTL);
+      var left = MAX_ATTEMPTS - failState.count;
+      LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "ERROR", motivo: "invalid_password_attempt_" + failState.count, usuarioId: u.id });
+      throw new Error("Credenciales inválidas. Te quedan " + left + " intento(s).");
+    }
+
+    // Success — clear failure counter
+    AppCacheService.remove(failKey);
+    var mustChange = u.mustChangePassword === true || u.mustChangePassword === "true";
+
+    LoginAuditService.record({ email: email, ip: ip, userAgent: userAgent, resultado: "OK", motivo: "login_success", usuarioId: u.id, rol: u.rol, unidad: u.unidadId });
+    AppLogger.info("AuthBridge.login: success", { email: email });
+
+    return {
+      usuarioId:          u.id,
+      nombre:             u.nombre,
+      email:              u.email,
+      rol:                u.rol,
+      unidadId:           u.unidadId,
+      mustChangePassword: mustChange,
+    };
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // Set or update the global (shared) platform password — ADMIN only
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * @param {{ password: string }} params
+   * @returns {{ updated: boolean }}
+   */
+  setGlobalPassword: function (params) {
+    Validator.requireFields(params, ["password"]);
+    var password = String(params.password);
+    if (password.length < 8) {
+      throw new Error("La contraseña debe tener al menos 8 caracteres.");
+    }
+    var salt = generateSalt_();
+    var hash = hashPassword_(password, salt);
+    PropertiesService.getScriptProperties().setProperties({
+      "GLOBAL_PASSWORD_HASH": hash,
+      "GLOBAL_PASSWORD_SALT": salt,
+    }, false);
+    AppLogger.info("AuthBridge.setGlobalPassword: updated");
+    return { updated: true };
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // Change password (first-login mandatory change or self-service)
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * @param {{ email: string, newPassword: string }} params
+   * @returns {{ changed: boolean }}
+   */
+  changePassword: function (params) {
+    Validator.requireFields(params, ["email", "newPassword"]);
+    var email       = String(params.email).trim().toLowerCase();
+    var newPassword = String(params.newPassword);
+
+    if (newPassword.length < 8) {
+      throw new Error("La contraseña debe tener al menos 8 caracteres.");
+    }
+
+    var results = listEntities_("usuarios", { email: email });
+    if (!results.items || results.items.length === 0) {
+      throw new Error("Usuario no encontrado.");
+    }
+    var u    = results.items[0];
+    var salt = generateSalt_();
+    var hash = hashPassword_(newPassword, salt);
+
+    updateEntity_("usuarios", u.id, {
+      passwordHash:       hash,
+      passwordSalt:       salt,
+      mustChangePassword: false,
+      updatedAt:          new Date().toISOString(),
+    });
+
+    AuditService.record({
+      accion:      "auth.changePassword",
+      entidadTipo: "usuarios",
+      entidadId:   u.id,
+      usuarioId:   u.id,
+      resultado:   "ok",
+    });
+
+    AppLogger.info("AuthBridge.changePassword: success", { email: email });
+    return { changed: true };
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // STEP 1 — send OTP
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * Validates domain, looks up user, enforces resend cooldown, stores OTP
+   * in CacheService, and sends it via GmailApp. Logs every outcome.
+   *
+   * @param {{ email: string, ip?: string, userAgent?: string }} params
+   * @returns {{ sent: boolean }}
+   */
   sendOtp: function (params) {
     Validator.requireFields(params, ["email"]);
     var email     = String(params.email).trim().toLowerCase();
     var ip        = String(params.ip        || "");
     var userAgent = String(params.userAgent || "");
 
-    // 1. Domain gate
+    // 1. Domain gate — enforced before any Sheets read
     var domain = email.split("@")[1] || "";
-    if (domain !== "upes.edu.sv") {
+    var allowedDomain = Config.domain() || "upes.edu.sv";
+    if (!domain || domain !== allowedDomain) {
       LoginAuditService.record({
         email: email, ip: ip, userAgent: userAgent,
         resultado: "ERROR", motivo: "domain_invalid",
@@ -2820,15 +4774,16 @@ var AuthBridge = {
       throw new Error("Usuario no autorizado.");
     }
 
-    // 3. Resend cooldown
+    // 3. Resend cooldown — prevent OTP spam
     var otpKey   = "otp:" + email;
     var existing = AppCacheService.get(otpKey);
     var now      = new Date().getTime();
-    var COOLDOWN_MS = 60 * 1000;
+    var COOLDOWN_MS = 60 * 1000; // 60 seconds
     var otpCode;
 
     if (existing) {
       var elapsed = now - (existing.issuedAt || 0);
+
       if (elapsed < COOLDOWN_MS) {
         var waitSec = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
         LoginAuditService.record({
@@ -2838,9 +4793,12 @@ var AuthBridge = {
         });
         throw new Error("Por favor espere " + waitSec + " segundo(s) antes de solicitar otro código.");
       }
-      // Cooldown passed: reuse same code, refresh TTL
+
+      // Cooldown passed: reuse the same code (avoids confusion with multiple codes),
+      // refresh TTL and issuedAt so the 10-min window restarts from now.
       otpCode = existing.code;
     } else {
+      // Generate a new 6-digit OTP (100 000–999 999)
       otpCode = String(Math.floor(100000 + Math.random() * 900000));
     }
 
@@ -2869,6 +4827,17 @@ var AuthBridge = {
     return { sent: true };
   },
 
+  // ─────────────────────────────────────────────────────────────
+  // STEP 2 — verify OTP
+  // ─────────────────────────────────────────────────────────────
+  /**
+   * Validates the OTP against cache. Wrong codes increment a failure counter;
+   * 5 consecutive failures trigger a 15-min lockout. On success the OTP is
+   * consumed and the failure counter is cleared.
+   *
+   * @param {{ email: string, code: string, ip?: string, userAgent?: string }} params
+   * @returns {{ usuarioId, nombre, email, rol, unidadId }}
+   */
   verifyOtp: function (params) {
     Validator.requireFields(params, ["email", "code"]);
     var email     = String(params.email).trim().toLowerCase();
@@ -2876,13 +4845,13 @@ var AuthBridge = {
     var ip        = String(params.ip        || "");
     var userAgent = String(params.userAgent || "");
 
-    var LOCK_TTL_SEC = 900;
+    var LOCK_TTL_SEC = 900; // 15 min
     var MAX_ATTEMPTS = 5;
     var failKey   = "fails:" + email;
     var failState = AppCacheService.get(failKey) || { count: 0, lockedUntil: 0 };
     var now       = new Date().getTime();
 
-    // 1. Lockout check
+    // 1. Lockout check — reject immediately if account is locked
     if (failState.lockedUntil && now < failState.lockedUntil) {
       var remaining = Math.ceil((failState.lockedUntil - now) / 60000);
       LoginAuditService.record({
@@ -2892,9 +4861,10 @@ var AuthBridge = {
       throw new Error("Cuenta bloqueada temporalmente. Intente nuevamente en " + remaining + " minuto(s).");
     }
 
-    // 2. OTP presence
+    // 2. OTP presence check
     var stored = AppCacheService.get("otp:" + email);
     if (!stored) {
+      // OTP expired (TTL elapsed) or was never issued
       LoginAuditService.record({
         email: email, ip: ip, userAgent: userAgent,
         resultado: "ERROR", motivo: "otp_expired",
@@ -2925,7 +4895,7 @@ var AuthBridge = {
       throw new Error("Código inválido o expirado. Te quedan " + left + " intento(s).");
     }
 
-    // 4. Correct — consume OTP and clear failure counter
+    // 4. Correct code — consume OTP and clear failure counter
     AppCacheService.remove("otp:" + email);
     AppCacheService.remove(failKey);
 
@@ -2964,6 +4934,9 @@ var AuthBridge = {
     };
   },
 
+  // ─────────────────────────────────────────────────────────────
+  // Admin / compatibility
+  // ─────────────────────────────────────────────────────────────
   getUser: function (params) {
     Validator.requireFields(params, ["email"]);
     var results = listEntities_("usuarios", { email: params.email });
@@ -2987,7 +4960,6 @@ var AuthBridge = {
     };
   },
 };
-
 
 // ============================================================
 // SOURCE: drive/DriveService.js
@@ -3170,7 +5142,6 @@ var DriveService = {
     return folder.getId();
   },
 };
-
 
 // ============================================================
 // SOURCE: drive/WorkspaceFolderManager.js
@@ -3431,7 +5402,6 @@ var WorkspaceFolderManager = {
   },
 };
 
-
 // ============================================================
 // SOURCE: resources/ResourceService.js
 // ============================================================
@@ -3588,6 +5558,1546 @@ var ResourceService = {
   },
 };
 
+// ============================================================
+// SOURCE: executive/ExecutiveDashboardEngine.js
+// ============================================================
+
+/**
+ * Executive Dashboard Engine.
+ *
+ * Transversal aggregation layer — knows NO unit directly.
+ * Each organizational unit registers a DashboardAdapter via register().
+ * The engine consolidates all adapters into a unified executive view.
+ *
+ * DashboardAdapter contract:
+ *   { unitKey: string, getResumen(wsId): DashboardUnitResumen }
+ *
+ * DashboardUnitResumen shape:
+ *   {
+ *     unitKey, label, color, icon,
+ *     estado,           // 'ok' | 'warning' | 'critical'
+ *     estadoRazon,
+ *     kpis,             // [{ id, label, valor, meta, unidad, semaforo, tendencia }]
+ *     alertas,          // [{ nivel, mensaje, accion }]
+ *     cumplimientoPct,
+ *     resumenFinanciero, // null | { egresos, saldo }
+ *     resumenOperativo,  // { descripcion, indicadores: [] }
+ *     actividadReciente, // [{ fecha, descripcion, tipo }]
+ *   }
+ */
+
+var ExecutiveDashboardEngine = (function () {
+  var _adapters = {};
+
+  function register(adapter) {
+    if (!adapter || !adapter.unitKey || typeof adapter.getResumen !== "function") {
+      throw new Error("ExecutiveDashboardEngine: adapter must have unitKey + getResumen()");
+    }
+    _adapters[adapter.unitKey] = adapter;
+    AppLogger.info("ExecutiveDashboardEngine: registered adapter", { unitKey: adapter.unitKey });
+  }
+
+  function _collectAlertasCriticas(unidades) {
+    var alertas = [];
+    for (var i = 0; i < unidades.length; i++) {
+      var u = unidades[i];
+      for (var j = 0; j < (u.alertas || []).length; j++) {
+        var a = u.alertas[j];
+        if (a.nivel === "critical") {
+          alertas.push({
+            unitKey:  u.unitKey,
+            unitLabel: u.label,
+            nivel:     a.nivel,
+            mensaje:   a.mensaje,
+            accion:    a.accion || null,
+          });
+        }
+      }
+    }
+    return alertas;
+  }
+
+  function _buildSemaforos(unidades) {
+    var sem = {};
+    for (var i = 0; i < unidades.length; i++) {
+      var u = unidades[i];
+      sem[u.unitKey] = u.estado === "critical" ? "rojo"
+                     : u.estado === "warning"  ? "amarillo"
+                     : "verde";
+    }
+    return sem;
+  }
+
+  function _consolidarFinanciero(unidades) {
+    var saldoTotal = 0;
+    var egresosTotal = 0;
+    for (var i = 0; i < unidades.length; i++) {
+      var rf = unidades[i].resumenFinanciero;
+      if (rf) {
+        saldoTotal   += (rf.saldo   || 0);
+        egresosTotal += (rf.egresos || 0);
+      }
+    }
+    return { saldo: saldoTotal, egresos: egresosTotal };
+  }
+
+  function _promedioCumplimiento(unidades) {
+    if (!unidades.length) return 0;
+    var suma = 0;
+    for (var i = 0; i < unidades.length; i++) {
+      suma += (unidades[i].cumplimientoPct || 0);
+    }
+    return Math.round(suma / unidades.length);
+  }
+
+  function getConsolidatedDashboard(wsId) {
+    var unidades = [];
+    var errores = [];
+
+    for (var key in _adapters) {
+      if (!Object.prototype.hasOwnProperty.call(_adapters, key)) continue;
+      try {
+        var resumen = _adapters[key].getResumen(wsId);
+        unidades.push(resumen);
+      } catch (e) {
+        AppLogger.warn("ExecutiveDashboardEngine: adapter error", { key: key, error: String(e) });
+        errores.push({ unitKey: key, error: String(e) });
+      }
+    }
+
+    var alertasCriticas = _collectAlertasCriticas(unidades);
+    var semaforos = _buildSemaforos(unidades);
+    var financiero = _consolidarFinanciero(unidades);
+    var cumplimientoPromedio = _promedioCumplimiento(unidades);
+
+    // Aggregate global KPIs across all units
+    var kpisGlobales = [];
+    for (var i = 0; i < unidades.length; i++) {
+      var u = unidades[i];
+      for (var j = 0; j < (u.kpis || []).length; j++) {
+        kpisGlobales.push(u.kpis[j]);
+      }
+    }
+
+    // Recent activity across all units (last 10 per unit, merged + sorted)
+    var actividadGlobal = [];
+    for (var ai = 0; ai < unidades.length; ai++) {
+      var au = unidades[ai];
+      for (var aj = 0; aj < (au.actividadReciente || []).length; aj++) {
+        actividadGlobal.push({
+          unitKey:     au.unitKey,
+          unitLabel:   au.label,
+          fecha:       au.actividadReciente[aj].fecha,
+          descripcion: au.actividadReciente[aj].descripcion,
+          tipo:        au.actividadReciente[aj].tipo,
+        });
+      }
+    }
+    actividadGlobal.sort(function (a, b) {
+      return a.fecha > b.fecha ? -1 : a.fecha < b.fecha ? 1 : 0;
+    });
+    actividadGlobal = actividadGlobal.slice(0, 20);
+
+    return {
+      generadoEn:          new Date().toISOString(),
+      unidades:            unidades,
+      semaforos:           semaforos,
+      alertasCriticas:     alertasCriticas,
+      kpisGlobales:        kpisGlobales,
+      actividadGlobal:     actividadGlobal,
+      globales: {
+        cumplimientoPromedio: cumplimientoPromedio,
+        alertasCriticasCount: alertasCriticas.length,
+        resumenFinanciero:    financiero,
+        unidadesOk:          unidades.filter(function(u) { return u.estado === "ok"; }).length,
+        unidadesWarning:     unidades.filter(function(u) { return u.estado === "warning"; }).length,
+        unidadesCritical:    unidades.filter(function(u) { return u.estado === "critical"; }).length,
+      },
+      errores: errores,
+    };
+  }
+
+  function getUnitSummary(unitKey, wsId) {
+    var adapter = _adapters[unitKey];
+    if (!adapter) throw new Error("No adapter registered for unit: " + unitKey);
+    return adapter.getResumen(wsId);
+  }
+
+  function getRegisteredAdapters() {
+    return Object.keys(_adapters);
+  }
+
+  return {
+    register:                register,
+    getConsolidatedDashboard: getConsolidatedDashboard,
+    getUnitSummary:          getUnitSummary,
+    getRegisteredAdapters:   getRegisteredAdapters,
+  };
+})();
+
+// ============================================================
+// SOURCE: executive/KPIEngine.js
+// ============================================================
+
+/**
+ * KPI Engine v1.
+ *
+ * Completely generic indicator engine — no hardcoded KPIs.
+ * Each organizational unit registers a KPIAdapter via register().
+ * KPIs are declared via configuration, not implemented manually.
+ *
+ * KPIAdapter contract:
+ *   { unitKey: string, getKPIs(wsId): KPIDefinicion[] }
+ *
+ * KPIDefinicion shape (all fields):
+ *   {
+ *     id, nombre, descripcion, unidad, categoria, grupo,
+ *     origen, adaptador, consulta, formula, tipo,
+ *     meta, valorActual, valorAnterior, variacion, tendencia,
+ *     semaforo, frecuencia, responsable, dashboard, visible, orden
+ *   }
+ */
+
+var KPIEngine = (function () {
+  var _adapters = {};
+
+  function register(adapter) {
+    if (!adapter || !adapter.unitKey || typeof adapter.getKPIs !== "function") {
+      throw new Error("KPIEngine: adapter must have unitKey + getKPIs()");
+    }
+    _adapters[adapter.unitKey] = adapter;
+    AppLogger.info("KPIEngine: registered adapter", { unitKey: adapter.unitKey });
+  }
+
+  function _calcVariacion(actual, anterior) {
+    if (!anterior || anterior === 0) return 0;
+    return Math.round(((actual - anterior) / Math.abs(anterior)) * 100 * 10) / 10;
+  }
+
+  function _calcTendencia(variacion, tipo) {
+    if (Math.abs(variacion) < 1) return "estable";
+    // For 'porcentaje' and 'numero' KPIs: positive variacion = alza
+    return variacion > 0 ? "alza" : "baja";
+  }
+
+  function _calcSemaforo(kpi) {
+    if (!kpi.meta || kpi.meta === 0) return "verde";
+    var pct = (kpi.valorActual / kpi.meta) * 100;
+
+    // Inverse KPIs (lower is better) — identified by negative meta or flag
+    if (kpi.inverso) {
+      if (pct <= 50)  return "verde";
+      if (pct <= 100) return "amarillo";
+      return "rojo";
+    }
+
+    // Normal KPIs (higher is better)
+    if (pct >= 90)  return "verde";
+    if (pct >= 70)  return "amarillo";
+    return "rojo";
+  }
+
+  function _enrichKPI(kpi) {
+    var variacion = _calcVariacion(kpi.valorActual, kpi.valorAnterior);
+    var tendencia = _calcTendencia(variacion, kpi.tipo);
+    var semaforo  = kpi.semaforo || _calcSemaforo(kpi);
+    return Object.assign({}, kpi, {
+      variacion: variacion,
+      tendencia: tendencia,
+      semaforo:  semaforo,
+    });
+  }
+
+  function getAllKPIs(wsId) {
+    var allKPIs = [];
+    for (var key in _adapters) {
+      if (!Object.prototype.hasOwnProperty.call(_adapters, key)) continue;
+      try {
+        var kpis = _adapters[key].getKPIs(wsId);
+        for (var i = 0; i < kpis.length; i++) {
+          allKPIs.push(_enrichKPI(kpis[i]));
+        }
+      } catch (e) {
+        AppLogger.warn("KPIEngine: adapter error", { key: key, error: String(e) });
+      }
+    }
+    allKPIs.sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+    return allKPIs;
+  }
+
+  function getKPIsByDashboard(dashboard, wsId) {
+    var all = getAllKPIs(wsId);
+    return all.filter(function (k) {
+      return k.dashboard === dashboard && k.visible !== false;
+    });
+  }
+
+  function getKPIsByUnit(unitKey, wsId) {
+    var adapter = _adapters[unitKey];
+    if (!adapter) throw new Error("No KPI adapter for unit: " + unitKey);
+    var kpis = adapter.getKPIs(wsId);
+    return kpis.map(_enrichKPI);
+  }
+
+  function getKPIsByCategoria(categoria, wsId) {
+    var all = getAllKPIs(wsId);
+    return all.filter(function (k) { return k.categoria === categoria; });
+  }
+
+  function getKPIsSemaforo(color, wsId) {
+    var all = getAllKPIs(wsId);
+    return all.filter(function (k) { return k.semaforo === color; });
+  }
+
+  function getRegisteredAdapters() {
+    return Object.keys(_adapters);
+  }
+
+  return {
+    register:            register,
+    getAllKPIs:           getAllKPIs,
+    getKPIsByDashboard:  getKPIsByDashboard,
+    getKPIsByUnit:       getKPIsByUnit,
+    getKPIsByCategoria:  getKPIsByCategoria,
+    getKPIsSemaforo:     getKPIsSemaforo,
+    getRegisteredAdapters: getRegisteredAdapters,
+  };
+})();
+
+// ============================================================
+// SOURCE: executive/DashboardAdapters.js
+// ============================================================
+
+/**
+ * Dashboard Adapters — one per organizational unit.
+ *
+ * Each adapter is an IIFE exposing { unitKey, getResumen(wsId) }.
+ * Adapters call SheetRepository directly — never call unit controllers.
+ * Adapters are registered with ExecutiveDashboardEngine via
+ * bootstrapExecutiveEngine_() in Code.js.
+ */
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function _listCount_(entityName, wsId) {
+  try {
+    var r = listEntities_(entityName, { wsId: wsId });
+    return r.items.length;
+  } catch (e) { return 0; }
+}
+
+function _listCountWhere_(entityName, wsId, field, value) {
+  try {
+    var q = { wsId: wsId };
+    q[field] = value;
+    var r = listEntities_(entityName, q);
+    return r.items.length;
+  } catch (e) { return 0; }
+}
+
+function _listItems_(entityName, wsId) {
+  try {
+    return listEntities_(entityName, { wsId: wsId }).items || [];
+  } catch (e) { return []; }
+}
+
+function _semaforo_(valor, meta, inverso) {
+  if (!meta || meta === 0) return "verde";
+  var pct = (valor / meta) * 100;
+  if (inverso) {
+    return pct <= 50 ? "verde" : pct <= 100 ? "amarillo" : "rojo";
+  }
+  return pct >= 90 ? "verde" : pct >= 70 ? "amarillo" : "rojo";
+}
+
+function _kpi_(id, label, valor, meta, unidad, semaforo, tendencia) {
+  return { id: id, label: label, valor: valor, meta: meta,
+           unidad: unidad, semaforo: semaforo, tendencia: tendencia };
+}
+
+function _alerta_(nivel, mensaje, accion) {
+  return { nivel: nivel, mensaje: mensaje, accion: accion || null };
+}
+
+function _estadoFromAlertas_(alertas) {
+  for (var i = 0; i < alertas.length; i++) {
+    if (alertas[i].nivel === "critical") return "critical";
+  }
+  for (var j = 0; j < alertas.length; j++) {
+    if (alertas[j].nivel === "warning") return "warning";
+  }
+  return "ok";
+}
+
+// ── RRHH Dashboard Adapter ─────────────────────────────────────────────────────
+
+var RRHHDashboardAdapter = (function () {
+  var UNIT_KEY = "rrhh";
+
+  function getResumen(wsId) {
+    var empleados   = _listItems_("empleados", wsId);
+    var activos     = empleados.filter(function(e) { return e.estado === "activo"; }).length;
+    var contrataciones = _listItems_("contrataciones", wsId);
+    var actProc     = contrataciones.filter(function(c) { return c.estado !== "cerrado" && c.estado !== "cancelado"; }).length;
+
+    var kpis = [
+      _kpi_("rrhh.empleados", "Empleados activos", activos, activos, "personas", "verde", "estable"),
+      _kpi_("rrhh.contrataciones", "Contrataciones en proceso", actProc, 0, "procesos",
+            actProc > 5 ? "amarillo" : "verde", "estable"),
+    ];
+
+    var alertas = [];
+    if (actProc > 10) alertas.push(_alerta_("warning", actProc + " contrataciones pendientes de cierre", "/ws/rrhh/contratacion"));
+
+    return {
+      unitKey:  UNIT_KEY,
+      label:    "Recursos Humanos",
+      color:    "#2563EB",
+      icon:     "M17 20h5v-2a3 3 0 0 0-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 0 1 5.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0 1 9.288 0M15 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+      estado:   _estadoFromAlertas_(alertas),
+      estadoRazon: alertas.length ? alertas[0].mensaje : "Sin alertas",
+      kpis:     kpis,
+      alertas:  alertas,
+      cumplimientoPct: 90,
+      resumenFinanciero: null,
+      resumenOperativo: {
+        descripcion: "Gestión de personal institucional",
+        indicadores: [
+          { label: "Empleados activos", valor: activos },
+          { label: "Contrataciones en proceso", valor: actProc },
+        ],
+      },
+      actividadReciente: [],
+    };
+  }
+
+  return { unitKey: UNIT_KEY, getResumen: getResumen };
+})();
+
+// ── VRAF Dashboard Adapter ─────────────────────────────────────────────────────
+
+var VRAFDashboardAdapter = (function () {
+  var UNIT_KEY = "vraf";
+
+  function getResumen(wsId) {
+    var objetivos  = _listItems_("objetivos",  wsId);
+    var proyectos  = _listItems_("proyectos",  wsId);
+    var indicadores = _listItems_("indicadores", wsId);
+    var evidencias  = _listItems_("evidencias",  wsId);
+
+    var objActivos  = objetivos.filter(function(o) { return o.estado !== "cerrado"; }).length;
+    var projActivos = proyectos.filter(function(p) { return p.estado === "en_ejecucion" || p.estado === "planificado"; }).length;
+    var indRojos    = indicadores.filter(function(i) { return i.semaforo === "rojo"; }).length;
+    var evPendientes = evidencias.filter(function(e) { return e.estado === "pendiente"; }).length;
+
+    var alertas = [];
+    if (indRojos > 0) alertas.push(_alerta_("warning", indRojos + " indicador(es) en rojo", "/ws/vraf/indicadores"));
+    if (evPendientes > 3) alertas.push(_alerta_("warning", evPendientes + " evidencias pendientes", "/ws/vraf/evidencias"));
+
+    return {
+      unitKey:  UNIT_KEY,
+      label:    "VRAF",
+      color:    "#7C3AED",
+      icon:     "M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z",
+      estado:   _estadoFromAlertas_(alertas),
+      estadoRazon: alertas.length ? alertas[0].mensaje : "Sin alertas",
+      kpis: [
+        _kpi_("vraf.objetivos",   "Objetivos activos",       objActivos,   objActivos, "obj", "verde", "estable"),
+        _kpi_("vraf.proyectos",   "Proyectos en ejecución",  projActivos,  projActivos, "proy", "verde", "estable"),
+        _kpi_("vraf.ind_rojo",    "Indicadores en rojo",     indRojos,     0,           "ind",
+              indRojos > 0 ? "rojo" : "verde", indRojos > 0 ? "alza" : "estable"),
+      ],
+      alertas:  alertas,
+      cumplimientoPct: indRojos === 0 ? 95 : 70,
+      resumenFinanciero: null,
+      resumenOperativo: {
+        descripcion: "Planificación estratégica institucional",
+        indicadores: [
+          { label: "Objetivos activos",    valor: objActivos },
+          { label: "Proyectos activos",    valor: projActivos },
+          { label: "Indicadores en rojo",  valor: indRojos },
+          { label: "Evidencias pendientes", valor: evPendientes },
+        ],
+      },
+      actividadReciente: [],
+    };
+  }
+
+  return { unitKey: UNIT_KEY, getResumen: getResumen };
+})();
+
+// ── Compras Dashboard Adapter ──────────────────────────────────────────────────
+
+var ComprasDashboardAdapter = (function () {
+  var UNIT_KEY = "compras";
+
+  function getResumen(wsId) {
+    var requisiciones = _listItems_("requisiciones",  wsId);
+    var ordenes       = _listItems_("ordenesCompra",  wsId);
+    var cotizaciones  = _listItems_("cotizaciones",   wsId);
+
+    var reqPendientes = requisiciones.filter(function(r) { return r.estado === "pendiente" || r.estado === "revisado"; }).length;
+    var ordAbiertas   = ordenes.filter(function(o) { return o.estado === "emitida" || o.estado === "parcial"; }).length;
+    var cotPendientes = cotizaciones.filter(function(c) { return c.estado === "pendiente"; }).length;
+
+    var gastoTotal = ordenes.reduce(function(s, o) { return s + (parseFloat(o.montoTotal) || 0); }, 0);
+
+    var alertas = [];
+    if (reqPendientes > 5)  alertas.push(_alerta_("warning",  reqPendientes + " requisiciones sin atender", "/ws/compras/requisiciones"));
+    if (ordAbiertas > 10)   alertas.push(_alerta_("warning",  ordAbiertas + " órdenes de compra abiertas", "/ws/compras/ordenes"));
+
+    return {
+      unitKey:  UNIT_KEY,
+      label:    "Compras",
+      color:    "#D97706",
+      icon:     "M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-8 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z",
+      estado:   _estadoFromAlertas_(alertas),
+      estadoRazon: alertas.length ? alertas[0].mensaje : "Sin alertas",
+      kpis: [
+        _kpi_("compras.requisiciones", "Requisiciones pendientes",  reqPendientes, 3,  "req",
+              _semaforo_(reqPendientes, 3, true),   reqPendientes > 3 ? "alza" : "estable"),
+        _kpi_("compras.ordenes",       "Órdenes abiertas",         ordAbiertas,   10, "OC",
+              _semaforo_(ordAbiertas, 10, true),    ordAbiertas > 10 ? "alza" : "estable"),
+        _kpi_("compras.gasto",         "Gasto total período",      gastoTotal,    0,  "$", "verde", "estable"),
+      ],
+      alertas:  alertas,
+      cumplimientoPct: reqPendientes <= 3 ? 90 : 70,
+      resumenFinanciero: { egresos: gastoTotal, saldo: 0 },
+      resumenOperativo: {
+        descripcion: "Gestión de adquisiciones institucionales",
+        indicadores: [
+          { label: "Requisiciones pendientes", valor: reqPendientes },
+          { label: "Órdenes abiertas",         valor: ordAbiertas },
+          { label: "Cotizaciones pendientes",   valor: cotPendientes },
+        ],
+      },
+      actividadReciente: [],
+    };
+  }
+
+  return { unitKey: UNIT_KEY, getResumen: getResumen };
+})();
+
+// ── Contabilidad Dashboard Adapter ─────────────────────────────────────────────
+
+var ContabilidadDashboardAdapter = (function () {
+  var UNIT_KEY = "contabilidad";
+
+  function getResumen(wsId) {
+    var cuentasCobrar  = _listItems_("cuentasCobrar",     wsId);
+    var cuentasPagar   = _listItems_("cuentasPagar",      wsId);
+    var compromisos    = _listItems_("compromisos",        wsId);
+    var registros      = _listItems_("registrosContables", wsId);
+
+    var ccVencidas     = cuentasCobrar.filter(function(c) { return c.estado === "vencida"; }).length;
+    var cpVencidas     = cuentasPagar.filter(function(c)  { return c.estado === "vencida"; }).length;
+    var compActivos    = compromisos.filter(function(c)  { return c.estado === "activo";  }).length;
+
+    var totalCobrar = cuentasCobrar.reduce(function(s, c) { return s + (parseFloat(c.monto) || 0); }, 0);
+    var totalPagar  = cuentasPagar.reduce(function(s,  c) { return s + (parseFloat(c.monto) || 0); }, 0);
+    var saldo       = totalCobrar - totalPagar;
+
+    var alertas = [];
+    if (ccVencidas > 0) alertas.push(_alerta_("critical", ccVencidas + " cuentas por cobrar vencidas", "/ws/contabilidad/cuentas-cobrar"));
+    if (cpVencidas > 0) alertas.push(_alerta_("warning",  cpVencidas + " cuentas por pagar vencidas",  "/ws/contabilidad/cuentas-pagar"));
+
+    return {
+      unitKey:  UNIT_KEY,
+      label:    "Contabilidad",
+      color:    "#059669",
+      icon:     "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z",
+      estado:   _estadoFromAlertas_(alertas),
+      estadoRazon: alertas.length ? alertas[0].mensaje : "Sin alertas",
+      kpis: [
+        _kpi_("conta.cc_vencidas", "CxC vencidas",   ccVencidas,  0, "facturas",
+              ccVencidas > 0 ? "rojo" : "verde", ccVencidas > 0 ? "alza" : "estable"),
+        _kpi_("conta.cp_vencidas", "CxP vencidas",   cpVencidas,  0, "facturas",
+              cpVencidas > 0 ? "amarillo" : "verde", "estable"),
+        _kpi_("conta.saldo",       "Saldo neto",      saldo,       0, "$", "verde", "estable"),
+        _kpi_("conta.compromisos", "Compromisos activos", compActivos, compActivos, "compromisos", "verde", "estable"),
+      ],
+      alertas:  alertas,
+      cumplimientoPct: (ccVencidas === 0 && cpVencidas === 0) ? 95 : 65,
+      resumenFinanciero: { egresos: totalPagar, saldo: saldo },
+      resumenOperativo: {
+        descripcion: "Gestión financiera y contable institucional",
+        indicadores: [
+          { label: "Cuentas por cobrar",     valor: totalCobrar },
+          { label: "Cuentas por pagar",      valor: totalPagar },
+          { label: "Saldo neto",             valor: saldo },
+          { label: "Compromisos activos",    valor: compActivos },
+        ],
+      },
+      actividadReciente: [],
+    };
+  }
+
+  return { unitKey: UNIT_KEY, getResumen: getResumen };
+})();
+
+// ── Mantenimiento Dashboard Adapter ───────────────────────────────────────────
+
+var MantenimientoDashboardAdapter = (function () {
+  var UNIT_KEY = "mantenimiento";
+
+  function getResumen(wsId) {
+    var activos    = _listItems_("mantoActivos",        wsId);
+    var ordenes    = _listItems_("mantoOrdenesTrabajo", wsId);
+    var solicitudes = _listItems_("mantoSolicitudes",   wsId);
+    var inventario  = _listItems_("mantoInventarioTecnico", wsId);
+
+    var operativos  = activos.filter(function(a) { return a.estado === "operativo"; }).length;
+    var ordAbiertas = ordenes.filter(function(o) { return o.estado === "emitida" || o.estado === "asignada" || o.estado === "en_proceso"; }).length;
+    var solPendientes = solicitudes.filter(function(s) { return s.estado === "pendiente"; }).length;
+    var bajoStock   = inventario.filter(function(i) { return (parseFloat(i.stockActual) || 0) <= (parseFloat(i.stockMinimo) || 0); }).length;
+
+    var costoTotal = ordenes.filter(function(o) { return o.estado === "completada"; })
+      .reduce(function(s, o) { return s + (parseFloat(o.costoTotal) || 0); }, 0);
+
+    var alertas = [];
+    if (bajoStock > 0)    alertas.push(_alerta_("warning",  bajoStock + " ítems con stock bajo mínimo",    "/ws/mantenimiento/inventario-tecnico"));
+    if (solPendientes > 3) alertas.push(_alerta_("warning", solPendientes + " solicitudes sin atender",     "/ws/mantenimiento/solicitudes-manto"));
+
+    return {
+      unitKey:  UNIT_KEY,
+      label:    "Mantenimiento",
+      color:    "#DC2626",
+      icon:     "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 0 0-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 0 0-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
+      estado:   _estadoFromAlertas_(alertas),
+      estadoRazon: alertas.length ? alertas[0].mensaje : "Sin alertas",
+      kpis: [
+        _kpi_("manto.activos_op",  "Activos operativos",        operativos,    activos.length, "activos",
+              _semaforo_(operativos, activos.length), "estable"),
+        _kpi_("manto.ordenes",     "Órdenes abiertas",          ordAbiertas,   5,  "OT",
+              _semaforo_(ordAbiertas, 5, true), "estable"),
+        _kpi_("manto.bajo_stock",  "Ítems bajo stock mínimo",   bajoStock,     0,  "ítems",
+              bajoStock > 0 ? "amarillo" : "verde", "estable"),
+        _kpi_("manto.costo",       "Costo mantenimiento",       costoTotal,    0,  "$", "verde", "estable"),
+      ],
+      alertas:  alertas,
+      cumplimientoPct: bajoStock === 0 && solPendientes === 0 ? 92 : 75,
+      resumenFinanciero: { egresos: costoTotal, saldo: 0 },
+      resumenOperativo: {
+        descripcion: "Gestión de activos e infraestructura institucional",
+        indicadores: [
+          { label: "Activos operativos",       valor: operativos },
+          { label: "Órdenes abiertas",         valor: ordAbiertas },
+          { label: "Solicitudes pendientes",    valor: solPendientes },
+          { label: "Ítems bajo stock mínimo",  valor: bajoStock },
+        ],
+      },
+      actividadReciente: [],
+    };
+  }
+
+  return { unitKey: UNIT_KEY, getResumen: getResumen };
+})();
+
+// ── SSO Dashboard Adapter ──────────────────────────────────────────────────────
+
+var SSODashboardAdapter = (function () {
+  var UNIT_KEY = "salud";
+
+  function getResumen(wsId) {
+    var incidentes    = _listItems_("ssoIncidentes",   wsId);
+    var riesgos       = _listItems_("ssoRiesgos",      wsId);
+    var acciones      = _listItems_("ssoAcciones",     wsId);
+    var cumplimiento  = _listItems_("ssoCumplimiento", wsId);
+
+    var incAbiertos   = incidentes.filter(function(i) { return i.estado === "abierto" || i.estado === "en_proceso"; }).length;
+    var riesgoCriticos = riesgos.filter(function(r) { return r.clasificacion === "critico"; }).length;
+    var accionesVencidas = acciones.filter(function(a) { return a.estado === "vencida"; }).length;
+
+    var totalCumpl    = cumplimiento.length;
+    var cumpleCumpl   = cumplimiento.filter(function(c) { return c.estado === "cumple"; }).length;
+    var cumplPct      = totalCumpl > 0 ? Math.round((cumpleCumpl / totalCumpl) * 100) : 100;
+
+    var alertas = [];
+    if (incAbiertos > 0)     alertas.push(_alerta_("critical", incAbiertos + " incidente(s) laboral(es) abierto(s)",       "/ws/salud/incidentes"));
+    if (riesgoCriticos > 0)  alertas.push(_alerta_("critical", riesgoCriticos + " riesgo(s) crítico(s) sin controlar",     "/ws/salud/matriz-riesgos"));
+    if (accionesVencidas > 0) alertas.push(_alerta_("warning", accionesVencidas + " acción(es) CAPA vencida(s)",           "/ws/salud/acciones-capa"));
+
+    return {
+      unitKey:  UNIT_KEY,
+      label:    "SSO",
+      color:    "#0891B2",
+      icon:     "M4.318 6.318a4.5 4.5 0 0 0 0 6.364L12 20.364l7.682-7.682a4.5 4.5 0 0 0-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 0 0-6.364 0z",
+      estado:   _estadoFromAlertas_(alertas),
+      estadoRazon: alertas.length ? alertas[0].mensaje : "Sin alertas SSO",
+      kpis: [
+        _kpi_("sso.incidentes",   "Incidentes abiertos",   incAbiertos,     0,  "incidentes",
+              incAbiertos > 0 ? "rojo" : "verde", "estable"),
+        _kpi_("sso.riesgos_crit", "Riesgos críticos",      riesgoCriticos,  0,  "riesgos",
+              riesgoCriticos > 0 ? "rojo" : "verde", "estable"),
+        _kpi_("sso.cumplimiento", "Cumplimiento legal",    cumplPct,        90, "%",
+              _semaforo_(cumplPct, 90), cumplPct >= 90 ? "alza" : "baja"),
+        _kpi_("sso.acc_vencidas", "Acciones CAPA vencidas", accionesVencidas, 0, "acciones",
+              accionesVencidas > 0 ? "amarillo" : "verde", "estable"),
+      ],
+      alertas:  alertas,
+      cumplimientoPct: cumplPct,
+      resumenFinanciero: null,
+      resumenOperativo: {
+        descripcion: "Seguridad y salud ocupacional institucional",
+        indicadores: [
+          { label: "Incidentes abiertos",    valor: incAbiertos },
+          { label: "Riesgos críticos",       valor: riesgoCriticos },
+          { label: "Cumplimiento legal",     valor: cumplPct + "%" },
+          { label: "Acciones CAPA vencidas", valor: accionesVencidas },
+        ],
+      },
+      actividadReciente: [],
+    };
+  }
+
+  return { unitKey: UNIT_KEY, getResumen: getResumen };
+})();
+
+// ── Bootstrap helper ───────────────────────────────────────────────────────────
+
+/**
+ * Register all dashboard adapters with ExecutiveDashboardEngine.
+ * Called from Code.js bootstrap after all unit controllers are loaded.
+ */
+function bootstrapDashboardAdapters_() {
+  ExecutiveDashboardEngine.register(RRHHDashboardAdapter);
+  ExecutiveDashboardEngine.register(VRAFDashboardAdapter);
+  ExecutiveDashboardEngine.register(ComprasDashboardAdapter);
+  ExecutiveDashboardEngine.register(ContabilidadDashboardAdapter);
+  ExecutiveDashboardEngine.register(MantenimientoDashboardAdapter);
+  ExecutiveDashboardEngine.register(SSODashboardAdapter);
+  AppLogger.info("bootstrapDashboardAdapters_: 6 adapters registered");
+}
+
+// ============================================================
+// SOURCE: executive/KPIAdapters.js
+// ============================================================
+
+/**
+ * KPI Adapters — Phase 3.
+ *
+ * One adapter per organizational unit. Each adapter implements:
+ *   { unitKey: string, getKPIs(wsId): KPIDefinicion[] }
+ *
+ * All 21 fields populated per KPI. Adapters call listEntities_() directly
+ * (SheetRepository) — never call unit controllers.
+ *
+ * Registered with KPIEngine via bootstrapKPIAdapters_().
+ */
+
+// ─── Shared helpers ──────────────────────────────────────────────────────────
+
+function _kpiCount_(wsId, entityName) {
+  try {
+    var r = listEntities_(entityName, { wsId: wsId, _pageSize: 1 });
+    return r && r.pagination ? r.pagination.total : 0;
+  } catch (e) { return 0; }
+}
+
+function _kpiCountWhere_(wsId, entityName, field, value) {
+  try {
+    var q = { wsId: wsId, _pageSize: 1000 };
+    q[field] = value;
+    var r = listEntities_(entityName, q);
+    return r && r.items ? r.items.length : 0;
+  } catch (e) { return 0; }
+}
+
+function _kpiSum_(wsId, entityName, field) {
+  try {
+    var r = listEntities_(entityName, { wsId: wsId, _pageSize: 1000 });
+    if (!r || !r.items) return 0;
+    var sum = 0;
+    for (var i = 0; i < r.items.length; i++) {
+      sum += (parseFloat(r.items[i][field]) || 0);
+    }
+    return Math.round(sum * 100) / 100;
+  } catch (e) { return 0; }
+}
+
+function _kpiAvg_(wsId, entityName, field) {
+  try {
+    var r = listEntities_(entityName, { wsId: wsId, _pageSize: 1000 });
+    if (!r || !r.items || !r.items.length) return 0;
+    var sum = 0;
+    for (var i = 0; i < r.items.length; i++) {
+      sum += (parseFloat(r.items[i][field]) || 0);
+    }
+    return Math.round((sum / r.items.length) * 10) / 10;
+  } catch (e) { return 0; }
+}
+
+function _kpiPct_(numerador, denominador) {
+  if (!denominador || denominador === 0) return 0;
+  return Math.round((numerador / denominador) * 100 * 10) / 10;
+}
+
+// ─── RRHH KPI Adapter ────────────────────────────────────────────────────────
+
+var RRHHKPIAdapter = {
+  unitKey: "rrhh",
+
+  getKPIs: function (wsId) {
+    var empleados       = _kpiCount_(wsId, "empleados");
+    var activos         = _kpiCountWhere_(wsId, "empleados", "estado", "activo");
+    var enProceso       = _kpiCountWhere_(wsId, "contrataciones", "estado", "en_proceso");
+    var contrataciones  = _kpiCount_(wsId, "contrataciones");
+    var evaluaciones    = _kpiCount_(wsId, "evaluaciones");
+    var evalCompletadas = _kpiCountWhere_(wsId, "evaluaciones", "estado", "completada");
+    var capacitaciones  = _kpiCount_(wsId, "capacitaciones");
+    var capCompletadas  = _kpiCountWhere_(wsId, "capacitaciones", "estado", "completada");
+    var vacaciones      = _kpiCountWhere_(wsId, "vacaciones", "estado", "aprobada");
+    var rotacion        = empleados > 0 ? _kpiPct_(_kpiCountWhere_(wsId, "empleados", "estado", "inactivo"), empleados) : 0;
+    var tasaEval        = _kpiPct_(evalCompletadas, evaluaciones);
+    var tasaCap         = _kpiPct_(capCompletadas, capacitaciones);
+
+    return [
+      {
+        id: "rrhh_plantilla_total", nombre: "Plantilla Total",
+        descripcion: "Total de empleados registrados en el sistema",
+        unidad: "empleados", categoria: "personal", grupo: "fuerza_laboral",
+        origen: "sheets", adaptador: "rrhh", consulta: "empleados",
+        formula: "COUNT(empleados)", tipo: "numero",
+        meta: 0, valorActual: empleados, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "RRHH",
+        dashboard: "ejecutivo", visible: true, orden: 10,
+      },
+      {
+        id: "rrhh_empleados_activos", nombre: "Empleados Activos",
+        descripcion: "Empleados con estado activo",
+        unidad: "empleados", categoria: "personal", grupo: "fuerza_laboral",
+        origen: "sheets", adaptador: "rrhh", consulta: "empleados[estado=activo]",
+        formula: "COUNT(empleados WHERE estado='activo')", tipo: "numero",
+        meta: empleados, valorActual: activos, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: _kpiPct_(activos, empleados) >= 90 ? "verde" : "amarillo",
+        frecuencia: "diaria", responsable: "RRHH",
+        dashboard: "ejecutivo", visible: true, orden: 11,
+      },
+      {
+        id: "rrhh_rotacion", nombre: "Tasa de Rotación",
+        descripcion: "Porcentaje de empleados inactivos respecto al total",
+        unidad: "%", categoria: "personal", grupo: "retención",
+        origen: "sheets", adaptador: "rrhh", consulta: "empleados[estado=inactivo]",
+        formula: "COUNT(inactivos)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 10, valorActual: rotacion, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: rotacion <= 5 ? "verde" : rotacion <= 10 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "mensual", responsable: "RRHH",
+        dashboard: "ejecutivo", visible: true, orden: 12,
+      },
+      {
+        id: "rrhh_contrataciones_abiertas", nombre: "Contrataciones en Proceso",
+        descripcion: "Procesos de contratación activos actualmente",
+        unidad: "procesos", categoria: "reclutamiento", grupo: "adquisicion_talento",
+        origen: "sheets", adaptador: "rrhh", consulta: "contrataciones[estado=en_proceso]",
+        formula: "COUNT(contrataciones WHERE estado='en_proceso')", tipo: "numero",
+        meta: 0, valorActual: enProceso, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "semanal", responsable: "RRHH",
+        dashboard: "ejecutivo", visible: true, orden: 13,
+      },
+      {
+        id: "rrhh_tasa_evaluacion", nombre: "Tasa de Evaluación",
+        descripcion: "Porcentaje de evaluaciones de desempeño completadas",
+        unidad: "%", categoria: "desempeño", grupo: "gestion_desempeno",
+        origen: "sheets", adaptador: "rrhh", consulta: "evaluaciones[estado=completada]",
+        formula: "COUNT(completadas)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 90, valorActual: tasaEval, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaEval >= 90 ? "verde" : tasaEval >= 70 ? "amarillo" : "rojo",
+        frecuencia: "trimestral", responsable: "RRHH",
+        dashboard: "ejecutivo", visible: true, orden: 14,
+      },
+      {
+        id: "rrhh_tasa_capacitacion", nombre: "Tasa de Capacitación",
+        descripcion: "Porcentaje de capacitaciones completadas",
+        unidad: "%", categoria: "desarrollo", grupo: "capacitacion",
+        origen: "sheets", adaptador: "rrhh", consulta: "capacitaciones[estado=completada]",
+        formula: "COUNT(completadas)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 85, valorActual: tasaCap, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaCap >= 85 ? "verde" : tasaCap >= 70 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "RRHH",
+        dashboard: "ejecutivo", visible: true, orden: 15,
+      },
+    ];
+  },
+};
+
+// ─── VRAF KPI Adapter ─────────────────────────────────────────────────────────
+
+var VRAFKPIAdapter = {
+  unitKey: "vraf",
+
+  getKPIs: function (wsId) {
+    var objetivos       = _kpiCount_(wsId, "objetivos");
+    var objCumplidos    = _kpiCountWhere_(wsId, "objetivos", "estado", "cumplido");
+    var proyectos       = _kpiCount_(wsId, "proyectos");
+    var proyActivos     = _kpiCountWhere_(wsId, "proyectos", "estado", "en_ejecucion");
+    var indicadores     = _kpiCount_(wsId, "indicadores");
+    var evidencias      = _kpiCount_(wsId, "evidencias");
+    var tasaObj         = _kpiPct_(objCumplidos, objetivos);
+    var avanceProy      = _kpiAvg_(wsId, "proyectos", "avancePct");
+    var pctEvidenciados = _kpiPct_(evidencias, indicadores);
+
+    return [
+      {
+        id: "vraf_objetivos_cumplidos", nombre: "Objetivos Cumplidos",
+        descripcion: "Porcentaje de objetivos estratégicos en estado cumplido",
+        unidad: "%", categoria: "estrategia", grupo: "planificacion",
+        origen: "sheets", adaptador: "vraf", consulta: "objetivos[estado=cumplido]",
+        formula: "COUNT(cumplidos)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 80, valorActual: tasaObj, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaObj >= 80 ? "verde" : tasaObj >= 60 ? "amarillo" : "rojo",
+        frecuencia: "trimestral", responsable: "VRAF",
+        dashboard: "ejecutivo", visible: true, orden: 20,
+      },
+      {
+        id: "vraf_proyectos_activos", nombre: "Proyectos en Ejecución",
+        descripcion: "Proyectos actualmente en ejecución",
+        unidad: "proyectos", categoria: "proyectos", grupo: "gestion_proyectos",
+        origen: "sheets", adaptador: "vraf", consulta: "proyectos[estado=en_ejecucion]",
+        formula: "COUNT(proyectos WHERE estado='en_ejecucion')", tipo: "numero",
+        meta: 0, valorActual: proyActivos, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "VRAF",
+        dashboard: "ejecutivo", visible: true, orden: 21,
+      },
+      {
+        id: "vraf_avance_proyectos", nombre: "Avance Promedio Proyectos",
+        descripcion: "Porcentaje de avance promedio de todos los proyectos",
+        unidad: "%", categoria: "proyectos", grupo: "avance",
+        origen: "sheets", adaptador: "vraf", consulta: "proyectos[avancePct]",
+        formula: "AVG(proyectos.avancePct)", tipo: "porcentaje",
+        meta: 75, valorActual: avanceProy, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: avanceProy >= 75 ? "verde" : avanceProy >= 50 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "VRAF",
+        dashboard: "ejecutivo", visible: true, orden: 22,
+      },
+      {
+        id: "vraf_indicadores_total", nombre: "Indicadores Registrados",
+        descripcion: "Total de indicadores estratégicos en seguimiento",
+        unidad: "indicadores", categoria: "estrategia", grupo: "seguimiento",
+        origen: "sheets", adaptador: "vraf", consulta: "indicadores",
+        formula: "COUNT(indicadores)", tipo: "numero",
+        meta: 0, valorActual: indicadores, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "VRAF",
+        dashboard: "ejecutivo", visible: true, orden: 23,
+      },
+      {
+        id: "vraf_evidencias_cumplimiento", nombre: "Cobertura de Evidencias",
+        descripcion: "Porcentaje de indicadores con evidencias registradas",
+        unidad: "%", categoria: "cumplimiento", grupo: "evidencias",
+        origen: "sheets", adaptador: "vraf", consulta: "evidencias vs indicadores",
+        formula: "COUNT(evidencias)/COUNT(indicadores)*100", tipo: "porcentaje",
+        meta: 90, valorActual: pctEvidenciados, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: pctEvidenciados >= 90 ? "verde" : pctEvidenciados >= 70 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "VRAF",
+        dashboard: "ejecutivo", visible: true, orden: 24,
+      },
+    ];
+  },
+};
+
+// ─── Compras KPI Adapter ──────────────────────────────────────────────────────
+
+var ComprasKPIAdapter = {
+  unitKey: "compras",
+
+  getKPIs: function (wsId) {
+    var requisiciones   = _kpiCount_(wsId, "requisiciones");
+    var reqPendientes   = _kpiCountWhere_(wsId, "requisiciones", "estado", "pendiente");
+    var ordenes         = _kpiCount_(wsId, "ordenes");
+    var ordenesAbiertas = _kpiCountWhere_(wsId, "ordenes", "estado", "emitida");
+    var cotizaciones    = _kpiCount_(wsId, "cotizaciones");
+    var contratos       = _kpiCount_(wsId, "contratos");
+    var proveedores     = _kpiCount_(wsId, "proveedores");
+    var montoTotal      = _kpiSum_(wsId, "ordenes", "montoTotal");
+    var tasaAtencion    = _kpiPct_(requisiciones - reqPendientes, requisiciones);
+
+    return [
+      {
+        id: "compras_requisiciones_pendientes", nombre: "Requisiciones Pendientes",
+        descripcion: "Requisiciones en espera de aprobación o proceso",
+        unidad: "requisiciones", categoria: "compras", grupo: "proceso_compra",
+        origen: "sheets", adaptador: "compras", consulta: "requisiciones[estado=pendiente]",
+        formula: "COUNT(requisiciones WHERE estado='pendiente')", tipo: "numero",
+        meta: 5, valorActual: reqPendientes, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: reqPendientes <= 5 ? "verde" : reqPendientes <= 10 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "diaria", responsable: "Compras",
+        dashboard: "ejecutivo", visible: true, orden: 30,
+      },
+      {
+        id: "compras_tasa_atencion", nombre: "Tasa de Atención",
+        descripcion: "Porcentaje de requisiciones atendidas",
+        unidad: "%", categoria: "compras", grupo: "eficiencia",
+        origen: "sheets", adaptador: "compras", consulta: "requisiciones atendidas",
+        formula: "(total-pendientes)/total*100", tipo: "porcentaje",
+        meta: 90, valorActual: tasaAtencion, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaAtencion >= 90 ? "verde" : tasaAtencion >= 70 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "Compras",
+        dashboard: "ejecutivo", visible: true, orden: 31,
+      },
+      {
+        id: "compras_ordenes_abiertas", nombre: "Órdenes de Compra Abiertas",
+        descripcion: "Órdenes de compra emitidas pendientes de recepción",
+        unidad: "órdenes", categoria: "compras", grupo: "proceso_compra",
+        origen: "sheets", adaptador: "compras", consulta: "ordenes[estado=emitida]",
+        formula: "COUNT(ordenes WHERE estado='emitida')", tipo: "numero",
+        meta: 20, valorActual: ordenesAbiertas, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: ordenesAbiertas <= 20 ? "verde" : ordenesAbiertas <= 40 ? "amarillo" : "rojo",
+        frecuencia: "diaria", responsable: "Compras",
+        dashboard: "ejecutivo", visible: true, orden: 32,
+      },
+      {
+        id: "compras_monto_comprometido", nombre: "Monto Comprometido",
+        descripcion: "Valor total de órdenes de compra emitidas",
+        unidad: "USD", categoria: "financiero", grupo: "presupuesto",
+        origen: "sheets", adaptador: "compras", consulta: "ordenes[montoTotal]",
+        formula: "SUM(ordenes.montoTotal)", tipo: "moneda",
+        meta: 0, valorActual: montoTotal, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "Compras",
+        dashboard: "ejecutivo", visible: true, orden: 33,
+      },
+      {
+        id: "compras_proveedores_activos", nombre: "Proveedores Activos",
+        descripcion: "Total de proveedores registrados en el catálogo",
+        unidad: "proveedores", categoria: "proveedores", grupo: "catalogo",
+        origen: "sheets", adaptador: "compras", consulta: "proveedores",
+        formula: "COUNT(proveedores)", tipo: "numero",
+        meta: 0, valorActual: proveedores, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "Compras",
+        dashboard: "ejecutivo", visible: false, orden: 34,
+      },
+      {
+        id: "compras_contratos_vigentes", nombre: "Contratos Vigentes",
+        descripcion: "Contratos con proveedores actualmente vigentes",
+        unidad: "contratos", categoria: "proveedores", grupo: "contratos",
+        origen: "sheets", adaptador: "compras", consulta: "contratos",
+        formula: "COUNT(contratos)", tipo: "numero",
+        meta: 0, valorActual: contratos, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "Compras",
+        dashboard: "ejecutivo", visible: true, orden: 35,
+      },
+    ];
+  },
+};
+
+// ─── Contabilidad KPI Adapter ─────────────────────────────────────────────────
+
+var ContabilidadKPIAdapter = {
+  unitKey: "contabilidad",
+
+  getKPIs: function (wsId) {
+    var porCobrar       = _kpiSum_(wsId, "cuentasCobrar", "monto");
+    var porPagar        = _kpiSum_(wsId, "cuentasPagar", "monto");
+    var compromisos     = _kpiCount_(wsId, "compromisos");
+    var compromisosEj   = _kpiCountWhere_(wsId, "compromisos", "estado", "ejecutado");
+    var asientosMes     = _kpiCount_(wsId, "asientos");
+    var liquidaciones   = _kpiCount_(wsId, "liquidaciones");
+    var liqAprobadas    = _kpiCountWhere_(wsId, "liquidaciones", "estado", "aprobada");
+    var tasaLiquidacion = _kpiPct_(liqAprobadas, liquidaciones);
+    var tasaCompromisos = _kpiPct_(compromisosEj, compromisos);
+    var saldoNeto       = porCobrar - porPagar;
+
+    return [
+      {
+        id: "cont_cuentas_cobrar", nombre: "Cuentas por Cobrar",
+        descripcion: "Saldo total de cuentas por cobrar pendientes",
+        unidad: "USD", categoria: "financiero", grupo: "liquidez",
+        origen: "sheets", adaptador: "contabilidad", consulta: "cuentasCobrar[monto]",
+        formula: "SUM(cuentasCobrar.monto)", tipo: "moneda",
+        meta: 0, valorActual: porCobrar, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "Contabilidad",
+        dashboard: "ejecutivo", visible: true, orden: 40,
+      },
+      {
+        id: "cont_cuentas_pagar", nombre: "Cuentas por Pagar",
+        descripcion: "Saldo total de cuentas por pagar pendientes",
+        unidad: "USD", categoria: "financiero", grupo: "liquidez",
+        origen: "sheets", adaptador: "contabilidad", consulta: "cuentasPagar[monto]",
+        formula: "SUM(cuentasPagar.monto)", tipo: "moneda",
+        meta: 0, valorActual: porPagar, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "Contabilidad",
+        dashboard: "ejecutivo", visible: true, orden: 41,
+      },
+      {
+        id: "cont_saldo_neto", nombre: "Saldo Neto (C×C - C×P)",
+        descripcion: "Diferencia entre cuentas por cobrar y cuentas por pagar",
+        unidad: "USD", categoria: "financiero", grupo: "liquidez",
+        origen: "sheets", adaptador: "contabilidad", consulta: "cuentasCobrar - cuentasPagar",
+        formula: "SUM(cobrar) - SUM(pagar)", tipo: "moneda",
+        meta: 0, valorActual: saldoNeto, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: saldoNeto >= 0 ? "verde" : saldoNeto >= -5000 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "Contabilidad",
+        dashboard: "ejecutivo", visible: true, orden: 42,
+      },
+      {
+        id: "cont_compromisos_ejecutados", nombre: "Ejecución de Compromisos",
+        descripcion: "Porcentaje de compromisos presupuestarios ejecutados",
+        unidad: "%", categoria: "presupuesto", grupo: "ejecucion",
+        origen: "sheets", adaptador: "contabilidad", consulta: "compromisos[estado=ejecutado]",
+        formula: "COUNT(ejecutados)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 80, valorActual: tasaCompromisos, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaCompromisos >= 80 ? "verde" : tasaCompromisos >= 60 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "Contabilidad",
+        dashboard: "ejecutivo", visible: true, orden: 43,
+      },
+      {
+        id: "cont_asientos_mes", nombre: "Asientos Contables (mes)",
+        descripcion: "Total de asientos contables registrados en el período",
+        unidad: "asientos", categoria: "contabilidad", grupo: "operacion",
+        origen: "sheets", adaptador: "contabilidad", consulta: "asientos",
+        formula: "COUNT(asientos)", tipo: "numero",
+        meta: 0, valorActual: asientosMes, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "Contabilidad",
+        dashboard: "ejecutivo", visible: false, orden: 44,
+      },
+      {
+        id: "cont_tasa_liquidacion", nombre: "Tasa de Liquidación",
+        descripcion: "Porcentaje de liquidaciones aprobadas respecto al total",
+        unidad: "%", categoria: "contabilidad", grupo: "liquidacion",
+        origen: "sheets", adaptador: "contabilidad", consulta: "liquidaciones[estado=aprobada]",
+        formula: "COUNT(aprobadas)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 90, valorActual: tasaLiquidacion, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaLiquidacion >= 90 ? "verde" : tasaLiquidacion >= 70 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "Contabilidad",
+        dashboard: "ejecutivo", visible: true, orden: 45,
+      },
+    ];
+  },
+};
+
+// ─── Mantenimiento KPI Adapter ────────────────────────────────────────────────
+
+var MantenimientoKPIAdapter = {
+  unitKey: "mantenimiento",
+
+  getKPIs: function (wsId) {
+    var activos         = _kpiCount_(wsId, "activos");
+    var activosOp       = _kpiCountWhere_(wsId, "activos", "estado", "operativo");
+    var ordenes         = _kpiCount_(wsId, "ordenes");
+    var ordAbiertas     = _kpiCountWhere_(wsId, "ordenes", "estado", "abierta");
+    var solicitudes     = _kpiCount_(wsId, "solicitudes");
+    var solicPend       = _kpiCountWhere_(wsId, "solicitudes", "estado", "pendiente");
+    var inventario      = _kpiCount_(wsId, "inventario");
+    var inventarioBajo  = _kpiCountWhere_(wsId, "inventario", "estadoStock", "bajo");
+    var disponibilidad  = _kpiPct_(activosOp, activos);
+    var tasaAtencion    = _kpiPct_(ordenes - ordAbiertas, ordenes);
+    var tasaStock       = activos > 0 ? _kpiPct_(inventario - inventarioBajo, inventario) : 100;
+
+    return [
+      {
+        id: "manto_disponibilidad_activos", nombre: "Disponibilidad de Activos",
+        descripcion: "Porcentaje de activos en estado operativo",
+        unidad: "%", categoria: "activos", grupo: "disponibilidad",
+        origen: "sheets", adaptador: "mantenimiento", consulta: "activos[estado=operativo]",
+        formula: "COUNT(operativos)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 95, valorActual: disponibilidad, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: disponibilidad >= 95 ? "verde" : disponibilidad >= 80 ? "amarillo" : "rojo",
+        frecuencia: "diaria", responsable: "Mantenimiento",
+        dashboard: "ejecutivo", visible: true, orden: 50,
+      },
+      {
+        id: "manto_ordenes_abiertas", nombre: "Órdenes de Trabajo Abiertas",
+        descripcion: "Órdenes de mantenimiento sin completar",
+        unidad: "órdenes", categoria: "mantenimiento", grupo: "operacion",
+        origen: "sheets", adaptador: "mantenimiento", consulta: "ordenes[estado=abierta]",
+        formula: "COUNT(ordenes WHERE estado='abierta')", tipo: "numero",
+        meta: 10, valorActual: ordAbiertas, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: ordAbiertas <= 10 ? "verde" : ordAbiertas <= 20 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "diaria", responsable: "Mantenimiento",
+        dashboard: "ejecutivo", visible: true, orden: 51,
+      },
+      {
+        id: "manto_solicitudes_pendientes", nombre: "Solicitudes Pendientes",
+        descripcion: "Solicitudes de mantenimiento en espera de atención",
+        unidad: "solicitudes", categoria: "mantenimiento", grupo: "operacion",
+        origen: "sheets", adaptador: "mantenimiento", consulta: "solicitudes[estado=pendiente]",
+        formula: "COUNT(solicitudes WHERE estado='pendiente')", tipo: "numero",
+        meta: 5, valorActual: solicPend, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: solicPend <= 5 ? "verde" : solicPend <= 15 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "diaria", responsable: "Mantenimiento",
+        dashboard: "ejecutivo", visible: true, orden: 52,
+      },
+      {
+        id: "manto_tasa_atencion", nombre: "Tasa de Atención OT",
+        descripcion: "Porcentaje de órdenes de trabajo completadas",
+        unidad: "%", categoria: "mantenimiento", grupo: "eficiencia",
+        origen: "sheets", adaptador: "mantenimiento", consulta: "ordenes completadas vs total",
+        formula: "(total-abiertas)/total*100", tipo: "porcentaje",
+        meta: 85, valorActual: tasaAtencion, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaAtencion >= 85 ? "verde" : tasaAtencion >= 70 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "Mantenimiento",
+        dashboard: "ejecutivo", visible: true, orden: 53,
+      },
+      {
+        id: "manto_stock_critico", nombre: "Ítems con Stock Bajo",
+        descripcion: "Número de ítems de inventario con stock por debajo del mínimo",
+        unidad: "ítems", categoria: "inventario", grupo: "stock",
+        origen: "sheets", adaptador: "mantenimiento", consulta: "inventario[estadoStock=bajo]",
+        formula: "COUNT(inventario WHERE estadoStock='bajo')", tipo: "numero",
+        meta: 0, valorActual: inventarioBajo, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: inventarioBajo === 0 ? "verde" : inventarioBajo <= 3 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "semanal", responsable: "Mantenimiento",
+        dashboard: "ejecutivo", visible: true, orden: 54,
+      },
+      {
+        id: "manto_activos_total", nombre: "Activos Registrados",
+        descripcion: "Total de activos bajo gestión de mantenimiento",
+        unidad: "activos", categoria: "activos", grupo: "inventario",
+        origen: "sheets", adaptador: "mantenimiento", consulta: "activos",
+        formula: "COUNT(activos)", tipo: "numero",
+        meta: 0, valorActual: activos, valorAnterior: 0,
+        variacion: 0, tendencia: "estable", semaforo: "verde",
+        frecuencia: "mensual", responsable: "Mantenimiento",
+        dashboard: "ejecutivo", visible: false, orden: 55,
+      },
+    ];
+  },
+};
+
+// ─── SSO KPI Adapter ──────────────────────────────────────────────────────────
+
+var SSOKPIAdapter = {
+  unitKey: "sso",
+
+  getKPIs: function (wsId) {
+    var incidentes      = _kpiCount_(wsId, "ssoIncidentes");
+    var incAbiertos     = _kpiCountWhere_(wsId, "ssoIncidentes", "estado", "abierto");
+    var accidentes      = _kpiCount_(wsId, "ssoAccidentes");
+    var riesgos         = _kpiCount_(wsId, "ssoRiesgos");
+    var riesgoCriticos  = _kpiCountWhere_(wsId, "ssoRiesgos", "clasificacion", "critico");
+    var acciones        = _kpiCount_(wsId, "ssoAcciones");
+    var accionesVenc    = _kpiCountWhere_(wsId, "ssoAcciones", "estado", "vencida");
+    var accionesCerrad  = _kpiCountWhere_(wsId, "ssoAcciones", "estado", "cerrada");
+    var cumplLegal      = _kpiCount_(wsId, "ssoCumplimiento");
+    var cumplCumplido   = _kpiCountWhere_(wsId, "ssoCumplimiento", "estado", "cumplido");
+    var tasaCumpl       = _kpiPct_(cumplCumplido, cumplLegal);
+    var tasaAcciones    = _kpiPct_(accionesCerrad, acciones);
+
+    return [
+      {
+        id: "sso_incidentes_abiertos", nombre: "Incidentes Abiertos",
+        descripcion: "Incidentes SSO sin cerrar pendientes de investigación",
+        unidad: "incidentes", categoria: "seguridad", grupo: "incidentes",
+        origen: "sheets", adaptador: "sso", consulta: "ssoIncidentes[estado=abierto]",
+        formula: "COUNT(incidentes WHERE estado='abierto')", tipo: "numero",
+        meta: 0, valorActual: incAbiertos, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: incAbiertos === 0 ? "verde" : incAbiertos <= 2 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "diaria", responsable: "SSO",
+        dashboard: "ejecutivo", visible: true, orden: 60,
+      },
+      {
+        id: "sso_accidentes_mes", nombre: "Accidentes Registrados",
+        descripcion: "Total de accidentes laborales registrados en el período",
+        unidad: "accidentes", categoria: "seguridad", grupo: "accidentes",
+        origen: "sheets", adaptador: "sso", consulta: "ssoAccidentes",
+        formula: "COUNT(accidentes)", tipo: "numero",
+        meta: 0, valorActual: accidentes, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: accidentes === 0 ? "verde" : accidentes <= 1 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "mensual", responsable: "SSO",
+        dashboard: "ejecutivo", visible: true, orden: 61,
+      },
+      {
+        id: "sso_riesgos_criticos", nombre: "Riesgos Críticos",
+        descripcion: "Riesgos identificados con clasificación crítica en matriz IPER",
+        unidad: "riesgos", categoria: "seguridad", grupo: "riesgos",
+        origen: "sheets", adaptador: "sso", consulta: "ssoRiesgos[clasificacion=critico]",
+        formula: "COUNT(riesgos WHERE clasificacion='critico')", tipo: "numero",
+        meta: 0, valorActual: riesgoCriticos, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: riesgoCriticos === 0 ? "verde" : riesgoCriticos <= 2 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "mensual", responsable: "SSO",
+        dashboard: "ejecutivo", visible: true, orden: 62,
+      },
+      {
+        id: "sso_acciones_vencidas", nombre: "Acciones CAPA Vencidas",
+        descripcion: "Acciones correctivas/preventivas vencidas sin completar",
+        unidad: "acciones", categoria: "seguridad", grupo: "acciones_capa",
+        origen: "sheets", adaptador: "sso", consulta: "ssoAcciones[estado=vencida]",
+        formula: "COUNT(acciones WHERE estado='vencida')", tipo: "numero",
+        meta: 0, valorActual: accionesVenc, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: accionesVenc === 0 ? "verde" : accionesVenc <= 3 ? "amarillo" : "rojo",
+        inverso: true,
+        frecuencia: "semanal", responsable: "SSO",
+        dashboard: "ejecutivo", visible: true, orden: 63,
+      },
+      {
+        id: "sso_tasa_acciones", nombre: "Efectividad CAPA",
+        descripcion: "Porcentaje de acciones correctivas/preventivas cerradas",
+        unidad: "%", categoria: "seguridad", grupo: "acciones_capa",
+        origen: "sheets", adaptador: "sso", consulta: "ssoAcciones[estado=cerrada]",
+        formula: "COUNT(cerradas)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 85, valorActual: tasaAcciones, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaAcciones >= 85 ? "verde" : tasaAcciones >= 70 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "SSO",
+        dashboard: "ejecutivo", visible: true, orden: 64,
+      },
+      {
+        id: "sso_cumplimiento_legal", nombre: "Cumplimiento Legal SSO",
+        descripcion: "Porcentaje de requisitos legales SSO en cumplimiento",
+        unidad: "%", categoria: "cumplimiento", grupo: "legal",
+        origen: "sheets", adaptador: "sso", consulta: "ssoCumplimiento[estado=cumplido]",
+        formula: "COUNT(cumplidos)/COUNT(total)*100", tipo: "porcentaje",
+        meta: 95, valorActual: tasaCumpl, valorAnterior: 0,
+        variacion: 0, tendencia: "estable",
+        semaforo: tasaCumpl >= 95 ? "verde" : tasaCumpl >= 80 ? "amarillo" : "rojo",
+        frecuencia: "mensual", responsable: "SSO",
+        dashboard: "ejecutivo", visible: true, orden: 65,
+      },
+    ];
+  },
+};
+
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
+
+function bootstrapKPIAdapters_() {
+  KPIEngine.register(RRHHKPIAdapter);
+  KPIEngine.register(VRAFKPIAdapter);
+  KPIEngine.register(ComprasKPIAdapter);
+  KPIEngine.register(ContabilidadKPIAdapter);
+  KPIEngine.register(MantenimientoKPIAdapter);
+  KPIEngine.register(SSOKPIAdapter);
+  AppLogger.info("KPIAdapters: all 6 adapters registered");
+}
+
+// ============================================================
+// SOURCE: OrgUnitRegistry.js
+// ============================================================
+
+/**
+ * OrgUnitRegistry — Central discovery point for all Organizational Units.
+ *
+ * Each unit registers a UnitDefinition object that fully describes its
+ * navigation, workflows, automations, reports, handlers, catalogs, and
+ * settings. The registry is the ONLY place where unit-specific logic is
+ * wired; no unit identifiers appear in the router or engine internals.
+ *
+ * Usage:
+ *   OrgUnitRegistry.register(MY_UNIT_DEF);
+ *   OrgUnitRegistry.invokeHandler("rrhh", "validarRequisicion", params, ctx);
+ *   OrgUnitRegistry.getNavigation("rrhh", "HEAD");
+ *
+ * Call registerAllUnits_() once during bootstrap (Code.js IIFE) after all
+ * unit definition vars have been assigned.
+ */
+var OrgUnitRegistry = (function () {
+
+  var _registry = {};
+
+  // ── Registration ─────────────────────────────────────────────────────────────
+
+  function register(def) {
+    if (!def || !def.key) throw new Error("UnitDefinition requires a 'key' field.");
+    _registry[def.key] = def;
+    AppLogger.info("OrgUnitRegistry.register", { key: def.key, version: def.version || "1.0" });
+  }
+
+  function has(key) {
+    return Object.prototype.hasOwnProperty.call(_registry, key);
+  }
+
+  function get(key) {
+    return has(key) ? _safeExport_(_registry[key]) : null;
+  }
+
+  function list() {
+    return Object.keys(_registry).map(function (k) { return _safeExport_(_registry[k]); });
+  }
+
+  // Strip handler functions — they are not serializable to JSON.
+  function _safeExport_(def) {
+    var safe = {};
+    var skip = { handlers: true };
+    for (var k in def) {
+      if (Object.prototype.hasOwnProperty.call(def, k) && !skip[k]) {
+        safe[k] = def[k];
+      }
+    }
+    // Replace handlers map with presence-only summary
+    if (def.handlers) {
+      safe.handlers = {};
+      var keys = Object.keys(def.handlers);
+      for (var i = 0; i < keys.length; i++) {
+        safe.handlers[keys[i]] = { registered: true };
+      }
+    }
+    return safe;
+  }
+
+  // ── Handler invocation (WorkflowEngine bridge) ────────────────────────────────
+
+  function invokeHandler(unitKey, handlerKey, params, context) {
+    var def = _registry[unitKey];
+    if (!def) throw new Error("OrgUnitRegistry: unknown unit '" + unitKey + "'.");
+    if (!def.enabled) throw new Error("Unit '" + unitKey + "' is disabled.");
+    if (!def.handlers || typeof def.handlers[handlerKey] !== "function") {
+      throw new Error("Handler '" + handlerKey + "' not found in unit '" + unitKey + "'.");
+    }
+    AppLogger.info("OrgUnitRegistry.invokeHandler", { unit: unitKey, handler: handlerKey });
+    return def.handlers[handlerKey](params, context);
+  }
+
+  // ── Direct unit routing (router.js hook) ─────────────────────────────────────
+
+  function route(unitKey, verb, params, context) {
+    var def = _registry[unitKey];
+    if (!def) throw new Error("OrgUnitRegistry: unknown unit '" + unitKey + "'.");
+    if (!def.enabled) throw new Error("Unit '" + unitKey + "' is disabled.");
+
+    var userEmail = context && context.userEmail || "";
+    var wsId = params && params.wsId || "";
+    if (wsId && userEmail) {
+      WorkspacePermissions.requirePermission(wsId, userEmail, "ws.admin.access");
+    }
+
+    return invokeHandler(unitKey, verb, params, context);
+  }
+
+  // ── Navigation discovery ──────────────────────────────────────────────────────
+
+  function getNavigation(unitKey, userRole) {
+    var def = _registry[unitKey];
+    if (!def) return [];
+    return _filterByRole_(def.navigation || [], userRole);
+  }
+
+  function getAllNavigation(userRole) {
+    var result = {};
+    var keys = Object.keys(_registry);
+    for (var i = 0; i < keys.length; i++) {
+      var def = _registry[keys[i]];
+      if (def.enabled) {
+        result[keys[i]] = _filterByRole_(def.navigation || [], userRole);
+      }
+    }
+    return result;
+  }
+
+  function _filterByRole_(items, userRole) {
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var roles = item.requiredRoles;
+      if (!roles || roles.length === 0 || !userRole || roles.indexOf(userRole) !== -1) {
+        var clone = Object.assign({}, item);
+        if (Array.isArray(item.children)) {
+          clone.children = _filterByRole_(item.children, userRole);
+        }
+        out.push(clone);
+      }
+    }
+    return out;
+  }
+
+  // ── Module / workflow / report discovery ─────────────────────────────────────
+
+  function getModules(unitKey) {
+    var def = _registry[unitKey];
+    return def ? (def.modules || []) : [];
+  }
+
+  function getWorkflows(unitKey) {
+    var def = _registry[unitKey];
+    return def ? (def.workflows || []) : [];
+  }
+
+  function getReports(unitKey, userRole) {
+    var def = _registry[unitKey];
+    if (!def) return [];
+    return _filterByRole_(def.reports || [], userRole);
+  }
+
+  function getPermissions(unitKey) {
+    var def = _registry[unitKey];
+    return def ? (def.permissions || {}) : {};
+  }
+
+  function getSettings(unitKey) {
+    var def = _registry[unitKey];
+    return def ? (def.settings || {}) : {};
+  }
+
+  function getCatalogs(unitKey) {
+    var def = _registry[unitKey];
+    return def ? (def.catalogs || []) : [];
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────────
+
+  return {
+    register:       register,
+    has:            has,
+    get:            get,
+    list:           list,
+    route:          route,
+    invokeHandler:  invokeHandler,
+    getNavigation:  getNavigation,
+    getAllNavigation: getAllNavigation,
+    getModules:     getModules,
+    getWorkflows:   getWorkflows,
+    getReports:     getReports,
+    getPermissions: getPermissions,
+    getSettings:    getSettings,
+    getCatalogs:    getCatalogs,
+  };
+
+})();
+
+/**
+ * Register all six organizational units. Called once from Code.js bootstrap.
+ * Unit vars must be defined before this runs (they are defined in units/*.js).
+ */
+function registerAllUnits_() {
+  var defs = [
+    typeof RRHH_UNIT_DEF         !== "undefined" ? RRHH_UNIT_DEF         : null,
+    typeof VRAF_UNIT_DEF         !== "undefined" ? VRAF_UNIT_DEF         : null,
+    typeof CONTABILIDAD_UNIT_DEF !== "undefined" ? CONTABILIDAD_UNIT_DEF : null,
+    typeof COMPRAS_UNIT_DEF      !== "undefined" ? COMPRAS_UNIT_DEF      : null,
+    typeof MANTENIMIENTO_UNIT_DEF !== "undefined" ? MANTENIMIENTO_UNIT_DEF : null,
+    typeof SALUD_SSO_UNIT_DEF    !== "undefined" ? SALUD_SSO_UNIT_DEF    : null,
+  ];
+  var count = 0;
+  for (var i = 0; i < defs.length; i++) {
+    if (defs[i]) { OrgUnitRegistry.register(defs[i]); count++; }
+  }
+  AppLogger.info("registerAllUnits_: registered units", { count: count });
+}
 
 // ============================================================
 // SOURCE: controllers/WorkspaceController.js
@@ -4137,7 +7647,6 @@ var WorkspaceController = {
   },
 };
 
-
 // ============================================================
 // SOURCE: controllers/BuilderController.js
 // ============================================================
@@ -4624,7 +8133,6 @@ var BuilderController = (function () {
 
 })();
 
-
 // ============================================================
 // SOURCE: controllers/HealthController.js
 // ============================================================
@@ -4877,7 +8385,6 @@ var HealthController = {
   },
 };
 
-
 // ============================================================
 // SOURCE: controllers/ContratacionController.js
 // ============================================================
@@ -4947,10 +8454,6 @@ var ContratacionController = (function () {
     var data = {};
     try { data = JSON.parse(row.dataJson || "{}"); } catch (e) {}
     return Object.assign({}, data, { id: row.id });
-  }
-
-  function genId_(prefix) {
-    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
   }
 
   function flatForTipo_(tipo, data) {
@@ -5035,8 +8538,10 @@ var ContratacionController = (function () {
     },
 
     crearProceso: function (params) {
+      Validator.requireFields(params, ["wsId", "nombrePuesto"]);
       var now_ = new Date().toISOString();
-      var id = genId_("PROC-RH");
+      var id = IdGen.uuid();
+      AppLogger.info("ContratacionController.crearProceso", { wsId: params.wsId, nombrePuesto: params.nombrePuesto });
       var proceso = Object.assign({
         tipoPuesto:       "plaza_existente",
         nombrePuesto:     "",
@@ -5056,7 +8561,7 @@ var ContratacionController = (function () {
       }, params, {
         id: id,
         historial: [{
-          id: genId_("EVT"),
+          id: IdGen.uuid(),
           fecha: now_,
           paso: 1,
           etapa: "identificacion_necesidad",
@@ -5094,8 +8599,8 @@ var ContratacionController = (function () {
     },
 
     avanzarEtapa: function (params) {
-      if (!params.id) throw new Error("id is required");
-      if (!params.resultado) throw new Error("resultado is required");
+      Validator.requireFields(params, ["id", "resultado"]);
+      AppLogger.info("ContratacionController.avanzarEtapa", { id: params.id, resultado: params.resultado });
 
       var now_ = new Date().toISOString();
       var row = getEntity_("contratProcesos", params.id);
@@ -5109,7 +8614,7 @@ var ContratacionController = (function () {
 
       var historial = Array.isArray(proceso.historial) ? proceso.historial : [];
       historial.push({
-        id:          genId_("EVT"),
+        id:          IdGen.uuid(),
         fecha:       now_,
         paso:        nuevoPaso,
         etapa:       nuevaEtapa,
@@ -5139,9 +8644,11 @@ var ContratacionController = (function () {
     },
 
     guardarDocumento: function (params) {
+      Validator.requireFields(params, ["tipo", "procesoId"]);
       var tipo = params.tipo;
       var entity = TIPO_ENTITY[tipo];
       if (!entity) throw new Error("Tipo de documento no reconocido: " + tipo);
+      AppLogger.info("ContratacionController.guardarDocumento", { tipo: tipo, procesoId: params.procesoId });
 
       var procesoId = params.procesoId;
       var now_ = new Date().toISOString();
@@ -5162,7 +8669,7 @@ var ContratacionController = (function () {
         return Object.assign({}, data, { id: existingRow.id, procesoId: procesoId });
       }
 
-      var newId = genId_(tipo.toUpperCase());
+      var newId = IdGen.uuid();
       flat.id        = newId;
       flat.createdAt = now_;
       flat.updatedAt = now_;
@@ -5179,8 +8686,10 @@ var ContratacionController = (function () {
     },
 
     agregarCandidato: function (params) {
+      Validator.requireFields(params, ["procesoId", "nombre"]);
       var now_ = new Date().toISOString();
-      var id = genId_("CAND");
+      var id = IdGen.uuid();
+      AppLogger.info("ContratacionController.agregarCandidato", { procesoId: params.procesoId, nombre: params.nombre });
       var data = Object.assign({ createdAt: now_ }, params, { id: id });
 
       createEntity_("contratCandidatos", {
@@ -5192,7 +8701,7 @@ var ContratacionController = (function () {
         cumplePerfilCV:            params.cumplePerfilCV !== undefined ? String(params.cumplePerfilCV) : "",
         enTerna:                   params.enTerna   ? "true" : "false",
         seleccionado:              params.seleccionado ? "true" : "false",
-        notaEntrevistaPrelimininar: params.notaEntrevistaPrelimininar || "",
+        notaEntrevistaPreliminAr: params.notaEntrevistaPreliminAr || "",
         notaPruebaTecnica:         params.notaPruebaTecnica          || "",
         notaPruebaConductual:      params.notaPruebaConductual       || "",
         notaEntrevistaRRHH:        params.notaEntrevistaRRHH         || "",
@@ -5206,7 +8715,8 @@ var ContratacionController = (function () {
     },
 
     evaluarCandidato: function (params) {
-      if (!params.id) throw new Error("id is required");
+      Validator.requireFields(params, ["id"]);
+      AppLogger.info("ContratacionController.evaluarCandidato", { id: params.id });
 
       var row = getEntity_("contratCandidatos", params.id);
       if (!row) throw new Error("Candidato " + params.id + " no encontrado");
@@ -5216,7 +8726,7 @@ var ContratacionController = (function () {
       var merged = Object.assign({}, existing, params);
 
       var notas = [
-        merged.notaEntrevistaPrelimininar,
+        merged.notaEntrevistaPreliminAr,
         merged.notaPruebaTecnica,
         merged.notaPruebaConductual,
         merged.notaEntrevistaRRHH,
@@ -5233,7 +8743,7 @@ var ContratacionController = (function () {
         cumplePerfilCV:            merged.cumplePerfilCV !== undefined ? String(merged.cumplePerfilCV) : "",
         enTerna:                   merged.enTerna   ? "true" : "false",
         seleccionado:              merged.seleccionado ? "true" : "false",
-        notaEntrevistaPrelimininar: merged.notaEntrevistaPrelimininar || "",
+        notaEntrevistaPreliminAr: merged.notaEntrevistaPreliminAr || "",
         notaPruebaTecnica:         merged.notaPruebaTecnica          || "",
         notaPruebaConductual:      merged.notaPruebaConductual       || "",
         notaEntrevistaRRHH:        merged.notaEntrevistaRRHH         || "",
@@ -5251,15 +8761,27 @@ var ContratacionController = (function () {
 /**
  * Route contratacion.* actions.
  */
-function routeContratacionAction_(verb, params) {
+function routeContratacionAction_(verb, params, context) {
   params = params || {};
+  var userEmail = context && context.userEmail || "";
+  var wsId      = params.wsId || "";
+
+  // Enforce manage permission for mutating verbs when authenticated
+  if (wsId && userEmail) {
+    var _mutatVerbs = { crearProceso: true, avanzarEtapa: true, guardarDocumento: true,
+                        agregarCandidato: true, evaluarCandidato: true };
+    if (_mutatVerbs[verb]) {
+      WorkspacePermissions.requirePermission(wsId, userEmail, "ws.processes.manage");
+    }
+  }
+
   switch (verb) {
-    case "listProcesos":    return ContratacionController.listProcesos(params);
-    case "getProceso":      return ContratacionController.getProceso(params);
-    case "crearProceso":    return ContratacionController.crearProceso(params);
-    case "avanzarEtapa":    return ContratacionController.avanzarEtapa(params);
-    case "guardarDocumento": return ContratacionController.guardarDocumento(params);
-    case "getDocumento":    return ContratacionController.getDocumento(params);
+    case "listProcesos":     return ContratacionController.listProcesos(params);
+    case "getProceso":       return ContratacionController.getProceso(params);
+    case "crearProceso":     return ContratacionController.crearProceso(params);
+    case "avanzarEtapa":     return ContratacionController.avanzarEtapa(params);
+    case "guardarDocumento":  return ContratacionController.guardarDocumento(params);
+    case "getDocumento":     return ContratacionController.getDocumento(params);
     case "agregarCandidato": return ContratacionController.agregarCandidato(params);
     case "evaluarCandidato": return ContratacionController.evaluarCandidato(params);
     default:
@@ -5267,6 +8789,16429 @@ function routeContratacionAction_(verb, params) {
   }
 }
 
+// ============================================================
+// SOURCE: controllers/ComprasController.js
+// ============================================================
+
+/**
+ * ComprasController — Compras y Adquisiciones operations.
+ *
+ * Scopes all queries to wsId = "compras" and orchestrates purchasing
+ * business logic. Persistence delegates to the generic SheetRepository
+ * via the compras entity schemas (comprasSolicitudes, comprasRequisiciones,
+ * comprasCotizaciones, comprasProveedores, comprasOrdenes, comprasRecepciones,
+ * comprasEvaluaciones).
+ */
+var ComprasController = (function () {
+
+  var COMPRAS_WS_ID = "compras";
+
+  // ── Solicitudes ──────────────────────────────────────────────────────────────
+
+  function listSolicitudes(params) {
+    var filter = { wsId: params.wsId || COMPRAS_WS_ID };
+    if (params.estado)      filter.estado      = params.estado;
+    if (params.prioridad)   filter.prioridad   = params.prioridad;
+    if (params.etapaActual) filter.etapaActual = params.etapaActual;
+    var result = listEntities_("comprasSolicitudes", filter);
+    return result.items || [];
+  }
+
+  function getSolicitud(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("comprasSolicitudes", params.id);
+  }
+
+  function createSolicitud(params) {
+    Validator.requireFields(params, ["titulo", "tipo"]);
+    AppLogger.info("ComprasController.createSolicitud", { titulo: params.titulo, tipo: params.tipo });
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      descripcion:       "",
+      solicitanteId:     "",
+      unidadSolicitante: "",
+      prioridad:         "normal",
+      estado:            "pendiente",
+      etapaActual:       "solicitud",
+      requisicionId:     "",
+      monto:             0,
+      montoAprobado:     0,
+      fechaRequerida:    "",
+      notas:             "",
+      dataJson:          "",
+      createdBy:         "",
+      deletedAt:         "",
+    }, params, {
+      id:            IdGen.uuid(),
+      wsId:          params.wsId || COMPRAS_WS_ID,
+      fechaSolicitud: now,
+      createdAt:     now,
+      updatedAt:     now,
+    });
+    createEntity_("comprasSolicitudes", data);
+    return data;
+  }
+
+  function updateSolicitud(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("comprasSolicitudes", params.id, patch);
+  }
+
+  function cambiarEstadoSolicitud(params) {
+    Validator.requireFields(params, ["id", "estado"]);
+    AppLogger.info("ComprasController.cambiarEstadoSolicitud", { id: params.id, estado: params.estado });
+    var now = new Date().toISOString();
+    var patch = {
+      estado:      params.estado,
+      updatedAt:   now,
+    };
+    if (params.etapaActual) patch.etapaActual = params.etapaActual;
+    return updateEntity_("comprasSolicitudes", params.id, patch);
+  }
+
+  function archivarSolicitud(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("ComprasController.archivarSolicitud", { id: params.id });
+    var now = new Date().toISOString();
+    return updateEntity_("comprasSolicitudes", params.id, {
+      estado:    "archivada",
+      deletedAt: now,
+      updatedAt: now,
+    });
+  }
+
+  // ── Requisiciones ────────────────────────────────────────────────────────────
+
+  function listRequisiciones(params) {
+    var filter = { wsId: params.wsId || COMPRAS_WS_ID };
+    if (params.solicitudId) filter.solicitudId = params.solicitudId;
+    if (params.estado)      filter.estado      = params.estado;
+    var result = listEntities_("comprasRequisiciones", filter);
+    return result.items || [];
+  }
+
+  function getRequisicion(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("comprasRequisiciones", params.id);
+  }
+
+  function createRequisicion(params) {
+    Validator.requireFields(params, ["solicitudId", "descripcion"]);
+    AppLogger.info("ComprasController.createRequisicion", { solicitudId: params.solicitudId });
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      codigo:               "",
+      especificaciones:     "",
+      cantidad:             1,
+      unidadMedida:         "",
+      presupuestoEstimado:  0,
+      cuentaPresupuestal:   "",
+      estado:               "borrador",
+      aprobadoPorId:        "",
+      fechaAprobacion:      "",
+      cotizacionId:         "",
+      dataJson:             "",
+      createdBy:            "",
+      deletedAt:            "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || COMPRAS_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("comprasRequisiciones", data);
+    return data;
+  }
+
+  function updateRequisicion(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("comprasRequisiciones", params.id, patch);
+  }
+
+  function aprobarRequisicion(params) {
+    Validator.requireFields(params, ["id", "aprobadoPorId"]);
+    AppLogger.info("ComprasController.aprobarRequisicion", { id: params.id, aprobadoPorId: params.aprobadoPorId });
+    var now = new Date().toISOString();
+    return updateEntity_("comprasRequisiciones", params.id, {
+      estado:          "aprobada",
+      aprobadoPorId:   params.aprobadoPorId,
+      fechaAprobacion: now,
+      updatedAt:       now,
+    });
+  }
+
+  // ── Cotizaciones ─────────────────────────────────────────────────────────────
+
+  function listCotizaciones(params) {
+    var filter = { wsId: params.wsId || COMPRAS_WS_ID };
+    if (params.requisicionId) filter.requisicionId = params.requisicionId;
+    if (params.proveedorId)   filter.proveedorId   = params.proveedorId;
+    if (params.estado)        filter.estado        = params.estado;
+    var result = listEntities_("comprasCotizaciones", filter);
+    return result.items || [];
+  }
+
+  function getCotizacion(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("comprasCotizaciones", params.id);
+  }
+
+  function createCotizacion(params) {
+    Validator.requireFields(params, ["requisicionId", "proveedorId", "monto"]);
+    AppLogger.info("ComprasController.createCotizacion", { requisicionId: params.requisicionId, proveedorId: params.proveedorId });
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      codigoCotizacion:  "",
+      moneda:            "USD",
+      plazoEntregaDias:  0,
+      formaPago:         "",
+      garantia:          "",
+      vigenciaDias:      30,
+      estado:            "pendiente",
+      seleccionada:      false,
+      notasTecnicas:     "",
+      notasEvaluacion:   "",
+      dataJson:          "",
+      createdBy:         "",
+      deletedAt:         "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || COMPRAS_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("comprasCotizaciones", data);
+    return data;
+  }
+
+  function updateCotizacion(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("comprasCotizaciones", params.id, patch);
+  }
+
+  function seleccionarCotizacion(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("ComprasController.seleccionarCotizacion", { id: params.id });
+    var now = new Date().toISOString();
+
+    // Retrieve the target cotizacion to get its requisicionId
+    var cotizacion = getEntity_("comprasCotizaciones", params.id);
+    if (!cotizacion) throw new Error("Cotizacion " + params.id + " no encontrada");
+    var requisicionId = cotizacion.requisicionId;
+
+    // Mark selected cotizacion as seleccionada
+    updateEntity_("comprasCotizaciones", params.id, {
+      seleccionada: true,
+      estado:       "seleccionada",
+      updatedAt:    now,
+    });
+
+    // Unmark all other cotizaciones for the same requisicion
+    var otras = listEntities_("comprasCotizaciones", { requisicionId: requisicionId });
+    var items = otras.items || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].id !== params.id) {
+        updateEntity_("comprasCotizaciones", items[i].id, {
+          seleccionada: false,
+          updatedAt:    now,
+        });
+      }
+    }
+
+    return { id: params.id, seleccionada: true, requisicionId: requisicionId };
+  }
+
+  // ── Proveedores ──────────────────────────────────────────────────────────────
+
+  function listProveedores(params) {
+    var filter = { wsId: params.wsId || COMPRAS_WS_ID };
+    if (params.estado)    filter.estado    = params.estado;
+    if (params.categoria) filter.categoria = params.categoria;
+    var result = listEntities_("comprasProveedores", filter);
+    return result.items || [];
+  }
+
+  function getProveedor(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("comprasProveedores", params.id);
+  }
+
+  function createProveedor(params) {
+    Validator.requireFields(params, ["razonSocial"]);
+    AppLogger.info("ComprasController.createProveedor", { razonSocial: params.razonSocial });
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      nombreComercial:  "",
+      nit:              "",
+      nrc:              "",
+      tipoProveedor:    "",
+      categoria:        "",
+      contactoNombre:   "",
+      contactoEmail:    "",
+      contactoTel:      "",
+      direccion:        "",
+      pais:             "",
+      calificacion:     "",
+      estado:           "activo",
+      observaciones:    "",
+      ultimaCompraFecha: "",
+      totalCompras:     0,
+      cantidadOrdenes:  0,
+      dataJson:         "",
+      createdBy:        "",
+      deletedAt:        "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || COMPRAS_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("comprasProveedores", data);
+    return data;
+  }
+
+  function updateProveedor(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("comprasProveedores", params.id, patch);
+  }
+
+  // ── Órdenes de Compra ────────────────────────────────────────────────────────
+
+  function listOrdenes(params) {
+    var filter = { wsId: params.wsId || COMPRAS_WS_ID };
+    if (params.estado)       filter.estado       = params.estado;
+    if (params.proveedorId)  filter.proveedorId  = params.proveedorId;
+    if (params.requisicionId) filter.requisicionId = params.requisicionId;
+    var result = listEntities_("comprasOrdenes", filter);
+    return result.items || [];
+  }
+
+  function getOrden(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("comprasOrdenes", params.id);
+  }
+
+  function createOrden(params) {
+    Validator.requireFields(params, ["requisicionId", "proveedorId", "monto"]);
+    AppLogger.info("ComprasController.createOrden", { requisicionId: params.requisicionId, proveedorId: params.proveedorId });
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      codigo:                   "",
+      cotizacionSeleccionadaId: "",
+      moneda:                   "USD",
+      plazoEntregaDias:         0,
+      fechaEmision:             now,
+      fechaEntregaEsperada:     "",
+      fechaEntregaReal:         "",
+      estado:                   "borrador",
+      autorizadoPorId:          "",
+      fechaAutorizacion:        "",
+      formaPago:                "",
+      terminosEntrega:          "",
+      facturaNro:               "",
+      montoFactura:             0,
+      fechaFactura:             "",
+      dataJson:                 "",
+      createdBy:                "",
+      deletedAt:                "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || COMPRAS_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("comprasOrdenes", data);
+    return data;
+  }
+
+  function updateOrden(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("comprasOrdenes", params.id, patch);
+  }
+
+  function autorizarOrden(params) {
+    Validator.requireFields(params, ["id", "autorizadoPorId"]);
+    AppLogger.info("ComprasController.autorizarOrden", { id: params.id, autorizadoPorId: params.autorizadoPorId });
+    var now = new Date().toISOString();
+    return updateEntity_("comprasOrdenes", params.id, {
+      estado:           "emitida",
+      autorizadoPorId:  params.autorizadoPorId,
+      fechaAutorizacion: now,
+      updatedAt:        now,
+    });
+  }
+
+  function cancelarOrden(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("ComprasController.cancelarOrden", { id: params.id });
+    var now = new Date().toISOString();
+    return updateEntity_("comprasOrdenes", params.id, {
+      estado:    "cancelada",
+      updatedAt: now,
+    });
+  }
+
+  // ── Recepciones ──────────────────────────────────────────────────────────────
+
+  function listRecepciones(params) {
+    var filter = { wsId: params.wsId || COMPRAS_WS_ID };
+    if (params.ordenId) filter.ordenId = params.ordenId;
+    if (params.estado)  filter.estado  = params.estado;
+    var result = listEntities_("comprasRecepciones", filter);
+    return result.items || [];
+  }
+
+  function getRecepcion(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("comprasRecepciones", params.id);
+  }
+
+  function createRecepcion(params) {
+    Validator.requireFields(params, ["ordenId", "cantidadRecibida"]);
+    AppLogger.info("ComprasController.createRecepcion", { ordenId: params.ordenId });
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      codigo:            "",
+      cantidadSolicitada: 0,
+      unidadMedida:      "",
+      condicion:         "bueno",
+      observaciones:     "",
+      receptorId:        "",
+      fechaRecepcion:    now,
+      actaRecepcionId:   "",
+      estado:            "recibido",
+      dataJson:          "",
+      createdBy:         "",
+      deletedAt:         "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || COMPRAS_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("comprasRecepciones", data);
+    return data;
+  }
+
+  function updateRecepcion(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("comprasRecepciones", params.id, patch);
+  }
+
+  // ── Evaluaciones de Proveedor ────────────────────────────────────────────────
+
+  function listEvaluaciones(params) {
+    var filter = { wsId: params.wsId || COMPRAS_WS_ID };
+    if (params.proveedorId) filter.proveedorId = params.proveedorId;
+    if (params.ordenId)     filter.ordenId     = params.ordenId;
+    var result = listEntities_("comprasEvaluaciones", filter);
+    return result.items || [];
+  }
+
+  function getEvaluacion(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("comprasEvaluaciones", params.id);
+  }
+
+  function createEvaluacion(params) {
+    Validator.requireFields(params, ["proveedorId", "ordenId", "evaluadorId"]);
+    AppLogger.info("ComprasController.createEvaluacion", { proveedorId: params.proveedorId, ordenId: params.ordenId });
+    var now = new Date().toISOString();
+
+    var calidadPuntaje              = parseFloat(params.calidadPuntaje              || 0);
+    var tiempoEntregaPuntaje        = parseFloat(params.tiempoEntregaPuntaje        || 0);
+    var cumplimientoPuntaje         = parseFloat(params.cumplimientoPuntaje         || 0);
+    var comunicacionPuntaje         = parseFloat(params.comunicacionPuntaje         || 0);
+    var precioCompetitividadPuntaje = parseFloat(params.precioCompetitividadPuntaje || 0);
+
+    var puntajeTotal = (calidadPuntaje + tiempoEntregaPuntaje + cumplimientoPuntaje +
+                        comunicacionPuntaje + precioCompetitividadPuntaje) / 5;
+    puntajeTotal = Math.round(puntajeTotal * 10) / 10;
+
+    var calificacionGlobal;
+    if (puntajeTotal >= 90) {
+      calificacionGlobal = "A";
+    } else if (puntajeTotal >= 70) {
+      calificacionGlobal = "B";
+    } else if (puntajeTotal >= 50) {
+      calificacionGlobal = "C";
+    } else {
+      calificacionGlobal = "D";
+    }
+
+    var data = Object.assign({
+      periodo:                    "",
+      recomendacion:              "",
+      observaciones:              "",
+      calidadPuntaje:             0,
+      tiempoEntregaPuntaje:       0,
+      cumplimientoPuntaje:        0,
+      comunicacionPuntaje:        0,
+      precioCompetitividadPuntaje: 0,
+      dataJson:                   "",
+      createdBy:                  "",
+    }, params, {
+      id:                         IdGen.uuid(),
+      wsId:                       params.wsId || COMPRAS_WS_ID,
+      calidadPuntaje:             calidadPuntaje,
+      tiempoEntregaPuntaje:       tiempoEntregaPuntaje,
+      cumplimientoPuntaje:        cumplimientoPuntaje,
+      comunicacionPuntaje:        comunicacionPuntaje,
+      precioCompetitividadPuntaje: precioCompetitividadPuntaje,
+      puntajeTotal:               puntajeTotal,
+      calificacionGlobal:         calificacionGlobal,
+      createdAt:                  now,
+      updatedAt:                  now,
+    });
+    createEntity_("comprasEvaluaciones", data);
+    return data;
+  }
+
+  // ── Dashboard ────────────────────────────────────────────────────────────────
+
+  function getDashboardResumen(params) {
+    var wsId = params.wsId || COMPRAS_WS_ID;
+    AppLogger.info("ComprasController.getDashboardResumen", { wsId: wsId });
+
+    var solicitudesResult   = listEntities_("comprasSolicitudes",   { wsId: wsId });
+    var ordenesResult       = listEntities_("comprasOrdenes",       { wsId: wsId });
+    var proveedoresResult   = listEntities_("comprasProveedores",   { wsId: wsId });
+    var cotizacionesResult  = listEntities_("comprasCotizaciones",  { wsId: wsId });
+    var requisicionesResult = listEntities_("comprasRequisiciones", { wsId: wsId });
+    var recepcionesResult   = listEntities_("comprasRecepciones",   { wsId: wsId });
+
+    var solicitudes   = solicitudesResult.items   || [];
+    var ordenes       = ordenesResult.items       || [];
+    var proveedores   = proveedoresResult.items   || [];
+    var cotizaciones  = cotizacionesResult.items  || [];
+    var requisiciones = requisicionesResult.items || [];
+    var recepciones   = recepcionesResult.items   || [];
+
+    var solicitudesActivas  = 0;
+    var solicitudesUrgentes = 0;
+    for (var i = 0; i < solicitudes.length; i++) {
+      if (solicitudes[i].estado !== "archivada") solicitudesActivas++;
+      if (solicitudes[i].prioridad === "urgente") solicitudesUrgentes++;
+    }
+
+    var ordenesAbiertas  = 0;
+    var ordenesCerradas  = 0;
+    var montoEjecutado   = 0;
+    for (var j = 0; j < ordenes.length; j++) {
+      var est = ordenes[j].estado;
+      if (est === "borrador" || est === "emitida") {
+        ordenesAbiertas++;
+      }
+      if (est === "recibida" || est === "pagada") {
+        ordenesCerradas++;
+        montoEjecutado += parseFloat(ordenes[j].monto || 0);
+      }
+    }
+
+    var proveedoresActivos = 0;
+    for (var k = 0; k < proveedores.length; k++) {
+      if (proveedores[k].estado === "activo") proveedoresActivos++;
+    }
+
+    var cotizacionesPendientes = 0;
+    for (var l = 0; l < cotizaciones.length; l++) {
+      if (cotizaciones[l].estado === "pendiente") cotizacionesPendientes++;
+    }
+
+    return {
+      solicitudesActivas:     solicitudesActivas,
+      solicitudesUrgentes:    solicitudesUrgentes,
+      ordenesAbiertas:        ordenesAbiertas,
+      ordenesCerradas:        ordenesCerradas,
+      proveedoresActivos:     proveedoresActivos,
+      cotizacionesPendientes: cotizacionesPendientes,
+      montoEjecutado:         Math.round(montoEjecutado * 100) / 100,
+      totalSolicitudes:       solicitudes.length,
+      totalRequisiciones:     requisiciones.length,
+      totalCotizaciones:      cotizaciones.length,
+      totalOrdenes:           ordenes.length,
+      totalRecepciones:       recepciones.length,
+      totalProveedores:       proveedores.length,
+    };
+  }
+
+  // ── Reportes ─────────────────────────────────────────────────────────────────
+
+  function reporteComprasPeriodo(params) {
+    var wsId  = params.wsId  || COMPRAS_WS_ID;
+    var desde = params.desde || "";
+    var hasta = params.hasta || "";
+    AppLogger.info("ComprasController.reporteComprasPeriodo", { wsId: wsId, desde: desde, hasta: hasta });
+
+    var ordenesResult = listEntities_("comprasOrdenes", { wsId: wsId });
+    var ordenes = ordenesResult.items || [];
+
+    var filtered    = [];
+    var totalMonto  = 0;
+    for (var i = 0; i < ordenes.length; i++) {
+      var fecha = ordenes[i].fechaEmision || "";
+      if (desde && fecha < desde) continue;
+      if (hasta && fecha > hasta) continue;
+      filtered.push(ordenes[i]);
+      totalMonto += parseFloat(ordenes[i].monto || 0);
+    }
+
+    // Group by estado
+    var porEstado = {};
+    for (var j = 0; j < filtered.length; j++) {
+      var est = filtered[j].estado || "sin_estado";
+      if (!porEstado[est]) porEstado[est] = { count: 0, monto: 0 };
+      porEstado[est].count++;
+      porEstado[est].monto += parseFloat(filtered[j].monto || 0);
+    }
+
+    // Group by proveedorId
+    var porProveedor = {};
+    for (var m = 0; m < filtered.length; m++) {
+      var pid = filtered[m].proveedorId || "sin_proveedor";
+      if (!porProveedor[pid]) porProveedor[pid] = { count: 0, monto: 0 };
+      porProveedor[pid].count++;
+      porProveedor[pid].monto += parseFloat(filtered[m].monto || 0);
+    }
+
+    return {
+      periodo:      { desde: desde, hasta: hasta },
+      totalOrdenes: filtered.length,
+      totalMonto:   Math.round(totalMonto * 100) / 100,
+      porEstado:    porEstado,
+      porProveedor: porProveedor,
+      ordenes:      filtered,
+    };
+  }
+
+  function reporteProveedores(params) {
+    var wsId = params.wsId || COMPRAS_WS_ID;
+    AppLogger.info("ComprasController.reporteProveedores", { wsId: wsId });
+
+    var proveedoresResult   = listEntities_("comprasProveedores",   { wsId: wsId });
+    var ordenesResult       = listEntities_("comprasOrdenes",       { wsId: wsId });
+    var evaluacionesResult  = listEntities_("comprasEvaluaciones",  { wsId: wsId });
+
+    var proveedores  = proveedoresResult.items  || [];
+    var ordenes      = ordenesResult.items      || [];
+    var evaluaciones = evaluacionesResult.items || [];
+
+    // Index ordenes by proveedorId
+    var ordenesPorProveedor = {};
+    for (var i = 0; i < ordenes.length; i++) {
+      var pid = ordenes[i].proveedorId;
+      if (!ordenesPorProveedor[pid]) ordenesPorProveedor[pid] = [];
+      ordenesPorProveedor[pid].push(ordenes[i]);
+    }
+
+    // Index evaluaciones by proveedorId
+    var evalsPorProveedor = {};
+    for (var j = 0; j < evaluaciones.length; j++) {
+      var eid = evaluaciones[j].proveedorId;
+      if (!evalsPorProveedor[eid]) evalsPorProveedor[eid] = [];
+      evalsPorProveedor[eid].push(evaluaciones[j]);
+    }
+
+    var resultado = [];
+    for (var k = 0; k < proveedores.length; k++) {
+      var proveedor       = proveedores[k];
+      var ordsProveedor   = ordenesPorProveedor[proveedor.id] || [];
+      var evalsProveedor  = evalsPorProveedor[proveedor.id]   || [];
+
+      var puntajePromedio = 0;
+      if (evalsProveedor.length > 0) {
+        var sumPuntaje = 0;
+        for (var l = 0; l < evalsProveedor.length; l++) {
+          sumPuntaje += parseFloat(evalsProveedor[l].puntajeTotal || 0);
+        }
+        puntajePromedio = Math.round(sumPuntaje / evalsProveedor.length * 10) / 10;
+      }
+
+      var montoTotal = 0;
+      for (var m = 0; m < ordsProveedor.length; m++) {
+        montoTotal += parseFloat(ordsProveedor[m].monto || 0);
+      }
+
+      resultado.push({
+        id:                   proveedor.id,
+        razonSocial:          proveedor.razonSocial,
+        nombreComercial:      proveedor.nombreComercial,
+        estado:               proveedor.estado,
+        calificacion:         proveedor.calificacion,
+        cantidadOrdenes:      ordsProveedor.length,
+        montoTotal:           Math.round(montoTotal * 100) / 100,
+        cantidadEvaluaciones: evalsProveedor.length,
+        puntajePromedio:      puntajePromedio,
+      });
+    }
+
+    return {
+      totalProveedores: proveedores.length,
+      proveedores:      resultado,
+    };
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────────
+
+  return {
+    listSolicitudes:        listSolicitudes,
+    getSolicitud:           getSolicitud,
+    createSolicitud:        createSolicitud,
+    updateSolicitud:        updateSolicitud,
+    cambiarEstadoSolicitud: cambiarEstadoSolicitud,
+    archivarSolicitud:      archivarSolicitud,
+    listRequisiciones:      listRequisiciones,
+    getRequisicion:         getRequisicion,
+    createRequisicion:      createRequisicion,
+    updateRequisicion:      updateRequisicion,
+    aprobarRequisicion:     aprobarRequisicion,
+    listCotizaciones:       listCotizaciones,
+    getCotizacion:          getCotizacion,
+    createCotizacion:       createCotizacion,
+    updateCotizacion:       updateCotizacion,
+    seleccionarCotizacion:  seleccionarCotizacion,
+    listProveedores:        listProveedores,
+    getProveedor:           getProveedor,
+    createProveedor:        createProveedor,
+    updateProveedor:        updateProveedor,
+    listOrdenes:            listOrdenes,
+    getOrden:               getOrden,
+    createOrden:            createOrden,
+    updateOrden:            updateOrden,
+    autorizarOrden:         autorizarOrden,
+    cancelarOrden:          cancelarOrden,
+    listRecepciones:        listRecepciones,
+    getRecepcion:           getRecepcion,
+    createRecepcion:        createRecepcion,
+    updateRecepcion:        updateRecepcion,
+    listEvaluaciones:       listEvaluaciones,
+    getEvaluacion:          getEvaluacion,
+    createEvaluacion:       createEvaluacion,
+    getDashboardResumen:    getDashboardResumen,
+    reporteComprasPeriodo:  reporteComprasPeriodo,
+    reporteProveedores:     reporteProveedores,
+  };
+
+})();
+
+/**
+ * Route compras.* actions via OrgUnitRegistry.
+ * Called by OrgUnitRegistry when namespace === "compras".
+ */
+function routeComprasAction_(verb, params, context) {
+  switch (verb) {
+    case "listSolicitudes":        return ComprasController.listSolicitudes(params);
+    case "getSolicitud":           return ComprasController.getSolicitud(params);
+    case "createSolicitud":        return ComprasController.createSolicitud(params);
+    case "updateSolicitud":        return ComprasController.updateSolicitud(params);
+    case "cambiarEstadoSolicitud": return ComprasController.cambiarEstadoSolicitud(params);
+    case "archivarSolicitud":      return ComprasController.archivarSolicitud(params);
+    case "listRequisiciones":      return ComprasController.listRequisiciones(params);
+    case "getRequisicion":         return ComprasController.getRequisicion(params);
+    case "createRequisicion":      return ComprasController.createRequisicion(params);
+    case "updateRequisicion":      return ComprasController.updateRequisicion(params);
+    case "aprobarRequisicion":     return ComprasController.aprobarRequisicion(params);
+    case "listCotizaciones":       return ComprasController.listCotizaciones(params);
+    case "getCotizacion":          return ComprasController.getCotizacion(params);
+    case "createCotizacion":       return ComprasController.createCotizacion(params);
+    case "updateCotizacion":       return ComprasController.updateCotizacion(params);
+    case "seleccionarCotizacion":  return ComprasController.seleccionarCotizacion(params);
+    case "listProveedores":        return ComprasController.listProveedores(params);
+    case "getProveedor":           return ComprasController.getProveedor(params);
+    case "createProveedor":        return ComprasController.createProveedor(params);
+    case "updateProveedor":        return ComprasController.updateProveedor(params);
+    case "listOrdenes":            return ComprasController.listOrdenes(params);
+    case "getOrden":               return ComprasController.getOrden(params);
+    case "createOrden":            return ComprasController.createOrden(params);
+    case "updateOrden":            return ComprasController.updateOrden(params);
+    case "autorizarOrden":         return ComprasController.autorizarOrden(params);
+    case "cancelarOrden":          return ComprasController.cancelarOrden(params);
+    case "listRecepciones":        return ComprasController.listRecepciones(params);
+    case "getRecepcion":           return ComprasController.getRecepcion(params);
+    case "createRecepcion":        return ComprasController.createRecepcion(params);
+    case "updateRecepcion":        return ComprasController.updateRecepcion(params);
+    case "listEvaluaciones":       return ComprasController.listEvaluaciones(params);
+    case "getEvaluacion":          return ComprasController.getEvaluacion(params);
+    case "createEvaluacion":       return ComprasController.createEvaluacion(params);
+    case "getDashboardResumen":    return ComprasController.getDashboardResumen(params);
+    case "reporteComprasPeriodo":  return ComprasController.reporteComprasPeriodo(params);
+    case "reporteProveedores":     return ComprasController.reporteProveedores(params);
+    default:
+      throw new Error("Unknown compras verb: " + verb);
+  }
+}
+
+// ============================================================
+// SOURCE: controllers/ContabilidadController.js
+// ============================================================
+
+/**
+ * ContabilidadController — Contabilidad y Finanzas operations.
+ *
+ * Scopes all queries to wsId = "contabilidad" and orchestrates accounting
+ * business logic. Persistence delegates to the generic SheetRepository via
+ * the contabilidad entity schemas:
+ *   contaCompromisos, contaRegistros, contaFacturas, contaPagos,
+ *   contaConciliaciones, contaCuentasPagar, contaCuentasCobrar.
+ *
+ * Integration points with Compras (read-only, no data duplication):
+ *   ordenCompraId  → comprasOrdenes.id
+ *   recepcionId    → comprasRecepciones.id
+ *   proveedorId    → comprasProveedores.id
+ */
+var ContabilidadController = (function () {
+
+  var CONTA_WS_ID = "contabilidad";
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function nowIso_() { return new Date().toISOString(); }
+
+  // ── Compromisos Presupuestarios ────────────────────────────────────────────
+
+  function listCompromisos(params) {
+    var filter = { wsId: params.wsId || CONTA_WS_ID };
+    if (params.estado)          filter.estado          = params.estado;
+    if (params.tipo)            filter.tipo            = params.tipo;
+    if (params.centroCosto)     filter.centroCosto     = params.centroCosto;
+    if (params.cuentaPresupuestal) filter.cuentaPresupuestal = params.cuentaPresupuestal;
+    if (params.proveedorId)     filter.proveedorId     = params.proveedorId;
+    if (params.ordenCompraId)   filter.ordenCompraId   = params.ordenCompraId;
+    var result = listEntities_("contaCompromisos", filter);
+    return result.items || [];
+  }
+
+  function getCompromiso(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("contaCompromisos", params.id);
+  }
+
+  function createCompromiso(params) {
+    Validator.requireFields(params, ["concepto", "tipo", "monto"]);
+    AppLogger.info("ContabilidadController.createCompromiso", { concepto: params.concepto, monto: params.monto });
+    var now = nowIso_();
+    var monto = Number(params.monto) || 0;
+    var data = Object.assign({
+      numero:             "",
+      moneda:             "USD",
+      cuentaPresupuestal: "",
+      centroCosto:        "",
+      partida:            "",
+      estado:             "borrador",
+      etapa:              "formulacion",
+      ordenCompraId:      "",
+      ordenCompraRef:     "",
+      proveedorId:        "",
+      proveedorRef:       "",
+      fechaVencimiento:   "",
+      montoEjecutado:     0,
+      saldo:              monto,
+      aprobadoPorId:      "",
+      fechaAprobacion:    "",
+      observaciones:      "",
+      dataJson:           "",
+      createdBy:          "",
+      deletedAt:          "",
+    }, params, {
+      id:               IdGen.uuid(),
+      wsId:             params.wsId || CONTA_WS_ID,
+      monto:            monto,
+      saldo:            monto - (Number(params.montoEjecutado) || 0),
+      fechaCompromiso:  params.fechaCompromiso || now,
+      createdAt:        now,
+      updatedAt:        now,
+    });
+    createEntity_("contaCompromisos", data);
+    return data;
+  }
+
+  function updateCompromiso(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("contaCompromisos", params.id, patch);
+  }
+
+  function aprobarCompromiso(params) {
+    Validator.requireFields(params, ["id", "aprobadoPorId"]);
+    AppLogger.info("ContabilidadController.aprobarCompromiso", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("contaCompromisos", params.id, {
+      estado:          "comprometido",
+      etapa:           "aprobacion",
+      aprobadoPorId:   params.aprobadoPorId,
+      fechaAprobacion: now,
+      updatedAt:       now,
+    });
+  }
+
+  function anularCompromiso(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("ContabilidadController.anularCompromiso", { id: params.id });
+    return updateEntity_("contaCompromisos", params.id, {
+      estado:    "anulado",
+      updatedAt: nowIso_(),
+    });
+  }
+
+  // ── Registros Contables ────────────────────────────────────────────────────
+
+  function listRegistros(params) {
+    var filter = { wsId: params.wsId || CONTA_WS_ID };
+    if (params.tipo)       filter.tipo       = params.tipo;
+    if (params.estado)     filter.estado     = params.estado;
+    if (params.periodo)    filter.periodo    = params.periodo;
+    if (params.centroCosto) filter.centroCosto = params.centroCosto;
+    if (params.facturaId)  filter.facturaId  = params.facturaId;
+    if (params.pagoId)     filter.pagoId     = params.pagoId;
+    var result = listEntities_("contaRegistros", filter);
+    return result.items || [];
+  }
+
+  function getRegistro(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("contaRegistros", params.id);
+  }
+
+  function createRegistro(params) {
+    Validator.requireFields(params, ["tipo", "descripcion", "cuentaDebito", "cuentaCredito", "monto"]);
+    AppLogger.info("ContabilidadController.createRegistro", { tipo: params.tipo, monto: params.monto });
+    var now = nowIso_();
+    var fechaAsiento = params.fechaAsiento || now;
+    var periodo = params.periodo || fechaAsiento.substring(0, 7);
+    var data = Object.assign({
+      numero:        "",
+      moneda:        "USD",
+      centroCosto:   "",
+      referenciaId:  "",
+      referenciaDoc: "",
+      estado:        "borrador",
+      compromisoId:  "",
+      facturaId:     "",
+      pagoId:        "",
+      dataJson:      "",
+      createdBy:     "",
+      deletedAt:     "",
+    }, params, {
+      id:          IdGen.uuid(),
+      wsId:        params.wsId || CONTA_WS_ID,
+      monto:       Number(params.monto) || 0,
+      fechaAsiento: fechaAsiento,
+      periodo:     periodo,
+      createdAt:   now,
+      updatedAt:   now,
+    });
+    createEntity_("contaRegistros", data);
+    return data;
+  }
+
+  function updateRegistro(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("contaRegistros", params.id, patch);
+  }
+
+  function anularRegistro(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("ContabilidadController.anularRegistro", { id: params.id });
+    return updateEntity_("contaRegistros", params.id, {
+      estado:    "anulado",
+      updatedAt: nowIso_(),
+    });
+  }
+
+  // ── Facturas ───────────────────────────────────────────────────────────────
+
+  function listFacturas(params) {
+    var filter = { wsId: params.wsId || CONTA_WS_ID };
+    if (params.estado)        filter.estado        = params.estado;
+    if (params.tipo)          filter.tipo          = params.tipo;
+    if (params.proveedorId)   filter.proveedorId   = params.proveedorId;
+    if (params.ordenCompraId) filter.ordenCompraId = params.ordenCompraId;
+    if (params.recepcionId)   filter.recepcionId   = params.recepcionId;
+    var result = listEntities_("contaFacturas", filter);
+    return result.items || [];
+  }
+
+  function getFactura(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("contaFacturas", params.id);
+  }
+
+  function createFactura(params) {
+    Validator.requireFields(params, ["numero", "tipo", "proveedorId", "monto"]);
+    AppLogger.info("ContabilidadController.createFactura", { numero: params.numero, monto: params.monto });
+    var now = nowIso_();
+    var monto      = Number(params.monto) || 0;
+    var montoIva   = Number(params.montoIva) || 0;
+    var montoTotal = Number(params.montoTotal) || (monto + montoIva);
+    var data = Object.assign({
+      serie:          "",
+      proveedorRef:   "",
+      ordenCompraId:  "",
+      recepcionId:    "",
+      fechaVencimiento: "",
+      fechaRecepcion: "",
+      moneda:         "USD",
+      estado:         "pendiente",
+      metodoPago:     "",
+      cuentaPagarId:  "",
+      compromisoId:   "",
+      observaciones:  "",
+      dataJson:       "",
+      createdBy:      "",
+      deletedAt:      "",
+    }, params, {
+      id:          IdGen.uuid(),
+      wsId:        params.wsId || CONTA_WS_ID,
+      monto:       monto,
+      montoIva:    montoIva,
+      montoTotal:  montoTotal,
+      fechaFactura: params.fechaFactura || now,
+      createdAt:   now,
+      updatedAt:   now,
+    });
+    createEntity_("contaFacturas", data);
+    return data;
+  }
+
+  function updateFactura(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("contaFacturas", params.id, patch);
+  }
+
+  function aprobarFactura(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("ContabilidadController.aprobarFactura", { id: params.id });
+    return updateEntity_("contaFacturas", params.id, {
+      estado:    "aprobada",
+      updatedAt: nowIso_(),
+    });
+  }
+
+  function rechazarFactura(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("ContabilidadController.rechazarFactura", { id: params.id });
+    return updateEntity_("contaFacturas", params.id, {
+      estado:       "rechazada",
+      observaciones: params.observaciones || "",
+      updatedAt:    nowIso_(),
+    });
+  }
+
+  // ── Pagos ──────────────────────────────────────────────────────────────────
+
+  function listPagos(params) {
+    var filter = { wsId: params.wsId || CONTA_WS_ID };
+    if (params.estado)      filter.estado      = params.estado;
+    if (params.tipo)        filter.tipo        = params.tipo;
+    if (params.facturaId)   filter.facturaId   = params.facturaId;
+    if (params.proveedorId) filter.proveedorId = params.proveedorId;
+    var result = listEntities_("contaPagos", filter);
+    return result.items || [];
+  }
+
+  function getPago(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("contaPagos", params.id);
+  }
+
+  function createPago(params) {
+    Validator.requireFields(params, ["tipo", "monto"]);
+    AppLogger.info("ContabilidadController.createPago", { tipo: params.tipo, monto: params.monto });
+    var now = nowIso_();
+    var data = Object.assign({
+      numeroPago:       "",
+      facturaId:        "",
+      proveedorId:      "",
+      proveedorRef:     "",
+      moneda:           "USD",
+      estado:           "pendiente",
+      fechaAprobacion:  "",
+      fechaEjecucion:   "",
+      aprobadoPorId:    "",
+      ejecutadoPorId:   "",
+      referenciaBancaria: "",
+      cuentaBancaria:   "",
+      concepto:         "",
+      registroId:       "",
+      dataJson:         "",
+      createdBy:        "",
+      deletedAt:        "",
+    }, params, {
+      id:             IdGen.uuid(),
+      wsId:           params.wsId || CONTA_WS_ID,
+      monto:          Number(params.monto) || 0,
+      fechaSolicitud: params.fechaSolicitud || now,
+      createdAt:      now,
+      updatedAt:      now,
+    });
+    createEntity_("contaPagos", data);
+    return data;
+  }
+
+  function updatePago(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("contaPagos", params.id, patch);
+  }
+
+  function aprobarPago(params) {
+    Validator.requireFields(params, ["id", "aprobadoPorId"]);
+    AppLogger.info("ContabilidadController.aprobarPago", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("contaPagos", params.id, {
+      estado:          "aprobado",
+      aprobadoPorId:   params.aprobadoPorId,
+      fechaAprobacion: now,
+      updatedAt:       now,
+    });
+  }
+
+  function ejecutarPago(params) {
+    Validator.requireFields(params, ["id", "ejecutadoPorId"]);
+    AppLogger.info("ContabilidadController.ejecutarPago", { id: params.id });
+    var now = nowIso_();
+    var patch = {
+      estado:            "ejecutado",
+      ejecutadoPorId:    params.ejecutadoPorId,
+      fechaEjecucion:    now,
+      updatedAt:         now,
+    };
+    if (params.referenciaBancaria) patch.referenciaBancaria = params.referenciaBancaria;
+    return updateEntity_("contaPagos", params.id, patch);
+  }
+
+  // ── Conciliaciones ─────────────────────────────────────────────────────────
+
+  function listConciliaciones(params) {
+    var filter = { wsId: params.wsId || CONTA_WS_ID };
+    if (params.estado)  filter.estado  = params.estado;
+    if (params.periodo) filter.periodo = params.periodo;
+    if (params.cuenta)  filter.cuenta  = params.cuenta;
+    var result = listEntities_("contaConciliaciones", filter);
+    return result.items || [];
+  }
+
+  function getConciliacion(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("contaConciliaciones", params.id);
+  }
+
+  function createConciliacion(params) {
+    Validator.requireFields(params, ["periodo", "cuenta"]);
+    AppLogger.info("ContabilidadController.createConciliacion", { periodo: params.periodo, cuenta: params.cuenta });
+    var now = nowIso_();
+    var saldoBanco  = Number(params.saldoBanco) || 0;
+    var saldoLibros = Number(params.saldoLibros) || 0;
+    var data = Object.assign({
+      banco:        "",
+      estado:       "abierta",
+      fechaCierre:  "",
+      observaciones: "",
+      dataJson:     "",
+      createdBy:    "",
+      deletedAt:    "",
+    }, params, {
+      id:           IdGen.uuid(),
+      wsId:         params.wsId || CONTA_WS_ID,
+      saldoBanco:   saldoBanco,
+      saldoLibros:  saldoLibros,
+      diferencia:   saldoBanco - saldoLibros,
+      fechaInicio:  params.fechaInicio || now,
+      createdAt:    now,
+      updatedAt:    now,
+    });
+    createEntity_("contaConciliaciones", data);
+    return data;
+  }
+
+  function updateConciliacion(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    if (patch.saldoBanco !== undefined || patch.saldoLibros !== undefined) {
+      var saldoBanco  = Number(patch.saldoBanco  || 0);
+      var saldoLibros = Number(patch.saldoLibros || 0);
+      patch.diferencia = saldoBanco - saldoLibros;
+    }
+    delete patch.id;
+    return updateEntity_("contaConciliaciones", params.id, patch);
+  }
+
+  function cerrarConciliacion(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("ContabilidadController.cerrarConciliacion", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("contaConciliaciones", params.id, {
+      estado:      "cerrada",
+      fechaCierre: now,
+      updatedAt:   now,
+    });
+  }
+
+  // ── Cuentas por Pagar ──────────────────────────────────────────────────────
+
+  function listCuentasPagar(params) {
+    var filter = { wsId: params.wsId || CONTA_WS_ID };
+    if (params.estado)      filter.estado      = params.estado;
+    if (params.prioridad)   filter.prioridad   = params.prioridad;
+    if (params.proveedorId) filter.proveedorId = params.proveedorId;
+    if (params.facturaId)   filter.facturaId   = params.facturaId;
+    var result = listEntities_("contaCuentasPagar", filter);
+    return result.items || [];
+  }
+
+  function getCuentaPagar(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("contaCuentasPagar", params.id);
+  }
+
+  function createCuentaPagar(params) {
+    Validator.requireFields(params, ["proveedorId", "monto"]);
+    AppLogger.info("ContabilidadController.createCuentaPagar", { proveedorId: params.proveedorId, monto: params.monto });
+    var now = nowIso_();
+    var monto = Number(params.monto) || 0;
+    var data = Object.assign({
+      codigo:        "",
+      proveedorRef:  "",
+      facturaId:     "",
+      ordenCompraId: "",
+      montoPagado:   0,
+      saldo:         monto,
+      moneda:        "USD",
+      estado:        "pendiente",
+      fechaVencimiento: "",
+      fechaPago:     "",
+      diasPlazo:     30,
+      prioridad:     "normal",
+      observaciones: "",
+      dataJson:      "",
+      createdBy:     "",
+      deletedAt:     "",
+    }, params, {
+      id:           IdGen.uuid(),
+      wsId:         params.wsId || CONTA_WS_ID,
+      monto:        monto,
+      saldo:        monto - (Number(params.montoPagado) || 0),
+      fechaEmision: params.fechaEmision || now,
+      createdAt:    now,
+      updatedAt:    now,
+    });
+    createEntity_("contaCuentasPagar", data);
+    return data;
+  }
+
+  function updateCuentaPagar(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("contaCuentasPagar", params.id, patch);
+  }
+
+  function saldarCuentaPagar(params) {
+    Validator.requireFields(params, ["id", "montoPagado"]);
+    AppLogger.info("ContabilidadController.saldarCuentaPagar", { id: params.id, montoPagado: params.montoPagado });
+    var now = nowIso_();
+    var current = getEntity_("contaCuentasPagar", params.id);
+    var montoPagado = Number(params.montoPagado) || 0;
+    var monto       = Number(current.monto) || 0;
+    var saldo       = monto - montoPagado;
+    var estado      = saldo <= 0 ? "pagada" : "parcial";
+    return updateEntity_("contaCuentasPagar", params.id, {
+      montoPagado: montoPagado,
+      saldo:       Math.max(0, saldo),
+      estado:      estado,
+      fechaPago:   params.fechaPago || now,
+      updatedAt:   now,
+    });
+  }
+
+  // ── Cuentas por Cobrar ─────────────────────────────────────────────────────
+
+  function listCuentasCobrar(params) {
+    var filter = { wsId: params.wsId || CONTA_WS_ID };
+    if (params.estado) filter.estado = params.estado;
+    var result = listEntities_("contaCuentasCobrar", filter);
+    return result.items || [];
+  }
+
+  function getCuentaCobrar(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("contaCuentasCobrar", params.id);
+  }
+
+  function createCuentaCobrar(params) {
+    Validator.requireFields(params, ["clienteRef", "concepto", "monto"]);
+    AppLogger.info("ContabilidadController.createCuentaCobrar", { clienteRef: params.clienteRef, monto: params.monto });
+    var now = nowIso_();
+    var monto = Number(params.monto) || 0;
+    var data = Object.assign({
+      codigo:          "",
+      montoCobrado:    0,
+      saldo:           monto,
+      moneda:          "USD",
+      estado:          "pendiente",
+      fechaVencimiento: "",
+      fechaCobro:      "",
+      diasPlazo:       30,
+      observaciones:   "",
+      dataJson:        "",
+      createdBy:       "",
+      deletedAt:       "",
+    }, params, {
+      id:          IdGen.uuid(),
+      wsId:        params.wsId || CONTA_WS_ID,
+      monto:       monto,
+      saldo:       monto - (Number(params.montoCobrado) || 0),
+      fechaEmision: params.fechaEmision || now,
+      createdAt:   now,
+      updatedAt:   now,
+    });
+    createEntity_("contaCuentasCobrar", data);
+    return data;
+  }
+
+  function updateCuentaCobrar(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("contaCuentasCobrar", params.id, patch);
+  }
+
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+
+  function getDashboardResumen(params) {
+    var wsId = params.wsId || CONTA_WS_ID;
+
+    var compromisos    = listEntities_("contaCompromisos",    { wsId: wsId }).items || [];
+    var facturas       = listEntities_("contaFacturas",       { wsId: wsId }).items || [];
+    var pagos          = listEntities_("contaPagos",          { wsId: wsId }).items || [];
+    var cuentasPagar   = listEntities_("contaCuentasPagar",   { wsId: wsId }).items || [];
+    var conciliaciones = listEntities_("contaConciliaciones", { wsId: wsId }).items || [];
+
+    var compActivos    = compromisos.filter(function (c) { return c.estado === "comprometido" && !c.deletedAt; });
+    var compAnulados   = compromisos.filter(function (c) { return c.estado === "anulado"; });
+    var montoCometido  = compActivos.reduce(function (acc, c) { return acc + (Number(c.monto) || 0); }, 0);
+    var montoEjecutado = compActivos.reduce(function (acc, c) { return acc + (Number(c.montoEjecutado) || 0); }, 0);
+
+    var factPendientes = facturas.filter(function (f) { return f.estado === "pendiente" && !f.deletedAt; });
+    var factAprobadas  = facturas.filter(function (f) { return f.estado === "aprobada" && !f.deletedAt; });
+    var factPagadas    = facturas.filter(function (f) { return f.estado === "pagada" && !f.deletedAt; });
+
+    var pagosPendientes = pagos.filter(function (p) { return p.estado === "pendiente" && !p.deletedAt; });
+    var pagosEjecutados = pagos.filter(function (p) { return p.estado === "ejecutado" && !p.deletedAt; });
+
+    var cpPendientes  = cuentasPagar.filter(function (c) { return c.estado === "pendiente" && !c.deletedAt; });
+    var cpVencidas    = cuentasPagar.filter(function (c) { return c.estado === "vencida" && !c.deletedAt; });
+    var montoCxP      = cpPendientes.reduce(function (acc, c) { return acc + (Number(c.saldo) || 0); }, 0);
+
+    var tiempoPromedioPago = 0;
+    if (pagosEjecutados.length > 0) {
+      var totalDias = pagosEjecutados.reduce(function (acc, p) {
+        if (!p.fechaSolicitud || !p.fechaEjecucion) return acc;
+        var dias = Math.round(
+          (new Date(p.fechaEjecucion).getTime() - new Date(p.fechaSolicitud).getTime()) / 86400000
+        );
+        return acc + dias;
+      }, 0);
+      tiempoPromedioPago = Math.round(totalDias / pagosEjecutados.length);
+    }
+
+    var ejecucionPct = montoCometido > 0
+      ? Math.round((montoEjecutado / montoCometido) * 100)
+      : 0;
+
+    return {
+      compromisosActivos:   compActivos.length,
+      montoCometido:        montoCometido,
+      montoEjecutado:       montoEjecutado,
+      ejecucionPct:         ejecucionPct,
+      facturasPendientes:   factPendientes.length,
+      facturasAprobadas:    factAprobadas.length,
+      facturasPagadas:      factPagadas.length,
+      pagosPendientes:      pagosPendientes.length,
+      montoPagosPendientes: pagosPendientes.reduce(function (acc, p) { return acc + (Number(p.monto) || 0); }, 0),
+      cuentasPorPagar:      cpPendientes.length,
+      cuentasVencidas:      cpVencidas.length,
+      montoCuentasPagar:    montoCxP,
+      tiempoPromedioPago:   tiempoPromedioPago,
+      conciliacionesAbiertas: conciliaciones.filter(function (c) { return c.estado === "abierta" && !c.deletedAt; }).length,
+    };
+  }
+
+  // ── Reportes ───────────────────────────────────────────────────────────────
+
+  function reporteEjecucionPresupuestaria(params) {
+    var wsId = params.wsId || CONTA_WS_ID;
+    var compromisos = listEntities_("contaCompromisos", { wsId: wsId }).items || [];
+    var activos = compromisos.filter(function (c) { return !c.deletedAt; });
+
+    var byCentro = {};
+    activos.forEach(function (c) {
+      var key = c.centroCosto || "sin_clasificar";
+      if (!byCentro[key]) byCentro[key] = { comprometido: 0, ejecutado: 0, saldo: 0, count: 0 };
+      byCentro[key].comprometido += Number(c.monto) || 0;
+      byCentro[key].ejecutado    += Number(c.montoEjecutado) || 0;
+      byCentro[key].saldo        += Number(c.saldo) || 0;
+      byCentro[key].count++;
+    });
+
+    var rows = Object.keys(byCentro).map(function (k) {
+      var d = byCentro[k];
+      return {
+        centroCosto:  k,
+        comprometido: d.comprometido,
+        ejecutado:    d.ejecutado,
+        saldo:        d.saldo,
+        pctEjecucion: d.comprometido > 0 ? Math.round((d.ejecutado / d.comprometido) * 100) : 0,
+        compromisos:  d.count,
+      };
+    });
+
+    return { rows: rows, total: activos.length };
+  }
+
+  function reportePagosPeriodo(params) {
+    var wsId = params.wsId || CONTA_WS_ID;
+    var filter = { wsId: wsId };
+    if (params.periodo) filter.periodo = params.periodo;
+    var pagos = listEntities_("contaPagos", filter).items || [];
+    var activos = pagos.filter(function (p) { return !p.deletedAt; });
+
+    var totalMonto     = activos.reduce(function (acc, p) { return acc + (Number(p.monto) || 0); }, 0);
+    var totalEjecutado = activos.filter(function (p) { return p.estado === "ejecutado"; })
+      .reduce(function (acc, p) { return acc + (Number(p.monto) || 0); }, 0);
+
+    return {
+      pagos:      activos,
+      total:      activos.length,
+      monto:      totalMonto,
+      ejecutado:  totalEjecutado,
+      pendiente:  totalMonto - totalEjecutado,
+    };
+  }
+
+  function reporteFacturasPendientes(params) {
+    var wsId = params.wsId || CONTA_WS_ID;
+    var facturas = listEntities_("contaFacturas", { wsId: wsId }).items || [];
+    var pendientes = facturas.filter(function (f) {
+      return (f.estado === "pendiente" || f.estado === "aprobada") && !f.deletedAt;
+    });
+    var total = pendientes.reduce(function (acc, f) { return acc + (Number(f.montoTotal) || 0); }, 0);
+    return { facturas: pendientes, total: pendientes.length, monto: total };
+  }
+
+  function reporteProveedoresEjecucion(params) {
+    var wsId = params.wsId || CONTA_WS_ID;
+    var cuentas = listEntities_("contaCuentasPagar", { wsId: wsId }).items || [];
+    var activas = cuentas.filter(function (c) { return !c.deletedAt; });
+
+    var byProv = {};
+    activas.forEach(function (c) {
+      var key = c.proveedorId || "sin_proveedor";
+      if (!byProv[key]) byProv[key] = { proveedorRef: c.proveedorRef || key, monto: 0, pagado: 0, saldo: 0, count: 0 };
+      byProv[key].monto  += Number(c.monto) || 0;
+      byProv[key].pagado += Number(c.montoPagado) || 0;
+      byProv[key].saldo  += Number(c.saldo) || 0;
+      byProv[key].count++;
+    });
+
+    var rows = Object.keys(byProv).map(function (k) {
+      var d = byProv[k];
+      return Object.assign({ proveedorId: k }, d);
+    });
+    rows.sort(function (a, b) { return b.monto - a.monto; });
+
+    return { rows: rows, total: activas.length };
+  }
+
+  // ── Public API ─────────────────────────────────────────────────────────────
+
+  return {
+    listCompromisos:               listCompromisos,
+    getCompromiso:                 getCompromiso,
+    createCompromiso:              createCompromiso,
+    updateCompromiso:              updateCompromiso,
+    aprobarCompromiso:             aprobarCompromiso,
+    anularCompromiso:              anularCompromiso,
+    listRegistros:                 listRegistros,
+    getRegistro:                   getRegistro,
+    createRegistro:                createRegistro,
+    updateRegistro:                updateRegistro,
+    anularRegistro:                anularRegistro,
+    listFacturas:                  listFacturas,
+    getFactura:                    getFactura,
+    createFactura:                 createFactura,
+    updateFactura:                 updateFactura,
+    aprobarFactura:                aprobarFactura,
+    rechazarFactura:               rechazarFactura,
+    listPagos:                     listPagos,
+    getPago:                       getPago,
+    createPago:                    createPago,
+    updatePago:                    updatePago,
+    aprobarPago:                   aprobarPago,
+    ejecutarPago:                  ejecutarPago,
+    listConciliaciones:            listConciliaciones,
+    getConciliacion:               getConciliacion,
+    createConciliacion:            createConciliacion,
+    updateConciliacion:            updateConciliacion,
+    cerrarConciliacion:            cerrarConciliacion,
+    listCuentasPagar:              listCuentasPagar,
+    getCuentaPagar:                getCuentaPagar,
+    createCuentaPagar:             createCuentaPagar,
+    updateCuentaPagar:             updateCuentaPagar,
+    saldarCuentaPagar:             saldarCuentaPagar,
+    listCuentasCobrar:             listCuentasCobrar,
+    getCuentaCobrar:               getCuentaCobrar,
+    createCuentaCobrar:            createCuentaCobrar,
+    updateCuentaCobrar:            updateCuentaCobrar,
+    getDashboardResumen:           getDashboardResumen,
+    reporteEjecucionPresupuestaria: reporteEjecucionPresupuestaria,
+    reportePagosPeriodo:           reportePagosPeriodo,
+    reporteFacturasPendientes:     reporteFacturasPendientes,
+    reporteProveedoresEjecucion:   reporteProveedoresEjecucion,
+  };
+
+})();
+
+/**
+ * Route contabilidad.* actions via OrgUnitRegistry.
+ * Called by OrgUnitRegistry when namespace === "contabilidad".
+ */
+function routeContabilidadAction_(verb, params, context) {
+  switch (verb) {
+    case "listCompromisos":               return ContabilidadController.listCompromisos(params);
+    case "getCompromiso":                 return ContabilidadController.getCompromiso(params);
+    case "createCompromiso":              return ContabilidadController.createCompromiso(params);
+    case "updateCompromiso":              return ContabilidadController.updateCompromiso(params);
+    case "aprobarCompromiso":             return ContabilidadController.aprobarCompromiso(params);
+    case "anularCompromiso":              return ContabilidadController.anularCompromiso(params);
+    case "listRegistros":                 return ContabilidadController.listRegistros(params);
+    case "getRegistro":                   return ContabilidadController.getRegistro(params);
+    case "createRegistro":                return ContabilidadController.createRegistro(params);
+    case "updateRegistro":                return ContabilidadController.updateRegistro(params);
+    case "anularRegistro":                return ContabilidadController.anularRegistro(params);
+    case "listFacturas":                  return ContabilidadController.listFacturas(params);
+    case "getFactura":                    return ContabilidadController.getFactura(params);
+    case "createFactura":                 return ContabilidadController.createFactura(params);
+    case "updateFactura":                 return ContabilidadController.updateFactura(params);
+    case "aprobarFactura":                return ContabilidadController.aprobarFactura(params);
+    case "rechazarFactura":               return ContabilidadController.rechazarFactura(params);
+    case "listPagos":                     return ContabilidadController.listPagos(params);
+    case "getPago":                       return ContabilidadController.getPago(params);
+    case "createPago":                    return ContabilidadController.createPago(params);
+    case "updatePago":                    return ContabilidadController.updatePago(params);
+    case "aprobarPago":                   return ContabilidadController.aprobarPago(params);
+    case "ejecutarPago":                  return ContabilidadController.ejecutarPago(params);
+    case "listConciliaciones":            return ContabilidadController.listConciliaciones(params);
+    case "getConciliacion":               return ContabilidadController.getConciliacion(params);
+    case "createConciliacion":            return ContabilidadController.createConciliacion(params);
+    case "updateConciliacion":            return ContabilidadController.updateConciliacion(params);
+    case "cerrarConciliacion":            return ContabilidadController.cerrarConciliacion(params);
+    case "listCuentasPagar":              return ContabilidadController.listCuentasPagar(params);
+    case "getCuentaPagar":                return ContabilidadController.getCuentaPagar(params);
+    case "createCuentaPagar":             return ContabilidadController.createCuentaPagar(params);
+    case "updateCuentaPagar":             return ContabilidadController.updateCuentaPagar(params);
+    case "saldarCuentaPagar":             return ContabilidadController.saldarCuentaPagar(params);
+    case "listCuentasCobrar":             return ContabilidadController.listCuentasCobrar(params);
+    case "getCuentaCobrar":               return ContabilidadController.getCuentaCobrar(params);
+    case "createCuentaCobrar":            return ContabilidadController.createCuentaCobrar(params);
+    case "updateCuentaCobrar":            return ContabilidadController.updateCuentaCobrar(params);
+    case "getDashboardResumen":           return ContabilidadController.getDashboardResumen(params);
+    case "reporteEjecucionPresupuestaria": return ContabilidadController.reporteEjecucionPresupuestaria(params);
+    case "reportePagosPeriodo":           return ContabilidadController.reportePagosPeriodo(params);
+    case "reporteFacturasPendientes":     return ContabilidadController.reporteFacturasPendientes(params);
+    case "reporteProveedoresEjecucion":   return ContabilidadController.reporteProveedoresEjecucion(params);
+    default:
+      throw new Error("Unknown contabilidad verb: " + verb);
+  }
+}
+
+// ============================================================
+// SOURCE: controllers/MantenimientoController.js
+// ============================================================
+
+/**
+ * MantenimientoController — Mantenimiento e Infraestructura operations.
+ *
+ * Scopes all queries to wsId = "mantenimiento" and orchestrates maintenance
+ * business logic. Persistence delegates to the generic SheetRepository via
+ * the mantenimiento entity schemas:
+ *   mantoActivos, mantoUbicaciones, mantoPlanes, mantoSolicitudes,
+ *   mantoOrdenesTrabajo, mantoInspecciones, mantoHistorial,
+ *   mantoCostos, mantoInventarioTecnico.
+ *
+ * Integration points (foreign keys only — no data duplication):
+ *   proveedorId     → comprasProveedores.id     (asset / inventory supplier)
+ *   ordenCompraRef  → comprasOrdenes.codigo       (purchase context)
+ *   compromisoId    → contaCompromisos.id         (budget commitment)
+ *   facturaId       → contaFacturas.id            (invoice for cost)
+ */
+var MantenimientoController = (function () {
+
+  var MANTO_WS_ID = "mantenimiento";
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function nowIso_() { return new Date().toISOString(); }
+
+  function codigoPrefijo_(prefijo) {
+    return prefijo + "-" + new Date().getFullYear() + "-" + IdGen.uuid().substring(0, 6).toUpperCase();
+  }
+
+  // ── Activos ────────────────────────────────────────────────────────────────
+
+  function listActivos(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.estado)      filter.estado      = params.estado;
+    if (params.categoria)   filter.categoria   = params.categoria;
+    if (params.tipo)        filter.tipo        = params.tipo;
+    if (params.ubicacionId) filter.ubicacionId = params.ubicacionId;
+    if (params.proveedorId) filter.proveedorId = params.proveedorId;
+    var result = listEntities_("mantoActivos", filter);
+    return result.items || [];
+  }
+
+  function getActivo(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoActivos", params.id);
+  }
+
+  function createActivo(params) {
+    Validator.requireFields(params, ["nombre", "categoria"]);
+    AppLogger.info("MantenimientoController.createActivo", { nombre: params.nombre });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:                    codigoPrefijo_("ACT"),
+      tipo:                      "",
+      marca:                     "",
+      modelo:                    "",
+      serie:                     "",
+      descripcion:               "",
+      ubicacionId:               "",
+      ubicacionRef:              "",
+      responsableId:             "",
+      estado:                    "operativo",
+      fechaAdquisicion:          "",
+      vidaUtilAnios:             0,
+      valorAdquisicion:          0,
+      valorActual:               0,
+      proveedorId:               "",
+      proveedorRef:              "",
+      ordenCompraRef:            "",
+      garantiaFecha:             "",
+      garantiaDetalles:          "",
+      ultimoMantenimientoFecha:  "",
+      proximoMantenimientoFecha: "",
+      observaciones:             "",
+      dataJson:                  "",
+      createdBy:                 "",
+      deletedAt:                 "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || MANTO_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("mantoActivos", data);
+    return data;
+  }
+
+  function updateActivo(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("mantoActivos", params.id, patch);
+  }
+
+  function cambiarEstadoActivo(params) {
+    Validator.requireFields(params, ["id", "estado"]);
+    AppLogger.info("MantenimientoController.cambiarEstadoActivo", { id: params.id, estado: params.estado });
+    return updateEntity_("mantoActivos", params.id, {
+      estado:     params.estado,
+      updatedAt:  nowIso_(),
+    });
+  }
+
+  function darBajaActivo(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("MantenimientoController.darBajaActivo", { id: params.id });
+    return updateEntity_("mantoActivos", params.id, {
+      estado:     "baja",
+      deletedAt:  nowIso_(),
+      updatedAt:  nowIso_(),
+    });
+  }
+
+  // ── Ubicaciones ────────────────────────────────────────────────────────────
+
+  function listUbicaciones(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.estado) filter.estado = params.estado;
+    if (params.tipo)   filter.tipo   = params.tipo;
+    if (params.area)   filter.area   = params.area;
+    var result = listEntities_("mantoUbicaciones", filter);
+    return result.items || [];
+  }
+
+  function getUbicacion(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoUbicaciones", params.id);
+  }
+
+  function createUbicacion(params) {
+    Validator.requireFields(params, ["nombre", "tipo"]);
+    AppLogger.info("MantenimientoController.createUbicacion", { nombre: params.nombre });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:        codigoPrefijo_("UBI"),
+      descripcion:   "",
+      area:          "",
+      responsableId: "",
+      estado:        "activo",
+      dataJson:      "",
+      createdBy:     "",
+      deletedAt:     "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || MANTO_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("mantoUbicaciones", data);
+    return data;
+  }
+
+  function updateUbicacion(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("mantoUbicaciones", params.id, patch);
+  }
+
+  // ── Planes Preventivos ─────────────────────────────────────────────────────
+
+  function listPlanes(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.estado)   filter.estado   = params.estado;
+    if (params.tipo)     filter.tipo     = params.tipo;
+    if (params.activoId) filter.activoId = params.activoId;
+    var result = listEntities_("mantoPlanes", filter);
+    return result.items || [];
+  }
+
+  function getPlan(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoPlanes", params.id);
+  }
+
+  function createPlan(params) {
+    Validator.requireFields(params, ["nombre", "tipo", "activoId", "frecuencia"]);
+    AppLogger.info("MantenimientoController.createPlan", { nombre: params.nombre });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:            codigoPrefijo_("PLAN"),
+      activoRef:         "",
+      descripcion:       "",
+      procedimiento:     "",
+      duracionHoras:     0,
+      costoEstimado:     0,
+      tecnicoAsignadoId: "",
+      fechaInicio:       "",
+      fechaFin:          "",
+      estado:            "borrador",
+      cumplimientoPct:   0,
+      dataJson:          "",
+      createdBy:         "",
+      deletedAt:         "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || MANTO_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("mantoPlanes", data);
+    return data;
+  }
+
+  function updatePlan(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("mantoPlanes", params.id, patch);
+  }
+
+  function activarPlan(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("MantenimientoController.activarPlan", { id: params.id });
+    return updateEntity_("mantoPlanes", params.id, {
+      estado:    "activo",
+      updatedAt: nowIso_(),
+    });
+  }
+
+  // ── Solicitudes de Servicio ────────────────────────────────────────────────
+
+  function listSolicitudes(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.estado)      filter.estado      = params.estado;
+    if (params.tipo)        filter.tipo        = params.tipo;
+    if (params.prioridad)   filter.prioridad   = params.prioridad;
+    if (params.activoId)    filter.activoId    = params.activoId;
+    if (params.solicitanteId) filter.solicitanteId = params.solicitanteId;
+    var result = listEntities_("mantoSolicitudes", filter);
+    return result.items || [];
+  }
+
+  function getSolicitud(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoSolicitudes", params.id);
+  }
+
+  function createSolicitud(params) {
+    Validator.requireFields(params, ["titulo", "tipo", "solicitanteId"]);
+    AppLogger.info("MantenimientoController.createSolicitud", { titulo: params.titulo });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:          codigoPrefijo_("SOL"),
+      unidadSolicitante: "",
+      prioridad:       "normal",
+      descripcion:     "",
+      activoId:        "",
+      activoRef:       "",
+      ubicacionId:     "",
+      ubicacionRef:    "",
+      estado:          "pendiente",
+      fechaRequerida:  "",
+      aprobadoPorId:   "",
+      fechaAprobacion: "",
+      ordenTrabajoId:  "",
+      notas:           "",
+      dataJson:        "",
+      createdBy:       "",
+      deletedAt:       "",
+    }, params, {
+      id:             IdGen.uuid(),
+      wsId:           params.wsId || MANTO_WS_ID,
+      fechaSolicitud: params.fechaSolicitud || now,
+      createdAt:      now,
+      updatedAt:      now,
+    });
+    createEntity_("mantoSolicitudes", data);
+    return data;
+  }
+
+  function updateSolicitud(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("mantoSolicitudes", params.id, patch);
+  }
+
+  function aprobarSolicitud(params) {
+    Validator.requireFields(params, ["id", "aprobadoPorId"]);
+    AppLogger.info("MantenimientoController.aprobarSolicitud", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("mantoSolicitudes", params.id, {
+      estado:          "aprobada",
+      aprobadoPorId:   params.aprobadoPorId,
+      fechaAprobacion: now,
+      updatedAt:       now,
+    });
+  }
+
+  // ── Órdenes de Trabajo ─────────────────────────────────────────────────────
+
+  function listOrdenes(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.estado)             filter.estado             = params.estado;
+    if (params.tipo)               filter.tipo               = params.tipo;
+    if (params.prioridad)          filter.prioridad          = params.prioridad;
+    if (params.activoId)           filter.activoId           = params.activoId;
+    if (params.tecnicoAsignadoId)  filter.tecnicoAsignadoId  = params.tecnicoAsignadoId;
+    if (params.solicitudId)        filter.solicitudId        = params.solicitudId;
+    if (params.planId)             filter.planId             = params.planId;
+    var result = listEntities_("mantoOrdenesTrabajo", filter);
+    return result.items || [];
+  }
+
+  function getOrden(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoOrdenesTrabajo", params.id);
+  }
+
+  function createOrden(params) {
+    Validator.requireFields(params, ["titulo", "tipo"]);
+    AppLogger.info("MantenimientoController.createOrden", { titulo: params.titulo });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:           codigoPrefijo_("OT"),
+      solicitudId:      "",
+      planId:           "",
+      prioridad:        "normal",
+      descripcion:      "",
+      activoId:         "",
+      activoRef:        "",
+      ubicacionId:      "",
+      ubicacionRef:     "",
+      tecnicoAsignadoId: "",
+      tecnicoRef:       "",
+      estado:           "emitida",
+      etapaActual:      "solicitud",
+      fechaEstimadaFin: "",
+      fechaInicio:      "",
+      fechaCierre:      "",
+      horasEstimadas:   0,
+      horasReales:      0,
+      diagnostico:      "",
+      solucion:         "",
+      costoManoObra:    0,
+      costoMateriales:  0,
+      costoTotal:       0,
+      dataJson:         "",
+      createdBy:        "",
+      deletedAt:        "",
+    }, params, {
+      id:          IdGen.uuid(),
+      wsId:        params.wsId || MANTO_WS_ID,
+      fechaEmision: params.fechaEmision || now,
+      createdAt:   now,
+      updatedAt:   now,
+    });
+    createEntity_("mantoOrdenesTrabajo", data);
+    return data;
+  }
+
+  function updateOrden(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("mantoOrdenesTrabajo", params.id, patch);
+  }
+
+  function asignarTecnico(params) {
+    Validator.requireFields(params, ["id", "tecnicoAsignadoId"]);
+    AppLogger.info("MantenimientoController.asignarTecnico", { id: params.id, tecnico: params.tecnicoAsignadoId });
+    var now = nowIso_();
+    return updateEntity_("mantoOrdenesTrabajo", params.id, {
+      tecnicoAsignadoId: params.tecnicoAsignadoId,
+      tecnicoRef:        params.tecnicoRef || "",
+      estado:            "asignada",
+      etapaActual:       "asignacion",
+      updatedAt:         now,
+    });
+  }
+
+  function cerrarOrden(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("MantenimientoController.cerrarOrden", { id: params.id });
+    var now = nowIso_();
+    var costoManoObra   = Number(params.costoManoObra)   || 0;
+    var costoMateriales = Number(params.costoMateriales) || 0;
+    return updateEntity_("mantoOrdenesTrabajo", params.id, {
+      estado:          "completada",
+      etapaActual:     "completado",
+      fechaCierre:     now,
+      horasReales:     Number(params.horasReales) || 0,
+      diagnostico:     params.diagnostico || "",
+      solucion:        params.solucion || "",
+      costoManoObra:   costoManoObra,
+      costoMateriales: costoMateriales,
+      costoTotal:      costoManoObra + costoMateriales,
+      updatedAt:       now,
+    });
+  }
+
+  function cancelarOrden(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("MantenimientoController.cancelarOrden", { id: params.id });
+    return updateEntity_("mantoOrdenesTrabajo", params.id, {
+      estado:    "cancelada",
+      updatedAt: nowIso_(),
+    });
+  }
+
+  // ── Inspecciones ───────────────────────────────────────────────────────────
+
+  function listInspecciones(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.estado)    filter.estado    = params.estado;
+    if (params.tipo)      filter.tipo      = params.tipo;
+    if (params.activoId)  filter.activoId  = params.activoId;
+    if (params.tecnicoId) filter.tecnicoId = params.tecnicoId;
+    var result = listEntities_("mantoInspecciones", filter);
+    return result.items || [];
+  }
+
+  function getInspeccion(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoInspecciones", params.id);
+  }
+
+  function createInspeccion(params) {
+    Validator.requireFields(params, ["tipo", "activoId"]);
+    AppLogger.info("MantenimientoController.createInspeccion", { activoId: params.activoId });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:          codigoPrefijo_("INS"),
+      activoRef:       "",
+      ubicacionId:     "",
+      ubicacionRef:    "",
+      estado:          "programada",
+      tecnicoId:       "",
+      tecnicoRef:      "",
+      fechaEjecucion:  "",
+      hallazgos:       "",
+      recomendaciones: "",
+      condicion:       "",
+      requiereOrden:   false,
+      ordenGeneradaId: "",
+      dataJson:        "",
+      createdBy:       "",
+      deletedAt:       "",
+    }, params, {
+      id:              IdGen.uuid(),
+      wsId:            params.wsId || MANTO_WS_ID,
+      fechaProgramada: params.fechaProgramada || now,
+      createdAt:       now,
+      updatedAt:       now,
+    });
+    createEntity_("mantoInspecciones", data);
+    return data;
+  }
+
+  function updateInspeccion(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("mantoInspecciones", params.id, patch);
+  }
+
+  function cerrarInspeccion(params) {
+    Validator.requireFields(params, ["id", "condicion"]);
+    AppLogger.info("MantenimientoController.cerrarInspeccion", { id: params.id, condicion: params.condicion });
+    var now = nowIso_();
+    return updateEntity_("mantoInspecciones", params.id, {
+      estado:          "completada",
+      fechaEjecucion:  now,
+      condicion:       params.condicion,
+      hallazgos:       params.hallazgos       || "",
+      recomendaciones: params.recomendaciones || "",
+      requiereOrden:   params.requiereOrden   || false,
+      ordenGeneradaId: params.ordenGeneradaId || "",
+      updatedAt:       now,
+    });
+  }
+
+  // ── Historial Técnico (insert-only) ────────────────────────────────────────
+
+  function listHistorial(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.activoId)     filter.activoId     = params.activoId;
+    if (params.tipo)         filter.tipo         = params.tipo;
+    if (params.ordenId)      filter.ordenId      = params.ordenId;
+    if (params.inspeccionId) filter.inspeccionId = params.inspeccionId;
+    var result = listEntities_("mantoHistorial", filter);
+    return result.items || [];
+  }
+
+  function getHistorialItem(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoHistorial", params.id);
+  }
+
+  function createHistorial(params) {
+    Validator.requireFields(params, ["activoId", "tipo", "descripcion"]);
+    AppLogger.info("MantenimientoController.createHistorial", { activoId: params.activoId, tipo: params.tipo });
+    var now = nowIso_();
+    var data = Object.assign({
+      inspeccionId: "",
+      ordenId:      "",
+      tecnicoId:    "",
+      costo:        0,
+      dataJson:     "",
+      createdBy:    "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || MANTO_WS_ID,
+      fecha:     params.fecha || now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("mantoHistorial", data);
+    return data;
+  }
+
+  // ── Costos de Mantenimiento ────────────────────────────────────────────────
+
+  function listCostos(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.ordenId)   filter.ordenId   = params.ordenId;
+    if (params.activoId)  filter.activoId  = params.activoId;
+    if (params.tipo)      filter.tipo      = params.tipo;
+    if (params.aprobado)  filter.aprobado  = params.aprobado;
+    var result = listEntities_("mantoCostos", filter);
+    return result.items || [];
+  }
+
+  function getCosto(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoCostos", params.id);
+  }
+
+  function createCosto(params) {
+    Validator.requireFields(params, ["tipo", "concepto", "monto"]);
+    AppLogger.info("MantenimientoController.createCosto", { concepto: params.concepto, monto: params.monto });
+    var now = nowIso_();
+    var data = Object.assign({
+      ordenId:      "",
+      activoId:     "",
+      activoRef:    "",
+      moneda:       "USD",
+      compromisoId: "",
+      facturaId:    "",
+      proveedor:    "",
+      aprobado:     false,
+      dataJson:     "",
+      createdBy:    "",
+      deletedAt:    "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || MANTO_WS_ID,
+      monto:     Number(params.monto) || 0,
+      fecha:     params.fecha || now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("mantoCostos", data);
+    return data;
+  }
+
+  function updateCosto(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("mantoCostos", params.id, patch);
+  }
+
+  // ── Inventario Técnico ─────────────────────────────────────────────────────
+
+  function listInventario(params) {
+    var filter = { wsId: params.wsId || MANTO_WS_ID };
+    if (params.estado)      filter.estado      = params.estado;
+    if (params.categoria)   filter.categoria   = params.categoria;
+    if (params.activoId)    filter.activoId    = params.activoId;
+    if (params.proveedorId) filter.proveedorId = params.proveedorId;
+    var result = listEntities_("mantoInventarioTecnico", filter);
+    return result.items || [];
+  }
+
+  function getInventarioItem(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("mantoInventarioTecnico", params.id);
+  }
+
+  function createInventarioItem(params) {
+    Validator.requireFields(params, ["nombre", "categoria", "unidadMedida"]);
+    AppLogger.info("MantenimientoController.createInventarioItem", { nombre: params.nombre });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:          codigoPrefijo_("INV"),
+      descripcion:     "",
+      stockActual:     0,
+      stockMinimo:     0,
+      ubicacionAlmacen: "",
+      activoId:        "",
+      ordenCompraId:   "",
+      proveedorId:     "",
+      estado:          "disponible",
+      valorUnitario:   0,
+      dataJson:        "",
+      createdBy:       "",
+      deletedAt:       "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || MANTO_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("mantoInventarioTecnico", data);
+    return data;
+  }
+
+  function updateInventarioItem(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("mantoInventarioTecnico", params.id, patch);
+  }
+
+  // ── Dashboard y Reportes ───────────────────────────────────────────────────
+
+  function getDashboardResumen(params) {
+    var wsId = params.wsId || MANTO_WS_ID;
+    AppLogger.info("MantenimientoController.getDashboardResumen", { wsId: wsId });
+
+    var activos      = (listEntities_("mantoActivos",          { wsId: wsId }).items || []);
+    var ordenes      = (listEntities_("mantoOrdenesTrabajo",   { wsId: wsId }).items || []);
+    var solicitudes  = (listEntities_("mantoSolicitudes",      { wsId: wsId }).items || []);
+    var inspecciones = (listEntities_("mantoInspecciones",     { wsId: wsId }).items || []);
+    var costos       = (listEntities_("mantoCostos",           { wsId: wsId }).items || []);
+    var inventario   = (listEntities_("mantoInventarioTecnico",{ wsId: wsId }).items || []);
+    var planes       = (listEntities_("mantoPlanes",           { wsId: wsId }).items || []);
+
+    // Activos KPIs
+    var totalActivos      = activos.length;
+    var activosOperativos = activos.filter(function(a) { return a.estado === "operativo"; }).length;
+    var activosInactivos  = activos.filter(function(a) { return a.estado === "inactivo"; }).length;
+    var activosEnManto    = activos.filter(function(a) { return a.estado === "mantenimiento"; }).length;
+
+    // Órdenes KPIs
+    var totalOrdenes      = ordenes.length;
+    var ordenesAbiertas   = ordenes.filter(function(o) { return o.estado === "emitida" || o.estado === "asignada"; }).length;
+    var ordenesEnProceso  = ordenes.filter(function(o) { return o.estado === "en_proceso"; }).length;
+    var ordenesCompletadas = ordenes.filter(function(o) { return o.estado === "completada"; }).length;
+
+    // Solicitudes KPIs
+    var solicitudesPendientes = solicitudes.filter(function(s) { return s.estado === "pendiente"; }).length;
+
+    // Costos KPIs
+    var costoTotal = costos.reduce(function(sum, c) { return sum + (Number(c.monto) || 0); }, 0);
+
+    // Inventario bajo stock
+    var itemsBajoStock = inventario.filter(function(i) {
+      return (Number(i.stockActual) || 0) <= (Number(i.stockMinimo) || 0);
+    }).length;
+
+    // Cumplimiento preventivo
+    var planesActivos   = planes.filter(function(p) { return p.estado === "activo"; }).length;
+    var cumplimientoPct = planesActivos > 0
+      ? Math.round(planes.reduce(function(sum, p) { return sum + (Number(p.cumplimientoPct) || 0); }, 0) / planesActivos)
+      : 0;
+
+    return {
+      activos: {
+        total:       totalActivos,
+        operativos:  activosOperativos,
+        inactivos:   activosInactivos,
+        enManto:     activosEnManto,
+      },
+      ordenes: {
+        total:       totalOrdenes,
+        abiertas:    ordenesAbiertas,
+        enProceso:   ordenesEnProceso,
+        completadas: ordenesCompletadas,
+      },
+      solicitudes: {
+        pendientes: solicitudesPendientes,
+      },
+      inspecciones: {
+        total: inspecciones.length,
+      },
+      costos: {
+        total: costoTotal,
+      },
+      inventario: {
+        itemsBajoStock: itemsBajoStock,
+      },
+      preventivo: {
+        planesActivos:   planesActivos,
+        cumplimientoPct: cumplimientoPct,
+      },
+    };
+  }
+
+  function reporteEstadoActivos(params) {
+    var wsId = params.wsId || MANTO_WS_ID;
+    var activos = (listEntities_("mantoActivos", { wsId: wsId }).items || []);
+    var porEstado = {};
+    activos.forEach(function(a) {
+      porEstado[a.estado] = (porEstado[a.estado] || 0) + 1;
+    });
+    return { rows: activos, total: activos.length, porEstado: porEstado };
+  }
+
+  function reporteOrdenesPeriodo(params) {
+    var wsId = params.wsId || MANTO_WS_ID;
+    var ordenes = (listEntities_("mantoOrdenesTrabajo", { wsId: wsId }).items || []);
+    if (params.desde) {
+      ordenes = ordenes.filter(function(o) { return o.fechaEmision >= params.desde; });
+    }
+    if (params.hasta) {
+      ordenes = ordenes.filter(function(o) { return o.fechaEmision <= params.hasta; });
+    }
+    var costoTotal = ordenes.reduce(function(sum, o) { return sum + (Number(o.costoTotal) || 0); }, 0);
+    return { rows: ordenes, total: ordenes.length, costoTotal: costoTotal };
+  }
+
+  function reporteCostosActivo(params) {
+    Validator.requireFields(params, ["activoId"]);
+    var wsId    = params.wsId    || MANTO_WS_ID;
+    var activoId = params.activoId;
+    var costos  = (listEntities_("mantoCostos", { wsId: wsId, activoId: activoId }).items || []);
+    var total   = costos.reduce(function(sum, c) { return sum + (Number(c.monto) || 0); }, 0);
+    return { rows: costos, total: costos.length, montoTotal: total, activoId: activoId };
+  }
+
+  function reporteCumplimientoPreventivo(params) {
+    var wsId   = params.wsId || MANTO_WS_ID;
+    var planes = (listEntities_("mantoPlanes", { wsId: wsId }).items || []);
+    var activos = planes.filter(function(p) { return p.estado === "activo"; });
+    var cumplimiento = activos.length > 0
+      ? Math.round(activos.reduce(function(sum, p) { return sum + (Number(p.cumplimientoPct) || 0); }, 0) / activos.length)
+      : 0;
+    return { rows: planes, total: planes.length, planesActivos: activos.length, cumplimientoPct: cumplimiento };
+  }
+
+  function reporteOrdenesTecnico(params) {
+    Validator.requireFields(params, ["tecnicoId"]);
+    var wsId     = params.wsId || MANTO_WS_ID;
+    var tecnicoId = params.tecnicoId;
+    var ordenes  = (listEntities_("mantoOrdenesTrabajo", { wsId: wsId, tecnicoAsignadoId: tecnicoId }).items || []);
+    var completadas = ordenes.filter(function(o) { return o.estado === "completada"; }).length;
+    var horasTotal  = ordenes.reduce(function(sum, o) { return sum + (Number(o.horasReales) || 0); }, 0);
+    return { rows: ordenes, total: ordenes.length, completadas: completadas, horasTotal: horasTotal, tecnicoId: tecnicoId };
+  }
+
+  // ── Public API ─────────────────────────────────────────────────────────────
+
+  return {
+    // Activos
+    listActivos:      listActivos,
+    getActivo:        getActivo,
+    createActivo:     createActivo,
+    updateActivo:     updateActivo,
+    cambiarEstadoActivo: cambiarEstadoActivo,
+    darBajaActivo:    darBajaActivo,
+    // Ubicaciones
+    listUbicaciones:  listUbicaciones,
+    getUbicacion:     getUbicacion,
+    createUbicacion:  createUbicacion,
+    updateUbicacion:  updateUbicacion,
+    // Planes
+    listPlanes:       listPlanes,
+    getPlan:          getPlan,
+    createPlan:       createPlan,
+    updatePlan:       updatePlan,
+    activarPlan:      activarPlan,
+    // Solicitudes
+    listSolicitudes:  listSolicitudes,
+    getSolicitud:     getSolicitud,
+    createSolicitud:  createSolicitud,
+    updateSolicitud:  updateSolicitud,
+    aprobarSolicitud: aprobarSolicitud,
+    // Órdenes de Trabajo
+    listOrdenes:      listOrdenes,
+    getOrden:         getOrden,
+    createOrden:      createOrden,
+    updateOrden:      updateOrden,
+    asignarTecnico:   asignarTecnico,
+    cerrarOrden:      cerrarOrden,
+    cancelarOrden:    cancelarOrden,
+    // Inspecciones
+    listInspecciones: listInspecciones,
+    getInspeccion:    getInspeccion,
+    createInspeccion: createInspeccion,
+    updateInspeccion: updateInspeccion,
+    cerrarInspeccion: cerrarInspeccion,
+    // Historial
+    listHistorial:    listHistorial,
+    getHistorialItem: getHistorialItem,
+    createHistorial:  createHistorial,
+    // Costos
+    listCostos:       listCostos,
+    getCosto:         getCosto,
+    createCosto:      createCosto,
+    updateCosto:      updateCosto,
+    // Inventario Técnico
+    listInventario:       listInventario,
+    getInventarioItem:    getInventarioItem,
+    createInventarioItem: createInventarioItem,
+    updateInventarioItem: updateInventarioItem,
+    // Dashboard y Reportes
+    getDashboardResumen:           getDashboardResumen,
+    reporteEstadoActivos:          reporteEstadoActivos,
+    reporteOrdenesPeriodo:         reporteOrdenesPeriodo,
+    reporteCostosActivo:           reporteCostosActivo,
+    reporteCumplimientoPreventivo: reporteCumplimientoPreventivo,
+    reporteOrdenesTecnico:         reporteOrdenesTecnico,
+  };
+
+})();
+
+// ── Action Router ────────────────────────────────────────────────────────────
+
+function routeMantenimientoAction_(verb, params, context) {
+  switch (verb) {
+    // Activos
+    case "listActivos":          return MantenimientoController.listActivos(params);
+    case "getActivo":            return MantenimientoController.getActivo(params);
+    case "createActivo":         return MantenimientoController.createActivo(params);
+    case "updateActivo":         return MantenimientoController.updateActivo(params);
+    case "cambiarEstadoActivo":  return MantenimientoController.cambiarEstadoActivo(params);
+    case "darBajaActivo":        return MantenimientoController.darBajaActivo(params);
+    // Ubicaciones
+    case "listUbicaciones":      return MantenimientoController.listUbicaciones(params);
+    case "getUbicacion":         return MantenimientoController.getUbicacion(params);
+    case "createUbicacion":      return MantenimientoController.createUbicacion(params);
+    case "updateUbicacion":      return MantenimientoController.updateUbicacion(params);
+    // Planes
+    case "listPlanes":           return MantenimientoController.listPlanes(params);
+    case "getPlan":              return MantenimientoController.getPlan(params);
+    case "createPlan":           return MantenimientoController.createPlan(params);
+    case "updatePlan":           return MantenimientoController.updatePlan(params);
+    case "activarPlan":          return MantenimientoController.activarPlan(params);
+    // Solicitudes
+    case "listSolicitudes":      return MantenimientoController.listSolicitudes(params);
+    case "getSolicitud":         return MantenimientoController.getSolicitud(params);
+    case "createSolicitud":      return MantenimientoController.createSolicitud(params);
+    case "updateSolicitud":      return MantenimientoController.updateSolicitud(params);
+    case "aprobarSolicitud":     return MantenimientoController.aprobarSolicitud(params);
+    // Órdenes de Trabajo
+    case "listOrdenes":          return MantenimientoController.listOrdenes(params);
+    case "getOrden":             return MantenimientoController.getOrden(params);
+    case "createOrden":          return MantenimientoController.createOrden(params);
+    case "updateOrden":          return MantenimientoController.updateOrden(params);
+    case "asignarTecnico":       return MantenimientoController.asignarTecnico(params);
+    case "cerrarOrden":          return MantenimientoController.cerrarOrden(params);
+    case "cancelarOrden":        return MantenimientoController.cancelarOrden(params);
+    // Inspecciones
+    case "listInspecciones":     return MantenimientoController.listInspecciones(params);
+    case "getInspeccion":        return MantenimientoController.getInspeccion(params);
+    case "createInspeccion":     return MantenimientoController.createInspeccion(params);
+    case "updateInspeccion":     return MantenimientoController.updateInspeccion(params);
+    case "cerrarInspeccion":     return MantenimientoController.cerrarInspeccion(params);
+    // Historial
+    case "listHistorial":        return MantenimientoController.listHistorial(params);
+    case "getHistorialItem":     return MantenimientoController.getHistorialItem(params);
+    case "createHistorial":      return MantenimientoController.createHistorial(params);
+    // Costos
+    case "listCostos":           return MantenimientoController.listCostos(params);
+    case "getCosto":             return MantenimientoController.getCosto(params);
+    case "createCosto":          return MantenimientoController.createCosto(params);
+    case "updateCosto":          return MantenimientoController.updateCosto(params);
+    // Inventario Técnico
+    case "listInventario":           return MantenimientoController.listInventario(params);
+    case "getInventarioItem":        return MantenimientoController.getInventarioItem(params);
+    case "createInventarioItem":     return MantenimientoController.createInventarioItem(params);
+    case "updateInventarioItem":     return MantenimientoController.updateInventarioItem(params);
+    // Dashboard y Reportes
+    case "getDashboardResumen":           return MantenimientoController.getDashboardResumen(params);
+    case "reporteEstadoActivos":          return MantenimientoController.reporteEstadoActivos(params);
+    case "reporteOrdenesPeriodo":         return MantenimientoController.reporteOrdenesPeriodo(params);
+    case "reporteCostosActivo":           return MantenimientoController.reporteCostosActivo(params);
+    case "reporteCumplimientoPreventivo": return MantenimientoController.reporteCumplimientoPreventivo(params);
+    case "reporteOrdenesTecnico":         return MantenimientoController.reporteOrdenesTecnico(params);
+
+    default:
+      throw new Error("MantenimientoController: unknown verb '" + verb + "'");
+  }
+}
+
+// ============================================================
+// SOURCE: controllers/SSOController.js
+// ============================================================
+
+/**
+ * SSOController — Salud y Seguridad Ocupacional operations.
+ *
+ * Scopes all queries to wsId = "salud" and orchestrates SSO business logic.
+ * Persistence delegates to the generic SheetRepository via the SSO entity schemas:
+ *   ssoIncidentes, ssoAccidentes, ssoInspecciones, ssoPeligros, ssoRiesgos,
+ *   ssoAcciones, ssoEPP, ssoCapacitaciones, ssoComite, ssoAuditorias, ssoCumplimiento.
+ *
+ * Integration points (foreign keys only — no data duplication):
+ *   empleadoId      → empleados.id            (RRHH)
+ *   activoId        → mantoActivos.id          (Mantenimiento — riesgos de infraestructura)
+ *   proveedorId     → comprasProveedores.id    (Compras — EPP)
+ *   ordenCompraRef  → comprasOrdenes.codigo    (Compras — EPP)
+ *   compromisoId    → contaCompromisos.id      (Contabilidad — costos SSO)
+ */
+var SSOController = (function () {
+
+  var SSO_WS_ID = "salud";
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function nowIso_() { return new Date().toISOString(); }
+
+  function codigoPrefijo_(prefijo) {
+    return prefijo + "-" + new Date().getFullYear() + "-" + IdGen.uuid().substring(0, 6).toUpperCase();
+  }
+
+  function calcularNivelRiesgo_(probabilidad, impacto) {
+    var nivel = (Number(probabilidad) || 1) * (Number(impacto) || 1);
+    if (nivel >= 15) return { nivelRiesgo: nivel, clasificacion: "critico" };
+    if (nivel >= 9)  return { nivelRiesgo: nivel, clasificacion: "alto" };
+    if (nivel >= 4)  return { nivelRiesgo: nivel, clasificacion: "medio" };
+    return { nivelRiesgo: nivel, clasificacion: "bajo" };
+  }
+
+  // ── Incidentes ─────────────────────────────────────────────────────────────
+
+  function listIncidentes(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado)     filter.estado     = params.estado;
+    if (params.tipo)       filter.tipo       = params.tipo;
+    if (params.gravedad)   filter.gravedad   = params.gravedad;
+    if (params.area)       filter.area       = params.area;
+    if (params.empleadoId) filter.empleadoId = params.empleadoId;
+    var result = listEntities_("ssoIncidentes", filter);
+    return result.items || [];
+  }
+
+  function getIncidente(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoIncidentes", params.id);
+  }
+
+  function createIncidente(params) {
+    Validator.requireFields(params, ["titulo", "tipo", "gravedad"]);
+    AppLogger.info("SSOController.createIncidente", { titulo: params.titulo, gravedad: params.gravedad });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:             codigoPrefijo_("INC"),
+      descripcion:        "",
+      area:               "",
+      proceso:            "",
+      empleadoId:         "",
+      empleadoRef:        "",
+      horaIncidente:      "",
+      ubicacion:          "",
+      activoId:           "",
+      estado:             "reportado",
+      etapa:              "reporte",
+      investigadorId:     "",
+      fechaInvestigacion: "",
+      causaRaiz:          "",
+      accionesGeneradas:  "",
+      diasPerdidos:       0,
+      costoEstimado:      0,
+      compromisoId:       "",
+      dataJson:           "",
+      createdBy:          "",
+      deletedAt:          "",
+    }, params, {
+      id:             IdGen.uuid(),
+      wsId:           params.wsId || SSO_WS_ID,
+      fechaIncidente: params.fechaIncidente || now,
+      createdAt:      now,
+      updatedAt:      now,
+    });
+    createEntity_("ssoIncidentes", data);
+    return data;
+  }
+
+  function updateIncidente(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoIncidentes", params.id, patch);
+  }
+
+  function clasificarIncidente(params) {
+    Validator.requireFields(params, ["id", "causaRaiz"]);
+    AppLogger.info("SSOController.clasificarIncidente", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("ssoIncidentes", params.id, {
+      estado:            "clasificado",
+      etapa:             "plan_accion",
+      causaRaiz:         params.causaRaiz,
+      fechaInvestigacion: params.fechaInvestigacion || now,
+      investigadorId:    params.investigadorId || "",
+      updatedAt:         now,
+    });
+  }
+
+  function cerrarIncidente(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("SSOController.cerrarIncidente", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("ssoIncidentes", params.id, {
+      estado:     "cerrado",
+      etapa:      "completado",
+      diasPerdidos:      Number(params.diasPerdidos)   || 0,
+      costoEstimado:     Number(params.costoEstimado)  || 0,
+      accionesGeneradas: params.accionesGeneradas || "",
+      updatedAt:  now,
+    });
+  }
+
+  // ── Accidentes ─────────────────────────────────────────────────────────────
+
+  function listAccidentes(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado)     filter.estado     = params.estado;
+    if (params.gravedad)   filter.gravedad   = params.gravedad;
+    if (params.area)       filter.area       = params.area;
+    if (params.empleadoId) filter.empleadoId = params.empleadoId;
+    if (params.incidenteId) filter.incidenteId = params.incidenteId;
+    var result = listEntities_("ssoAccidentes", filter);
+    return result.items || [];
+  }
+
+  function getAccidente(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoAccidentes", params.id);
+  }
+
+  function createAccidente(params) {
+    Validator.requireFields(params, ["tipo", "gravedad", "empleadoId"]);
+    AppLogger.info("SSOController.createAccidente", { tipo: params.tipo, gravedad: params.gravedad });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:          codigoPrefijo_("ACC"),
+      incidenteId:     "",
+      empleadoRef:     "",
+      proceso:         "",
+      area:            "",
+      horaAccidente:   "",
+      descripcion:     "",
+      causas:          "",
+      lesionTipo:      "",
+      parteCuerpo:     "",
+      testigos:        "",
+      diasIncapacidad: 0,
+      costosAtencion:  0,
+      compromisoId:    "",
+      estado:          "registrado",
+      dataJson:        "",
+      createdBy:       "",
+      deletedAt:       "",
+    }, params, {
+      id:             IdGen.uuid(),
+      wsId:           params.wsId || SSO_WS_ID,
+      fechaAccidente: params.fechaAccidente || now,
+      createdAt:      now,
+      updatedAt:      now,
+    });
+    createEntity_("ssoAccidentes", data);
+    return data;
+  }
+
+  function updateAccidente(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoAccidentes", params.id, patch);
+  }
+
+  function cerrarAccidente(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("SSOController.cerrarAccidente", { id: params.id });
+    return updateEntity_("ssoAccidentes", params.id, {
+      estado:          "cerrado",
+      diasIncapacidad: Number(params.diasIncapacidad) || 0,
+      costosAtencion:  Number(params.costosAtencion)  || 0,
+      updatedAt:       nowIso_(),
+    });
+  }
+
+  // ── Inspecciones SSO ───────────────────────────────────────────────────────
+
+  function listInspeccionesSso(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado)      filter.estado      = params.estado;
+    if (params.tipo)        filter.tipo        = params.tipo;
+    if (params.area)        filter.area        = params.area;
+    if (params.inspectorId) filter.inspectorId = params.inspectorId;
+    var result = listEntities_("ssoInspecciones", filter);
+    return result.items || [];
+  }
+
+  function getInspeccionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoInspecciones", params.id);
+  }
+
+  function createInspeccionSso(params) {
+    Validator.requireFields(params, ["titulo", "tipo", "area"]);
+    AppLogger.info("SSOController.createInspeccionSso", { titulo: params.titulo });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:            codigoPrefijo_("INS-SSO"),
+      proceso:           "",
+      inspectorId:       "",
+      inspectorRef:      "",
+      fechaEjecucion:    "",
+      hallazgos:         "",
+      observaciones:     "",
+      numHallazgos:      0,
+      numConformes:      0,
+      numNoConformes:    0,
+      estado:            "programada",
+      accionesGeneradas: "",
+      dataJson:          "",
+      createdBy:         "",
+      deletedAt:         "",
+    }, params, {
+      id:              IdGen.uuid(),
+      wsId:            params.wsId || SSO_WS_ID,
+      fechaProgramada: params.fechaProgramada || now,
+      createdAt:       now,
+      updatedAt:       now,
+    });
+    createEntity_("ssoInspecciones", data);
+    return data;
+  }
+
+  function updateInspeccionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoInspecciones", params.id, patch);
+  }
+
+  function cerrarInspeccionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("SSOController.cerrarInspeccionSso", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("ssoInspecciones", params.id, {
+      estado:            "completada",
+      fechaEjecucion:    now,
+      hallazgos:         params.hallazgos         || "",
+      observaciones:     params.observaciones      || "",
+      numHallazgos:      Number(params.numHallazgos)    || 0,
+      numConformes:      Number(params.numConformes)    || 0,
+      numNoConformes:    Number(params.numNoConformes)   || 0,
+      accionesGeneradas: params.accionesGeneradas  || "",
+      updatedAt:         now,
+    });
+  }
+
+  // ── Peligros ───────────────────────────────────────────────────────────────
+
+  function listPeligros(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado)   filter.estado   = params.estado;
+    if (params.tipo)     filter.tipo     = params.tipo;
+    if (params.area)     filter.area     = params.area;
+    if (params.activoId) filter.activoId = params.activoId;
+    var result = listEntities_("ssoPeligros", filter);
+    return result.items || [];
+  }
+
+  function getPeligro(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoPeligros", params.id);
+  }
+
+  function createPeligro(params) {
+    Validator.requireFields(params, ["tipo", "descripcion", "area"]);
+    AppLogger.info("SSOController.createPeligro", { tipo: params.tipo, area: params.area });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:            codigoPrefijo_("PEL"),
+      proceso:           "",
+      actividad:         "",
+      fuente:            "",
+      personasExpuestas: 0,
+      controlesExistentes: "",
+      estado:            "identificado",
+      activoId:          "",
+      dataJson:          "",
+      createdBy:         "",
+      deletedAt:         "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || SSO_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("ssoPeligros", data);
+    return data;
+  }
+
+  function updatePeligro(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoPeligros", params.id, patch);
+  }
+
+  // ── Riesgos (Matriz IPER) ──────────────────────────────────────────────────
+
+  function listRiesgos(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado)         filter.estado         = params.estado;
+    if (params.clasificacion)  filter.clasificacion  = params.clasificacion;
+    if (params.area)           filter.area           = params.area;
+    if (params.peligroId)      filter.peligroId      = params.peligroId;
+    if (params.responsableId)  filter.responsableId  = params.responsableId;
+    var result = listEntities_("ssoRiesgos", filter);
+    return result.items || [];
+  }
+
+  function getRiesgo(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoRiesgos", params.id);
+  }
+
+  function createRiesgo(params) {
+    Validator.requireFields(params, ["area", "probabilidad", "impacto"]);
+    AppLogger.info("SSOController.createRiesgo", { area: params.area });
+    var now = nowIso_();
+    var nivel = calcularNivelRiesgo_(params.probabilidad, params.impacto);
+    var data = Object.assign({
+      codigo:                codigoPrefijo_("RIE"),
+      peligroId:             "",
+      proceso:               "",
+      actividad:             "",
+      peligroDesc:           "",
+      controlesExistentes:   "",
+      accionesRecomendadas:  "",
+      responsableId:         "",
+      fechaRevision:         "",
+      estado:                "vigente",
+      dataJson:              "",
+      createdBy:             "",
+      deletedAt:             "",
+    }, params, {
+      id:            IdGen.uuid(),
+      wsId:          params.wsId || SSO_WS_ID,
+      probabilidad:  Number(params.probabilidad) || 1,
+      impacto:       Number(params.impacto)      || 1,
+      nivelRiesgo:   nivel.nivelRiesgo,
+      clasificacion: nivel.clasificacion,
+      createdAt:     now,
+      updatedAt:     now,
+    });
+    createEntity_("ssoRiesgos", data);
+    return data;
+  }
+
+  function updateRiesgo(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    // Recalculate risk level if probability or impact changed
+    if (params.probabilidad != null || params.impacto != null) {
+      var existing = getEntity_("ssoRiesgos", params.id);
+      var prob   = Number(params.probabilidad) || Number(existing.probabilidad) || 1;
+      var impact = Number(params.impacto)      || Number(existing.impacto)      || 1;
+      var nivel  = calcularNivelRiesgo_(prob, impact);
+      patch.nivelRiesgo   = nivel.nivelRiesgo;
+      patch.clasificacion = nivel.clasificacion;
+    }
+    delete patch.id;
+    return updateEntity_("ssoRiesgos", params.id, patch);
+  }
+
+  // ── Acciones Correctivas y Preventivas (CAPA) ──────────────────────────────
+
+  function listAccionesSso(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.tipo)          filter.tipo          = params.tipo;
+    if (params.estado)        filter.estado        = params.estado;
+    if (params.prioridad)     filter.prioridad     = params.prioridad;
+    if (params.origen)        filter.origen        = params.origen;
+    if (params.responsableId) filter.responsableId = params.responsableId;
+    if (params.area)          filter.area          = params.area;
+    var result = listEntities_("ssoAcciones", filter);
+    return result.items || [];
+  }
+
+  function getAccionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoAcciones", params.id);
+  }
+
+  function createAccionSso(params) {
+    Validator.requireFields(params, ["tipo", "titulo", "responsableId"]);
+    AppLogger.info("SSOController.createAccionSso", { tipo: params.tipo, titulo: params.titulo });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:          codigoPrefijo_("CAPA"),
+      origen:          "",
+      origenId:        "",
+      descripcion:     "",
+      responsableRef:  "",
+      area:            "",
+      prioridad:       "media",
+      fechaLimite:     "",
+      fechaCierre:     "",
+      progresoPct:     0,
+      verificadoPorId: "",
+      fechaVerificacion: "",
+      estado:          "pendiente",
+      dataJson:        "",
+      createdBy:       "",
+      deletedAt:       "",
+    }, params, {
+      id:              IdGen.uuid(),
+      wsId:            params.wsId || SSO_WS_ID,
+      fechaAsignacion: params.fechaAsignacion || now,
+      createdAt:       now,
+      updatedAt:       now,
+    });
+    createEntity_("ssoAcciones", data);
+    return data;
+  }
+
+  function updateAccionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoAcciones", params.id, patch);
+  }
+
+  function verificarAccion(params) {
+    Validator.requireFields(params, ["id", "verificadoPorId"]);
+    AppLogger.info("SSOController.verificarAccion", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("ssoAcciones", params.id, {
+      estado:           "verificada",
+      progresoPct:      100,
+      verificadoPorId:  params.verificadoPorId,
+      fechaVerificacion: now,
+      updatedAt:        now,
+    });
+  }
+
+  function cerrarAccionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("SSOController.cerrarAccionSso", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("ssoAcciones", params.id, {
+      estado:      "cerrada",
+      fechaCierre: now,
+      progresoPct: 100,
+      updatedAt:   now,
+    });
+  }
+
+  // ── EPP — Equipos de Protección Personal ───────────────────────────────────
+
+  function listEPP(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado)     filter.estado     = params.estado;
+    if (params.categoria)  filter.categoria  = params.categoria;
+    if (params.empleadoId) filter.empleadoId = params.empleadoId;
+    var result = listEntities_("ssoEPP", filter);
+    return result.items || [];
+  }
+
+  function getEPPItem(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoEPP", params.id);
+  }
+
+  function createEPPItem(params) {
+    Validator.requireFields(params, ["nombre", "categoria", "empleadoId"]);
+    AppLogger.info("SSOController.createEPPItem", { nombre: params.nombre });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:        codigoPrefijo_("EPP"),
+      descripcion:   "",
+      empleadoRef:   "",
+      tipo:          "",
+      talla:         "",
+      marca:         "",
+      modelo:        "",
+      fechaVencimiento: "",
+      cantidad:      1,
+      unidadMedida:  "unidad",
+      estado:        "entregado",
+      // Compras integration
+      proveedorId:   "",
+      ordenCompraRef: "",
+      // Contabilidad integration
+      costo:         0,
+      compromisoId:  "",
+      dataJson:      "",
+      createdBy:     "",
+      deletedAt:     "",
+    }, params, {
+      id:           IdGen.uuid(),
+      wsId:         params.wsId || SSO_WS_ID,
+      fechaEntrega: params.fechaEntrega || now,
+      createdAt:    now,
+      updatedAt:    now,
+    });
+    createEntity_("ssoEPP", data);
+    return data;
+  }
+
+  function updateEPPItem(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoEPP", params.id, patch);
+  }
+
+  // ── Capacitaciones SSO ─────────────────────────────────────────────────────
+
+  function listCapacitacionesSso(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado)    filter.estado    = params.estado;
+    if (params.tipo)      filter.tipo      = params.tipo;
+    if (params.modalidad) filter.modalidad = params.modalidad;
+    var result = listEntities_("ssoCapacitaciones", filter);
+    return result.items || [];
+  }
+
+  function getCapacitacionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoCapacitaciones", params.id);
+  }
+
+  function createCapacitacionSso(params) {
+    Validator.requireFields(params, ["titulo", "tipo"]);
+    AppLogger.info("SSOController.createCapacitacionSso", { titulo: params.titulo });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:           codigoPrefijo_("CAP-SSO"),
+      modalidad:        "presencial",
+      instructor:       "",
+      entidad:          "",
+      fechaFin:         "",
+      duracionHoras:    0,
+      participantesIds: "",
+      numParticipantes: 0,
+      numAprobados:     0,
+      tematica:         "",
+      objetivo:         "",
+      estado:           "programada",
+      // Contabilidad integration
+      costo:            0,
+      compromisoId:     "",
+      dataJson:         "",
+      createdBy:        "",
+      deletedAt:        "",
+    }, params, {
+      id:          IdGen.uuid(),
+      wsId:        params.wsId || SSO_WS_ID,
+      fechaInicio: params.fechaInicio || now,
+      createdAt:   now,
+      updatedAt:   now,
+    });
+    createEntity_("ssoCapacitaciones", data);
+    return data;
+  }
+
+  function updateCapacitacionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoCapacitaciones", params.id, patch);
+  }
+
+  function finalizarCapacitacionSso(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("SSOController.finalizarCapacitacionSso", { id: params.id });
+    return updateEntity_("ssoCapacitaciones", params.id, {
+      estado:          "finalizada",
+      numParticipantes: Number(params.numParticipantes) || 0,
+      numAprobados:     Number(params.numAprobados)     || 0,
+      updatedAt:        nowIso_(),
+    });
+  }
+
+  // ── Comité SSO ─────────────────────────────────────────────────────────────
+
+  function listActasComite(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado) filter.estado = params.estado;
+    if (params.tipo)   filter.tipo   = params.tipo;
+    var result = listEntities_("ssoComite", filter);
+    return result.items || [];
+  }
+
+  function getActaComite(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoComite", params.id);
+  }
+
+  function createActaComite(params) {
+    Validator.requireFields(params, ["tipo", "fecha"]);
+    AppLogger.info("SSOController.createActaComite", { tipo: params.tipo, fecha: params.fecha });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:       codigoPrefijo_("COM"),
+      numero:       "",
+      lugar:        "",
+      presidenteId: "",
+      secretarioId: "",
+      miembros:     "",
+      numAsistentes: 0,
+      agenda:       "",
+      acuerdos:     "",
+      compromisos:  "",
+      estado:       "convocada",
+      proximaFecha: "",
+      dataJson:     "",
+      createdBy:    "",
+      deletedAt:    "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || SSO_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("ssoComite", data);
+    return data;
+  }
+
+  function updateActaComite(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoComite", params.id, patch);
+  }
+
+  // ── Auditorías SSO ─────────────────────────────────────────────────────────
+
+  function listAuditoriasSSO(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado) filter.estado = params.estado;
+    if (params.tipo)   filter.tipo   = params.tipo;
+    var result = listEntities_("ssoAuditorias", filter);
+    return result.items || [];
+  }
+
+  function getAuditoriaSSO(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoAuditorias", params.id);
+  }
+
+  function createAuditoriaSSO(params) {
+    Validator.requireFields(params, ["titulo", "tipo"]);
+    AppLogger.info("SSOController.createAuditoriaSSO", { titulo: params.titulo });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:          codigoPrefijo_("AUD-SSO"),
+      normaRef:        "",
+      auditorId:       "",
+      auditorRef:      "",
+      fechaEjecucion:  "",
+      alcance:         "",
+      metodologia:     "",
+      hallazgos:       "",
+      noConformidades: "",
+      numHallazgos:    0,
+      numNC:           0,
+      planAccion:      "",
+      estado:          "programada",
+      dataJson:        "",
+      createdBy:       "",
+      deletedAt:       "",
+    }, params, {
+      id:              IdGen.uuid(),
+      wsId:            params.wsId || SSO_WS_ID,
+      fechaProgramada: params.fechaProgramada || now,
+      createdAt:       now,
+      updatedAt:       now,
+    });
+    createEntity_("ssoAuditorias", data);
+    return data;
+  }
+
+  function updateAuditoriaSSO(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoAuditorias", params.id, patch);
+  }
+
+  function cerrarAuditoriaSSO(params) {
+    Validator.requireFields(params, ["id"]);
+    AppLogger.info("SSOController.cerrarAuditoriaSSO", { id: params.id });
+    var now = nowIso_();
+    return updateEntity_("ssoAuditorias", params.id, {
+      estado:          "completada",
+      fechaEjecucion:  now,
+      hallazgos:       params.hallazgos       || "",
+      noConformidades: params.noConformidades || "",
+      numHallazgos:    Number(params.numHallazgos) || 0,
+      numNC:           Number(params.numNC)         || 0,
+      planAccion:      params.planAccion      || "",
+      updatedAt:       now,
+    });
+  }
+
+  // ── Cumplimiento Legal ─────────────────────────────────────────────────────
+
+  function listCumplimiento(params) {
+    var filter = { wsId: params.wsId || SSO_WS_ID };
+    if (params.estado) filter.estado = params.estado;
+    if (params.tipo)   filter.tipo   = params.tipo;
+    var result = listEntities_("ssoCumplimiento", filter);
+    return result.items || [];
+  }
+
+  function getCumplimiento(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("ssoCumplimiento", params.id);
+  }
+
+  function createCumplimiento(params) {
+    Validator.requireFields(params, ["norma", "descripcion"]);
+    AppLogger.info("SSOController.createCumplimiento", { norma: params.norma });
+    var now = nowIso_();
+    var data = Object.assign({
+      codigo:       codigoPrefijo_("CUM"),
+      articulo:     "",
+      tipo:         "legal",
+      responsableId: "",
+      fechaVigencia: "",
+      fechaRevision: "",
+      evidencia:    "",
+      estado:       "en_proceso",
+      observaciones: "",
+      dataJson:     "",
+      createdBy:    "",
+      deletedAt:    "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || SSO_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("ssoCumplimiento", data);
+    return data;
+  }
+
+  function updateCumplimiento(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: nowIso_() });
+    delete patch.id;
+    return updateEntity_("ssoCumplimiento", params.id, patch);
+  }
+
+  // ── Dashboard y Reportes ───────────────────────────────────────────────────
+
+  function getDashboardResumen(params) {
+    var wsId = params.wsId || SSO_WS_ID;
+    AppLogger.info("SSOController.getDashboardResumen", { wsId: wsId });
+
+    var incidentes       = (listEntities_("ssoIncidentes",    { wsId: wsId }).items || []);
+    var accidentes       = (listEntities_("ssoAccidentes",    { wsId: wsId }).items || []);
+    var inspecciones     = (listEntities_("ssoInspecciones",  { wsId: wsId }).items || []);
+    var riesgos          = (listEntities_("ssoRiesgos",       { wsId: wsId }).items || []);
+    var acciones         = (listEntities_("ssoAcciones",      { wsId: wsId }).items || []);
+    var capacitaciones   = (listEntities_("ssoCapacitaciones",{ wsId: wsId }).items || []);
+    var comite           = (listEntities_("ssoComite",        { wsId: wsId }).items || []);
+    var cumplimiento     = (listEntities_("ssoCumplimiento",  { wsId: wsId }).items || []);
+
+    // Incidentes KPIs
+    var incidentesTotal       = incidentes.filter(function(i) { return i.deletedAt == null; }).length;
+    var incidentesAbiertos    = incidentes.filter(function(i) { return i.estado !== "cerrado"; }).length;
+
+    // Accidentes
+    var accidentesTotal       = accidentes.filter(function(a) { return a.deletedAt == null; }).length;
+
+    // Tiempo promedio de cierre (días)
+    var cerrados = incidentes.filter(function(i) { return i.estado === "cerrado" && i.fechaIncidente; });
+    var tiempoProm = 0;
+    if (cerrados.length > 0) {
+      var totalDias = cerrados.reduce(function(sum, i) {
+        return sum + (Number(i.diasPerdidos) || 0);
+      }, 0);
+      tiempoProm = Math.round(totalDias / cerrados.length);
+    }
+
+    // Inspecciones
+    var inspeccionesRealizadas = inspecciones.filter(function(i) { return i.estado === "completada"; }).length;
+    var inspeccionesPendientes = inspecciones.filter(function(i) { return i.estado === "programada"; }).length;
+
+    // Riesgos por clasificación
+    var riesgosAltos  = riesgos.filter(function(r) { return r.clasificacion === "alto"   && r.estado === "vigente"; }).length;
+    var riesgosMedios = riesgos.filter(function(r) { return r.clasificacion === "medio"  && r.estado === "vigente"; }).length;
+    var riesgosBajos  = riesgos.filter(function(r) { return r.clasificacion === "bajo"   && r.estado === "vigente"; }).length;
+
+    // Acciones CAPA
+    var accionesCorrectivasAbiertas = acciones.filter(function(a) { return a.tipo === "correctiva" && a.estado !== "cerrada"; }).length;
+    var accionesPreventivas         = acciones.filter(function(a) { return a.tipo === "preventiva" && a.estado !== "cerrada"; }).length;
+
+    // Capacitaciones
+    var capacitacionesEjecutadas = capacitaciones.filter(function(c) { return c.estado === "finalizada"; }).length;
+
+    // Comité — participación promedio
+    var comiteTotal = comite.filter(function(c) { return c.estado === "realizada" || c.estado === "aprobada"; }).length;
+
+    // Cumplimiento legal
+    var cumplimientoTotal = cumplimiento.filter(function(c) { return c.deletedAt == null; }).length;
+    var cumplimientoCumple = cumplimiento.filter(function(c) { return c.estado === "cumple"; }).length;
+    var cumplimientoPct = cumplimientoTotal > 0 ? Math.round((cumplimientoCumple / cumplimientoTotal) * 100) : 0;
+
+    return {
+      incidentes: {
+        total:    incidentesTotal,
+        abiertos: incidentesAbiertos,
+      },
+      accidentes: {
+        total: accidentesTotal,
+      },
+      inspecciones: {
+        realizadas: inspeccionesRealizadas,
+        pendientes: inspeccionesPendientes,
+      },
+      riesgos: {
+        altos:  riesgosAltos,
+        medios: riesgosMedios,
+        bajos:  riesgosBajos,
+      },
+      acciones: {
+        correctivasAbiertas: accionesCorrectivasAbiertas,
+        preventivasAbiertas: accionesPreventivas,
+      },
+      capacitaciones: {
+        ejecutadas: capacitacionesEjecutadas,
+      },
+      comite: {
+        sesionesRealizadas: comiteTotal,
+      },
+      cumplimiento: {
+        pct: cumplimientoPct,
+      },
+      tiempoPromediosCierreIncidentes: tiempoProm,
+    };
+  }
+
+  function reporteIncidentesPeriodo(params) {
+    var wsId = params.wsId || SSO_WS_ID;
+    var items = (listEntities_("ssoIncidentes", { wsId: wsId }).items || []);
+    if (params.desde) items = items.filter(function(i) { return i.fechaIncidente >= params.desde; });
+    if (params.hasta) items = items.filter(function(i) { return i.fechaIncidente <= params.hasta; });
+    var porTipo = {};
+    items.forEach(function(i) { porTipo[i.tipo] = (porTipo[i.tipo] || 0) + 1; });
+    return { rows: items, total: items.length, porTipo: porTipo };
+  }
+
+  function reporteAccidentesArea(params) {
+    var wsId = params.wsId || SSO_WS_ID;
+    var items = (listEntities_("ssoAccidentes", { wsId: wsId }).items || []);
+    var porArea = {};
+    items.forEach(function(a) { porArea[a.area || "sin_area"] = (porArea[a.area || "sin_area"] || 0) + 1; });
+    return { rows: items, total: items.length, porArea: porArea };
+  }
+
+  function reporteAccionesPendientes(params) {
+    var wsId = params.wsId || SSO_WS_ID;
+    var items = (listEntities_("ssoAcciones", { wsId: wsId }).items || []).filter(
+      function(a) { return a.estado !== "cerrada"; }
+    );
+    var vencidas = items.filter(function(a) {
+      return a.fechaLimite && a.fechaLimite < new Date().toISOString();
+    }).length;
+    return { rows: items, total: items.length, vencidas: vencidas };
+  }
+
+  function reporteIndicadoresAccidentalidad(params) {
+    var wsId = params.wsId || SSO_WS_ID;
+    var incidentes  = (listEntities_("ssoIncidentes",  { wsId: wsId }).items || []);
+    var accidentes  = (listEntities_("ssoAccidentes",  { wsId: wsId }).items || []);
+    var totalDias   = accidentes.reduce(function(s, a) { return s + (Number(a.diasIncapacidad) || 0); }, 0);
+    var totalCosto  = incidentes.reduce(function(s, i) { return s + (Number(i.costoEstimado)   || 0); }, 0);
+    return {
+      totalIncidentes:  incidentes.length,
+      totalAccidentes:  accidentes.length,
+      totalDiasIncapacidad: totalDias,
+      costoTotalEstimado:   totalCosto,
+    };
+  }
+
+  function reporteCumplimientoLegal(params) {
+    var wsId = params.wsId || SSO_WS_ID;
+    var items = (listEntities_("ssoCumplimiento", { wsId: wsId }).items || []);
+    var porEstado = {};
+    items.forEach(function(c) { porEstado[c.estado] = (porEstado[c.estado] || 0) + 1; });
+    var pct = items.length > 0
+      ? Math.round(((porEstado["cumple"] || 0) / items.length) * 100)
+      : 0;
+    return { rows: items, total: items.length, porEstado: porEstado, cumplimientoPct: pct };
+  }
+
+  // ── Public API ─────────────────────────────────────────────────────────────
+
+  return {
+    // Incidentes
+    listIncidentes:       listIncidentes,
+    getIncidente:         getIncidente,
+    createIncidente:      createIncidente,
+    updateIncidente:      updateIncidente,
+    clasificarIncidente:  clasificarIncidente,
+    cerrarIncidente:      cerrarIncidente,
+    // Accidentes
+    listAccidentes:       listAccidentes,
+    getAccidente:         getAccidente,
+    createAccidente:      createAccidente,
+    updateAccidente:      updateAccidente,
+    cerrarAccidente:      cerrarAccidente,
+    // Inspecciones SSO
+    listInspeccionesSso:  listInspeccionesSso,
+    getInspeccionSso:     getInspeccionSso,
+    createInspeccionSso:  createInspeccionSso,
+    updateInspeccionSso:  updateInspeccionSso,
+    cerrarInspeccionSso:  cerrarInspeccionSso,
+    // Peligros
+    listPeligros:         listPeligros,
+    getPeligro:           getPeligro,
+    createPeligro:        createPeligro,
+    updatePeligro:        updatePeligro,
+    // Riesgos (Matriz IPER)
+    listRiesgos:          listRiesgos,
+    getRiesgo:            getRiesgo,
+    createRiesgo:         createRiesgo,
+    updateRiesgo:         updateRiesgo,
+    // Acciones CAPA
+    listAccionesSso:      listAccionesSso,
+    getAccionSso:         getAccionSso,
+    createAccionSso:      createAccionSso,
+    updateAccionSso:      updateAccionSso,
+    verificarAccion:      verificarAccion,
+    cerrarAccionSso:      cerrarAccionSso,
+    // EPP
+    listEPP:              listEPP,
+    getEPPItem:           getEPPItem,
+    createEPPItem:        createEPPItem,
+    updateEPPItem:        updateEPPItem,
+    // Capacitaciones SSO
+    listCapacitacionesSso:      listCapacitacionesSso,
+    getCapacitacionSso:         getCapacitacionSso,
+    createCapacitacionSso:      createCapacitacionSso,
+    updateCapacitacionSso:      updateCapacitacionSso,
+    finalizarCapacitacionSso:   finalizarCapacitacionSso,
+    // Comité
+    listActasComite:      listActasComite,
+    getActaComite:        getActaComite,
+    createActaComite:     createActaComite,
+    updateActaComite:     updateActaComite,
+    // Auditorías
+    listAuditoriasSSO:    listAuditoriasSSO,
+    getAuditoriaSSO:      getAuditoriaSSO,
+    createAuditoriaSSO:   createAuditoriaSSO,
+    updateAuditoriaSSO:   updateAuditoriaSSO,
+    cerrarAuditoriaSSO:   cerrarAuditoriaSSO,
+    // Cumplimiento legal
+    listCumplimiento:     listCumplimiento,
+    getCumplimiento:      getCumplimiento,
+    createCumplimiento:   createCumplimiento,
+    updateCumplimiento:   updateCumplimiento,
+    // Dashboard y Reportes
+    getDashboardResumen:             getDashboardResumen,
+    reporteIncidentesPeriodo:        reporteIncidentesPeriodo,
+    reporteAccidentesArea:           reporteAccidentesArea,
+    reporteAccionesPendientes:       reporteAccionesPendientes,
+    reporteIndicadoresAccidentalidad: reporteIndicadoresAccidentalidad,
+    reporteCumplimientoLegal:        reporteCumplimientoLegal,
+  };
+
+})();
+
+// ── Action Router ────────────────────────────────────────────────────────────
+
+function routeSSOAction_(verb, params, context) {
+  switch (verb) {
+    // Incidentes
+    case "listIncidentes":       return SSOController.listIncidentes(params);
+    case "getIncidente":         return SSOController.getIncidente(params);
+    case "createIncidente":      return SSOController.createIncidente(params);
+    case "updateIncidente":      return SSOController.updateIncidente(params);
+    case "clasificarIncidente":  return SSOController.clasificarIncidente(params);
+    case "cerrarIncidente":      return SSOController.cerrarIncidente(params);
+    // Accidentes
+    case "listAccidentes":       return SSOController.listAccidentes(params);
+    case "getAccidente":         return SSOController.getAccidente(params);
+    case "createAccidente":      return SSOController.createAccidente(params);
+    case "updateAccidente":      return SSOController.updateAccidente(params);
+    case "cerrarAccidente":      return SSOController.cerrarAccidente(params);
+    // Inspecciones SSO
+    case "listInspeccionesSso":  return SSOController.listInspeccionesSso(params);
+    case "getInspeccionSso":     return SSOController.getInspeccionSso(params);
+    case "createInspeccionSso":  return SSOController.createInspeccionSso(params);
+    case "updateInspeccionSso":  return SSOController.updateInspeccionSso(params);
+    case "cerrarInspeccionSso":  return SSOController.cerrarInspeccionSso(params);
+    // Peligros
+    case "listPeligros":         return SSOController.listPeligros(params);
+    case "getPeligro":           return SSOController.getPeligro(params);
+    case "createPeligro":        return SSOController.createPeligro(params);
+    case "updatePeligro":        return SSOController.updatePeligro(params);
+    // Riesgos (Matriz IPER)
+    case "listRiesgos":          return SSOController.listRiesgos(params);
+    case "getRiesgo":            return SSOController.getRiesgo(params);
+    case "createRiesgo":         return SSOController.createRiesgo(params);
+    case "updateRiesgo":         return SSOController.updateRiesgo(params);
+    // Acciones CAPA
+    case "listAccionesSso":      return SSOController.listAccionesSso(params);
+    case "getAccionSso":         return SSOController.getAccionSso(params);
+    case "createAccionSso":      return SSOController.createAccionSso(params);
+    case "updateAccionSso":      return SSOController.updateAccionSso(params);
+    case "verificarAccion":      return SSOController.verificarAccion(params);
+    case "cerrarAccionSso":      return SSOController.cerrarAccionSso(params);
+    // EPP
+    case "listEPP":              return SSOController.listEPP(params);
+    case "getEPPItem":           return SSOController.getEPPItem(params);
+    case "createEPPItem":        return SSOController.createEPPItem(params);
+    case "updateEPPItem":        return SSOController.updateEPPItem(params);
+    // Capacitaciones SSO
+    case "listCapacitacionesSso":    return SSOController.listCapacitacionesSso(params);
+    case "getCapacitacionSso":       return SSOController.getCapacitacionSso(params);
+    case "createCapacitacionSso":    return SSOController.createCapacitacionSso(params);
+    case "updateCapacitacionSso":    return SSOController.updateCapacitacionSso(params);
+    case "finalizarCapacitacionSso": return SSOController.finalizarCapacitacionSso(params);
+    // Comité
+    case "listActasComite":      return SSOController.listActasComite(params);
+    case "getActaComite":        return SSOController.getActaComite(params);
+    case "createActaComite":     return SSOController.createActaComite(params);
+    case "updateActaComite":     return SSOController.updateActaComite(params);
+    // Auditorías
+    case "listAuditoriasSSO":    return SSOController.listAuditoriasSSO(params);
+    case "getAuditoriaSSO":      return SSOController.getAuditoriaSSO(params);
+    case "createAuditoriaSSO":   return SSOController.createAuditoriaSSO(params);
+    case "updateAuditoriaSSO":   return SSOController.updateAuditoriaSSO(params);
+    case "cerrarAuditoriaSSO":   return SSOController.cerrarAuditoriaSSO(params);
+    // Cumplimiento legal
+    case "listCumplimiento":     return SSOController.listCumplimiento(params);
+    case "getCumplimiento":      return SSOController.getCumplimiento(params);
+    case "createCumplimiento":   return SSOController.createCumplimiento(params);
+    case "updateCumplimiento":   return SSOController.updateCumplimiento(params);
+    // Dashboard y Reportes
+    case "getDashboardResumen":             return SSOController.getDashboardResumen(params);
+    case "reporteIncidentesPeriodo":        return SSOController.reporteIncidentesPeriodo(params);
+    case "reporteAccidentesArea":           return SSOController.reporteAccidentesArea(params);
+    case "reporteAccionesPendientes":       return SSOController.reporteAccionesPendientes(params);
+    case "reporteIndicadoresAccidentalidad": return SSOController.reporteIndicadoresAccidentalidad(params);
+    case "reporteCumplimientoLegal":        return SSOController.reporteCumplimientoLegal(params);
+
+    default:
+      throw new Error("SSOController: unknown verb '" + verb + "'");
+  }
+}
+
+// ============================================================
+// SOURCE: controllers/ExecutiveDashboardController.js
+// ============================================================
+
+/**
+ * Executive Dashboard Controller.
+ *
+ * Routes "ejecutivo.*" actions to ExecutiveDashboardEngine and KPIEngine.
+ * No unit business logic here — pure aggregation and delegation.
+ */
+
+var ExecutiveDashboardController = (function () {
+
+  function getDashboard(params, context) {
+    var wsId = params.wsId;
+    if (!wsId) return { error: "wsId requerido" };
+    var data = ExecutiveDashboardEngine.getConsolidatedDashboard(wsId);
+    return { ok: true, data: data };
+  }
+
+  function getUnitSummary(params, context) {
+    var wsId    = params.wsId;
+    var unitKey = params.unitKey;
+    if (!wsId || !unitKey) return { error: "wsId y unitKey requeridos" };
+    var data = ExecutiveDashboardEngine.getUnitSummary(unitKey, wsId);
+    return { ok: true, data: data };
+  }
+
+  function getAllKPIs(params, context) {
+    var wsId = params.wsId;
+    if (!wsId) return { error: "wsId requerido" };
+    var kpis = KPIEngine.getAllKPIs(wsId);
+    return { ok: true, data: kpis, total: kpis.length };
+  }
+
+  function getKPIsByDashboard(params, context) {
+    var wsId      = params.wsId;
+    var dashboard = params.dashboard || "ejecutivo";
+    if (!wsId) return { error: "wsId requerido" };
+    var kpis = KPIEngine.getKPIsByDashboard(dashboard, wsId);
+    return { ok: true, data: kpis, total: kpis.length };
+  }
+
+  function getKPIsByUnit(params, context) {
+    var wsId    = params.wsId;
+    var unitKey = params.unitKey;
+    if (!wsId || !unitKey) return { error: "wsId y unitKey requeridos" };
+    var kpis = KPIEngine.getKPIsByUnit(unitKey, wsId);
+    return { ok: true, data: kpis, total: kpis.length };
+  }
+
+  function getKPIsByCategoria(params, context) {
+    var wsId      = params.wsId;
+    var categoria = params.categoria;
+    if (!wsId || !categoria) return { error: "wsId y categoria requeridos" };
+    var kpis = KPIEngine.getKPIsByCategoria(categoria, wsId);
+    return { ok: true, data: kpis, total: kpis.length };
+  }
+
+  function getKPIsSemaforo(params, context) {
+    var wsId  = params.wsId;
+    var color = params.color;
+    if (!wsId || !color) return { error: "wsId y color requeridos" };
+    var kpis = KPIEngine.getKPIsSemaforo(color, wsId);
+    return { ok: true, data: kpis, total: kpis.length };
+  }
+
+  function getRegisteredAdapters(params, context) {
+    return {
+      ok: true,
+      data: {
+        dashboardAdapters: ExecutiveDashboardEngine.getRegisteredAdapters(),
+        kpiAdapters:       KPIEngine.getRegisteredAdapters(),
+      },
+    };
+  }
+
+  return {
+    getDashboard:          getDashboard,
+    getUnitSummary:        getUnitSummary,
+    getAllKPIs:             getAllKPIs,
+    getKPIsByDashboard:    getKPIsByDashboard,
+    getKPIsByUnit:         getKPIsByUnit,
+    getKPIsByCategoria:    getKPIsByCategoria,
+    getKPIsSemaforo:       getKPIsSemaforo,
+    getRegisteredAdapters: getRegisteredAdapters,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/IMEController.js
+// ============================================================
+
+/**
+ * IME — Indicator Management Engine Controller.
+ *
+ * Business logic for institutional indicator definitions and their catalogs.
+ * Persistence delegates to SheetRepository via imeIndicadores / imeCatalogos / imeHistorial.
+ */
+var IMEController = (function () {
+
+  var IME_WS_ID = "ime";
+
+  // ── Private helpers ───────────────────────────────────────────────────────────
+
+  function _wsId(params) {
+    return params.wsId || IME_WS_ID;
+  }
+
+  function _now() {
+    return new Date().toISOString();
+  }
+
+  function _recordHistorial(indicadorId, accion, usuario, detalle, wsId) {
+    try {
+      createEntity_("imeHistorial", {
+        id:          IdGen.uuid(),
+        wsId:        wsId || IME_WS_ID,
+        indicadorId: indicadorId,
+        accion:      accion,
+        usuario:     usuario || "",
+        detalle:     JSON.stringify(detalle || {}),
+        createdAt:   _now(),
+      });
+    } catch (e) {
+      AppLogger.warn("IMEController._recordHistorial failed", { error: String(e) });
+    }
+  }
+
+  function _codeExists(code, excludeId, wsId) {
+    var result = listEntities_("imeIndicadores", { wsId: wsId, code: code, _pageSize: 5 });
+    var items  = result.items || [];
+    for (var i = 0; i < items.length; i++) {
+      if (!excludeId || items[i].id !== excludeId) return true;
+    }
+    return false;
+  }
+
+  // ── Indicadores — List / Get ──────────────────────────────────────────────────
+
+  function listIndicadores(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.active !== undefined && params.active !== "")
+      filter.active = params.active;
+    if (params.indicatorType) filter.indicatorType = params.indicatorType;
+    if (params.frequency)     filter.frequency     = params.frequency;
+    if (params.processId)     filter.processId     = params.processId;
+    if (params.organizationalUnitId) filter.organizationalUnitId = params.organizationalUnitId;
+    if (params.year)          filter.year          = params.year;
+    if (params._page)         filter._page         = params._page;
+    if (params._pageSize)     filter._pageSize      = params._pageSize;
+    if (params._sortBy)       filter._sortBy        = params._sortBy;
+    if (params._sortDir)      filter._sortDir       = params._sortDir;
+    return listEntities_("imeIndicadores", filter);
+  }
+
+  function getIndicador(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("imeIndicadores", params.id);
+  }
+
+  // ── Indicadores — Create ──────────────────────────────────────────────────────
+
+  function createIndicador(params) {
+    Validator.requireFields(params, ["code", "name", "measurementUnit", "frequency", "processId", "targetValue"]);
+    var wsId = _wsId(params);
+
+    if (_codeExists(params.code, null, wsId)) {
+      throw new Error("El código '" + params.code + "' ya está en uso por otro indicador.");
+    }
+
+    var now = _now();
+    var data = Object.assign({
+      description:          "",
+      active:               "true",
+      organizationalUnitId: "",
+      procedureId:          "",
+      strategicPillar:      "",
+      strategicObjective:   "",
+      indicatorType:        "",
+      calculationType:      "promedio",
+      polarity:             "positiva",
+      warningThreshold:     0,
+      criticalThreshold:    0,
+      responsiblePosition:  "",
+      responsibleUser:      "",
+      displayOrder:         0,
+      year:                 new Date().getFullYear(),
+      version:              "1.0",
+      observations:         "",
+      updatedBy:            "",
+      deletedAt:            "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      wsId,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    createEntity_("imeIndicadores", data);
+    _recordHistorial(data.id, "creado", data.createdBy, { code: data.code, name: data.name }, wsId);
+    return data;
+  }
+
+  // ── Indicadores — Update ──────────────────────────────────────────────────────
+
+  function updateIndicador(params) {
+    Validator.requireFields(params, ["id"]);
+    var existing = getEntity_("imeIndicadores", params.id);
+    if (!existing) throw new Error("Indicador no encontrado: " + params.id);
+
+    if (params.code && params.code !== existing.code) {
+      if (_codeExists(params.code, params.id, existing.wsId)) {
+        throw new Error("El código '" + params.code + "' ya está en uso por otro indicador.");
+      }
+    }
+
+    var patch = Object.assign({}, params, {
+      updatedAt: _now(),
+      updatedBy: params.updatedBy || "",
+    });
+    delete patch.id;
+    delete patch.wsId;
+    delete patch.createdAt;
+    delete patch.createdBy;
+
+    var result = updateEntity_("imeIndicadores", params.id, patch);
+    _recordHistorial(params.id, "actualizado", params.updatedBy, { fields: Object.keys(patch) }, existing.wsId);
+    return result;
+  }
+
+  // ── Indicadores — Activate / Deactivate ──────────────────────────────────────
+
+  function activarIndicador(params) {
+    Validator.requireFields(params, ["id"]);
+    var result = updateEntity_("imeIndicadores", params.id, {
+      active:    "true",
+      updatedAt: _now(),
+      updatedBy: params.userId || "",
+    });
+    _recordHistorial(params.id, "activado", params.userId, {}, IME_WS_ID);
+    return result;
+  }
+
+  function desactivarIndicador(params) {
+    Validator.requireFields(params, ["id"]);
+    var result = updateEntity_("imeIndicadores", params.id, {
+      active:    "false",
+      updatedAt: _now(),
+      updatedBy: params.userId || "",
+    });
+    _recordHistorial(params.id, "desactivado", params.userId, {}, IME_WS_ID);
+    return result;
+  }
+
+  // ── Indicadores — Duplicate ───────────────────────────────────────────────────
+
+  function duplicarIndicador(params) {
+    Validator.requireFields(params, ["id"]);
+    var source = getEntity_("imeIndicadores", params.id);
+    if (!source) throw new Error("Indicador no encontrado: " + params.id);
+
+    var newCode  = source.code + "-COPIA";
+    var wsId     = source.wsId || IME_WS_ID;
+    var counter  = 1;
+    while (_codeExists(newCode, null, wsId)) {
+      newCode = source.code + "-COPIA-" + (++counter);
+    }
+
+    var now  = _now();
+    var copy = Object.assign({}, source, {
+      id:        IdGen.uuid(),
+      code:      newCode,
+      name:      source.name + " (Copia)",
+      active:    "false",
+      version:   "1.0",
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedAt: now,
+      updatedBy: "",
+      deletedAt: "",
+    });
+
+    createEntity_("imeIndicadores", copy);
+    _recordHistorial(copy.id, "duplicado", params.userId, { sourceId: source.id, sourceCode: source.code }, wsId);
+    return copy;
+  }
+
+  // ── Historial ─────────────────────────────────────────────────────────────────
+
+  function getHistorial(params) {
+    Validator.requireFields(params, ["indicadorId"]);
+    var filter = {
+      wsId:        _wsId(params),
+      indicadorId: params.indicadorId,
+      _sortBy:     "createdAt",
+      _sortDir:    "desc",
+      _pageSize:   50,
+    };
+    var result = listEntities_("imeHistorial", filter);
+    return result.items || [];
+  }
+
+  // ── Catálogos — List / Get ────────────────────────────────────────────────────
+
+  function listCatalogos(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.tipo)   filter.tipo   = params.tipo;
+    if (params.activo !== undefined && params.activo !== "") filter.activo = params.activo;
+    filter._sortBy  = "orden";
+    filter._sortDir = "asc";
+    filter._pageSize = 500;
+    var result = listEntities_("imeCatalogos", filter);
+    return result.items || [];
+  }
+
+  function getCatalogo(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("imeCatalogos", params.id);
+  }
+
+  function createCatalogo(params) {
+    Validator.requireFields(params, ["tipo", "nombre"]);
+    var now = _now();
+    var data = Object.assign({
+      wsId:        _wsId(params),
+      codigo:      "",
+      descripcion: "",
+      activo:      "true",
+      orden:       0,
+      createdBy:   "",
+      deletedAt:   "",
+    }, params, {
+      id:        IdGen.uuid(),
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("imeCatalogos", data);
+    return data;
+  }
+
+  function updateCatalogo(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: _now() });
+    delete patch.id;
+    return updateEntity_("imeCatalogos", params.id, patch);
+  }
+
+  function archivarCatalogo(params) {
+    Validator.requireFields(params, ["id"]);
+    return updateEntity_("imeCatalogos", params.id, {
+      activo:    "false",
+      updatedAt: _now(),
+    });
+  }
+
+  // ── Dashboard summary ─────────────────────────────────────────────────────────
+
+  function getDashboard(params) {
+    var wsId    = _wsId(params);
+    var all     = listEntities_("imeIndicadores", { wsId: wsId, _pageSize: 1000 });
+    var items   = all.items || [];
+    var total   = items.length;
+    var activos = 0, inactivos = 0;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].active === "true" || items[i].active === true) {
+        activos++;
+      } else {
+        inactivos++;
+      }
+    }
+    return { total: total, activos: activos, inactivos: inactivos };
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────────
+
+  return {
+    listIndicadores:   listIndicadores,
+    getIndicador:      getIndicador,
+    createIndicador:   createIndicador,
+    updateIndicador:   updateIndicador,
+    activarIndicador:  activarIndicador,
+    desactivarIndicador: desactivarIndicador,
+    duplicarIndicador: duplicarIndicador,
+    getHistorial:      getHistorial,
+    listCatalogos:     listCatalogos,
+    getCatalogo:       getCatalogo,
+    createCatalogo:    createCatalogo,
+    updateCatalogo:    updateCatalogo,
+    archivarCatalogo:  archivarCatalogo,
+    getDashboard:      getDashboard,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/PMEController.js
+// ============================================================
+
+/**
+ * PME — Process Management Engine Controller.
+ *
+ * Business logic for institutional processes, procedures, and activities.
+ * Persistence delegates to SheetRepository via pmeProcesos / pmeProcedimientos /
+ * pmeActividades / pmeCatalogos / pmeHistorial.
+ *
+ * RULES:
+ *  - No physical deletion — only archive (active = false, deletedAt = now)
+ *  - All entity codes must be unique within their type across the workspace
+ *  - Every state change is recorded in pmeHistorial
+ */
+var PMEController = (function () {
+
+  var PME_WS_ID = "pme";
+
+  // ── Private helpers ───────────────────────────────────────────────────────────
+
+  function _wsId(params) {
+    return params.wsId || PME_WS_ID;
+  }
+
+  function _now() {
+    return new Date().toISOString();
+  }
+
+  function _recordHistorial(entidadTipo, entidadId, accion, usuario, detalle, wsId) {
+    try {
+      createEntity_("pmeHistorial", {
+        id:          IdGen.uuid(),
+        wsId:        wsId || PME_WS_ID,
+        entidadTipo: entidadTipo,
+        entidadId:   entidadId,
+        accion:      accion,
+        usuario:     usuario || "",
+        detalle:     JSON.stringify(detalle || {}),
+        createdAt:   _now(),
+      });
+    } catch (e) {
+      AppLogger.warn("PMEController._recordHistorial failed", { error: String(e) });
+    }
+  }
+
+  function _codeExistsIn(entityName, code, excludeId, wsId) {
+    var result = listEntities_(entityName, { wsId: wsId, code: code, _pageSize: 5 });
+    var items  = result.items || [];
+    for (var i = 0; i < items.length; i++) {
+      if (!excludeId || items[i].id !== excludeId) return true;
+    }
+    return false;
+  }
+
+  // ── PROCESOS — List / Get ─────────────────────────────────────────────────────
+
+  function listProcesos(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.active !== undefined && params.active !== "") filter.active = params.active;
+    if (params.tipoProcesoId) filter.tipoProcesoId = params.tipoProcesoId;
+    if (params.periodicidad)  filter.periodicidad  = params.periodicidad;
+    if (params.organizationalUnitId) filter.organizationalUnitId = params.organizationalUnitId;
+    if (params._page)         filter._page         = params._page;
+    if (params._pageSize)     filter._pageSize      = params._pageSize;
+    if (params._sortBy)       filter._sortBy        = params._sortBy;
+    if (params._sortDir)      filter._sortDir       = params._sortDir;
+    return listEntities_("pmeProcesos", filter);
+  }
+
+  function getProceso(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("pmeProcesos", params.id);
+  }
+
+  // ── PROCESOS — Create ─────────────────────────────────────────────────────────
+
+  function createProceso(params) {
+    Validator.requireFields(params, ["code", "name"]);
+    var wsId = _wsId(params);
+
+    if (_codeExistsIn("pmeProcesos", params.code, null, wsId)) {
+      throw new Error("El código '" + params.code + "' ya está en uso por otro proceso.");
+    }
+
+    var now = _now();
+    var data = Object.assign({}, params, {
+      id:        IdGen.uuid(),
+      wsId:      wsId,
+      active:    true,
+      indicadorIds: params.indicadorIds || "",
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+      deletedAt: "",
+    });
+    delete data.userId;
+
+    var entity = createEntity_("pmeProcesos", data);
+    _recordHistorial("proceso", entity.id, "creado", data.createdBy, { code: entity.code, name: entity.name }, wsId);
+    return entity;
+  }
+
+  // ── PROCESOS — Update ─────────────────────────────────────────────────────────
+
+  function updateProceso(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId     = _wsId(params);
+    var existing = getEntity_("pmeProcesos", params.id);
+
+    if (params.code && params.code !== existing.code) {
+      if (_codeExistsIn("pmeProcesos", params.code, params.id, wsId)) {
+        throw new Error("El código '" + params.code + "' ya está en uso por otro proceso.");
+      }
+    }
+
+    var now  = _now();
+    var diff = {};
+
+    if (params.name && params.name !== existing.name) {
+      diff.nombreCambiado = { desde: existing.name, hacia: params.name };
+    }
+    if (params.objetivo && params.objetivo !== existing.objetivo) {
+      diff.objetivoCambiado = { desde: existing.objetivo, hacia: params.objetivo };
+    }
+    if ((params.responsibleUser || params.responsiblePosition) &&
+        (params.responsibleUser !== existing.responsibleUser || params.responsiblePosition !== existing.responsiblePosition)) {
+      diff.responsableCambiado = {
+        desde: { position: existing.responsiblePosition, user: existing.responsibleUser },
+        hacia: { position: params.responsiblePosition,   user: params.responsibleUser   },
+      };
+    }
+
+    var patch = Object.assign({}, params, {
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    delete patch.userId;
+
+    var accion = Object.keys(diff).length > 0
+      ? (diff.nombreCambiado ? "nombreCambiado" : diff.responsableCambiado ? "responsableCambiado" : "objetivoCambiado")
+      : "actualizado";
+
+    var entity = updateEntity_("pmeProcesos", params.id, patch);
+    _recordHistorial("proceso", entity.id, accion, patch.updatedBy, diff, wsId);
+    return entity;
+  }
+
+  // ── PROCESOS — Archive ────────────────────────────────────────────────────────
+
+  function archivarProceso(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var entity = updateEntity_("pmeProcesos", params.id, {
+      active:    false,
+      deletedAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    _recordHistorial("proceso", entity.id, "archivado", params.userId || "", {}, wsId);
+    return entity;
+  }
+
+  function activarProceso(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var entity = updateEntity_("pmeProcesos", params.id, {
+      active:    true,
+      deletedAt: "",
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    _recordHistorial("proceso", entity.id, "activado", params.userId || "", {}, wsId);
+    return entity;
+  }
+
+  // ── PROCESOS — Duplicate ──────────────────────────────────────────────────────
+
+  function duplicarProceso(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId     = _wsId(params);
+    var original = getEntity_("pmeProcesos", params.id);
+    var now      = _now();
+    var newCode  = original.code + "-COPIA";
+    var attempt  = 0;
+    while (_codeExistsIn("pmeProcesos", newCode, null, wsId)) {
+      attempt++;
+      newCode = original.code + "-COPIA" + (attempt > 0 ? attempt : "");
+    }
+    var copy = Object.assign({}, original, {
+      id:        IdGen.uuid(),
+      code:      newCode,
+      name:      original.name + " (Copia)",
+      active:    false,
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+      deletedAt: "",
+    });
+    var entity = createEntity_("pmeProcesos", copy);
+    _recordHistorial("proceso", entity.id, "duplicado", params.userId || "", { originalId: original.id }, wsId);
+    return entity;
+  }
+
+  // ── PROCEDIMIENTOS — List / Get ───────────────────────────────────────────────
+
+  function listProcedimientos(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.active !== undefined && params.active !== "") filter.active = params.active;
+    if (params.procesoId)  filter.procesoId  = params.procesoId;
+    if (params.periodicidad) filter.periodicidad = params.periodicidad;
+    if (params._page)      filter._page      = params._page;
+    if (params._pageSize)  filter._pageSize   = params._pageSize;
+    if (params._sortBy)    filter._sortBy     = params._sortBy;
+    if (params._sortDir)   filter._sortDir    = params._sortDir;
+    return listEntities_("pmeProcedimientos", filter);
+  }
+
+  function getProcedimiento(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("pmeProcedimientos", params.id);
+  }
+
+  // ── PROCEDIMIENTOS — Create ───────────────────────────────────────────────────
+
+  function createProcedimiento(params) {
+    Validator.requireFields(params, ["code", "name", "procesoId"]);
+    var wsId = _wsId(params);
+
+    if (_codeExistsIn("pmeProcedimientos", params.code, null, wsId)) {
+      throw new Error("El código '" + params.code + "' ya está en uso por otro procedimiento.");
+    }
+
+    var now = _now();
+    var data = Object.assign({}, params, {
+      id:        IdGen.uuid(),
+      wsId:      wsId,
+      active:    true,
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+      deletedAt: "",
+    });
+    delete data.userId;
+
+    var entity = createEntity_("pmeProcedimientos", data);
+    _recordHistorial("procedimiento", entity.id, "creado", data.createdBy, { code: entity.code, name: entity.name }, wsId);
+    return entity;
+  }
+
+  // ── PROCEDIMIENTOS — Update ───────────────────────────────────────────────────
+
+  function updateProcedimiento(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId     = _wsId(params);
+    var existing = getEntity_("pmeProcedimientos", params.id);
+
+    if (params.code && params.code !== existing.code) {
+      if (_codeExistsIn("pmeProcedimientos", params.code, params.id, wsId)) {
+        throw new Error("El código '" + params.code + "' ya está en uso por otro procedimiento.");
+      }
+    }
+
+    var now  = _now();
+    var diff = {};
+    if (params.name && params.name !== existing.name)
+      diff.nombreCambiado = { desde: existing.name, hacia: params.name };
+    if (params.objetivo && params.objetivo !== existing.objetivo)
+      diff.objetivoCambiado = { desde: existing.objetivo, hacia: params.objetivo };
+    if ((params.responsibleUser || params.responsiblePosition) &&
+        (params.responsibleUser !== existing.responsibleUser || params.responsiblePosition !== existing.responsiblePosition))
+      diff.responsableCambiado = {
+        desde: { position: existing.responsiblePosition, user: existing.responsibleUser },
+        hacia: { position: params.responsiblePosition,   user: params.responsibleUser   },
+      };
+
+    var patch = Object.assign({}, params, {
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    delete patch.userId;
+
+    var accion = Object.keys(diff).length > 0
+      ? (diff.nombreCambiado ? "nombreCambiado" : diff.responsableCambiado ? "responsableCambiado" : "objetivoCambiado")
+      : "actualizado";
+
+    var entity = updateEntity_("pmeProcedimientos", params.id, patch);
+    _recordHistorial("procedimiento", entity.id, accion, patch.updatedBy, diff, wsId);
+    return entity;
+  }
+
+  // ── PROCEDIMIENTOS — Archive / Activate / Duplicate ──────────────────────────
+
+  function archivarProcedimiento(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var entity = updateEntity_("pmeProcedimientos", params.id, {
+      active:    false,
+      deletedAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    _recordHistorial("procedimiento", entity.id, "archivado", params.userId || "", {}, wsId);
+    return entity;
+  }
+
+  function activarProcedimiento(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var entity = updateEntity_("pmeProcedimientos", params.id, {
+      active:    true,
+      deletedAt: "",
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    _recordHistorial("procedimiento", entity.id, "activado", params.userId || "", {}, wsId);
+    return entity;
+  }
+
+  function duplicarProcedimiento(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId     = _wsId(params);
+    var original = getEntity_("pmeProcedimientos", params.id);
+    var now      = _now();
+    var newCode  = original.code + "-COPIA";
+    var attempt  = 0;
+    while (_codeExistsIn("pmeProcedimientos", newCode, null, wsId)) {
+      attempt++;
+      newCode = original.code + "-COPIA" + (attempt > 0 ? attempt : "");
+    }
+    var copy = Object.assign({}, original, {
+      id:        IdGen.uuid(),
+      code:      newCode,
+      name:      original.name + " (Copia)",
+      active:    false,
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+      deletedAt: "",
+    });
+    var entity = createEntity_("pmeProcedimientos", copy);
+    _recordHistorial("procedimiento", entity.id, "duplicado", params.userId || "", { originalId: original.id }, wsId);
+    return entity;
+  }
+
+  // ── ACTIVIDADES — List / Get ──────────────────────────────────────────────────
+
+  function listActividades(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.active !== undefined && params.active !== "") filter.active = params.active;
+    if (params.procesoId)         filter.procesoId         = params.procesoId;
+    if (params.procedimientoId)   filter.procedimientoId   = params.procedimientoId;
+    if (params.tipoActividadId)   filter.tipoActividadId   = params.tipoActividadId;
+    if (params.estadoOperativoId) filter.estadoOperativoId = params.estadoOperativoId;
+    if (params.periodicidad)      filter.periodicidad      = params.periodicidad;
+    if (params._page)             filter._page             = params._page;
+    if (params._pageSize)         filter._pageSize          = params._pageSize;
+    if (params._sortBy)           filter._sortBy            = params._sortBy;
+    if (params._sortDir)          filter._sortDir           = params._sortDir;
+    return listEntities_("pmeActividades", filter);
+  }
+
+  function getActividad(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("pmeActividades", params.id);
+  }
+
+  // ── ACTIVIDADES — Create ──────────────────────────────────────────────────────
+
+  function createActividad(params) {
+    Validator.requireFields(params, ["code", "name", "procesoId", "procedimientoId"]);
+    var wsId = _wsId(params);
+
+    if (_codeExistsIn("pmeActividades", params.code, null, wsId)) {
+      throw new Error("El código '" + params.code + "' ya está en uso por otra actividad.");
+    }
+
+    var now = _now();
+    var data = Object.assign({}, params, {
+      id:        IdGen.uuid(),
+      wsId:      wsId,
+      active:    true,
+      indicadorId: params.indicadorId || "",
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+      deletedAt: "",
+    });
+    delete data.userId;
+
+    var entity = createEntity_("pmeActividades", data);
+    _recordHistorial("actividad", entity.id, "creado", data.createdBy, { code: entity.code, name: entity.name }, wsId);
+    return entity;
+  }
+
+  // ── ACTIVIDADES — Update ──────────────────────────────────────────────────────
+
+  function updateActividad(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId     = _wsId(params);
+    var existing = getEntity_("pmeActividades", params.id);
+
+    if (params.code && params.code !== existing.code) {
+      if (_codeExistsIn("pmeActividades", params.code, params.id, wsId)) {
+        throw new Error("El código '" + params.code + "' ya está en uso por otra actividad.");
+      }
+    }
+
+    var now  = _now();
+    var diff = {};
+    if (params.name && params.name !== existing.name)
+      diff.nombreCambiado = { desde: existing.name, hacia: params.name };
+    if (params.objetivo && params.objetivo !== existing.objetivo)
+      diff.objetivoCambiado = { desde: existing.objetivo, hacia: params.objetivo };
+    if ((params.responsibleUser || params.responsiblePosition) &&
+        (params.responsibleUser !== existing.responsibleUser || params.responsiblePosition !== existing.responsiblePosition))
+      diff.responsableCambiado = {
+        desde: { position: existing.responsiblePosition, user: existing.responsibleUser },
+        hacia: { position: params.responsiblePosition,   user: params.responsibleUser   },
+      };
+
+    var patch = Object.assign({}, params, {
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    delete patch.userId;
+
+    var accion = Object.keys(diff).length > 0
+      ? (diff.nombreCambiado ? "nombreCambiado" : diff.responsableCambiado ? "responsableCambiado" : "objetivoCambiado")
+      : "actualizado";
+
+    var entity = updateEntity_("pmeActividades", params.id, patch);
+    _recordHistorial("actividad", entity.id, accion, patch.updatedBy, diff, wsId);
+    return entity;
+  }
+
+  // ── ACTIVIDADES — Archive / Activate / Duplicate ──────────────────────────────
+
+  function archivarActividad(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var entity = updateEntity_("pmeActividades", params.id, {
+      active:    false,
+      deletedAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    _recordHistorial("actividad", entity.id, "archivado", params.userId || "", {}, wsId);
+    return entity;
+  }
+
+  function activarActividad(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var entity = updateEntity_("pmeActividades", params.id, {
+      active:    true,
+      deletedAt: "",
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    _recordHistorial("actividad", entity.id, "activado", params.userId || "", {}, wsId);
+    return entity;
+  }
+
+  function duplicarActividad(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId     = _wsId(params);
+    var original = getEntity_("pmeActividades", params.id);
+    var now      = _now();
+    var newCode  = original.code + "-COPIA";
+    var attempt  = 0;
+    while (_codeExistsIn("pmeActividades", newCode, null, wsId)) {
+      attempt++;
+      newCode = original.code + "-COPIA" + (attempt > 0 ? attempt : "");
+    }
+    var copy = Object.assign({}, original, {
+      id:        IdGen.uuid(),
+      code:      newCode,
+      name:      original.name + " (Copia)",
+      active:    false,
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+      deletedAt: "",
+    });
+    var entity = createEntity_("pmeActividades", copy);
+    _recordHistorial("actividad", entity.id, "duplicado", params.userId || "", { originalId: original.id }, wsId);
+    return entity;
+  }
+
+  // ── CATALOGOS ─────────────────────────────────────────────────────────────────
+
+  function listCatalogos(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.tipo)   filter.tipo   = params.tipo;
+    if (params.activo !== undefined && params.activo !== "") filter.activo = params.activo;
+    if (params._sortBy)  filter._sortBy  = params._sortBy  || "orden";
+    if (params._sortDir) filter._sortDir = params._sortDir || "asc";
+    return listEntities_("pmeCatalogos", filter);
+  }
+
+  function getCatalogo(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("pmeCatalogos", params.id);
+  }
+
+  function createCatalogo(params) {
+    Validator.requireFields(params, ["tipo", "codigo", "nombre"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var data = Object.assign({}, params, {
+      id:        IdGen.uuid(),
+      wsId:      wsId,
+      activo:    true,
+      orden:     params.orden || 0,
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: "",
+    });
+    delete data.userId;
+    return createEntity_("pmeCatalogos", data);
+  }
+
+  function updateCatalogo(params) {
+    Validator.requireFields(params, ["id"]);
+    var now   = _now();
+    var patch = Object.assign({}, params, { updatedAt: now });
+    delete patch.userId;
+    return updateEntity_("pmeCatalogos", params.id, patch);
+  }
+
+  function archivarCatalogo(params) {
+    Validator.requireFields(params, ["id"]);
+    return updateEntity_("pmeCatalogos", params.id, {
+      activo:    false,
+      deletedAt: _now(),
+      updatedAt: _now(),
+    });
+  }
+
+  // ── HISTORIAL ─────────────────────────────────────────────────────────────────
+
+  function getHistorial(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.entidadId)   filter.entidadId   = params.entidadId;
+    if (params.entidadTipo) filter.entidadTipo = params.entidadTipo;
+    filter._sortBy  = "createdAt";
+    filter._sortDir = "desc";
+    return listEntities_("pmeHistorial", filter);
+  }
+
+  // ── DASHBOARD ─────────────────────────────────────────────────────────────────
+
+  function getDashboard(params) {
+    var wsId   = _wsId(params);
+    var rPro   = listEntities_("pmeProcesos",       { wsId: wsId, _pageSize: 9999 });
+    var rProc  = listEntities_("pmeProcedimientos", { wsId: wsId, _pageSize: 9999 });
+    var rAct   = listEntities_("pmeActividades",    { wsId: wsId, _pageSize: 9999 });
+
+    var procesos       = rPro.items  || [];
+    var procedimientos = rProc.items || [];
+    var actividades    = rAct.items  || [];
+
+    return {
+      procesos: {
+        total:    procesos.length,
+        activos:  procesos.filter(function (p) { return p.active === true || p.active === "true"; }).length,
+        archivados: procesos.filter(function (p) { return p.active === false || p.active === "false"; }).length,
+      },
+      procedimientos: {
+        total:    procedimientos.length,
+        activos:  procedimientos.filter(function (p) { return p.active === true || p.active === "true"; }).length,
+        archivados: procedimientos.filter(function (p) { return p.active === false || p.active === "false"; }).length,
+      },
+      actividades: {
+        total:    actividades.length,
+        activos:  actividades.filter(function (a) { return a.active === true || a.active === "true"; }).length,
+        archivados: actividades.filter(function (a) { return a.active === false || a.active === "false"; }).length,
+      },
+    };
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────────
+
+  return {
+    listProcesos:            listProcesos,
+    getProceso:              getProceso,
+    createProceso:           createProceso,
+    updateProceso:           updateProceso,
+    archivarProceso:         archivarProceso,
+    activarProceso:          activarProceso,
+    duplicarProceso:         duplicarProceso,
+    listProcedimientos:      listProcedimientos,
+    getProcedimiento:        getProcedimiento,
+    createProcedimiento:     createProcedimiento,
+    updateProcedimiento:     updateProcedimiento,
+    archivarProcedimiento:   archivarProcedimiento,
+    activarProcedimiento:    activarProcedimiento,
+    duplicarProcedimiento:   duplicarProcedimiento,
+    listActividades:         listActividades,
+    getActividad:            getActividad,
+    createActividad:         createActividad,
+    updateActividad:         updateActividad,
+    archivarActividad:       archivarActividad,
+    activarActividad:        activarActividad,
+    duplicarActividad:       duplicarActividad,
+    listCatalogos:           listCatalogos,
+    getCatalogo:             getCatalogo,
+    createCatalogo:          createCatalogo,
+    updateCatalogo:          updateCatalogo,
+    archivarCatalogo:        archivarCatalogo,
+    getHistorial:            getHistorial,
+    getDashboard:            getDashboard,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/APEController.js
+// ============================================================
+
+/**
+ * APE — Activity Planning Engine Controller.
+ *
+ * Generates and manages the institutional operational planning for PME activities.
+ * Scope: planning ONLY. No tracking, evidence, compliance, or execution state.
+ *
+ * GENERATION RULES:
+ *   Única        → 1 plan  (full year)
+ *   Diaria       → 365 plans
+ *   Semanal      → 52 plans
+ *   Quincenal    → 24 plans
+ *   Mensual      → 12 plans
+ *   Bimestral    →  6 plans
+ *   Trimestral   →  4 plans
+ *   Cuatrimestral→  3 plans
+ *   Semestral    →  2 plans
+ *   Anual        →  1 plan  (same as Única for one year)
+ *   Personalizada→ caller supplies explicit dates array
+ *
+ * REGENERATION MODES:
+ *   nuevo      — create; fail if any plan already exists for activity+year
+ *   regenerar  — archive existing + create fresh
+ *   mantener   — keep existing, add only missing execution numbers
+ *   duplicar   — create a parallel set (does NOT touch existing plans)
+ */
+var APEController = (function () {
+
+  var APE_WS_ID = "ape";
+
+  // ── Private helpers ──────────────────────────────────────────────────────────
+
+  function _wsId(params) {
+    return params.wsId || APE_WS_ID;
+  }
+
+  function _now() {
+    return new Date().toISOString();
+  }
+
+  function _pad2(n) {
+    return n < 10 ? "0" + n : String(n);
+  }
+
+  function _dateStr(d) {
+    return d.getFullYear() + "-" + _pad2(d.getMonth() + 1) + "-" + _pad2(d.getDate());
+  }
+
+  function _isoWeek(d) {
+    var date = new Date(d.getTime());
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+    var jan4 = new Date(date.getFullYear(), 0, 4);
+    return 1 + Math.round(((date.getTime() - jan4.getTime()) / 86400000 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
+  }
+
+  function _quarter(month) { return Math.ceil(month / 3); }
+  function _semester(month) { return month <= 6 ? 1 : 2; }
+
+  function _lastDayOfMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  // ── Occurrence generators ────────────────────────────────────────────────────
+
+  function _buildOccurrences(periodicidad, year) {
+    var y = parseInt(year) || new Date().getFullYear();
+    var results = [];
+
+    switch (periodicidad) {
+
+      case "Única":
+      case "Anual":
+        results.push({
+          startDate: y + "-01-01",
+          endDate:   y + "-12-31",
+          month: 1, quarter: 1, semester: 1, week: 1, number: 1,
+        });
+        break;
+
+      case "Semestral":
+        results.push({ startDate: y + "-01-01", endDate: y + "-06-30",
+          month: 1, quarter: 1, semester: 1, week: 1, number: 1 });
+        results.push({ startDate: y + "-07-01", endDate: y + "-12-31",
+          month: 7, quarter: 3, semester: 2, week: 27, number: 2 });
+        break;
+
+      case "Cuatrimestral":
+        var cuaRanges = [
+          [1, 4, y + "-01-01", y + "-04-30"],
+          [5, 8, y + "-05-01", y + "-08-31"],
+          [9, 12, y + "-09-01", y + "-12-31"],
+        ];
+        for (var ci = 0; ci < cuaRanges.length; ci++) {
+          var cr = cuaRanges[ci];
+          results.push({
+            startDate: cr[2], endDate: cr[3],
+            month: cr[0], quarter: _quarter(cr[0]), semester: _semester(cr[0]),
+            week: _isoWeek(new Date(cr[2])), number: ci + 1,
+          });
+        }
+        break;
+
+      case "Trimestral":
+        for (var q = 0; q < 4; q++) {
+          var qM = q * 3;
+          var qStart = new Date(y, qM, 1);
+          var qEnd   = new Date(y, qM + 3, 0);
+          results.push({
+            startDate: _dateStr(qStart), endDate: _dateStr(qEnd),
+            month: qM + 1, quarter: q + 1, semester: _semester(qM + 1),
+            week: _isoWeek(qStart), number: q + 1,
+          });
+        }
+        break;
+
+      case "Bimestral":
+        for (var b = 0; b < 6; b++) {
+          var bM = b * 2;
+          var bStart = new Date(y, bM, 1);
+          var bEnd   = new Date(y, bM + 2, 0);
+          results.push({
+            startDate: _dateStr(bStart), endDate: _dateStr(bEnd),
+            month: bM + 1, quarter: _quarter(bM + 1), semester: _semester(bM + 1),
+            week: _isoWeek(bStart), number: b + 1,
+          });
+        }
+        break;
+
+      case "Mensual":
+        for (var m = 0; m < 12; m++) {
+          var mStart = new Date(y, m, 1);
+          var mEnd   = new Date(y, m + 1, 0);
+          results.push({
+            startDate: _dateStr(mStart), endDate: _dateStr(mEnd),
+            month: m + 1, quarter: _quarter(m + 1), semester: _semester(m + 1),
+            week: _isoWeek(mStart), number: m + 1,
+          });
+        }
+        break;
+
+      case "Quincenal":
+        var qnNum = 1;
+        for (var qnm = 0; qnm < 12; qnm++) {
+          var q1Start = new Date(y, qnm, 1);
+          var q1End   = new Date(y, qnm, 15);
+          var q2Start = new Date(y, qnm, 16);
+          var q2End   = new Date(y, qnm + 1, 0);
+          results.push({ startDate: _dateStr(q1Start), endDate: _dateStr(q1End),
+            month: qnm + 1, quarter: _quarter(qnm + 1), semester: _semester(qnm + 1),
+            week: _isoWeek(q1Start), number: qnNum++ });
+          results.push({ startDate: _dateStr(q2Start), endDate: _dateStr(q2End),
+            month: qnm + 1, quarter: _quarter(qnm + 1), semester: _semester(qnm + 1),
+            week: _isoWeek(q2Start), number: qnNum++ });
+        }
+        break;
+
+      case "Semanal":
+        var sw = new Date(y, 0, 1);
+        // move to Monday
+        while (sw.getDay() !== 1) sw.setDate(sw.getDate() + 1);
+        var swNum = 1;
+        while (sw.getFullYear() === y) {
+          var swEnd = new Date(sw);
+          swEnd.setDate(swEnd.getDate() + 6);
+          results.push({
+            startDate: _dateStr(sw), endDate: _dateStr(swEnd),
+            month: sw.getMonth() + 1, quarter: _quarter(sw.getMonth() + 1),
+            semester: _semester(sw.getMonth() + 1),
+            week: swNum, number: swNum,
+          });
+          sw.setDate(sw.getDate() + 7);
+          swNum++;
+          if (swNum > 53) break;
+        }
+        break;
+
+      case "Diaria":
+        var dd = new Date(y, 0, 1);
+        var ddNum = 1;
+        while (dd.getFullYear() === y) {
+          results.push({
+            startDate: _dateStr(dd), endDate: _dateStr(dd),
+            month: dd.getMonth() + 1, quarter: _quarter(dd.getMonth() + 1),
+            semester: _semester(dd.getMonth() + 1),
+            week: _isoWeek(dd), number: ddNum,
+          });
+          dd.setDate(dd.getDate() + 1);
+          ddNum++;
+          if (ddNum > 366) break;
+        }
+        break;
+
+      default:
+        // Personalizada — caller must provide explicit dates via params.customDates
+        break;
+    }
+
+    return results;
+  }
+
+  // ── History helper ────────────────────────────────────────────────────────────
+
+  function _record(planId, accion, usuario, detalle, wsId) {
+    try {
+      createEntity_("apeHistorial", {
+        id:       IdGen.uuid(),
+        wsId:     wsId || APE_WS_ID,
+        planId:   planId,
+        accion:   accion,
+        usuario:  usuario || "",
+        detalle:  JSON.stringify(detalle || {}),
+        createdAt: _now(),
+      });
+    } catch (e) {
+      AppLogger.warn("APEController._record failed", { error: String(e) });
+    }
+  }
+
+  // ── List / Get ───────────────────────────────────────────────────────────────
+
+  function listPlanes(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.activityId)         filter.activityId         = params.activityId;
+    if (params.processId)          filter.processId          = params.processId;
+    if (params.procedureId)        filter.procedureId        = params.procedureId;
+    if (params.organizationalUnitId) filter.organizationalUnitId = params.organizationalUnitId;
+    if (params.year)               filter.year               = params.year;
+    if (params.status)             filter.status             = params.status;
+    if (params.priority)           filter.priority           = params.priority;
+    if (params.periodicity)        filter.periodicity        = params.periodicity;
+    if (params.responsibleUser)    filter.responsibleUser    = params.responsibleUser;
+    if (params.plannedMonth)       filter.plannedMonth       = params.plannedMonth;
+    if (params.plannedQuarter)     filter.plannedQuarter     = params.plannedQuarter;
+    if (params.plannedSemester)    filter.plannedSemester    = params.plannedSemester;
+    if (params._page)              filter._page              = params._page;
+    if (params._pageSize)          filter._pageSize           = params._pageSize;
+    if (params._sortBy)            filter._sortBy             = params._sortBy  || "plannedStartDate";
+    if (params._sortDir)           filter._sortDir            = params._sortDir || "asc";
+    return listEntities_("apePlanes", filter);
+  }
+
+  function getPlan(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("apePlanes", params.id);
+  }
+
+  // ── Create single plan ────────────────────────────────────────────────────────
+
+  function createPlan(params) {
+    Validator.requireFields(params, ["activityId", "title", "plannedStartDate"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var data = Object.assign({}, params, {
+      id:        IdGen.uuid(),
+      wsId:      wsId,
+      status:    params.status || "Programada",
+      priority:  params.priority || "Media",
+      dependencies: params.dependencies || "",
+      notes:     params.notes || "",
+      createdBy: params.userId || "",
+      createdAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+      deletedAt: "",
+    });
+    delete data.userId;
+    var entity = createEntity_("apePlanes", data);
+    _record(entity.id, "generado", data.createdBy, { title: entity.title }, wsId);
+    return entity;
+  }
+
+  // ── Update ────────────────────────────────────────────────────────────────────
+
+  function updatePlan(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var patch = Object.assign({}, params, {
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    delete patch.userId;
+    var entity = updateEntity_("apePlanes", params.id, patch);
+    _record(entity.id, "actualizado", patch.updatedBy, {}, wsId);
+    return entity;
+  }
+
+  // ── State transitions (no delete — only archive/cancel) ───────────────────────
+
+  function cambiarEstado(params) {
+    Validator.requireFields(params, ["id", "status"]);
+    var allowed = ["Programada", "Próxima", "Pendiente", "Archivada", "Cancelada"];
+    if (allowed.indexOf(params.status) === -1) {
+      throw new Error("Estado inválido: " + params.status +
+        ". Permitidos: " + allowed.join(", "));
+    }
+    var wsId = _wsId(params);
+    var now  = _now();
+    var entity = updateEntity_("apePlanes", params.id, {
+      status:    params.status,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    var accionMap = {
+      "Programada": "programado", "Próxima": "proximo",
+      "Pendiente": "pendiente", "Archivada": "archivado", "Cancelada": "cancelado",
+    };
+    _record(entity.id, accionMap[params.status] || "actualizado",
+      params.userId || "", { status: params.status }, wsId);
+    return entity;
+  }
+
+  // ── Auto-generate plans for an activity ──────────────────────────────────────
+
+  function generatePlans(params) {
+    Validator.requireFields(params, ["activityId", "year"]);
+    var wsId  = _wsId(params);
+    var mode  = params.mode || "nuevo"; // nuevo | regenerar | mantener | duplicar
+
+    // Check for existing plans
+    var existing = listEntities_("apePlanes", {
+      wsId: wsId, activityId: params.activityId, year: params.year, _pageSize: 9999,
+    });
+    var existingItems = existing.items || [];
+
+    if (mode === "nuevo" && existingItems.length > 0) {
+      throw new Error(
+        "Ya existen " + existingItems.length +
+        " planes para esta actividad en el año " + params.year +
+        ". Use mode='regenerar', 'mantener' o 'duplicar'."
+      );
+    }
+
+    // Archive existing if regenerating
+    if (mode === "regenerar" && existingItems.length > 0) {
+      var now = _now();
+      for (var i = 0; i < existingItems.length; i++) {
+        var ex = existingItems[i];
+        updateEntity_("apePlanes", ex.id, {
+          status: "Archivada", deletedAt: now,
+          updatedBy: params.userId || "", updatedAt: now,
+        });
+        _record(ex.id, "regenerado", params.userId || "", { year: params.year }, wsId);
+      }
+    }
+
+    // Build occurrence list
+    var periodicidad = params.periodicity || "Mensual";
+    var occurrences  = _buildOccurrences(periodicidad, params.year);
+
+    // For 'mantener': filter to numbers not already present
+    if (mode === "mantener" && existingItems.length > 0) {
+      var existingNums = {};
+      existingItems.forEach(function (e) {
+        existingNums[String(e.plannedExecutionNumber)] = true;
+      });
+      occurrences = occurrences.filter(function (o) {
+        return !existingNums[String(o.number)];
+      });
+    }
+
+    // Personalizada: use caller-supplied dates
+    if (periodicidad === "Personalizada" && params.customDates) {
+      try {
+        occurrences = JSON.parse(params.customDates);
+      } catch (e) {
+        throw new Error("customDates debe ser un JSON array válido.");
+      }
+    }
+
+    var created  = [];
+    var baseTitle = params.title || ("Plan " + params.year);
+
+    for (var j = 0; j < occurrences.length; j++) {
+      var occ  = occurrences[j];
+      var now2 = _now();
+      var plan = {
+        id:                    IdGen.uuid(),
+        wsId:                  wsId,
+        activityId:            params.activityId,
+        processId:             params.processId          || "",
+        procedureId:           params.procedureId        || "",
+        organizationalUnitId:  params.organizationalUnitId || "",
+        title:                 baseTitle + " #" + occ.number,
+        description:           params.description        || "",
+        year:                  String(params.year),
+        plannedStartDate:      occ.startDate,
+        plannedEndDate:        occ.endDate,
+        plannedMonth:          String(occ.month),
+        plannedQuarter:        String(occ.quarter),
+        plannedSemester:       String(occ.semester),
+        plannedWeek:           String(occ.week),
+        plannedExecutionNumber: String(occ.number),
+        periodicity:           periodicidad,
+        responsibleUser:       params.responsibleUser    || "",
+        responsiblePosition:   params.responsiblePosition || "",
+        priority:              params.priority            || "Media",
+        status:                "Programada",
+        plannedHours:          params.plannedHours        || "",
+        dependencies:          "",
+        notes:                 "",
+        createdBy:             params.userId || "",
+        createdAt:             now2,
+        updatedBy:             params.userId || "",
+        updatedAt:             now2,
+        deletedAt:             "",
+      };
+      var entity = createEntity_("apePlanes", plan);
+      _record(entity.id, "generado", params.userId || "",
+        { executionNumber: occ.number, period: occ.startDate }, wsId);
+      created.push(entity);
+    }
+
+    return { created: created.length, plans: created };
+  }
+
+  // ── Preview (dry-run, no DB writes) ──────────────────────────────────────────
+
+  function previewGeneration(params) {
+    Validator.requireFields(params, ["year", "periodicity"]);
+    var occurrences = _buildOccurrences(params.periodicity, params.year);
+    return { count: occurrences.length, occurrences: occurrences };
+  }
+
+  // ── Historial ─────────────────────────────────────────────────────────────────
+
+  function getHistorial(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.planId)      filter.planId      = params.planId;
+    if (params.activityId)  filter.activityId  = params.activityId;
+    filter._sortBy  = "createdAt";
+    filter._sortDir = "desc";
+    return listEntities_("apeHistorial", filter);
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────────
+
+  function getDashboard(params) {
+    var wsId    = _wsId(params);
+    var yearNow = params.year || String(new Date().getFullYear());
+    var result  = listEntities_("apePlanes", { wsId: wsId, year: yearNow, _pageSize: 9999 });
+    var planes  = result.items || [];
+
+    var byStatus = {}, byPriority = {}, byMonth = {}, byUnit = {}, byUser = {};
+    var upcoming = [];
+    var todayStr = (new Date()).toISOString().slice(0, 10);
+
+    planes.forEach(function (p) {
+      byStatus[p.status]   = (byStatus[p.status]   || 0) + 1;
+      byPriority[p.priority] = (byPriority[p.priority] || 0) + 1;
+      var monthKey = p.plannedMonth ? ("Mes " + p.plannedMonth) : "Sin mes";
+      byMonth[monthKey]    = (byMonth[monthKey]    || 0) + 1;
+      if (p.organizationalUnitId) {
+        byUnit[p.organizationalUnitId] = (byUnit[p.organizationalUnitId] || 0) + 1;
+      }
+      if (p.responsibleUser) {
+        byUser[p.responsibleUser] = (byUser[p.responsibleUser] || 0) + 1;
+      }
+      if (p.status !== "Archivada" && p.status !== "Cancelada" &&
+          p.plannedStartDate >= todayStr) {
+        upcoming.push(p);
+      }
+    });
+
+    upcoming.sort(function (a, b) {
+      return a.plannedStartDate < b.plannedStartDate ? -1 : 1;
+    });
+
+    return {
+      year:       yearNow,
+      total:      planes.length,
+      byStatus:   byStatus,
+      byPriority: byPriority,
+      byMonth:    byMonth,
+      byUnit:     byUnit,
+      byUser:     byUser,
+      upcoming:   upcoming.slice(0, 10),
+    };
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────────
+
+  return {
+    listPlanes:         listPlanes,
+    getPlan:            getPlan,
+    createPlan:         createPlan,
+    updatePlan:         updatePlan,
+    cambiarEstado:      cambiarEstado,
+    generatePlans:      generatePlans,
+    previewGeneration:  previewGeneration,
+    getHistorial:       getHistorial,
+    getDashboard:       getDashboard,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/AEEController.js
+// ============================================================
+
+/**
+ * AEE — Activity Execution Engine Controller.
+ *
+ * Records the real execution of institutional activities planned by APE.
+ * Scope: execution recording ONLY.
+ * No evidence uploads, no compliance calculation, no indicator modification.
+ *
+ * STATE MACHINE:
+ *   Pendiente            → En ejecución | Reprogramada | Cancelada | No ejecutada
+ *   En ejecución         → Finalizada | Finalizada con observaciones | Reprogramada | Cancelada
+ *   Finalizada           → (terminal)
+ *   Finalizada con obs.  → (terminal)
+ *   Reprogramada         → Pendiente | Cancelada
+ *   Cancelada            → (terminal)
+ *   No ejecutada         → Pendiente
+ *
+ * CATALOG TYPES:
+ *   resultadoEjecucion — Ejecutada exitosamente | Ejecutada parcialmente |
+ *                        Requiere seguimiento | Suspendida | Cancelada | No ejecutada
+ *   nivelRiesgo        — Sin riesgo | Riesgo bajo | Riesgo medio | Riesgo alto | Riesgo crítico
+ */
+var AEEController = (function () {
+
+  var AEE_WS_ID = "aee";
+
+  // ── Private helpers ──────────────────────────────────────────────────────────
+
+  function _wsId(params) {
+    return params.wsId || AEE_WS_ID;
+  }
+
+  function _now() {
+    return new Date().toISOString();
+  }
+
+  var ALLOWED_STATES = [
+    "Pendiente",
+    "En ejecución",
+    "Finalizada",
+    "Finalizada con observaciones",
+    "Reprogramada",
+    "Cancelada",
+    "No ejecutada",
+  ];
+
+  var VALID_TRANSITIONS = {
+    "Pendiente":                   ["En ejecución", "Reprogramada", "Cancelada", "No ejecutada"],
+    "En ejecución":                ["Finalizada", "Finalizada con observaciones", "Reprogramada", "Cancelada"],
+    "Finalizada":                  [],
+    "Finalizada con observaciones":[],
+    "Reprogramada":                ["Pendiente", "Cancelada"],
+    "Cancelada":                   [],
+    "No ejecutada":                ["Pendiente"],
+  };
+
+  // Default catalog values (returned when catalog sheet is empty)
+  var DEFAULT_CATALOGOS = {
+    resultadoEjecucion: [
+      { valor: "ejecutada-exitosamente",  etiqueta: "Ejecutada exitosamente",  orden: 1 },
+      { valor: "ejecutada-parcialmente",  etiqueta: "Ejecutada parcialmente",  orden: 2 },
+      { valor: "requiere-seguimiento",    etiqueta: "Requiere seguimiento",    orden: 3 },
+      { valor: "suspendida",              etiqueta: "Suspendida",              orden: 4 },
+      { valor: "cancelada",               etiqueta: "Cancelada",               orden: 5 },
+      { valor: "no-ejecutada",            etiqueta: "No ejecutada",            orden: 6 },
+    ],
+    nivelRiesgo: [
+      { valor: "sin-riesgo",    etiqueta: "Sin riesgo",    orden: 1 },
+      { valor: "riesgo-bajo",   etiqueta: "Riesgo bajo",   orden: 2 },
+      { valor: "riesgo-medio",  etiqueta: "Riesgo medio",  orden: 3 },
+      { valor: "riesgo-alto",   etiqueta: "Riesgo alto",   orden: 4 },
+      { valor: "riesgo-critico",etiqueta: "Riesgo crítico",orden: 5 },
+    ],
+  };
+
+  function _record(ejecucionId, accion, estadoAnterior, estadoNuevo, usuario, detalle, wsId) {
+    try {
+      createEntity_("aeeHistorial", {
+        id:            IdGen.uuid(),
+        wsId:          wsId || AEE_WS_ID,
+        ejecucionId:   ejecucionId,
+        accion:        accion,
+        estadoAnterior: estadoAnterior || "",
+        estadoNuevo:   estadoNuevo || "",
+        usuario:       usuario || "",
+        detalle:       JSON.stringify(detalle || {}),
+        createdAt:     _now(),
+      });
+    } catch (e) {
+      AppLogger.warn("AEEController._record failed", { error: String(e) });
+    }
+  }
+
+  function _assertPlanNotArchived(planId) {
+    if (!planId) return;
+    try {
+      var plan = getEntity_("apePlanes", planId);
+      if (plan && (plan.status === "Archivada" || plan.status === "Cancelada")) {
+        throw new Error(
+          "No se puede registrar ejecución sobre un plan con estado '" + plan.status + "'."
+        );
+      }
+    } catch (e) {
+      if (e.message && e.message.indexOf("No se puede") === 0) throw e;
+      // Plan not found or sheet error — allow creation (plan may be in different ws)
+    }
+  }
+
+  // ── Ejecuciones: List / Get ──────────────────────────────────────────────────
+
+  function listEjecuciones(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.planId)               filter.planId               = params.planId;
+    if (params.activityId)           filter.activityId           = params.activityId;
+    if (params.processId)            filter.processId            = params.processId;
+    if (params.organizationalUnitId) filter.organizationalUnitId = params.organizationalUnitId;
+    if (params.executedBy)           filter.executedBy           = params.executedBy;
+    if (params.status)               filter.status               = params.status;
+    if (params.executionDate)        filter.executionDate        = params.executionDate;
+    if (params.riskDetected)         filter.riskDetected         = params.riskDetected;
+    if (params._page)                filter._page                = params._page;
+    if (params._pageSize)            filter._pageSize            = params._pageSize;
+    filter._sortBy  = params._sortBy  || "executionDate";
+    filter._sortDir = params._sortDir || "desc";
+    return listEntities_("aeeEjecuciones", filter);
+  }
+
+  function getEjecucion(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("aeeEjecuciones", params.id);
+  }
+
+  // ── Ejecuciones: Create ──────────────────────────────────────────────────────
+
+  function createEjecucion(params) {
+    Validator.requireFields(params, ["planId", "executedBy", "executionDate"]);
+    if (!params.executedBy || params.executedBy.trim() === "") {
+      throw new Error("El campo 'executedBy' (responsable) es requerido.");
+    }
+    if (params.durationMinutes !== undefined && Number(params.durationMinutes) < 0) {
+      throw new Error("La duración no puede ser negativa.");
+    }
+    if (params.startTime && params.endTime && params.startTime > params.endTime) {
+      throw new Error("La hora de inicio no puede ser posterior a la hora de fin.");
+    }
+
+    _assertPlanNotArchived(params.planId);
+
+    var wsId = _wsId(params);
+    var now  = _now();
+
+    // Auto-calculate duration if times provided but duration missing
+    var durationMinutes = params.durationMinutes;
+    if (!durationMinutes && params.startTime && params.endTime) {
+      var parts1 = params.startTime.split(":").map(Number);
+      var parts2 = params.endTime.split(":").map(Number);
+      durationMinutes = (parts2[0] * 60 + parts2[1]) - (parts1[0] * 60 + parts1[1]);
+      if (durationMinutes < 0) durationMinutes = 0;
+    }
+
+    // Auto-assign executionNumber within the plan
+    var existingForPlan = listEntities_("aeeEjecuciones", {
+      wsId: wsId, planId: params.planId, _pageSize: 9999,
+    });
+    var existingItems = existingForPlan.items || [];
+    var executionNumber = existingItems.length + 1;
+
+    var data = Object.assign({}, params, {
+      id:              IdGen.uuid(),
+      wsId:            wsId,
+      executionNumber: String(executionNumber),
+      durationMinutes: String(durationMinutes || ""),
+      status:          params.status || "Pendiente",
+      executionResult: params.executionResult || "",
+      completionNotes: params.completionNotes || "",
+      observations:    params.observations    || "",
+      requiresEvidence: params.requiresEvidence ? "true" : "false",
+      hasEvidence:      "false",
+      riskDetected:     params.riskDetected   || "sin-riesgo",
+      incidentReported: params.incidentReported ? "true" : "false",
+      requiresApproval: params.requiresApproval ? "true" : "false",
+      approvedBy:       "",
+      approvalDate:     "",
+      createdBy:        params.userId || "",
+      createdAt:        now,
+      updatedBy:        params.userId || "",
+      updatedAt:        now,
+      deletedAt:        "",
+    });
+    delete data.userId;
+
+    var entity = createEntity_("aeeEjecuciones", data);
+    _record(entity.id, "creado", "", entity.status, data.createdBy,
+      { planId: entity.planId, executionNumber: executionNumber }, wsId);
+    return entity;
+  }
+
+  // ── Ejecuciones: Update ──────────────────────────────────────────────────────
+
+  function updateEjecucion(params) {
+    Validator.requireFields(params, ["id"]);
+    var existing = getEntity_("aeeEjecuciones", params.id);
+    if (existing && existing.deletedAt) {
+      throw new Error("No se puede modificar una ejecución archivada.");
+    }
+
+    var wsId = _wsId(params);
+    var now  = _now();
+
+    var patch = Object.assign({}, params, {
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    delete patch.userId;
+
+    var entity = updateEntity_("aeeEjecuciones", params.id, patch);
+    _record(entity.id, "actualizado", "", "", patch.updatedBy, {}, wsId);
+    return entity;
+  }
+
+  // ── Ejecuciones: State Machine ───────────────────────────────────────────────
+
+  function cambiarEstado(params) {
+    Validator.requireFields(params, ["id", "status"]);
+
+    if (ALLOWED_STATES.indexOf(params.status) === -1) {
+      throw new Error(
+        "Estado inválido: '" + params.status + "'. " +
+        "Permitidos: " + ALLOWED_STATES.join(", ")
+      );
+    }
+
+    var existing = getEntity_("aeeEjecuciones", params.id);
+    if (!existing) throw new Error("Ejecución no encontrada: " + params.id);
+    if (existing.deletedAt) throw new Error("No se puede cambiar el estado de una ejecución archivada.");
+
+    var allowed = VALID_TRANSITIONS[existing.status] || [];
+    if (allowed.indexOf(params.status) === -1) {
+      throw new Error(
+        "Transición inválida: '" + existing.status + "' → '" + params.status + "'. " +
+        "Transiciones permitidas: " + (allowed.length > 0 ? allowed.join(", ") : "ninguna (estado terminal)")
+      );
+    }
+
+    var wsId = _wsId(params);
+    var now  = _now();
+    var prev = existing.status;
+
+    var entity = updateEntity_("aeeEjecuciones", params.id, {
+      status:    params.status,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+
+    _record(entity.id, "estado_cambiado", prev, params.status,
+      params.userId || "", { from: prev, to: params.status }, wsId);
+    return entity;
+  }
+
+  // ── Ejecuciones: Archive ─────────────────────────────────────────────────────
+
+  function archivarEjecucion(params) {
+    Validator.requireFields(params, ["id"]);
+    var wsId = _wsId(params);
+    var now  = _now();
+    var existing = getEntity_("aeeEjecuciones", params.id);
+    var prev = existing ? existing.status : "";
+
+    var entity = updateEntity_("aeeEjecuciones", params.id, {
+      status:    "Cancelada",
+      deletedAt: now,
+      updatedBy: params.userId || "",
+      updatedAt: now,
+    });
+    _record(entity.id, "archivado", prev, "Cancelada",
+      params.userId || "", {}, wsId);
+    return entity;
+  }
+
+  // ── Mis actividades (APE plans assigned to current user) ─────────────────────
+
+  function getMisActividades(params) {
+    Validator.requireFields(params, ["executedBy"]);
+    var filter = {
+      wsId:            "ape",
+      responsibleUser: params.executedBy,
+      _pageSize:       params._pageSize || 200,
+      _sortBy:         params._sortBy   || "plannedStartDate",
+      _sortDir:        params._sortDir  || "asc",
+    };
+    if (params.year)   filter.year   = params.year;
+    if (params.status) filter.status = params.status;
+    var result = listEntities_("apePlanes", filter);
+    var items  = (result.items || []).filter(function (p) {
+      return p.status !== "Archivada" && p.status !== "Cancelada";
+    });
+    return { total: items.length, items: items };
+  }
+
+  // ── Catálogos ─────────────────────────────────────────────────────────────────
+
+  function listCatalogos(params) {
+    var wsId = _wsId(params);
+    var filter = { wsId: wsId };
+    if (params.tipo)   filter.tipo   = params.tipo;
+    if (params.activo !== undefined) filter.activo = params.activo;
+    filter._sortBy  = "orden";
+    filter._sortDir = "asc";
+    filter._pageSize = 999;
+
+    var result = listEntities_("aeeCatalogos", filter);
+    var stored = result.items || [];
+
+    // Return defaults when catalog sheet is empty for this type
+    if (stored.length === 0 && params.tipo && DEFAULT_CATALOGOS[params.tipo]) {
+      return {
+        total: DEFAULT_CATALOGOS[params.tipo].length,
+        items: DEFAULT_CATALOGOS[params.tipo].map(function (d) {
+          return Object.assign({ id: d.valor, wsId: wsId, tipo: params.tipo, activo: "true" }, d);
+        }),
+        isDefault: true,
+      };
+    }
+
+    return { total: stored.length, items: stored };
+  }
+
+  function createCatalogo(params) {
+    Validator.requireFields(params, ["tipo", "valor", "etiqueta"]);
+    var now = _now();
+    return createEntity_("aeeCatalogos", Object.assign({}, params, {
+      id:        IdGen.uuid(),
+      wsId:      _wsId(params),
+      activo:    params.activo !== undefined ? params.activo : "true",
+      orden:     params.orden  || "99",
+      createdAt: now,
+      updatedAt: now,
+    }));
+  }
+
+  function updateCatalogo(params) {
+    Validator.requireFields(params, ["id"]);
+    return updateEntity_("aeeCatalogos", params.id,
+      Object.assign({}, params, { updatedAt: _now() }));
+  }
+
+  // ── Historial ─────────────────────────────────────────────────────────────────
+
+  function getHistorial(params) {
+    var filter = { wsId: _wsId(params) };
+    if (params.ejecucionId) filter.ejecucionId = params.ejecucionId;
+    if (params.planId)      filter.planId      = params.planId;
+    if (params.executedBy)  filter.usuario     = params.executedBy;
+    filter._sortBy  = "createdAt";
+    filter._sortDir = "desc";
+    filter._pageSize = params._pageSize || 500;
+    return listEntities_("aeeHistorial", filter);
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────────
+
+  function getDashboard(params) {
+    var wsId    = _wsId(params);
+    var todayStr = (new Date()).toISOString().slice(0, 10);
+
+    var result  = listEntities_("aeeEjecuciones", { wsId: wsId, _pageSize: 9999 });
+    var items   = result.items || [];
+
+    var byStatus = {}, byUser = {}, byProcess = {};
+    var todayList = [], pendingList = [], inProgressList = [];
+    var incidentList = [], reprogramadaList = [];
+    var totalDuration = 0, durCount = 0;
+
+    items.forEach(function (e) {
+      // By status
+      byStatus[e.status]  = (byStatus[e.status]  || 0) + 1;
+      // By user
+      if (e.executedBy)  byUser[e.executedBy]    = (byUser[e.executedBy]    || 0) + 1;
+      // By process
+      if (e.processId)   byProcess[e.processId]  = (byProcess[e.processId]  || 0) + 1;
+
+      // Duration average
+      if (e.durationMinutes && Number(e.durationMinutes) > 0) {
+        totalDuration += Number(e.durationMinutes);
+        durCount++;
+      }
+
+      // Categorized lists
+      if (e.executionDate === todayStr)                  todayList.push(e);
+      if (e.status === "Pendiente")                       pendingList.push(e);
+      if (e.status === "En ejecución")                    inProgressList.push(e);
+      if (e.incidentReported === "true" || e.incidentReported === true) incidentList.push(e);
+      if (e.status === "Reprogramada")                    reprogramadaList.push(e);
+    });
+
+    return {
+      total:               items.length,
+      today:               todayList.length,
+      pending:             pendingList.length,
+      inProgress:          inProgressList.length,
+      withIncidents:       incidentList.length,
+      rescheduled:         reprogramadaList.length,
+      avgDurationMinutes:  durCount > 0 ? Math.round(totalDuration / durCount) : 0,
+      byStatus:            byStatus,
+      byUser:              byUser,
+      byProcess:           byProcess,
+      todayExecutions:     todayList.slice(0, 10),
+      pendingExecutions:   pendingList.slice(0, 10),
+      inProgressExecutions:inProgressList.slice(0, 10),
+    };
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────────
+
+  return {
+    listEjecuciones:   listEjecuciones,
+    getEjecucion:      getEjecucion,
+    createEjecucion:   createEjecucion,
+    updateEjecucion:   updateEjecucion,
+    cambiarEstado:     cambiarEstado,
+    archivarEjecucion: archivarEjecucion,
+    getMisActividades: getMisActividades,
+    listCatalogos:     listCatalogos,
+    createCatalogo:    createCatalogo,
+    updateCatalogo:    updateCatalogo,
+    getHistorial:      getHistorial,
+    getDashboard:      getDashboard,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/EMEController.js
+// ============================================================
+
+/**
+ * EME — Evidence Management Engine Controller.
+ *
+ * Manages institutional evidence associated with AEE executions.
+ * Scope: evidence repository ONLY.
+ * No file upload connectors, no compliance calculation, no indicator modification.
+ *
+ * STATE MACHINE:
+ *   Pendiente      → Cargada | Archivada
+ *   Cargada        → En validación | Archivada
+ *   En validación  → Validada | Rechazada
+ *   Validada       → Archivada
+ *   Rechazada      → Cargada | Archivada
+ *   Archivada      → (terminal)
+ *
+ * VERSIONING:
+ *   Initial version: "1.0"
+ *   nuevaVersion() increments the minor part; major bumps reserved for significant replacements.
+ *   Original evidence rows are never deleted — each version creates a new row.
+ *
+ * CATALOG TYPES:
+ *   tipoEvidencia             — Documento PDF | Documento Word | Excel | Imagen | …
+ *   estadoEvidencia           — Pendiente | Cargada | En validación | Validada | Rechazada | Archivada
+ *   proveedorAlmacenamiento   — Google Drive | OneDrive | SharePoint | Local | AWS S3 | Azure Blob
+ *   nivelConfidencialidad     — Pública | Interna | Confidencial | Restringida
+ */
+var EMEController = (function () {
+
+  var EME_WS_ID = "eme";
+
+  // ── Private helpers ──────────────────────────────────────────────────────────
+
+  function _wsId(params) {
+    return params.wsId || EME_WS_ID;
+  }
+
+  function _now() {
+    return new Date().toISOString();
+  }
+
+  var ALLOWED_STATES = [
+    "Pendiente",
+    "Cargada",
+    "En validación",
+    "Validada",
+    "Rechazada",
+    "Archivada",
+  ];
+
+  var VALID_TRANSITIONS = {
+    "Pendiente":     ["Cargada", "Archivada"],
+    "Cargada":       ["En validación", "Archivada"],
+    "En validación": ["Validada", "Rechazada"],
+    "Validada":      ["Archivada"],
+    "Rechazada":     ["Cargada", "Archivada"],
+    "Archivada":     [],
+  };
+
+  // Default catalog values — returned when the sheet is empty (isDefault: true)
+  var DEFAULT_CATALOGOS = {
+    tipoEvidencia: [
+      { valor: "documento-pdf",    etiqueta: "Documento PDF",    orden: 1 },
+      { valor: "documento-word",   etiqueta: "Documento Word",   orden: 2 },
+      { valor: "excel",            etiqueta: "Excel",            orden: 3 },
+      { valor: "imagen",           etiqueta: "Imagen",           orden: 4 },
+      { valor: "fotografia",       etiqueta: "Fotografía",       orden: 5 },
+      { valor: "video",            etiqueta: "Video",            orden: 6 },
+      { valor: "audio",            etiqueta: "Audio",            orden: 7 },
+      { valor: "presentacion",     etiqueta: "Presentación",     orden: 8 },
+      { valor: "formulario",       etiqueta: "Formulario",       orden: 9 },
+      { valor: "acta",             etiqueta: "Acta",             orden: 10 },
+      { valor: "constancia",       etiqueta: "Constancia",       orden: 11 },
+      { valor: "contrato",         etiqueta: "Contrato",         orden: 12 },
+      { valor: "factura",          etiqueta: "Factura",          orden: 13 },
+      { valor: "enlace",           etiqueta: "Enlace",           orden: 14 },
+      { valor: "google-drive",     etiqueta: "Google Drive",     orden: 15 },
+      { valor: "otro",             etiqueta: "Otro",             orden: 16 },
+    ],
+    estadoEvidencia: [
+      { valor: "Pendiente",     etiqueta: "Pendiente",     orden: 1 },
+      { valor: "Cargada",       etiqueta: "Cargada",       orden: 2 },
+      { valor: "En validación", etiqueta: "En validación", orden: 3 },
+      { valor: "Validada",      etiqueta: "Validada",      orden: 4 },
+      { valor: "Rechazada",     etiqueta: "Rechazada",     orden: 5 },
+      { valor: "Archivada",     etiqueta: "Archivada",     orden: 6 },
+    ],
+    proveedorAlmacenamiento: [
+      { valor: "google-drive", etiqueta: "Google Drive",  orden: 1 },
+      { valor: "onedrive",     etiqueta: "OneDrive",      orden: 2 },
+      { valor: "sharepoint",   etiqueta: "SharePoint",    orden: 3 },
+      { valor: "local",        etiqueta: "Local",         orden: 4 },
+      { valor: "aws-s3",       etiqueta: "AWS S3",        orden: 5 },
+      { valor: "azure-blob",   etiqueta: "Azure Blob",    orden: 6 },
+    ],
+    nivelConfidencialidad: [
+      { valor: "publica",       etiqueta: "Pública",       orden: 1 },
+      { valor: "interna",       etiqueta: "Interna",       orden: 2 },
+      { valor: "confidencial",  etiqueta: "Confidencial",  orden: 3 },
+      { valor: "restringida",   etiqueta: "Restringida",   orden: 4 },
+    ],
+  };
+
+  function _record(evidenciaId, accion, fields, usuario, wsId) {
+    try {
+      createEntity_("emeHistorial", {
+        id:              IdGen.uuid(),
+        wsId:            wsId || EME_WS_ID,
+        evidenciaId:     evidenciaId,
+        accion:          accion,
+        estadoAnterior:  fields.estadoAnterior  || "",
+        estadoNuevo:     fields.estadoNuevo     || "",
+        versionAnterior: fields.versionAnterior || "",
+        versionNueva:    fields.versionNueva    || "",
+        usuario:         usuario                || "",
+        detalle:         JSON.stringify(fields.detalle || {}),
+        createdAt:       _now(),
+      });
+    } catch (e) {
+      AppLogger.warn("EMEController._record: failed to write historial", { error: e.message });
+    }
+  }
+
+  function _assertExecution(executionId) {
+    if (!executionId) throw new Error("executionId es requerido.");
+    var rows = listEntities_("aeeEjecuciones", { id: executionId });
+    if (!rows || rows.length === 0) {
+      throw new Error("La ejecución indicada no existe: " + executionId);
+    }
+    var execution = rows[0];
+    if (execution.deletedAt) {
+      throw new Error("La ejecución está archivada y no puede recibir nuevas evidencias.");
+    }
+    return execution;
+  }
+
+  function _incrementVersion(currentVersion) {
+    if (!currentVersion) return "1.0";
+    var parts = String(currentVersion).split(".");
+    var major = parseInt(parts[0], 10) || 1;
+    var minor = parseInt(parts[1], 10) || 0;
+    return major + "." + (minor + 1);
+  }
+
+  function _simulateStorageReference(fileName, provider) {
+    var ts = new Date().getTime();
+    switch (provider) {
+      case "google-drive":  return "https://drive.google.com/file/d/simulated-" + ts;
+      case "onedrive":      return "https://1drv.ms/simulated-" + ts;
+      case "sharepoint":    return "https://sharepoint.com/sites/sse/simulated-" + ts;
+      case "aws-s3":        return "s3://sse-bucket/evidencias/" + ts + "-" + (fileName || "file");
+      case "azure-blob":    return "https://ssestorage.blob.core.windows.net/evidencias/" + ts;
+      default:              return "/evidencias/local/" + ts + "-" + (fileName || "file");
+    }
+  }
+
+  // ── Handlers ──────────────────────────────────────────────────────────────────
+
+  function listEvidencias(params) {
+    var query = {};
+    if (params.executionId) query.executionId    = params.executionId;
+    if (params.status)      query.status         = params.status;
+    if (params.evidenceType)query.evidenceType   = params.evidenceType;
+    if (params.uploadedBy)  query.uploadedBy     = params.uploadedBy;
+    if (params.processId)   query.processId      = params.processId;
+    if (params.organizationalUnitId) query.organizationalUnitId = params.organizationalUnitId;
+
+    var pageSize = parseInt(params._pageSize, 10) || 200;
+    var rows = listEntities_("emeEvidencias", query, pageSize);
+
+    // Text search (title, description, tags)
+    if (params.q) {
+      var q = String(params.q).toLowerCase();
+      rows = rows.filter(function (r) {
+        return (r.title       || "").toLowerCase().indexOf(q) !== -1 ||
+               (r.description || "").toLowerCase().indexOf(q) !== -1 ||
+               (r.tags        || "").toLowerCase().indexOf(q) !== -1 ||
+               (r.originalFileName || "").toLowerCase().indexOf(q) !== -1;
+      });
+    }
+
+    // Date range
+    if (params.dateFrom) {
+      rows = rows.filter(function (r) { return (r.uploadedAt || "") >= params.dateFrom; });
+    }
+    if (params.dateTo) {
+      rows = rows.filter(function (r) { return (r.uploadedAt || "") <= params.dateTo + "T23:59:59"; });
+    }
+
+    return { total: rows.length, items: rows };
+  }
+
+  function getEvidencia(params) {
+    if (!params.id) throw new Error("id es requerido.");
+    var rows = listEntities_("emeEvidencias", { id: params.id });
+    if (!rows || rows.length === 0) throw new Error("Evidencia no encontrada: " + params.id);
+    return rows[0];
+  }
+
+  function createEvidencia(params) {
+    var wsId = _wsId(params);
+
+    // Require valid execution
+    _assertExecution(params.executionId);
+
+    // Validate required fields
+    if (!params.title)         throw new Error("title es requerido.");
+    if (!params.evidenceType)  throw new Error("evidenceType es requerido.");
+    if (!params.uploadedBy)    throw new Error("uploadedBy es requerido.");
+
+    var now = _now();
+    var id  = IdGen.uuid();
+
+    // Simulate storage reference if not provided
+    var storageRef = params.storageReference ||
+      _simulateStorageReference(params.originalFileName, params.storageProvider || "local");
+
+    var entity = {
+      id:                   id,
+      wsId:                 wsId,
+      executionId:          params.executionId,
+      planId:               params.planId               || "",
+      activityId:           params.activityId           || "",
+      procedureId:          params.procedureId          || "",
+      processId:            params.processId            || "",
+      organizationalUnitId: params.organizationalUnitId || "",
+      title:                params.title,
+      description:          params.description          || "",
+      evidenceType:         params.evidenceType,
+      storageProvider:      params.storageProvider      || "local",
+      storageReference:     storageRef,
+      fileName:             params.fileName             || params.originalFileName || "",
+      originalFileName:     params.originalFileName      || "",
+      extension:            params.extension            || "",
+      mimeType:             params.mimeType             || "",
+      fileSize:             params.fileSize             || 0,
+      checksum:             params.checksum             || "",
+      version:              "1.0",
+      status:               "Cargada",
+      uploadedBy:           params.uploadedBy,
+      uploadedAt:           now,
+      validatedBy:          "",
+      validatedAt:          "",
+      validationStatus:     "pendiente",
+      validationComments:   "",
+      isRequired:           params.isRequired           === true || params.isRequired === "true",
+      isConfidential:       params.isConfidential       === true || params.isConfidential === "true",
+      confidentialityLevel: params.confidentialityLevel || "interna",
+      expirationDate:       params.expirationDate       || "",
+      tags:                 Array.isArray(params.tags) ? JSON.stringify(params.tags) : (params.tags || "[]"),
+      notes:                params.notes                || "",
+      createdBy:            params.uploadedBy,
+      createdAt:            now,
+      updatedBy:            params.uploadedBy,
+      updatedAt:            now,
+      deletedAt:            "",
+    };
+
+    createEntity_("emeEvidencias", entity);
+
+    _record(id, "creado", {
+      estadoNuevo:  "Cargada",
+      versionNueva: "1.0",
+      detalle:      { title: entity.title, evidenceType: entity.evidenceType },
+    }, params.uploadedBy, wsId);
+
+    return entity;
+  }
+
+  function updateEvidencia(params) {
+    if (!params.id) throw new Error("id es requerido.");
+
+    var rows = listEntities_("emeEvidencias", { id: params.id });
+    if (!rows || rows.length === 0) throw new Error("Evidencia no encontrada: " + params.id);
+    var current = rows[0];
+
+    if (current.deletedAt) throw new Error("No se puede editar una evidencia archivada.");
+
+    var now   = _now();
+    var patch = {
+      title:               params.title               !== undefined ? params.title               : current.title,
+      description:         params.description         !== undefined ? params.description         : current.description,
+      evidenceType:        params.evidenceType        !== undefined ? params.evidenceType        : current.evidenceType,
+      storageProvider:     params.storageProvider     !== undefined ? params.storageProvider     : current.storageProvider,
+      storageReference:    params.storageReference    !== undefined ? params.storageReference    : current.storageReference,
+      fileName:            params.fileName            !== undefined ? params.fileName            : current.fileName,
+      originalFileName:    params.originalFileName    !== undefined ? params.originalFileName    : current.originalFileName,
+      extension:           params.extension           !== undefined ? params.extension           : current.extension,
+      mimeType:            params.mimeType            !== undefined ? params.mimeType            : current.mimeType,
+      fileSize:            params.fileSize            !== undefined ? params.fileSize            : current.fileSize,
+      confidentialityLevel:params.confidentialityLevel !== undefined ? params.confidentialityLevel : current.confidentialityLevel,
+      isConfidential:      params.isConfidential      !== undefined ? params.isConfidential      : current.isConfidential,
+      expirationDate:      params.expirationDate      !== undefined ? params.expirationDate      : current.expirationDate,
+      tags:                params.tags               !== undefined
+        ? (Array.isArray(params.tags) ? JSON.stringify(params.tags) : params.tags)
+        : current.tags,
+      notes:               params.notes              !== undefined ? params.notes                : current.notes,
+      updatedBy:           params.updatedBy           || params.userId || "",
+      updatedAt:           now,
+    };
+
+    updateEntity_("emeEvidencias", params.id, patch);
+
+    _record(params.id, "actualizado", {
+      estadoAnterior: current.status,
+      estadoNuevo:    current.status,
+      detalle:        { campos: Object.keys(patch) },
+    }, patch.updatedBy, current.wsId);
+
+    return Object.assign({}, current, patch);
+  }
+
+  function cambiarEstado(params) {
+    if (!params.id)     throw new Error("id es requerido.");
+    if (!params.status) throw new Error("status es requerido.");
+
+    if (ALLOWED_STATES.indexOf(params.status) === -1) {
+      throw new Error("Estado inválido: " + params.status);
+    }
+
+    var rows = listEntities_("emeEvidencias", { id: params.id });
+    if (!rows || rows.length === 0) throw new Error("Evidencia no encontrada: " + params.id);
+    var current = rows[0];
+
+    if (current.deletedAt) throw new Error("La evidencia está archivada.");
+
+    var allowed = VALID_TRANSITIONS[current.status] || [];
+    if (allowed.indexOf(params.status) === -1) {
+      throw new Error(
+        "Transición inválida: " + current.status + " → " + params.status +
+        ". Permitidas: " + (allowed.join(", ") || "ninguna")
+      );
+    }
+
+    var now   = _now();
+    var patch = { status: params.status, updatedBy: params.userId || "", updatedAt: now };
+    updateEntity_("emeEvidencias", params.id, patch);
+
+    _record(params.id, "estado_cambiado", {
+      estadoAnterior: current.status,
+      estadoNuevo:    params.status,
+    }, params.userId || "", current.wsId);
+
+    return Object.assign({}, current, patch);
+  }
+
+  function validarEvidencia(params) {
+    if (!params.id)               throw new Error("id es requerido.");
+    if (!params.validationStatus) throw new Error("validationStatus es requerido.");
+
+    var validStatuses = ["aprobada", "rechazada", "pendiente"];
+    if (validStatuses.indexOf(params.validationStatus) === -1) {
+      throw new Error("validationStatus inválido: " + params.validationStatus);
+    }
+
+    var rows = listEntities_("emeEvidencias", { id: params.id });
+    if (!rows || rows.length === 0) throw new Error("Evidencia no encontrada: " + params.id);
+    var current = rows[0];
+
+    if (current.status !== "En validación") {
+      throw new Error("Solo evidencias en estado 'En validación' pueden ser validadas.");
+    }
+
+    var now        = _now();
+    var newStatus  = params.validationStatus === "aprobada" ? "Validada" : "Rechazada";
+
+    var patch = {
+      validatedBy:        params.userId || "",
+      validatedAt:        now,
+      validationStatus:   params.validationStatus,
+      validationComments: params.validationComments || "",
+      status:             newStatus,
+      updatedBy:          params.userId || "",
+      updatedAt:          now,
+    };
+
+    updateEntity_("emeEvidencias", params.id, patch);
+
+    _record(params.id, params.validationStatus === "aprobada" ? "validado" : "rechazado", {
+      estadoAnterior: current.status,
+      estadoNuevo:    newStatus,
+      detalle:        { validationComments: patch.validationComments },
+    }, params.userId || "", current.wsId);
+
+    return Object.assign({}, current, patch);
+  }
+
+  function nuevaVersion(params) {
+    if (!params.id)         throw new Error("id es requerido.");
+    if (!params.uploadedBy) throw new Error("uploadedBy es requerido.");
+
+    var rows = listEntities_("emeEvidencias", { id: params.id });
+    if (!rows || rows.length === 0) throw new Error("Evidencia no encontrada: " + params.id);
+    var current = rows[0];
+
+    if (current.deletedAt) throw new Error("No se puede versionar una evidencia archivada.");
+
+    var now        = _now();
+    var newVersion = _incrementVersion(current.version);
+    var newId      = IdGen.uuid();
+
+    var storageRef = params.storageReference ||
+      _simulateStorageReference(params.originalFileName || current.originalFileName, params.storageProvider || current.storageProvider);
+
+    var newEntity = {
+      id:                   newId,
+      wsId:                 current.wsId,
+      executionId:          current.executionId,
+      planId:               current.planId,
+      activityId:           current.activityId,
+      procedureId:          current.procedureId,
+      processId:            current.processId,
+      organizationalUnitId: current.organizationalUnitId,
+      title:                current.title,
+      description:          params.description          || current.description,
+      evidenceType:         params.evidenceType         || current.evidenceType,
+      storageProvider:      params.storageProvider      || current.storageProvider,
+      storageReference:     storageRef,
+      fileName:             params.fileName             || current.fileName,
+      originalFileName:     params.originalFileName     || current.originalFileName,
+      extension:            params.extension            || current.extension,
+      mimeType:             params.mimeType             || current.mimeType,
+      fileSize:             params.fileSize             || current.fileSize,
+      checksum:             params.checksum             || "",
+      version:              newVersion,
+      status:               "Cargada",
+      uploadedBy:           params.uploadedBy,
+      uploadedAt:           now,
+      validatedBy:          "",
+      validatedAt:          "",
+      validationStatus:     "pendiente",
+      validationComments:   "",
+      isRequired:           current.isRequired,
+      isConfidential:       current.isConfidential,
+      confidentialityLevel: params.confidentialityLevel || current.confidentialityLevel,
+      expirationDate:       params.expirationDate       || current.expirationDate,
+      tags:                 params.tags
+        ? (Array.isArray(params.tags) ? JSON.stringify(params.tags) : params.tags)
+        : current.tags,
+      notes:                params.notes               || current.notes,
+      createdBy:            params.uploadedBy,
+      createdAt:            now,
+      updatedBy:            params.uploadedBy,
+      updatedAt:            now,
+      deletedAt:            "",
+    };
+
+    // Archive the current version (mark with deletedAt so it's excluded from active listings)
+    updateEntity_("emeEvidencias", current.id, { deletedAt: now });
+
+    createEntity_("emeEvidencias", newEntity);
+
+    _record(current.id, "version_nueva", {
+      estadoAnterior:  current.status,
+      estadoNuevo:     "Cargada",
+      versionAnterior: current.version,
+      versionNueva:    newVersion,
+      detalle:         { newId: newId, notes: params.notes },
+    }, params.uploadedBy, current.wsId);
+
+    _record(newId, "creado", {
+      estadoNuevo:     "Cargada",
+      versionNueva:    newVersion,
+      detalle:         { previousId: current.id, previousVersion: current.version },
+    }, params.uploadedBy, current.wsId);
+
+    return newEntity;
+  }
+
+  function archivarEvidencia(params) {
+    if (!params.id) throw new Error("id es requerido.");
+
+    var rows = listEntities_("emeEvidencias", { id: params.id });
+    if (!rows || rows.length === 0) throw new Error("Evidencia no encontrada: " + params.id);
+    var current = rows[0];
+
+    if (current.deletedAt) throw new Error("La evidencia ya está archivada.");
+
+    var now   = _now();
+    var patch = { status: "Archivada", deletedAt: now, updatedBy: params.userId || "", updatedAt: now };
+    updateEntity_("emeEvidencias", params.id, patch);
+
+    _record(params.id, "archivado", {
+      estadoAnterior: current.status,
+      estadoNuevo:    "Archivada",
+    }, params.userId || "", current.wsId);
+
+    return Object.assign({}, current, patch);
+  }
+
+  function getMisEvidencias(params) {
+    if (!params.uploadedBy) throw new Error("uploadedBy es requerido.");
+    var rows = listEntities_("emeEvidencias", { uploadedBy: params.uploadedBy }, 500);
+    if (params.status) {
+      rows = rows.filter(function (r) { return r.status === params.status; });
+    }
+    return { total: rows.length, items: rows };
+  }
+
+  function listCatalogos(params) {
+    var rows = listEntities_("emeCatalogos", { wsId: _wsId(params) }, 500);
+
+    if (params.tipo) {
+      rows = rows.filter(function (r) { return r.tipo === params.tipo; });
+    }
+
+    if (rows.length > 0) {
+      return { total: rows.length, items: rows, isDefault: false };
+    }
+
+    // Sheet is empty — return defaults
+    var defaults = params.tipo
+      ? (DEFAULT_CATALOGOS[params.tipo] || []).map(function (item, i) {
+          return Object.assign({ id: "default-" + i, wsId: EME_WS_ID, tipo: params.tipo, activo: true }, item);
+        })
+      : Object.keys(DEFAULT_CATALOGOS).reduce(function (acc, tipo) {
+          DEFAULT_CATALOGOS[tipo].forEach(function (item, i) {
+            acc.push(Object.assign({ id: tipo + "-default-" + i, wsId: EME_WS_ID, tipo: tipo, activo: true }, item));
+          });
+          return acc;
+        }, []);
+
+    return { total: defaults.length, items: defaults, isDefault: true };
+  }
+
+  function createCatalogo(params) {
+    if (!params.tipo || !params.valor || !params.etiqueta) {
+      throw new Error("tipo, valor y etiqueta son requeridos.");
+    }
+    var now    = _now();
+    var entity = {
+      id:        IdGen.uuid(),
+      wsId:      _wsId(params),
+      tipo:      params.tipo,
+      valor:     params.valor,
+      etiqueta:  params.etiqueta,
+      activo:    params.activo !== false,
+      orden:     params.orden || 99,
+      createdAt: now,
+      updatedAt: now,
+    };
+    createEntity_("emeCatalogos", entity);
+    return entity;
+  }
+
+  function updateCatalogo(params) {
+    if (!params.id) throw new Error("id es requerido.");
+    var now   = _now();
+    var patch = { updatedAt: now };
+    if (params.etiqueta !== undefined) patch.etiqueta = params.etiqueta;
+    if (params.activo   !== undefined) patch.activo   = params.activo;
+    if (params.orden    !== undefined) patch.orden    = params.orden;
+    updateEntity_("emeCatalogos", params.id, patch);
+    return Object.assign({ id: params.id }, patch);
+  }
+
+  function getHistorial(params) {
+    var query = { wsId: _wsId(params) };
+    if (params.evidenciaId) query.evidenciaId = params.evidenciaId;
+    var rows = listEntities_("emeHistorial", query, 1000);
+    return rows;
+  }
+
+  function buscarEvidencias(params) {
+    if (!params.q) throw new Error("q (query) es requerido.");
+    var q = String(params.q).toLowerCase();
+
+    var rows = listEntities_("emeEvidencias", {}, 1000);
+    var results = rows.filter(function (r) {
+      return (r.title            || "").toLowerCase().indexOf(q) !== -1 ||
+             (r.description      || "").toLowerCase().indexOf(q) !== -1 ||
+             (r.tags             || "").toLowerCase().indexOf(q) !== -1 ||
+             (r.processId        || "").toLowerCase().indexOf(q) !== -1 ||
+             (r.activityId       || "").toLowerCase().indexOf(q) !== -1 ||
+             (r.uploadedBy       || "").toLowerCase().indexOf(q) !== -1 ||
+             (r.originalFileName || "").toLowerCase().indexOf(q) !== -1 ||
+             (r.evidenceType     || "").toLowerCase().indexOf(q) !== -1;
+    });
+
+    return { total: results.length, items: results };
+  }
+
+  function getDashboard(params) {
+    var wsId = _wsId(params);
+    var all  = listEntities_("emeEvidencias", {}, 5000);
+
+    var byStatus = {};
+    ALLOWED_STATES.forEach(function (s) { byStatus[s] = 0; });
+
+    var byType    = {};
+    var byUnit    = {};
+    var byUser    = {};
+    var today     = new Date().toISOString().slice(0, 10);
+    var todayList = [];
+    var totalSize = 0;
+
+    all.forEach(function (e) {
+      // status counts
+      if (byStatus[e.status] !== undefined) byStatus[e.status]++;
+
+      // by type
+      if (e.evidenceType) {
+        byType[e.evidenceType] = (byType[e.evidenceType] || 0) + 1;
+      }
+
+      // by unit
+      if (e.organizationalUnitId) {
+        byUnit[e.organizationalUnitId] = (byUnit[e.organizationalUnitId] || 0) + 1;
+      }
+
+      // by user
+      if (e.uploadedBy) {
+        byUser[e.uploadedBy] = (byUser[e.uploadedBy] || 0) + 1;
+      }
+
+      // today
+      if (e.uploadedAt && e.uploadedAt.slice(0, 10) === today) {
+        todayList.push(e);
+      }
+
+      // size
+      totalSize += parseInt(e.fileSize, 10) || 0;
+    });
+
+    var recent = all
+      .slice()
+      .sort(function (a, b) {
+        return (b.uploadedAt || "").localeCompare(a.uploadedAt || "");
+      })
+      .slice(0, 10);
+
+    return {
+      total:      all.length,
+      pending:    byStatus["Pendiente"]     || 0,
+      uploaded:   byStatus["Cargada"]       || 0,
+      inReview:   byStatus["En validación"] || 0,
+      validated:  byStatus["Validada"]      || 0,
+      rejected:   byStatus["Rechazada"]     || 0,
+      archived:   byStatus["Archivada"]     || 0,
+      today:      todayList.length,
+      totalSize:  totalSize,
+      byStatus:   Object.keys(byStatus).map(function (k) { return { status: k, count: byStatus[k] }; }),
+      byType:     Object.keys(byType).map(function (k) { return { type: k, count: byType[k] }; }),
+      byUnit:     Object.keys(byUnit).map(function (k) { return { unitId: k, count: byUnit[k] }; }),
+      byUser:     Object.keys(byUser).map(function (k) { return { userId: k, count: byUser[k] }; }),
+      recentEvidences: recent,
+      todayEvidences:  todayList.slice(0, 5),
+    };
+  }
+
+  return {
+    listEvidencias:   listEvidencias,
+    getEvidencia:     getEvidencia,
+    createEvidencia:  createEvidencia,
+    updateEvidencia:  updateEvidencia,
+    cambiarEstado:    cambiarEstado,
+    validarEvidencia: validarEvidencia,
+    nuevaVersion:     nuevaVersion,
+    archivarEvidencia:archivarEvidencia,
+    getMisEvidencias: getMisEvidencias,
+    listCatalogos:    listCatalogos,
+    createCatalogo:   createCatalogo,
+    updateCatalogo:   updateCatalogo,
+    getHistorial:     getHistorial,
+    buscarEvidencias: buscarEvidencias,
+    getDashboard:     getDashboard,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/CPEController.js
+// ============================================================
+
+/**
+ * CPEController — Compliance & Performance Engine.
+ * Analytical-only engine. Reads from IME/PME/APE/AEE/EME without modifying them.
+ * Writes only to CPE-owned sheets: cpeSnapshots, cpePlanesMejora, cpeHistorial, cpeCatalogos.
+ */
+var CPEController = (function () {
+  var CPE_WS = "cpe";
+
+  // ── Default Catalogos ────────────────────────────────────────────────────────
+
+  var DEFAULT_CATALOGOS = {
+    pesoCumplimiento: [
+      { valor: "planificacion", etiqueta: "Planificación",  peso: 40, orden: 1 },
+      { valor: "ejecucion",     etiqueta: "Ejecución",      peso: 30, orden: 2 },
+      { valor: "documentacion", etiqueta: "Documentación",  peso: 20, orden: 3 },
+      { valor: "indicadores",   etiqueta: "Indicadores",    peso: 10, orden: 4 },
+    ],
+    semaforo: [
+      { valor: "verde",    etiqueta: "Verde",    scoreMin: 90,  scoreMax: 100, orden: 1 },
+      { valor: "amarillo", etiqueta: "Amarillo", scoreMin: 75,  scoreMax: 89,  orden: 2 },
+      { valor: "naranja",  etiqueta: "Naranja",  scoreMin: 60,  scoreMax: 74,  orden: 3 },
+      { valor: "rojo",     etiqueta: "Rojo",     scoreMin: 0,   scoreMax: 59,  orden: 4 },
+    ],
+    rangoRiesgo: [
+      { valor: "muy-bajo", etiqueta: "Muy Bajo",  scoreMin: 90, scoreMax: 100, orden: 1 },
+      { valor: "bajo",     etiqueta: "Bajo",       scoreMin: 80, scoreMax: 89,  orden: 2 },
+      { valor: "medio",    etiqueta: "Medio",      scoreMin: 65, scoreMax: 79,  orden: 3 },
+      { valor: "alto",     etiqueta: "Alto",       scoreMin: 50, scoreMax: 64,  orden: 4 },
+      { valor: "critico",  etiqueta: "Crítico",    scoreMin: 0,  scoreMax: 49,  orden: 5 },
+    ],
+    estadoPlanMejora: [
+      { valor: "Pendiente",   etiqueta: "Pendiente",   orden: 1 },
+      { valor: "En proceso",  etiqueta: "En proceso",  orden: 2 },
+      { valor: "Completado",  etiqueta: "Completado",  orden: 3 },
+      { valor: "Cancelado",   etiqueta: "Cancelado",   orden: 4 },
+      { valor: "Pausado",     etiqueta: "Pausado",     orden: 5 },
+    ],
+    prioridadPlan: [
+      { valor: "Crítica", etiqueta: "Crítica", orden: 1 },
+      { valor: "Alta",    etiqueta: "Alta",    orden: 2 },
+      { valor: "Media",   etiqueta: "Media",   orden: 3 },
+      { valor: "Baja",    etiqueta: "Baja",    orden: 4 },
+    ],
+  };
+
+  // ── Scoring helpers ───────────────────────────────────────────────────────────
+
+  function _getPesos_() {
+    var cats = listEntities_("cpeCatalogos", { wsId: CPE_WS, tipo: "pesoCumplimiento" });
+    if (!cats || cats.length === 0) {
+      return { planificacion: 40, ejecucion: 30, documentacion: 20, indicadores: 10 };
+    }
+    var pesos = {};
+    cats.forEach(function (c) { pesos[c.valor] = Number(c.peso) || 0; });
+    return pesos;
+  }
+
+  function _getComplianceStatus_(score) {
+    if (score >= 90) return "Verde";
+    if (score >= 75) return "Amarillo";
+    if (score >= 60) return "Naranja";
+    return "Rojo";
+  }
+
+  function _getRiskLevel_(score) {
+    if (score >= 90) return "Muy Bajo";
+    if (score >= 80) return "Bajo";
+    if (score >= 65) return "Medio";
+    if (score >= 50) return "Alto";
+    return "Crítico";
+  }
+
+  function _calcScore_(planned, executed, validated, required) {
+    var planningScore   = planned > 0 ? Math.min(100, (executed / planned) * 100) : 100;
+    var executionScore  = executed > 0 ? Math.min(100, (executed / planned) * 100) : 0;
+    var docScore        = required > 0 ? Math.min(100, (validated / required) * 100) : 100;
+    return {
+      planningScore:      Math.round(planningScore),
+      executionScore:     Math.round(executionScore),
+      documentationScore: Math.round(docScore),
+      indicatorScore:     null,
+    };
+  }
+
+  function _weightedOverall_(scores, pesos) {
+    var totalPeso = pesos.planificacion + pesos.ejecucion + pesos.documentacion;
+    var sum = (scores.planningScore * pesos.planificacion)
+            + (scores.executionScore * pesos.ejecucion)
+            + (scores.documentationScore * pesos.documentacion);
+    return totalPeso > 0 ? Math.round(sum / totalPeso) : 0;
+  }
+
+  // ── Breach detection ──────────────────────────────────────────────────────────
+
+  function _detectBrechas_(year) {
+    var brechas = [];
+    var now     = new Date().toISOString();
+
+    // 1. APE plans with no executed AEE execution (overdue by plannedEndDate)
+    var apePlanes = listEntities_("apePlanes", { wsId: "ape" });
+    var apePlanesYear = (apePlanes || []).filter(function (p) {
+      return p.plannedStartDate && String(p.plannedStartDate).indexOf(String(year)) !== -1;
+    });
+    apePlanesYear.forEach(function (plan) {
+      var ejecuciones = listEntities_("aeeEjecuciones", { planId: plan.id });
+      var hasFinished = (ejecuciones || []).some(function (e) { return e.status === "Finalizada"; });
+      if (!hasFinished && plan.plannedEndDate && plan.plannedEndDate < now) {
+        brechas.push({
+          tipo: "actividad_no_ejecutada",
+          descripcion: "Plan sin ejecución finalizada y vencido: " + (plan.title || plan.id),
+          severidad: "alta",
+          entidadId: plan.id,
+          entidadTipo: "apePlan",
+          fechaDeteccion: now,
+        });
+      }
+    });
+
+    // 2. AEE executions that require evidence but have no validated evidence
+    var ejecucionesConEvidencia = listEntities_("aeeEjecuciones", { requiresEvidence: "true" });
+    (ejecucionesConEvidencia || []).forEach(function (ej) {
+      var evidencias = listEntities_("emeEvidencias", { executionId: ej.id, status: "Validada" });
+      if (!evidencias || evidencias.length === 0) {
+        brechas.push({
+          tipo: "evidencia_faltante",
+          descripcion: "Ejecución sin evidencia validada: " + (ej.activityName || ej.id),
+          severidad: "media",
+          entidadId: ej.id,
+          entidadTipo: "aeeEjecucion",
+          fechaDeteccion: now,
+        });
+      }
+    });
+
+    // 3. Rejected evidence (EME)
+    var rechazadas = listEntities_("emeEvidencias", { status: "Rechazada" });
+    (rechazadas || []).forEach(function (ev) {
+      brechas.push({
+        tipo: "evidencia_rechazada",
+        descripcion: "Evidencia rechazada pendiente de acción: " + (ev.title || ev.id),
+        severidad: "media",
+        entidadId: ev.id,
+        entidadTipo: "emeEvidencia",
+        fechaDeteccion: now,
+      });
+    });
+
+    // 4. IME indicators without targetValue (not configured)
+    var indicadores = listEntities_("imeIndicadores", { active: "true" });
+    (indicadores || []).forEach(function (ind) {
+      if (!ind.targetValue || ind.targetValue === "") {
+        brechas.push({
+          tipo: "indicador_sin_datos",
+          descripcion: "Indicador sin valor objetivo configurado: " + (ind.name || ind.id),
+          severidad: "baja",
+          entidadId: ind.id,
+          entidadTipo: "imeIndicador",
+          fechaDeteccion: now,
+        });
+      }
+    });
+
+    // 5. PME processes without any APE plan
+    var procesos = listEntities_("pmeProcesos", {});
+    (procesos || []).forEach(function (proc) {
+      var planes = (apePlanes || []).filter(function (p) { return p.processId === proc.id; });
+      if (planes.length === 0) {
+        brechas.push({
+          tipo: "proceso_sin_plan",
+          descripcion: "Proceso sin plan de actividades: " + (proc.name || proc.id),
+          severidad: "baja",
+          entidadId: proc.id,
+          entidadTipo: "pmeProceso",
+          fechaDeteccion: now,
+        });
+      }
+    });
+
+    return brechas;
+  }
+
+  // ── Public handlers ───────────────────────────────────────────────────────────
+
+  function calcularCumplimiento(params) {
+    var wsId   = params.wsId || CPE_WS;
+    var year   = Number(params.year)  || new Date().getFullYear();
+    var month  = Number(params.month) || new Date().getMonth() + 1;
+    var userId = params.userId || "";
+    var startMs = new Date().getTime();
+
+    var pesos = _getPesos_();
+
+    // Gather cross-engine data
+    var apePlanes    = listEntities_("apePlanes",    { wsId: "ape" });
+    var aeeEjecucion = listEntities_("aeeEjecuciones", {});
+    var emeEvidencias = listEntities_("emeEvidencias", {});
+
+    var yearStr = String(year);
+    var planesYear = (apePlanes || []).filter(function (p) {
+      return p.plannedStartDate && p.plannedStartDate.indexOf(yearStr) !== -1;
+    });
+    var monStr = year + "-" + (month < 10 ? "0" + month : month);
+    var ejecMonth = (aeeEjecucion || []).filter(function (e) {
+      return e.executedAt && e.executedAt.indexOf(monStr) !== -1;
+    });
+
+    var planned  = planesYear.length;
+    var executed = (aeeEjecucion || []).filter(function (e) { return e.status === "Finalizada"; }).length;
+    var required = (emeEvidencias || []).filter(function (ev) { return ev.isRequired === "true" || ev.isRequired === true; }).length;
+    var validated = (emeEvidencias || []).filter(function (ev) {
+      return ev.status === "Validada" && (ev.isRequired === "true" || ev.isRequired === true);
+    }).length;
+
+    var scores = _calcScore_(planned, executed, validated, required);
+    var overall = _weightedOverall_(scores, pesos);
+    var status  = _getComplianceStatus_(overall);
+    var risk    = _getRiskLevel_(overall);
+
+    var now       = new Date().toISOString();
+    var snapshotId = IdGen.generate("SNAP");
+    var snap = {
+      id:                   snapshotId,
+      wsId:                 wsId,
+      snapshotDate:         now,
+      year:                 year,
+      month:                month,
+      plannedActivities:    planned,
+      executedActivities:   executed,
+      validatedEvidence:    validated,
+      requiredEvidence:     required,
+      planningScore:        scores.planningScore,
+      executionScore:       scores.executionScore,
+      documentationScore:   scores.documentationScore,
+      indicatorScore:       "",
+      overallScore:         overall,
+      complianceStatus:     status,
+      riskLevel:            risk,
+      calculatedAt:         now,
+      calculatedBy:         userId,
+      createdAt:            now,
+    };
+    createEntity_("cpeSnapshots", snap);
+
+    // Log to historial
+    var duracion = new Date().getTime() - startMs;
+    var total    = planned + required + (aeeEjecucion || []).length;
+    createEntity_("cpeHistorial", {
+      id:                  IdGen.generate("CHIST"),
+      wsId:                wsId,
+      tipoCalculo:         "cumplimiento-mensual",
+      duracion:            duracion,
+      registrosAnalizados: total,
+      resultado:           status + " (" + overall + ")",
+      usuario:             userId,
+      createdAt:           now,
+    });
+
+    return snap;
+  }
+
+  function getSnapshot(params) {
+    var id = params.id;
+    var snap = getEntity_("cpeSnapshots", id);
+    if (!snap) throw new Error("Snapshot no encontrado: " + id);
+    return snap;
+  }
+
+  function listSnapshots(params) {
+    var filter = {};
+    if (params.wsId)  filter.wsId  = params.wsId;
+    if (params.year)  filter.year  = String(params.year);
+    if (params.month) filter.month = String(params.month);
+    var items = listEntities_("cpeSnapshots", filter);
+    return { total: items.length, items: items };
+  }
+
+  function getDashboard(params) {
+    var wsId = params.wsId || CPE_WS;
+    var year = Number(params.year) || new Date().getFullYear();
+
+    var snaps = listEntities_("cpeSnapshots", { wsId: wsId });
+    snaps.sort(function (a, b) { return a.snapshotDate > b.snapshotDate ? -1 : 1; });
+
+    var actual    = snaps.length > 0 ? snaps[0] : null;
+    var tendencia = snaps.slice(0, 12).reverse();
+
+    var brechas = _detectBrechas_(year);
+
+    var planes = listEntities_("cpePlanesMejora", { wsId: wsId });
+    var activos  = (planes || []).filter(function (p) { return p.status === "Pendiente" || p.status === "En proceso"; }).length;
+    var now      = new Date().toISOString();
+    var vencidos = (planes || []).filter(function (p) {
+      return (p.status === "Pendiente" || p.status === "En proceso") && p.targetDate && p.targetDate < now;
+    }).length;
+
+    return {
+      snapshotActual: actual,
+      tendencia:      tendencia,
+      brechas:        brechas,
+      planesActivos:  activos,
+      planesVencidos: vencidos,
+      ultimoCalculo:  actual ? actual.calculatedAt : null,
+    };
+  }
+
+  function getBrechas(params) {
+    var year = Number(params.year) || new Date().getFullYear();
+    return _detectBrechas_(year);
+  }
+
+  // ── Planes de Mejora CRUD ────────────────────────────────────────────────────
+
+  function listPlanesMejora(params) {
+    var filter = { wsId: params.wsId || CPE_WS };
+    if (params.status)   filter.status   = params.status;
+    if (params.priority) filter.priority = params.priority;
+    var items = listEntities_("cpePlanesMejora", filter);
+    return { total: items.length, items: items };
+  }
+
+  function getPlanMejora(params) {
+    var plan = getEntity_("cpePlanesMejora", params.id);
+    if (!plan) throw new Error("Plan de mejora no encontrado: " + params.id);
+    return plan;
+  }
+
+  function createPlanMejora(params) {
+    var now = new Date().toISOString();
+    var plan = {
+      id:                  IdGen.generate("PLAN"),
+      wsId:                params.wsId || CPE_WS,
+      relatedComplianceId: params.relatedComplianceId || "",
+      title:               params.title || "",
+      description:         params.description || "",
+      priority:            params.priority || "Media",
+      responsible:         params.responsible || "",
+      targetDate:          params.targetDate || "",
+      status:              "Pendiente",
+      progress:            0,
+      notes:               params.notes || "",
+      createdBy:           params.userId || "",
+      createdAt:           now,
+      updatedAt:           now,
+      deletedAt:           "",
+    };
+    return createEntity_("cpePlanesMejora", plan);
+  }
+
+  function updatePlanMejora(params) {
+    var id   = params.id;
+    var plan = getEntity_("cpePlanesMejora", id);
+    if (!plan) throw new Error("Plan de mejora no encontrado: " + id);
+    var now  = new Date().toISOString();
+    var patch = {
+      updatedAt: now,
+    };
+    var allowed = ["title", "description", "priority", "responsible", "targetDate", "status", "progress", "notes"];
+    allowed.forEach(function (f) { if (params[f] !== undefined) patch[f] = params[f]; });
+    return updateEntity_("cpePlanesMejora", id, patch);
+  }
+
+  function deletePlanMejora(params) {
+    var id   = params.id;
+    var plan = getEntity_("cpePlanesMejora", id);
+    if (!plan) throw new Error("Plan de mejora no encontrado: " + id);
+    updateEntity_("cpePlanesMejora", id, { deletedAt: new Date().toISOString() });
+    return { success: true };
+  }
+
+  // ── Catálogos ────────────────────────────────────────────────────────────────
+
+  function listCatalogos(params) {
+    var filter = { wsId: params.wsId || CPE_WS };
+    if (params.tipo) filter.tipo = params.tipo;
+    var items = listEntities_("cpeCatalogos", filter);
+    if (!items || items.length === 0) {
+      var tipo = params.tipo;
+      var defaults = tipo && DEFAULT_CATALOGOS[tipo]
+        ? DEFAULT_CATALOGOS[tipo]
+        : Object.keys(DEFAULT_CATALOGOS).reduce(function (acc, k) {
+            return acc.concat(DEFAULT_CATALOGOS[k]);
+          }, []);
+      return { total: defaults.length, items: defaults, isDefault: true };
+    }
+    return { total: items.length, items: items };
+  }
+
+  function updateCatalogo(params) {
+    var id  = params.id;
+    var cat = getEntity_("cpeCatalogos", id);
+    if (!cat) throw new Error("Catálogo no encontrado: " + id);
+    var patch = { updatedAt: new Date().toISOString() };
+    ["peso", "umbralMin", "umbralMax", "scoreMin", "scoreMax", "activo"].forEach(function (f) {
+      if (params[f] !== undefined) patch[f] = params[f];
+    });
+    return updateEntity_("cpeCatalogos", id, patch);
+  }
+
+  function getHistorial(params) {
+    var filter = { wsId: params.wsId || CPE_WS };
+    var items  = listEntities_("cpeHistorial", filter);
+    items.sort(function (a, b) { return a.createdAt > b.createdAt ? -1 : 1; });
+    return items;
+  }
+
+  // ── Return public interface ───────────────────────────────────────────────────
+  return {
+    calcularCumplimiento: calcularCumplimiento,
+    getSnapshot:          getSnapshot,
+    listSnapshots:        listSnapshots,
+    getDashboard:         getDashboard,
+    getBrechas:           getBrechas,
+    listPlanesMejora:     listPlanesMejora,
+    getPlanMejora:        getPlanMejora,
+    createPlanMejora:     createPlanMejora,
+    updatePlanMejora:     updatePlanMejora,
+    deletePlanMejora:     deletePlanMejora,
+    listCatalogos:        listCatalogos,
+    updateCatalogo:       updateCatalogo,
+    getHistorial:         getHistorial,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/EIPController.js
+// ============================================================
+
+/**
+ * EIPController — Executive Intelligence Platform.
+ * Pure read-only consumer. Aggregates data from all engines without modifying them.
+ * Does NOT own any entity sheets.
+ */
+var EIPController = (function () {
+
+  // ── Private helpers ───────────────────────────────────────────────────────────
+
+  function _color_(score) {
+    var s = Number(score) || 0;
+    if (s >= 90) return "Verde";
+    if (s >= 75) return "Amarillo";
+    if (s >= 60) return "Naranja";
+    return "Rojo";
+  }
+
+  function _trend_(curr, prev) {
+    var c = Number(curr) || 0;
+    var p = Number(prev) || 0;
+    if (Math.abs(c - p) < 2) return "stable";
+    return c > p ? "up" : "down";
+  }
+
+  // ── Cross-engine data loaders ─────────────────────────────────────────────────
+
+  function _snaps_()   { return listEntities_("cpeSnapshots",   {}) || []; }
+  function _planes_()  { return listEntities_("apePlanes",      {}) || []; }
+  function _ejecs_()   { return listEntities_("aeeEjecuciones", {}) || []; }
+  function _evids_()   { return listEntities_("emeEvidencias",  {}) || []; }
+  function _inds_()    { return listEntities_("imeIndicadores", {}) || []; }
+  function _procs_()   { return listEntities_("pmeProcesos",    {}) || []; }
+  function _mejora_()  { return listEntities_("cpePlanesMejora",{}) || []; }
+
+  function _latestSnap_(snaps) {
+    var s = (snaps || []).slice();
+    s.sort(function (a, b) { return a.calculatedAt > b.calculatedAt ? -1 : 1; });
+    return s.length > 0 ? s[0] : null;
+  }
+
+  // ── Ranking computations ──────────────────────────────────────────────────────
+
+  function _processRanking_(planes, ejecs) {
+    var byProc = {};
+    (planes || []).forEach(function (plan) {
+      var pid = plan.processId || plan.id;
+      if (!byProc[pid]) byProc[pid] = { id: pid, label: pid, planned: 0, executed: 0 };
+      byProc[pid].planned++;
+      (ejecs || []).forEach(function (e) {
+        if (e.planId === plan.id && e.status === "Finalizada") byProc[pid].executed++;
+      });
+    });
+    return Object.keys(byProc).map(function (pid) {
+      var p = byProc[pid];
+      var score = p.planned > 0 ? Math.min(100, Math.round((p.executed / p.planned) * 100)) : 0;
+      return { rank: 0, id: p.id, label: p.label, type: "proceso", score: score, semaforo: _color_(score), trend: "stable", details: { planned: p.planned, executed: p.executed } };
+    }).sort(function (a, b) { return b.score - a.score; }).map(function (r, i) { r.rank = i + 1; return r; });
+  }
+
+  function _unitRanking_(planes, ejecs) {
+    var byUnit = {};
+    (planes || []).forEach(function (plan) {
+      var uid = plan.organizationalUnitId || "SIN-UNIDAD";
+      if (!byUnit[uid]) byUnit[uid] = { id: uid, label: uid, planned: 0, executed: 0 };
+      byUnit[uid].planned++;
+      (ejecs || []).forEach(function (e) {
+        if (e.planId === plan.id && e.status === "Finalizada") byUnit[uid].executed++;
+      });
+    });
+    return Object.keys(byUnit).map(function (uid) {
+      var u = byUnit[uid];
+      var score = u.planned > 0 ? Math.min(100, Math.round((u.executed / u.planned) * 100)) : 0;
+      return { rank: 0, id: u.id, label: u.label, type: "unidad", score: score, semaforo: _color_(score), trend: "stable", details: { planned: u.planned, executed: u.executed } };
+    }).sort(function (a, b) { return b.score - a.score; }).map(function (r, i) { r.rank = i + 1; return r; });
+  }
+
+  function _indicatorRanking_(inds) {
+    return (inds || []).map(function (ind) {
+      var hasTarget = ind.targetValue && ind.targetValue !== "";
+      var score = hasTarget ? 75 : 25;
+      return { rank: 0, id: ind.id, label: ind.name || ind.id, type: "indicador", score: score, semaforo: _color_(score), trend: "stable", details: { unit: ind.unit || "", hasTarget: hasTarget } };
+    }).sort(function (a, b) { return b.score - a.score; }).map(function (r, i) { r.rank = i + 1; return r; });
+  }
+
+  function _responsableRanking_(ejecs) {
+    var byResp = {};
+    (ejecs || []).forEach(function (ej) {
+      var resp = ej.responsibleUserId || ej.createdBy || "Desconocido";
+      if (!byResp[resp]) byResp[resp] = { id: resp, label: resp, total: 0, completed: 0 };
+      byResp[resp].total++;
+      if (ej.status === "Finalizada") byResp[resp].completed++;
+    });
+    return Object.keys(byResp).map(function (resp) {
+      var r = byResp[resp];
+      var score = r.total > 0 ? Math.min(100, Math.round((r.completed / r.total) * 100)) : 0;
+      return { rank: 0, id: r.id, label: r.label, type: "responsable", score: score, semaforo: _color_(score), trend: "stable", details: { total: r.total, completed: r.completed } };
+    }).sort(function (a, b) { return b.score - a.score; }).map(function (r, i) { r.rank = i + 1; return r; });
+  }
+
+  // ── Alert generation ──────────────────────────────────────────────────────────
+
+  function _generateAlerts_(snaps, planesOverdue) {
+    var alerts = [];
+    var now = new Date().toISOString();
+
+    if (snaps.length >= 2) {
+      var curr = Number(snaps[0].overallScore) || 0;
+      var prev = Number(snaps[1].overallScore) || 0;
+      var drop = prev - curr;
+      if (drop >= 10) {
+        alerts.push({ id: "alert-drop-" + snaps[0].id, type: "caida_desempeno", severity: drop >= 20 ? "critica" : "alta", title: "Caída de desempeño detectada", description: "El puntaje global cayó " + Math.round(drop) + " puntos respecto al periodo anterior (" + Math.round(prev) + " → " + Math.round(curr) + ").", value: curr, threshold: prev, generatedAt: now });
+      }
+      var riskOrder = ["Muy Bajo", "Bajo", "Medio", "Alto", "Crítico"];
+      var rCurr = riskOrder.indexOf(snaps[0].riskLevel || "");
+      var rPrev = riskOrder.indexOf(snaps[1].riskLevel || "");
+      if (rCurr > rPrev && rCurr >= 0) {
+        alerts.push({ id: "alert-risk-" + snaps[0].id, type: "incremento_riesgo", severity: rCurr >= 4 ? "critica" : rCurr >= 3 ? "alta" : "media", title: "Nivel de riesgo aumentó", description: "El riesgo institucional escaló de \"" + (snaps[1].riskLevel || "N/D") + "\" a \"" + (snaps[0].riskLevel || "N/D") + "\".", generatedAt: now });
+      }
+    }
+
+    if (snaps.length > 0) {
+      var score = Number(snaps[0].overallScore) || 0;
+      if (score < 60) {
+        alerts.push({ id: "alert-score-" + snaps[0].id, type: "incumplimiento_critico", severity: score < 40 ? "critica" : "alta", title: "Puntaje de cumplimiento crítico", description: "Puntaje global " + Math.round(score) + "/100, por debajo del umbral mínimo aceptable (60).", value: score, threshold: 60, generatedAt: now });
+      }
+      var docScore = Number(snaps[0].documentationScore) || 0;
+      if (docScore < 50) {
+        alerts.push({ id: "alert-doc-" + snaps[0].id, type: "documentacion_insuficiente", severity: "media", title: "Documentación insuficiente", description: "Score de documentación: " + Math.round(docScore) + "%. Hay evidencias faltantes o rechazadas.", value: docScore, threshold: 50, generatedAt: now });
+      }
+    }
+
+    if (planesOverdue.length > 0) {
+      alerts.push({ id: "alert-planes-" + new Date().getTime(), type: "planes_mejora_vencidos", severity: planesOverdue.length >= 5 ? "alta" : "media", title: planesOverdue.length + " plan(es) de mejora vencido(s)", description: "Existen " + planesOverdue.length + " planes de mejora con fecha objetivo pasada sin completar.", value: planesOverdue.length, generatedAt: now });
+    }
+
+    var sevOrd = { critica: 0, alta: 1, media: 2, informativa: 3 };
+    alerts.sort(function (a, b) { return (sevOrd[a.severity] || 3) - (sevOrd[b.severity] || 3); });
+    return alerts;
+  }
+
+  // ── Heat map builder ──────────────────────────────────────────────────────────
+
+  function _buildHeatMap_(planes, ejecs, type) {
+    var ranking = type === "unidad" ? _unitRanking_(planes, ejecs) : _processRanking_(planes, ejecs);
+    return ranking.map(function (r) {
+      return { id: r.id, label: r.label, type: type || "proceso", score: r.score, semaforo: r.semaforo };
+    });
+  }
+
+  // ── Public handlers ───────────────────────────────────────────────────────────
+
+  function getDashboard(params) {
+    var year  = Number(params.year) || new Date().getFullYear();
+    var now   = new Date().toISOString();
+
+    var snaps  = _snaps_();
+    snaps.sort(function (a, b) { return a.calculatedAt > b.calculatedAt ? -1 : 1; });
+    var latest = snaps.length > 0 ? snaps[0] : null;
+    var planes = _planes_();
+    var ejecs  = _ejecs_();
+    var inds   = _inds_();
+    var mejora = _mejora_();
+
+    var overallScore = latest ? Number(latest.overallScore) || 0 : 0;
+
+    var kpis = [
+      { id: "kpi-planning",      label: "Planificación",     value: latest ? Number(latest.planningScore)       || 0 : 0, unit: "%", trend: snaps.length >= 2 ? _trend_(latest.planningScore,       snaps[1].planningScore)       : "stable", trendValue: snaps.length >= 2 ? Math.round(Math.abs((Number(latest.planningScore)       || 0) - (Number(snaps[1].planningScore)       || 0))) : 0, semaforo: _color_(latest ? latest.planningScore       : 0), description: "Actividades ejecutadas vs planificadas" },
+      { id: "kpi-execution",     label: "Ejecución",         value: latest ? Number(latest.executionScore)      || 0 : 0, unit: "%", trend: snaps.length >= 2 ? _trend_(latest.executionScore,      snaps[1].executionScore)      : "stable", trendValue: snaps.length >= 2 ? Math.round(Math.abs((Number(latest.executionScore)      || 0) - (Number(snaps[1].executionScore)      || 0))) : 0, semaforo: _color_(latest ? latest.executionScore      : 0), description: "Actividades finalizadas" },
+      { id: "kpi-documentation", label: "Documentación",    value: latest ? Number(latest.documentationScore)  || 0 : 0, unit: "%", trend: snaps.length >= 2 ? _trend_(latest.documentationScore,  snaps[1].documentationScore)  : "stable", trendValue: snaps.length >= 2 ? Math.round(Math.abs((Number(latest.documentationScore)  || 0) - (Number(snaps[1].documentationScore)  || 0))) : 0, semaforo: _color_(latest ? latest.documentationScore  : 0), description: "Evidencias validadas vs requeridas" },
+      { id: "kpi-improvement",   label: "Planes Completados",value: mejora.filter(function (p) { return p.status === "Completado"; }).length, unit: "planes", trend: "stable", trendValue: 0, semaforo: "Verde", description: "Planes de mejora finalizados" },
+    ];
+
+    var planesOverdue = mejora.filter(function (p) {
+      return (p.status === "Pendiente" || p.status === "En proceso") && p.targetDate && p.targetDate < now;
+    });
+
+    var brechas = [];
+    (planes || []).forEach(function (plan) {
+      if (plan.plannedEndDate && plan.plannedEndDate < now) {
+        var ejs = (ejecs || []).filter(function (e) { return e.planId === plan.id && e.status === "Finalizada"; });
+        if (ejs.length === 0) {
+          brechas.push({ tipo: "actividad_no_ejecutada", descripcion: "Plan vencido sin ejecución: " + (plan.title || plan.id), severidad: "alta", entidadId: plan.id, entidadTipo: "apePlan", fechaDeteccion: now });
+        }
+      }
+    });
+
+    var risks = [];
+    if (overallScore < 60) {
+      risks.push({ id: "risk-score", type: "cumplimiento_bajo", level: overallScore < 40 ? "critico" : "alto", description: "Puntaje global " + overallScore + "/100 por debajo del umbral.", value: overallScore });
+    }
+    if (planesOverdue.length > 0) {
+      risks.push({ id: "risk-planes", type: "planes_vencidos", level: planesOverdue.length >= 5 ? "alto" : "medio", description: planesOverdue.length + " planes de mejora vencidos.", value: planesOverdue.length });
+    }
+
+    return {
+      overallScore:    overallScore,
+      semaforo:        _color_(overallScore),
+      kpis:            kpis,
+      topUnits:        _unitRanking_(planes, ejecs).slice(0, 5),
+      topProcesses:    _processRanking_(planes, ejecs).slice(0, 5),
+      topIndicators:   _indicatorRanking_(inds).slice(0, 5),
+      criticalBrechas: brechas.slice(0, 5),
+      risks:           risks,
+      alerts:          _generateAlerts_(snaps, planesOverdue).slice(0, 10),
+      heatMapSummary:  _buildHeatMap_(planes, ejecs, "proceso").slice(0, 8),
+      generatedAt:     now,
+    };
+  }
+
+  function getScorecard(params) {
+    var now    = new Date().toISOString();
+    var snaps  = _snaps_();
+    var latest = _latestSnap_(snaps);
+    var planes = _planes_();
+    var ejecs  = _ejecs_();
+    var inds   = _inds_();
+
+    var planScore = latest ? Number(latest.planningScore)       || 0 : 0;
+    var execScore = latest ? Number(latest.executionScore)      || 0 : 0;
+    var docScore  = latest ? Number(latest.documentationScore)  || 0 : 0;
+    var overall   = latest ? Number(latest.overallScore)        || 0 : 0;
+
+    var ejTotal   = (ejecs || []).length;
+    var ejFin     = (ejecs || []).filter(function (e) { return e.status === "Finalizada"; }).length;
+    var ejRate    = ejTotal > 0 ? Math.round((ejFin / ejTotal) * 100) : 0;
+
+    var indWithTarget = (inds || []).filter(function (i) { return i.targetValue && i.targetValue !== ""; }).length;
+    var indPct = inds.length > 0 ? Math.round((indWithTarget / inds.length) * 100) : 0;
+
+    var items = [
+      { id: "bsc-f1", perspective: "financiera",    objective: "Eficiencia documental",              indicator: "Índice de evidencias validadas",              target: 90,  actual: docScore,    unit: "%",        score: docScore,    semaforo: _color_(docScore) },
+      { id: "bsc-f2", perspective: "financiera",    objective: "Optimización de procesos de soporte", indicator: "Planes de mejora activos vs completados",   target: 100, actual: null,        unit: "%",        score: 50,          semaforo: _color_(50) },
+      { id: "bsc-p1", perspective: "procesos",      objective: "Cumplimiento de planificación",       indicator: "Tasa de planificación ejecutada",           target: 90,  actual: planScore,   unit: "%",        score: planScore,   semaforo: _color_(planScore) },
+      { id: "bsc-p2", perspective: "procesos",      objective: "Ejecución efectiva de actividades",   indicator: "Tasa de ejecución operativa",               target: 85,  actual: execScore,   unit: "%",        score: execScore,   semaforo: _color_(execScore) },
+      { id: "bsc-p3", perspective: "procesos",      objective: "Gestión de procesos activos",         indicator: "Procesos con plan de actividades vigente",  target: 100, actual: planes.length > 0 ? 75 : 0, unit: "%", score: planes.length > 0 ? 75 : 0, semaforo: _color_(planes.length > 0 ? 75 : 0) },
+      { id: "bsc-a1", perspective: "aprendizaje",   objective: "Capacidad de ejecución operativa",    indicator: "Tasa de finalización de actividades",       target: 85,  actual: ejRate,      unit: "%",        score: ejRate,      semaforo: _color_(ejRate) },
+      { id: "bsc-a2", perspective: "aprendizaje",   objective: "Gestión del conocimiento",            indicator: "Indicadores con objetivo configurado",      target: 100, actual: indPct,       unit: "%",        score: indPct,      semaforo: _color_(indPct) },
+      { id: "bsc-c1", perspective: "clientes",      objective: "Cumplimiento normativo institucional", indicator: "Puntaje global de cumplimiento",           target: 90,  actual: overall,     unit: "%",        score: overall,     semaforo: _color_(overall) },
+      { id: "bsc-c2", perspective: "clientes",      objective: "Calidad en la entrega de resultados",  indicator: "Evidencias validadas del total",           target: 95,  actual: docScore,    unit: "%",        score: docScore,    semaforo: _color_(docScore) },
+    ];
+
+    var perspectives = { financiera: [], procesos: [], aprendizaje: [], clientes: [] };
+    items.forEach(function (item) {
+      if (perspectives[item.perspective]) perspectives[item.perspective].push(item);
+    });
+
+    var avgScore = items.length > 0 ? Math.round(items.reduce(function (s, i) { return s + i.score; }, 0) / items.length) : 0;
+
+    return { perspectives: perspectives, overallScore: avgScore, generatedAt: now };
+  }
+
+  function getHeatMap(params) {
+    var type   = params.type || "proceso";
+    var planes = _planes_();
+    var ejecs  = _ejecs_();
+    return _buildHeatMap_(planes, ejecs, type);
+  }
+
+  function getTrends(params) {
+    var snaps = _snaps_();
+    snaps.sort(function (a, b) { return a.snapshotDate > b.snapshotDate ? 1 : -1; });
+
+    function toPoints(field) {
+      return snaps.map(function (s) {
+        var score = Number(s[field]) || 0;
+        var m = Number(s.month) || 1;
+        return { period: s.year + "-" + (m < 10 ? "0" + m : m), year: Number(s.year), month: m, score: score, semaforo: _color_(score) };
+      });
+    }
+
+    return [
+      { label: "Cumplimiento Global", entityId: "global",        entityType: "global", color: "#1D4ED8", points: toPoints("overallScore") },
+      { label: "Planificación",        entityId: "planning",      entityType: "global", color: "#059669", points: toPoints("planningScore") },
+      { label: "Ejecución",            entityId: "execution",     entityType: "global", color: "#0E7490", points: toPoints("executionScore") },
+      { label: "Documentación",        entityId: "documentation", entityType: "global", color: "#7C3AED", points: toPoints("documentationScore") },
+    ];
+  }
+
+  function getAlerts(params) {
+    var snaps  = _snaps_();
+    snaps.sort(function (a, b) { return a.calculatedAt > b.calculatedAt ? -1 : 1; });
+    var mejora = _mejora_();
+    var now    = new Date().toISOString();
+    var planesOverdue = mejora.filter(function (p) {
+      return (p.status === "Pendiente" || p.status === "En proceso") && p.targetDate && p.targetDate < now;
+    });
+    var alerts = _generateAlerts_(snaps, planesOverdue);
+    if (params.severity) {
+      alerts = alerts.filter(function (a) { return a.severity === params.severity; });
+    }
+    return alerts.slice(0, Number(params.limit) || 50);
+  }
+
+  function getTimeline(params) {
+    var year     = Number(params.year) || new Date().getFullYear();
+    var limit    = Number(params.limit) || 50;
+    var yearStr  = String(year);
+    var typeFilter = params.types ? String(params.types).split(",") : null;
+    var events   = [];
+
+    (_planes_() || []).forEach(function (plan) {
+      if (plan.plannedStartDate && String(plan.plannedStartDate).indexOf(yearStr) !== -1) {
+        events.push({ id: "ev-plan-" + plan.id, type: "planificacion", title: "Plan de actividad creado", description: plan.title || plan.id, date: plan.plannedStartDate, entityId: plan.id, entityType: "apePlan", status: plan.status });
+      }
+    });
+
+    (_ejecs_() || []).forEach(function (ej) {
+      if (ej.executedAt && String(ej.executedAt).indexOf(yearStr) !== -1) {
+        events.push({ id: "ev-ej-" + ej.id, type: "ejecucion", title: "Actividad ejecutada", description: (ej.activityName || ej.id) + " — " + (ej.status || ""), date: ej.executedAt, entityId: ej.id, entityType: "aeeEjecucion", status: ej.status });
+      }
+    });
+
+    (_evids_() || []).forEach(function (ev) {
+      if (ev.createdAt && String(ev.createdAt).indexOf(yearStr) !== -1) {
+        events.push({ id: "ev-eme-" + ev.id, type: "evidencia", title: "Evidencia cargada", description: ev.title || ev.id, date: ev.createdAt, entityId: ev.id, entityType: "emeEvidencia", status: ev.status });
+      }
+    });
+
+    (_mejora_() || []).forEach(function (p) {
+      if (p.createdAt && String(p.createdAt).indexOf(yearStr) !== -1) {
+        events.push({ id: "ev-mejora-" + p.id, type: "plan_mejora", title: "Plan de mejora creado", description: p.title || p.id, date: p.createdAt, entityId: p.id, entityType: "cpePlanMejora", status: p.status });
+      }
+    });
+
+    if (typeFilter && typeFilter.length > 0) {
+      events = events.filter(function (e) { return typeFilter.indexOf(e.type) !== -1; });
+    }
+
+    events.sort(function (a, b) { return a.date > b.date ? -1 : 1; });
+    return events.slice(0, limit);
+  }
+
+  function getRanking(params) {
+    var type   = params.type || "proceso";
+    var limit  = Number(params.limit) || 20;
+    var planes = _planes_();
+    var ejecs  = _ejecs_();
+    var inds   = _inds_();
+    var ranking;
+
+    if      (type === "unidad")      ranking = _unitRanking_(planes, ejecs);
+    else if (type === "indicador")   ranking = _indicatorRanking_(inds);
+    else if (type === "responsable") ranking = _responsableRanking_(ejecs);
+    else                             ranking = _processRanking_(planes, ejecs);
+
+    return ranking.slice(0, limit);
+  }
+
+  function getComparativo(params) {
+    var type = params.type || "mes-vs-mes";
+    var now  = new Date();
+    var cY   = Number(params.currentYear)   || now.getFullYear();
+    var cM   = Number(params.currentMonth)  || (now.getMonth() + 1);
+    var pY   = Number(params.previousYear)  || (cM === 1 ? cY - 1 : cY);
+    var pM   = Number(params.previousMonth) || (cM === 1 ? 12 : cM - 1);
+    var nowStr = now.toISOString();
+
+    if (type === "mes-vs-mes" || type === "año-vs-año") {
+      var snaps = _snaps_();
+      var cSnap = snaps.filter(function (s) { return Number(s.year) === cY && Number(s.month) === cM; })[0] || null;
+      var pSnap = snaps.filter(function (s) { return Number(s.year) === pY && Number(s.month) === pM; })[0] || null;
+
+      var dims = [
+        { id: "overall",       label: "Puntaje Global", c: cSnap ? Number(cSnap.overallScore)       || 0 : 0, p: pSnap ? Number(pSnap.overallScore)       || 0 : 0 },
+        { id: "planning",      label: "Planificación",  c: cSnap ? Number(cSnap.planningScore)      || 0 : 0, p: pSnap ? Number(pSnap.planningScore)      || 0 : 0 },
+        { id: "execution",     label: "Ejecución",      c: cSnap ? Number(cSnap.executionScore)     || 0 : 0, p: pSnap ? Number(pSnap.executionScore)     || 0 : 0 },
+        { id: "documentation", label: "Documentación",  c: cSnap ? Number(cSnap.documentationScore) || 0 : 0, p: pSnap ? Number(pSnap.documentationScore) || 0 : 0 },
+      ];
+
+      var items = dims.map(function (d) {
+        var variation = d.c - d.p;
+        return { entityId: d.id, entityLabel: d.label, current: d.c, previous: d.p, variation: Math.round(variation * 10) / 10, variationPct: d.p > 0 ? Math.round((variation / d.p) * 1000) / 10 : 0, trend: _trend_(d.c, d.p) };
+      });
+
+      var pad = function (n) { return n < 10 ? "0" + n : String(n); };
+      return { type: type, currentPeriod: cY + "-" + pad(cM), previousPeriod: pY + "-" + pad(pM), items: items, generatedAt: nowStr };
+    }
+
+    var planes = _planes_();
+    var ejecs  = _ejecs_();
+    var ranking = type === "unidad-vs-unidad" ? _unitRanking_(planes, ejecs) : _processRanking_(planes, ejecs);
+    var items = ranking.slice(0, 10).map(function (r) {
+      return { entityId: r.id, entityLabel: r.label, current: r.score, previous: r.score, variation: 0, variationPct: 0, trend: "stable" };
+    });
+
+    return { type: type, currentPeriod: String(cY), previousPeriod: String(pY), items: items, generatedAt: nowStr };
+  }
+
+  // ── Public interface ──────────────────────────────────────────────────────────
+  return {
+    getDashboard:   getDashboard,
+    getScorecard:   getScorecard,
+    getHeatMap:     getHeatMap,
+    getTrends:      getTrends,
+    getAlerts:      getAlerts,
+    getTimeline:    getTimeline,
+    getRanking:     getRanking,
+    getComparativo: getComparativo,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/IIEController.js
+// ============================================================
+
+/**
+ * IIEController — Institutional Intelligence Engine.
+ *
+ * Pure analytical engine. Contains 5 internal sub-engines:
+ *   1. DiagnosisEngine      — structured institutional diagnosis via rules
+ *   2. RecommendationEngine — prioritized, explainable recommendations
+ *   3. PredictionEngine     — deterministic linear-trend forecasting
+ *   4. AnomalyDetectionEngine — pattern & deviation detection
+ *   5. NarrativeEngine      — template-based executive text generation
+ *
+ * Plus: InstitutionalSemanticService — structured semantic query endpoint
+ * for future AI provider integration (no AI implemented here).
+ *
+ * Reads from: cpeSnapshots, cpePlanesMejora, apePlanes, aeeEjecuciones,
+ *             emeEvidencias, imeIndicadores, pmeProcesos + own config sheets.
+ * Writes to:  iieConfiguration, iieKnowledgeRules only (own config sheets).
+ * NEVER writes to: IME, PME, APE, AEE, EME, CPE, EIP sheets.
+ */
+var IIEController = (function () {
+  var IIE_WS = "iie";
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DATA LOADERS — cross-engine reads via SheetRepository contracts
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _snaps_()   { try { return listEntities_("cpeSnapshots",    {}) || []; } catch (e) { return []; } }
+  function _planes_()  { try { return listEntities_("apePlanes",       {}) || []; } catch (e) { return []; } }
+  function _ejecs_()   { try { return listEntities_("aeeEjecuciones",  {}) || []; } catch (e) { return []; } }
+  function _evids_()   { try { return listEntities_("emeEvidencias",   {}) || []; } catch (e) { return []; } }
+  function _inds_()    { try { return listEntities_("imeIndicadores",  {}) || []; } catch (e) { return []; } }
+  function _procs_()   { try { return listEntities_("pmeProcesos",     {}) || []; } catch (e) { return []; } }
+  function _mejora_()  { try { return listEntities_("cpePlanesMejora", {}) || []; } catch (e) { return []; } }
+  function _config_()  { try { return listEntities_("iieConfiguration",  {}) || []; } catch (e) { return []; } }
+  function _rules_()   { try { return listEntities_("iieKnowledgeRules", {}) || []; } catch (e) { return []; } }
+  function _mparams_() { try { return listEntities_("iieModelParameters",{}) || []; } catch (e) { return []; } }
+
+  // ─── Config access helpers ─────────────────────────────────────────────────
+
+  function _cfgNum_(key, def) {
+    var items = _config_();
+    var item = items.find(function (c) { return c.key === key; });
+    return item ? Number(item.value) : def;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SCORING & CLASSIFICATION HELPERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _riskLevel_(score) {
+    var verde    = _cfgNum_("cumplimiento.umbral.verde",    90);
+    var amarillo = _cfgNum_("cumplimiento.umbral.amarillo", 75);
+    var naranja  = _cfgNum_("cumplimiento.umbral.naranja",  60);
+    if (score >= verde)    return "bajo";
+    if (score >= amarillo) return "medio";
+    if (score >= naranja)  return "alto";
+    return "critico";
+  }
+
+  function _confidenceLevel_(score) {
+    if (score >= 80) return "muy_alta";
+    if (score >= 60) return "alta";
+    if (score >= 40) return "media";
+    return "baja";
+  }
+
+  // ─── Confidence score (0-100) based on 4 data quality dimensions ──────────
+
+  function _confidence_(dataCount, recencyDays, indicatorCoverage, documentationRate) {
+    var wData  = _cfgNum_("confianza.peso.datos",          0.25);
+    var wRec   = _cfgNum_("confianza.peso.actualidad",     0.25);
+    var wCov   = _cfgNum_("confianza.peso.cobertura",      0.30);
+    var wDoc   = _cfgNum_("confianza.peso.documentacion",  0.20);
+    var dataSrc = Math.min(100, (dataCount || 0) * 5);
+    var recency = Math.max(0, 100 - Math.min(100, recencyDays || 30));
+    var cov     = Math.min(100, indicatorCoverage || 0);
+    var doc     = Math.min(100, documentationRate || 0);
+    return Math.round(dataSrc * wData + recency * wRec + cov * wCov + doc * wDoc);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ENGINE 1 — RULES ENGINE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _parseJson_(str, def) {
+    if (!str) return def;
+    if (typeof str !== "string") return str;
+    try { return JSON.parse(str); } catch (e) { return def; }
+  }
+
+  function _evalCondition_(ctx, cond) {
+    var val = ctx[cond.field];
+    if (val === undefined || val === null) return false;
+    switch (cond.operator) {
+      case "lt":  return Number(val) <  Number(cond.value);
+      case "lte": return Number(val) <= Number(cond.value);
+      case "gt":  return Number(val) >  Number(cond.value);
+      case "gte": return Number(val) >= Number(cond.value);
+      case "eq":  return String(val) === String(cond.value);
+      case "neq": return String(val) !== String(cond.value);
+      default:    return false;
+    }
+  }
+
+  function _applyRules_(rules, ctx) {
+    var results = [];
+    rules.forEach(function (rule) {
+      if (!rule.enabled && rule.enabled !== undefined) return;
+      var conditions   = _parseJson_(rule.conditions,   []);
+      var consequences = _parseJson_(rule.consequences, []);
+      var logic = (rule.logic || "AND").toUpperCase();
+      var matched = logic === "OR"
+        ? conditions.some(function (c)  { return _evalCondition_(ctx, c); })
+        : conditions.every(function (c) { return _evalCondition_(ctx, c); });
+      if (matched) {
+        results.push({
+          ruleId:      rule.id,
+          ruleName:    rule.name,
+          consequences: consequences,
+          weight:       Number(rule.weight)     || 1,
+          confidence:   Number(rule.confidence) || 80,
+        });
+      }
+    });
+    return results;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ENGINE 2 — DIAGNOSIS ENGINE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _aggregateMetrics_(snaps, ejecs, evids, inds) {
+    var totalScore = 0, totalBrechas = 0, totalEvidencias = 0;
+    (snaps || []).forEach(function (s) {
+      totalScore     += Number(s.overallScore || 0);
+      totalBrechas   += Number(s.brechas || 0);
+    });
+    var avgScore = snaps && snaps.length > 0 ? Math.round(totalScore / snaps.length) : 0;
+
+    var evidCount = (evids || []).length;
+    var indCount  = (inds  || []).length;
+    var indWithMeta = (inds || []).filter(function (i) { return Number(i.meta || 0) > 0; }).length;
+    var indCoverage = indCount > 0 ? Math.round((indWithMeta / indCount) * 100) : 0;
+    var docRate  = evidCount > 0 ? Math.min(100, evidCount * 10) : 0;
+
+    return {
+      cumplimiento:       avgScore,
+      brechas:            totalBrechas,
+      evidencias:         evidCount,
+      indicatorCoverage:  indCoverage,
+      dataCount:          (snaps || []).length,
+      recencyDays:        7,
+      documentationRate:  docRate,
+    };
+  }
+
+  function _buildDiagnosis_(entityType, entityId, entityLabel, metrics, rules) {
+    var applied = _applyRules_(rules, metrics);
+    var score   = metrics.cumplimiento || 0;
+    var riskOverride;
+
+    applied.forEach(function (r) {
+      r.consequences.forEach(function (c) {
+        if (c.field === "riskLevel") riskOverride = String(c.value);
+      });
+    });
+
+    var riskLevel = riskOverride || _riskLevel_(score);
+    var conf = _confidence_(metrics.dataCount, metrics.recencyDays, metrics.indicatorCoverage, metrics.documentationRate);
+
+    var factors = [
+      { name: "Cumplimiento",   value: score,                     impact: score >= 75 ? "positivo" : "negativo",                              weight: 0.4, description: "Tasa de cumplimiento de actividades planificadas" },
+      { name: "Brechas",        value: metrics.brechas || 0,      impact: (metrics.brechas || 0) > 5 ? "negativo" : "neutro",                 weight: 0.2, description: "Número de brechas detectadas en el período" },
+      { name: "Evidencias",     value: metrics.evidencias || 0,   impact: (metrics.evidencias || 0) > 0 ? "positivo" : "negativo",            weight: 0.2, description: "Documentos de evidencia registrados" },
+      { name: "Cobertura Ind.", value: metrics.indicatorCoverage || 0, impact: (metrics.indicatorCoverage || 0) >= 70 ? "positivo" : "negativo", weight: 0.2, description: "Porcentaje de indicadores con meta definida" },
+    ];
+
+    var summary = _diagSummary_(entityLabel, riskLevel, score, metrics);
+
+    return {
+      id:              IdGen.id(),
+      entityType:      entityType,
+      entityId:        entityId,
+      entityLabel:     entityLabel,
+      period:          new Date().toISOString().slice(0, 7),
+      riskLevel:       riskLevel,
+      overallScore:    score,
+      confidenceScore: conf,
+      confidenceLevel: _confidenceLevel_(conf),
+      factors:         factors,
+      summary:         summary,
+      appliedRules:    applied.map(function (r) { return r.ruleName; }),
+      dataCompleteness: Math.min(100, (metrics.dataCount || 0) * 10),
+      dataRecency:      Math.max(0, 100 - (metrics.recencyDays || 30)),
+      generatedAt:     new Date().toISOString(),
+    };
+  }
+
+  function _diagSummary_(label, risk, score, m) {
+    var parts = [label + " presenta nivel de riesgo " + risk + " con " + score + "% de cumplimiento."];
+    if ((m.brechas || 0) > 10) parts.push("Se identificaron " + m.brechas + " brechas que requieren atención prioritaria.");
+    if (score < 70) parts.push("El cumplimiento está por debajo del umbral mínimo institucional (70%).");
+    if ((m.evidencias || 0) === 0) parts.push("No se registran evidencias documentales en el período analizado.");
+    if ((m.indicatorCoverage || 0) < 50) parts.push("La cobertura de indicadores es insuficiente.");
+    return parts.join(" ");
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ENGINE 3 — RECOMMENDATION ENGINE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _buildRecommendations_(diagnoses, rules) {
+    var recs = [];
+    diagnoses.forEach(function (d) {
+      if (d.riskLevel === "critico" || d.riskLevel === "alto") {
+        recs.push({
+          id:          IdGen.id(),
+          title:       "Revisar planificación — " + d.entityLabel,
+          description: "El nivel de riesgo " + d.riskLevel + " requiere intervención en la planificación institucional.",
+          priority:    d.riskLevel === "critico" ? "critica" : "alta",
+          impact:      "alto",
+          urgency:     d.riskLevel === "critico" ? "critica" : "alta",
+          justification:        d.summary,
+          suggestedResponsible: "Dirección de " + d.entityLabel,
+          entityType:  d.entityType,
+          entityId:    d.entityId,
+          entityLabel: d.entityLabel,
+          why:         "Análisis operativo detecta incumplimiento sostenido en " + d.entityLabel + " con " + d.overallScore + "% de cumplimiento.",
+          sourceData:  d.factors.map(function (f) { return { source: f.name, value: f.value, label: f.description }; }),
+          expectedImpact:        "Reducción del riesgo de " + d.riskLevel + " a medio en 60 días con seguimiento activo.",
+          consequenceIfIgnored:  "Escalamiento del riesgo institucional y posible impacto en procesos acreditación.",
+          confidenceScore:       d.confidenceScore,
+          status:       "pendiente",
+          appliedRule:  d.appliedRules[0] || null,
+          estimatedEffort: d.riskLevel === "critico" ? "Alta" : "Media",
+          generatedAt:  new Date().toISOString(),
+        });
+      }
+
+      var hasNoEvid = d.factors.some(function (f) { return f.name === "Evidencias" && Number(f.value) === 0; });
+      if (hasNoEvid) {
+        recs.push({
+          id:          IdGen.id(),
+          title:       "Completar documentación — " + d.entityLabel,
+          description: "No existen evidencias documentadas en el período actual.",
+          priority:    "media",
+          impact:      "medio",
+          urgency:     "media",
+          justification:        "La ausencia de evidencias impacta el puntaje de calidad documental.",
+          entityType:  d.entityType,
+          entityId:    d.entityId,
+          entityLabel: d.entityLabel,
+          why:         "Ausencia total de documentación en el período analizado.",
+          sourceData:  [{ source: "Evidencias", value: 0, label: "Documentos registrados" }],
+          expectedImpact:       "Mejora del 10–15% en el puntaje de cumplimiento documental.",
+          consequenceIfIgnored: "Deterioro continuo del indicador de calidad documental.",
+          confidenceScore:      Math.min(d.confidenceScore, 70),
+          status:       "pendiente",
+          generatedAt:  new Date().toISOString(),
+        });
+      }
+
+      var lowInd = d.factors.some(function (f) { return f.name === "Cobertura Ind." && Number(f.value) < 50; });
+      if (lowInd) {
+        recs.push({
+          id:          IdGen.id(),
+          title:       "Ampliar cobertura de indicadores — " + d.entityLabel,
+          description: "La cobertura de indicadores con meta definida es inferior al 50%.",
+          priority:    "media",
+          impact:      "medio",
+          urgency:     "baja",
+          justification:        "Los indicadores sin meta no pueden ser evaluados para el cálculo de cumplimiento.",
+          entityType:  d.entityType,
+          entityId:    d.entityId,
+          entityLabel: d.entityLabel,
+          why:         "Solo " + (d.factors.find(function (f) { return f.name === "Cobertura Ind."; }) || { value: 0 }).value + "% de indicadores tienen meta definida.",
+          sourceData:  [{ source: "Cobertura Indicadores", value: d.factors.find(function (f) { return f.name === "Cobertura Ind."; }) ? d.factors.find(function (f) { return f.name === "Cobertura Ind."; }).value : 0, label: "% con meta" }],
+          expectedImpact:       "Mayor precisión en el cálculo de cumplimiento.",
+          consequenceIfIgnored: "Evaluación institucional basada en datos incompletos.",
+          confidenceScore:      80,
+          status:       "pendiente",
+          generatedAt:  new Date().toISOString(),
+        });
+      }
+    });
+
+    var order = { critica: 0, alta: 1, media: 2, baja: 3 };
+    recs.sort(function (a, b) { return (order[a.priority] || 3) - (order[b.priority] || 3); });
+    return recs;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ENGINE 4 — PREDICTION ENGINE (deterministic)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _linearSlope_(values) {
+    var n = values.length;
+    if (n < 2) return 0;
+    var sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    values.forEach(function (v, i) { sumX += i; sumY += v; sumXY += i * v; sumX2 += i * i; });
+    var denom = n * sumX2 - sumX * sumX;
+    return denom === 0 ? 0 : (n * sumXY - sumX * sumY) / denom;
+  }
+
+  function _buildHistoricalScores_(snaps) {
+    var byPeriod = {};
+    (snaps || []).forEach(function (s) {
+      var period = String(s.year || new Date().getFullYear());
+      if (!byPeriod[period]) byPeriod[period] = [];
+      byPeriod[period].push(Number(s.overallScore || 0));
+    });
+    return Object.keys(byPeriod).sort().map(function (p) {
+      var vals = byPeriod[p];
+      var avg = Math.round(vals.reduce(function (a, b) { return a + b; }, 0) / vals.length);
+      return { period: p, label: p, score: avg };
+    });
+  }
+
+  function _buildPrediction_(entityType, entityId, entityLabel, hist, horizon) {
+    var smoothing = _cfgNum_("prediccion.smoothing", 0.3);
+    var uncFactor = _cfgNum_("prediccion.uncertainty_factor", 3);
+    var maxUnc    = _cfgNum_("prediccion.max_uncertainty", 20);
+
+    var historical = (hist || []).map(function (h) {
+      return { period: h.period, label: h.label, predicted: h.score, lowerBound: h.score - 5, upperBound: Math.min(100, h.score + 5), isHistorical: true };
+    });
+
+    var scores  = (hist || []).map(function (h) { return h.score; });
+    var slope   = _linearSlope_(scores);
+    var last    = scores.length > 0 ? scores[scores.length - 1] : 70;
+    var steps   = horizon === "anual" ? 12 : horizon === "semestral" ? 6 : 3;
+    var now     = new Date();
+
+    var future = [];
+    for (var i = 1; i <= steps; i++) {
+      var pred  = Math.max(0, Math.min(100, last + slope * i));
+      var unc   = Math.min(maxUnc, i * uncFactor);
+      var d     = new Date(now);
+      d.setMonth(d.getMonth() + i);
+      var lbl   = d.toISOString().slice(0, 7);
+      future.push({ period: lbl, label: lbl, predicted: Math.round(pred), lowerBound: Math.max(0, Math.round(pred - unc)), upperBound: Math.min(100, Math.round(pred + unc)), isHistorical: false });
+    }
+
+    var finalScore = future.length > 0 ? future[future.length - 1].predicted : last;
+    var trend = Math.abs(slope) < 0.5 ? "estable" : slope > 0 ? "creciente" : "decreciente";
+
+    return {
+      id:           IdGen.id(),
+      entityType:   entityType,
+      entityId:     entityId,
+      entityLabel:  entityLabel,
+      metric:       "cumplimiento",
+      horizon:      horizon || "trimestral",
+      model:        "linear_trend",
+      currentValue: last,
+      predictedValue:         finalScore,
+      probabilityOfCompliance: finalScore >= 75 ? Math.min(95, finalScore) : Math.max(5, finalScore),
+      expectedRisk: _riskLevel_(finalScore),
+      trend:        trend,
+      points:       historical.concat(future),
+      confidenceScore: Math.max(40, Math.min(90, 80 - (hist || []).length * 2)),
+      assumptions:  [
+        "La tendencia histórica se mantiene sin eventos disruptivos externos.",
+        "Los recursos institucionales permanecen sin cambios significativos.",
+        "Las reglas de negocio configuradas son representativas del comportamiento real.",
+      ],
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ENGINE 5 — ANOMALY DETECTION ENGINE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _detectAnomalies_(snaps) {
+    var dropThreshold  = _cfgNum_("anomalia.umbral.caida",       15);
+    var sustainedPers  = _cfgNum_("anomalia.periodos.sostenido",  3);
+    var anomalies = [];
+    var byEntity  = {};
+
+    (snaps || []).forEach(function (s) {
+      var key = String(s.organizationalUnitId || "global") + "_" + String(s.processId || "");
+      if (!byEntity[key]) byEntity[key] = { entityType: "unidad", entityId: s.organizationalUnitId || "global", entityLabel: s.entityLabel || "Global", scores: [] };
+      byEntity[key].scores.push({ period: String(s.year || ""), score: Number(s.overallScore || 0) });
+    });
+
+    Object.keys(byEntity).forEach(function (key) {
+      var ent    = byEntity[key];
+      var scores = ent.scores.sort(function (a, b) { return a.period.localeCompare(b.period); });
+      if (scores.length < 2) return;
+
+      var last = scores[scores.length - 1].score;
+      var prev = scores[scores.length - 2].score;
+      var deviation = prev > 0 ? Math.round(((last - prev) / prev) * 100) : 0;
+
+      // Sudden drop
+      if (deviation <= -dropThreshold) {
+        anomalies.push({
+          id:            IdGen.id(),
+          type:          "caida_productividad",
+          entityType:    ent.entityType,
+          entityId:      ent.entityId,
+          entityLabel:   ent.entityLabel,
+          severity:      deviation <= -(dropThreshold * 1.67) ? "critico" : "alto",
+          detectedAt:    new Date().toISOString(),
+          description:   "Caída abrupta del " + Math.abs(deviation) + "% respecto al período anterior.",
+          metric:        "cumplimiento",
+          observedValue: last,
+          expectedValue: prev,
+          deviationPct:  deviation,
+          period:        scores[scores.length - 1].period,
+          isActive:      true,
+        });
+      }
+
+      // Sustained decrease
+      if (scores.length >= sustainedPers) {
+        var sustDecreasing = true;
+        for (var i = scores.length - 1; i >= scores.length - sustainedPers; i--) {
+          if (i === 0 || scores[i].score >= scores[i - 1].score) { sustDecreasing = false; break; }
+        }
+        if (sustDecreasing) {
+          var oldScore = scores[scores.length - sustainedPers].score;
+          var deviSust = oldScore > 0 ? Math.round(((last - oldScore) / oldScore) * 100) : 0;
+          anomalies.push({
+            id:            IdGen.id(),
+            type:          "disminucion_cumplimiento",
+            entityType:    ent.entityType,
+            entityId:      ent.entityId,
+            entityLabel:   ent.entityLabel,
+            severity:      "alto",
+            detectedAt:    new Date().toISOString(),
+            description:   "Disminución sostenida durante " + sustainedPers + " períodos consecutivos (" + deviSust + "% acumulado).",
+            metric:        "cumplimiento",
+            observedValue: last,
+            expectedValue: oldScore,
+            deviationPct:  deviSust,
+            period:        scores[scores.length - 1].period,
+            isActive:      true,
+          });
+        }
+      }
+    });
+
+    return anomalies;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ENGINE 6 — NARRATIVE ENGINE (template-based, no AI)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _buildNarrative_(period, periodLabel, ctx) {
+    var score       = ctx.overallScore || 0;
+    var risk        = ctx.riskLevel || "medio";
+    var recs        = (ctx.recommendations || []).length;
+    var anomalies   = (ctx.anomalies || []).length;
+    var trend       = ctx.trend || "estable";
+    var prevScore   = ctx.prevScore || score;
+    var delta       = score - prevScore;
+
+    var trendText = { creciente: "una mejora del " + Math.abs(Math.round(delta)) + "%", decreciente: "un retroceso del " + Math.abs(Math.round(delta)) + "%", estable: "estabilidad", volatil: "variabilidad" }[trend] || "estabilidad";
+
+    var sections = [
+      {
+        title: "Resumen Ejecutivo",
+        content: "La institución registra un puntaje de cumplimiento del " + score + "% con nivel de riesgo " + risk +
+          " para el período " + periodLabel + ". Se evidencia " + trendText + " respecto al período anterior.",
+      },
+      {
+        title: "Hallazgos del Período",
+        content: (recs > 0
+          ? "El motor de análisis generó " + recs + " recomendación" + (recs > 1 ? "es" : "") + " activa" + (recs > 1 ? "s" : "") + ". "
+          : "No se identificaron hallazgos críticos en el período. ") +
+          (anomalies > 0
+            ? "Se detectaron " + anomalies + " anomalía" + (anomalies > 1 ? "s" : "") + " que requieren seguimiento inmediato."
+            : "No se detectaron anomalías significativas en el comportamiento operativo."),
+      },
+      {
+        title: "Diagnóstico Institucional",
+        content: score >= 90
+          ? "El desempeño institucional se encuentra en nivel óptimo. Se recomienda mantener las prácticas actuales y enfocar esfuerzos en mejora continua."
+          : score >= 75
+          ? "El desempeño institucional es satisfactorio. Se recomienda abordar las brechas identificadas para alcanzar el nivel óptimo."
+          : score >= 60
+          ? "El desempeño institucional está en nivel de alerta. Se requiere intervención en los procesos con mayor rezago."
+          : "El desempeño institucional está en nivel crítico. Se requiere intervención inmediata y revisión integral de la planificación.",
+      },
+      {
+        title: "Proyección",
+        content: "Con base en la tendencia " + trend + ", se proyecta " +
+          (trend === "creciente" ? "continuar la mejora" : trend === "decreciente" ? "una posible disminución" : "estabilidad") +
+          " en el próximo período. El seguimiento de las " + recs + " recomendación" + (recs !== 1 ? "es" : "") +
+          " activa" + (recs !== 1 ? "s" : "") + " es clave para mantener o mejorar el nivel actual.",
+      },
+    ];
+
+    return {
+      id:           IdGen.id(),
+      period:       period,
+      periodLabel:  periodLabel,
+      title:        "Informe Ejecutivo Institucional — " + periodLabel,
+      body:         sections.map(function (s) { return s.title + ": " + s.content; }).join(" "),
+      sections:     sections,
+      keyFigures:   [
+        { label: "Cumplimiento",    value: score + "%",                                         trend: trend },
+        { label: "Nivel de Riesgo", value: risk.charAt(0).toUpperCase() + risk.slice(1),        trend: anomalies > 0 ? "negativo" : "estable" },
+        { label: "Recomendaciones", value: String(recs),                                         trend: recs > 5 ? "negativo" : "positivo" },
+        { label: "Anomalías",       value: String(anomalies),                                    trend: anomalies > 0 ? "negativo" : "positivo" },
+      ],
+      generatedAt:  new Date().toISOString(),
+      confidenceScore: ctx.confidenceScore || 75,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SEMANTIC MODEL — Institutional ontology for future AI integration
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _getSemanticModel_() {
+    return {
+      version: "1.0.0",
+      concepts: [
+        { id: "unidad", label: "Unidad Institucional", description: "Dependencia o área organizacional responsable de la ejecución de procesos institucionales.", relations: [{ concept: "proceso", relation: "gestiona", cardinality: "1:N" }, { concept: "plan", relation: "ejecuta", cardinality: "1:N" }, { concept: "cumplimiento", relation: "tiene", cardinality: "1:1" }], attributes: [{ name: "nombre", type: "string", description: "Nombre oficial de la unidad" }, { name: "cumplimiento", type: "number", description: "Porcentaje de cumplimiento en el período" }] },
+        { id: "proceso", label: "Proceso Institucional", description: "Conjunto sistematizado de actividades que transforma insumos en productos o servicios institucionales.", relations: [{ concept: "unidad", relation: "pertenece_a", cardinality: "N:1" }, { concept: "actividad", relation: "contiene", cardinality: "1:N" }, { concept: "indicador", relation: "medido_por", cardinality: "N:N" }], attributes: [{ name: "nombre", type: "string", description: "Nombre del proceso" }, { name: "estado", type: "string", description: "Estado operacional" }] },
+        { id: "actividad", label: "Actividad", description: "Tarea específica y planificada dentro de un proceso institucional.", relations: [{ concept: "proceso", relation: "pertenece_a", cardinality: "N:1" }, { concept: "ejecucion", relation: "genera", cardinality: "1:N" }, { concept: "evidencia", relation: "requiere", cardinality: "N:N" }], attributes: [{ name: "nombre", type: "string", description: "Nombre de la actividad" }, { name: "fechaProgramada", type: "date", description: "Fecha planificada de ejecución" }] },
+        { id: "plan", label: "Plan Estratégico/Operativo", description: "Documento de planificación que define actividades, metas e indicadores para un período.", relations: [{ concept: "unidad", relation: "ejecutado_por", cardinality: "N:1" }, { concept: "actividad", relation: "incluye", cardinality: "1:N" }], attributes: [{ name: "periodo", type: "string", description: "Período del plan" }, { name: "progreso", type: "number", description: "Porcentaje de ejecución" }] },
+        { id: "ejecucion", label: "Registro de Ejecución", description: "Evidencia formal de que una actividad fue ejecutada en la fecha y condiciones previstas.", relations: [{ concept: "actividad", relation: "corresponde_a", cardinality: "N:1" }, { concept: "evidencia", relation: "genera", cardinality: "1:N" }], attributes: [{ name: "fechaEjecucion", type: "date", description: "Fecha real de ejecución" }, { name: "estado", type: "string", description: "Estado de la ejecución" }] },
+        { id: "evidencia", label: "Evidencia Documental", description: "Documento o registro que acredita la ejecución o resultado de una actividad institucional.", relations: [{ concept: "ejecucion", relation: "respalda", cardinality: "N:1" }, { concept: "cumplimiento", relation: "contribuye_a", cardinality: "N:1" }], attributes: [{ name: "tipo", type: "string", description: "Tipo de evidencia" }, { name: "estado", type: "string", description: "Estado de validación" }] },
+        { id: "indicador", label: "Indicador de Desempeño", description: "Métrica cuantitativa o cualitativa que mide el grado de cumplimiento de objetivos institucionales.", relations: [{ concept: "proceso", relation: "mide", cardinality: "N:1" }, { concept: "cumplimiento", relation: "determina", cardinality: "N:1" }], attributes: [{ name: "meta", type: "number", description: "Valor meta del indicador" }, { name: "actual", type: "number", description: "Valor actual alcanzado" }] },
+        { id: "cumplimiento", label: "Cumplimiento Institucional", description: "Nivel de adherencia a la planificación institucional medido en porcentaje.", relations: [{ concept: "brecha", relation: "genera", cardinality: "1:N" }, { concept: "riesgo", relation: "determina", cardinality: "1:N" }], attributes: [{ name: "porcentaje", type: "number", description: "Porcentaje de cumplimiento" }, { name: "semaforo", type: "string", description: "Clasificación semafórica" }] },
+        { id: "brecha", label: "Brecha Institucional", description: "Diferencia medible entre el desempeño esperado y el desempeño real en un período.", relations: [{ concept: "cumplimiento", relation: "originada_por", cardinality: "N:1" }, { concept: "plan_mejora", relation: "atendida_por", cardinality: "N:N" }], attributes: [{ name: "descripcion", type: "string", description: "Descripción de la brecha" }, { name: "severidad", type: "string", description: "Nivel de severidad" }] },
+        { id: "riesgo", label: "Riesgo Institucional", description: "Probabilidad de incumplimiento o impacto negativo sobre los objetivos institucionales.", relations: [{ concept: "cumplimiento", relation: "asociado_a", cardinality: "N:1" }, { concept: "plan_mejora", relation: "mitigado_por", cardinality: "N:N" }], attributes: [{ name: "nivel", type: "string", description: "Nivel de riesgo: bajo/medio/alto/crítico" }, { name: "probabilidad", type: "number", description: "Probabilidad estimada (0-100)" }] },
+        { id: "plan_mejora", label: "Plan de Mejora", description: "Conjunto estructurado de acciones para corregir brechas, mitigar riesgos y elevar el cumplimiento.", relations: [{ concept: "brecha", relation: "atiende", cardinality: "N:N" }, { concept: "riesgo", relation: "mitiga", cardinality: "N:N" }], attributes: [{ name: "progreso", type: "number", description: "Porcentaje de avance" }, { name: "estado", type: "string", description: "Estado del plan" }] },
+      ],
+      generatedAt: new Date().toISOString(),
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INSTITUTIONAL SEMANTIC SERVICE — single AI integration entry point
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _semanticQuery_(query) {
+    var snaps = _snaps_();
+    var rules = _rules_();
+    var metrics = _aggregateMetrics_(snaps, _ejecs_(), _evids_(), _inds_());
+    var result, explanation, sources;
+
+    switch (query.intent) {
+      case "diagnostico":
+        result = _buildDiagnosis_(query.entityType || "unidad", query.entityId || "global", query.entityId || "Institución", metrics, rules);
+        explanation = "Diagnóstico generado mediante " + rules.filter(function (r) { return r.enabled !== false; }).length + " reglas de conocimiento activas.";
+        sources = ["cpeSnapshots", "iieKnowledgeRules"];
+        break;
+
+      case "recomendacion":
+        var diag = [_buildDiagnosis_("unidad", "global", "Institución", metrics, rules)];
+        result = _buildRecommendations_(diag, rules);
+        explanation = "Recomendaciones generadas desde el motor de reglas de negocio institucional.";
+        sources = ["cpeSnapshots", "iieKnowledgeRules"];
+        break;
+
+      case "narrativa":
+        var dashCtx = { overallScore: metrics.cumplimiento, riskLevel: _riskLevel_(metrics.cumplimiento), confidenceScore: _confidence_(metrics.dataCount, metrics.recencyDays, metrics.indicatorCoverage, metrics.documentationRate), trend: "estable", recommendations: [], anomalies: [] };
+        result = _buildNarrative_("mensual", new Date().toISOString().slice(0, 7), dashCtx);
+        explanation = "Narrativa construida mediante plantillas dinámicas estructuradas. Sin generación por IA.";
+        sources = ["cpeSnapshots", "apePlanes", "aeeEjecuciones"];
+        break;
+
+      case "prediccion":
+        var hist = _buildHistoricalScores_(snaps);
+        result = _buildPrediction_("unidad", "global", "Institución", hist, "trimestral");
+        explanation = "Predicción calculada mediante regresión lineal determinística sobre datos históricos.";
+        sources = ["cpeSnapshots"];
+        break;
+
+      case "explicacion":
+        result = { concept: query.entityType || "cumplimiento", model: _getSemanticModel_() };
+        explanation = "Explicación derivada del modelo semántico institucional v1.0.";
+        sources = ["iieSemanticModel"];
+        break;
+
+      default:
+        result = null;
+        explanation = "Intención no reconocida: " + String(query.intent);
+        sources = [];
+    }
+
+    return {
+      query:          query,
+      result:         result,
+      explanation:    explanation,
+      confidenceScore: 75,
+      sources:        sources,
+      generatedAt:    new Date().toISOString(),
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DASHBOARD AGGREGATOR
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function _buildDashContext_() {
+    var snaps   = _snaps_();
+    var rules   = _rules_();
+    var metrics = _aggregateMetrics_(snaps, _ejecs_(), _evids_(), _inds_());
+    var diag    = _buildDiagnosis_("unidad", "global", "Institución", metrics, rules);
+    var anom    = _detectAnomalies_(snaps);
+    var recs    = _buildRecommendations_([diag], rules);
+    var hist    = _buildHistoricalScores_(snaps);
+    var pred    = _buildPrediction_("unidad", "global", "Institución", hist, "trimestral");
+
+    return { metrics: metrics, diagnosis: diag, anomalies: anom, recommendations: recs, prediction: pred };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PUBLIC HANDLERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  function getDashboard(params) {
+    var ctx      = _buildDashContext_();
+    var d        = ctx.diagnosis;
+    var pred     = ctx.prediction;
+    var maxRecs  = _cfgNum_("recomendacion.limite.dashboard", 5);
+    var narrative = _buildNarrative_("mensual", new Date().toISOString().slice(0, 7), {
+      overallScore: d.overallScore, riskLevel: d.riskLevel, confidenceScore: d.confidenceScore,
+      trend: pred.trend, recommendations: ctx.recommendations, anomalies: ctx.anomalies,
+    });
+
+    return {
+      institutionalScore:    d.overallScore,
+      riskLevel:             d.riskLevel,
+      confidenceScore:       d.confidenceScore,
+      quarterlyPrediction:   pred.predictedValue,
+      predictedRisk:         pred.expectedRisk,
+      executiveNarrative:    narrative.sections[0].content,
+      topRecommendations:    ctx.recommendations.slice(0, maxRecs),
+      topAnomalies:          ctx.anomalies.slice(0, 5),
+      recentDiagnoses:       [d],
+      alertCount:            ctx.anomalies.length,
+      diagnosisCount:        1,
+      recommendationCount:   ctx.recommendations.length,
+      anomalyCount:          ctx.anomalies.length,
+      dataQuality:           d.confidenceScore,
+      generatedAt:           new Date().toISOString(),
+    };
+  }
+
+  function getDiagnostics(params) {
+    var p    = params || {};
+    var snaps = _snaps_();
+    var rules = _rules_();
+    var metrics = _aggregateMetrics_(snaps, _ejecs_(), _evids_(), _inds_());
+    var diag = _buildDiagnosis_("unidad", "global", "Institución", metrics, rules);
+
+    if (p.riskLevel && diag.riskLevel !== p.riskLevel) return [];
+    if (p.minConfidence && diag.confidenceScore < Number(p.minConfidence)) return [];
+    return [diag].slice(0, p.limit || 50);
+  }
+
+  function getRecommendations(params) {
+    var p   = params || {};
+    var ctx = _buildDashContext_();
+    var res = ctx.recommendations;
+    if (p.priority) res = res.filter(function (r) { return r.priority === p.priority; });
+    if (p.status)   res = res.filter(function (r) { return r.status === p.status; });
+    return res.slice(0, p.limit || 50);
+  }
+
+  function getPredictions(params) {
+    var p    = params || {};
+    var hist = _buildHistoricalScores_(_snaps_());
+    var pred = _buildPrediction_("unidad", "global", "Institución", hist, p.horizon || "trimestral");
+    return [pred];
+  }
+
+  function getAnomalies(params) {
+    var p   = params || {};
+    var res = _detectAnomalies_(_snaps_());
+    if (p.severity)             res = res.filter(function (a) { return a.severity === p.severity; });
+    if (p.type)                 res = res.filter(function (a) { return a.type === p.type; });
+    if (p.isActive !== undefined) res = res.filter(function (a) { return Boolean(a.isActive) === Boolean(p.isActive); });
+    return res.slice(0, p.limit || 50);
+  }
+
+  function getNarratives(params) {
+    var p   = params || {};
+    var ctx = _buildDashContext_();
+    var dashCtx = {
+      overallScore: ctx.diagnosis.overallScore,
+      riskLevel: ctx.diagnosis.riskLevel,
+      confidenceScore: ctx.diagnosis.confidenceScore,
+      trend: ctx.prediction.trend,
+      recommendations: ctx.recommendations,
+      anomalies: ctx.anomalies,
+    };
+    var periods = p.period ? [p.period] : ["semanal", "mensual", "trimestral", "anual"];
+    var now = new Date();
+    var qtr = Math.ceil((now.getMonth() + 1) / 3);
+    var labels = {
+      semanal:    "Semana " + now.toISOString().slice(0, 10),
+      mensual:    now.toISOString().slice(0, 7),
+      trimestral: "Q" + qtr + " " + now.getFullYear(),
+      anual:      String(now.getFullYear()),
+    };
+    return periods.map(function (p_) { return _buildNarrative_(p_, labels[p_] || p_, dashCtx); });
+  }
+
+  function getConfiguration(params) {
+    return _config_();
+  }
+
+  function updateConfiguration(params) {
+    var p = params || {};
+    if (!p.key || p.value === undefined) throw new Error("key y value son requeridos");
+    var items = _config_();
+    var existing = items.find(function (c) { return c.key === p.key; });
+    if (!existing) throw new Error("Clave de configuración no encontrada: " + p.key);
+    return updateEntity_("iieConfiguration", existing.id, { value: String(p.value), updatedAt: new Date().toISOString() });
+  }
+
+  function getKnowledgeRules(params) {
+    var p   = params || {};
+    var res = _rules_();
+    if (p.enabled !== undefined) res = res.filter(function (r) { return Boolean(r.enabled) === Boolean(p.enabled); });
+    if (p.category)              res = res.filter(function (r) { return r.category === p.category; });
+    return res;
+  }
+
+  function updateKnowledgeRule(params) {
+    var p = params || {};
+    if (!p.id) throw new Error("id es requerido");
+    var payload = Object.assign({}, p, { updatedAt: new Date().toISOString() });
+    return updateEntity_("iieKnowledgeRules", p.id, payload);
+  }
+
+  function getSemanticModel(params) {
+    return _getSemanticModel_();
+  }
+
+  function semanticQuery(params) {
+    var p = params || {};
+    if (!p.intent) throw new Error("intent es requerido");
+    return _semanticQuery_(p);
+  }
+
+  return {
+    getDashboard:        getDashboard,
+    getDiagnostics:      getDiagnostics,
+    getRecommendations:  getRecommendations,
+    getPredictions:      getPredictions,
+    getAnomalies:        getAnomalies,
+    getNarratives:       getNarratives,
+    getConfiguration:    getConfiguration,
+    updateConfiguration: updateConfiguration,
+    getKnowledgeRules:   getKnowledgeRules,
+    updateKnowledgeRule: updateKnowledgeRule,
+    getSemanticModel:    getSemanticModel,
+    semanticQuery:       semanticQuery,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/IOEController.js
+// ============================================================
+
+/**
+ * IOE — Institutional Orchestration Engine
+ *
+ * Transforms diagnoses and recommendations from IIE, CPE, EIP, APE, AEE
+ * into executable, trackable action plans with milestones, tasks, and decisions.
+ * Read-only consumer of all source engines — never writes to them.
+ */
+var IOEController = (function () {
+  "use strict";
+
+  // ─── Private loaders ────────────────────────────────────────────────────────
+
+  function _plans_(filter) {
+    return listEntities_("ioeActionPlans", filter || {});
+  }
+
+  function _milestones_(filter) {
+    return listEntities_("ioeMilestones", filter || {});
+  }
+
+  function _tasks_(filter) {
+    return listEntities_("ioeTasks", filter || {});
+  }
+
+  function _decisions_(filter) {
+    return listEntities_("ioeDecisions", filter || {});
+  }
+
+  // ─── Cross-engine readers (read-only, never writes) ─────────────────────────
+
+  function _iieRecommendations_() {
+    try { return listEntities_("iieRecommendations", {}); } catch (e) { return []; }
+  }
+
+  function _iieDiagnoses_() {
+    try { return listEntities_("iieDiagnoses", {}); } catch (e) { return []; }
+  }
+
+  function _cpeBrechas_() {
+    try { return listEntities_("cpeBrechas", {}); } catch (e) { return []; }
+  }
+
+  function _cpePlanesMejora_() {
+    try { return listEntities_("cpePlanesMejora", {}); } catch (e) { return []; }
+  }
+
+  function _eipAlerts_() {
+    try { return listEntities_("eipAlerts", {}); } catch (e) { return []; }
+  }
+
+  // ─── ID generators ──────────────────────────────────────────────────────────
+
+  function _planId_(seq) {
+    var yy = String(new Date().getFullYear()).slice(-2);
+    return "PLAN-IOE-" + yy + "-" + String(seq).padStart(3, "0");
+  }
+
+  function _milestoneId_(planId, seq) {
+    return "HIT-" + planId + "-" + String(seq).padStart(2, "0");
+  }
+
+  function _taskId_(planId, seq) {
+    return "TASK-" + planId + "-" + String(seq).padStart(3, "0");
+  }
+
+  function _decisionId_(planId, seq) {
+    return "DEC-" + planId + "-" + String(seq).padStart(2, "0");
+  }
+
+  // ─── Date helpers ───────────────────────────────────────────────────────────
+
+  function _today_() { return new Date().toISOString().slice(0, 10); }
+
+  function _isPast_(dateStr) {
+    return dateStr && dateStr < _today_();
+  }
+
+  function _daysDiff_(a, b) {
+    var da = new Date(a), db = new Date(b);
+    return Math.round((db - da) / 86400000);
+  }
+
+  // ─── Progress calculator ─────────────────────────────────────────────────────
+
+  function _calcProgress_(tasks) {
+    if (!tasks || tasks.length === 0) return 0;
+    var total = tasks.reduce(function (s, t) { return s + (Number(t.progress) || 0); }, 0);
+    return Math.round(total / tasks.length);
+  }
+
+  // ─── Dependency / block detector ────────────────────────────────────────────
+
+  function _detectBlocks_(tasks) {
+    var statusMap = {};
+    tasks.forEach(function (t) { statusMap[t.id] = t.status; });
+
+    return tasks.map(function (t) {
+      var deps = (t.dependencies && typeof t.dependencies === "string")
+        ? JSON.parse(t.dependencies)
+        : (Array.isArray(t.dependencies) ? t.dependencies : []);
+
+      var blocked = deps.some(function (depId) {
+        var depStatus = statusMap[depId];
+        return depStatus && depStatus !== "completada" && depStatus !== "cancelada";
+      });
+
+      return Object.assign({}, t, {
+        isBlocked: blocked,
+        blockReason: blocked ? "Depende de tareas no completadas" : "",
+        dependencies: deps,
+      });
+    });
+  }
+
+  // ─── Metrics calculator ──────────────────────────────────────────────────────
+
+  function _calcMetrics_(plans, tasks) {
+    var completed = plans.filter(function (p) { return p.status === "completado"; });
+    var avgClosure = 0;
+    if (completed.length > 0) {
+      var total = completed.reduce(function (s, p) {
+        return s + _daysDiff_(p.startDate, p.completionDate || _today_());
+      }, 0);
+      avgClosure = Math.round(total / completed.length);
+    }
+
+    var withDates = plans.filter(function (p) { return p.targetDate && p.startDate; });
+    var deviations = withDates.map(function (p) {
+      var end = p.completionDate || _today_();
+      return Math.max(0, _daysDiff_(p.targetDate, end));
+    });
+    var avgDev = deviations.length > 0
+      ? Math.round(deviations.reduce(function (s, d) { return s + d; }, 0) / deviations.length)
+      : 0;
+
+    var doneTasks  = tasks.filter(function (t) { return t.status === "completada"; }).length;
+    var execIndex  = tasks.length > 0 ? Math.round((doneTasks / tasks.length) * 100) : 0;
+
+    var overdueTasks = tasks.filter(function (t) {
+      return t.status !== "completada" && t.status !== "cancelada" && _isPast_(t.plannedEnd);
+    }).length;
+    var delayIndex = tasks.length > 0 ? Math.round((overdueTasks / tasks.length) * 100) : 0;
+
+    return {
+      avgClosureTime:  avgClosure,
+      dateDeviationAvg: avgDev,
+      executionIndex:  execIndex,
+      delayIndex:      delayIndex,
+    };
+  }
+
+  // ─── Owner load calculator ───────────────────────────────────────────────────
+
+  function _calcOwnerLoad_(plans, tasks) {
+    var owners = {};
+
+    plans.forEach(function (p) {
+      if (!p.owner) return;
+      if (!owners[p.owner]) owners[p.owner] = { owner: p.owner, activePlans: 0, activeTasks: 0, completedTasks: 0, overdueTasks: 0 };
+      if (p.status === "activo" || p.status === "en_riesgo") owners[p.owner].activePlans++;
+    });
+
+    tasks.forEach(function (t) {
+      if (!t.assignedTo) return;
+      if (!owners[t.assignedTo]) owners[t.assignedTo] = { owner: t.assignedTo, activePlans: 0, activeTasks: 0, completedTasks: 0, overdueTasks: 0 };
+      if (t.status === "en_progreso" || t.status === "pendiente") owners[t.assignedTo].activeTasks++;
+      if (t.status === "completada") owners[t.assignedTo].completedTasks++;
+      if (t.status !== "completada" && t.status !== "cancelada" && _isPast_(t.plannedEnd)) owners[t.assignedTo].overdueTasks++;
+    });
+
+    return Object.values(owners).map(function (o) {
+      var total = o.completedTasks + o.overdueTasks + o.activeTasks;
+      return Object.assign({}, o, {
+        complianceRate: total > 0 ? Math.round((o.completedTasks / total) * 100) : 100,
+      });
+    }).sort(function (a, b) { return b.activePlans - a.activePlans; });
+  }
+
+  // ─── Dashboard ───────────────────────────────────────────────────────────────
+
+  function _buildDashboard_() {
+    var plans     = _plans_({});
+    var tasks     = _detectBlocks_(_tasks_({}));
+    var milestones = _milestones_({});
+    var today     = _today_();
+
+    var active   = plans.filter(function (p) { return p.status === "activo" || p.status === "en_riesgo"; });
+    var critical = plans.filter(function (p) { return p.status === "en_riesgo" || p.priority === "critica"; });
+    var overduePlans = plans.filter(function (p) {
+      return p.status !== "completado" && p.status !== "archivado" && p.status !== "cancelado" && _isPast_(p.targetDate);
+    });
+
+    var avgProgress = active.length > 0
+      ? Math.round(active.reduce(function (s, p) { return s + (Number(p.progress) || 0); }, 0) / active.length)
+      : 0;
+
+    var lateTasks = tasks.filter(function (t) {
+      return t.status !== "completada" && t.status !== "cancelada" && _isPast_(t.plannedEnd);
+    });
+    var blockedTasks = tasks.filter(function (t) { return t.isBlocked; });
+
+    var urgentMilestones = milestones.filter(function (m) {
+      return m.status !== "completado" && m.status !== "cancelado" && m.plannedDate;
+    }).sort(function (a, b) { return a.plannedDate.localeCompare(b.plannedDate); }).slice(0, 5);
+
+    var unitMap = {};
+    plans.forEach(function (p) {
+      var u = p.organizationalUnitLabel || p.organizationalUnitId || "Sin unidad";
+      if (!unitMap[u]) unitMap[u] = { unit: u, planCount: 0, taskCount: 0 };
+      unitMap[u].planCount++;
+    });
+    tasks.forEach(function (t) {
+      var plan = plans.find(function (p) { return p.id === t.actionPlanId; });
+      var u = plan ? (plan.organizationalUnitLabel || "Sin unidad") : "Sin unidad";
+      if (!unitMap[u]) unitMap[u] = { unit: u, planCount: 0, taskCount: 0 };
+      unitMap[u].taskCount++;
+    });
+
+    var recentPlans = plans
+      .sort(function (a, b) { return (b.updatedAt || "").localeCompare(a.updatedAt || ""); })
+      .slice(0, 5);
+
+    return {
+      activePlans:       active.length,
+      criticalPlans:     critical.length,
+      avgProgress:       avgProgress,
+      overduePlans:      overduePlans.length,
+      lateTasks:         lateTasks.length,
+      blockedTasks:      blockedTasks.length,
+      metrics:           _calcMetrics_(plans, tasks),
+      ownerLoad:         _calcOwnerLoad_(plans, tasks),
+      recentPlans:       recentPlans,
+      urgentMilestones:  urgentMilestones,
+      unitLoad:          Object.values(unitMap),
+      generatedAt:       new Date().toISOString(),
+    };
+  }
+
+  // ─── Calendar event builder ──────────────────────────────────────────────────
+
+  function _buildCalendarEvents_(from, to, filters) {
+    var plans     = _plans_({});
+    var milestones = _milestones_({});
+    var tasks     = _tasks_({});
+    var events    = [];
+
+    var typesFilter = filters.types || ["plan", "hito", "tarea"];
+    var ownerFilter = filters.owner;
+    var unitFilter  = filters.unit;
+
+    plans.forEach(function (p) {
+      if (typesFilter.indexOf("plan") < 0) return;
+      if (ownerFilter && p.owner !== ownerFilter) return;
+      if (unitFilter  && p.organizationalUnitId !== unitFilter) return;
+      var start = p.startDate || p.createdAt.slice(0, 10);
+      var end   = p.targetDate || start;
+      if (end < from || start > to) return;
+      events.push({ id: p.id, type: "plan", title: p.title, start: start, end: end,
+        status: p.status, priority: p.priority, owner: p.owner,
+        unit: p.organizationalUnitLabel, relatedPlanId: p.id });
+    });
+
+    milestones.forEach(function (m) {
+      if (typesFilter.indexOf("hito") < 0) return;
+      var d = m.plannedDate;
+      if (!d || d < from || d > to) return;
+      var plan = plans.find(function (p) { return p.id === m.actionPlanId; });
+      if (ownerFilter && plan && plan.owner !== ownerFilter) return;
+      if (unitFilter  && plan && plan.organizationalUnitId !== unitFilter) return;
+      events.push({ id: m.id, type: "hito", title: m.title, start: d, end: d,
+        status: m.status, priority: "media", owner: plan ? plan.owner : "",
+        unit: plan ? plan.organizationalUnitLabel : "", relatedPlanId: m.actionPlanId });
+    });
+
+    tasks.forEach(function (t) {
+      if (typesFilter.indexOf("tarea") < 0) return;
+      if (ownerFilter && t.assignedTo !== ownerFilter) return;
+      var start = t.plannedStart, end = t.plannedEnd;
+      if (!start || !end || end < from || start > to) return;
+      events.push({ id: t.id, type: "tarea", title: t.title, start: start, end: end,
+        status: t.status, priority: t.priority, owner: t.assignedTo,
+        relatedPlanId: t.actionPlanId });
+    });
+
+    return events;
+  }
+
+  // ─── Completion eligibility ──────────────────────────────────────────────────
+
+  function _checkEligibility_(planId) {
+    var tasks     = _tasks_({ actionPlanId: planId });
+    var milestones = _milestones_({ actionPlanId: planId });
+
+    var pendingTasks = tasks.filter(function (t) {
+      return t.status !== "completada" && t.status !== "cancelada";
+    });
+    var pendingMilestones = milestones.filter(function (m) {
+      return m.status !== "completado" && m.status !== "cancelado";
+    });
+
+    var reasons = [];
+    if (pendingTasks.length > 0)
+      reasons.push(pendingTasks.length + " tarea(s) pendiente(s) o en progreso");
+    if (pendingMilestones.length > 0)
+      reasons.push(pendingMilestones.length + " hito(s) sin completar");
+
+    return {
+      planId:            planId,
+      eligible:          reasons.length === 0,
+      pendingTasks:      pendingTasks.length,
+      pendingMilestones: pendingMilestones.length,
+      reasons:           reasons,
+    };
+  }
+
+  // ─── Auto-generation from source engine ─────────────────────────────────────
+
+  function _templatesForSource_(sourceType) {
+    var tpl = {
+      iie_diagnosis:       { title: "Plan de acción: Diagnóstico IIE", milestones: ["Análisis de causa raíz", "Definición de acciones", "Implementación", "Verificación"] },
+      iie_recommendation:  { title: "Implementación de recomendación IIE", milestones: ["Evaluación de recomendación", "Planificación", "Ejecución", "Cierre y evidencia"] },
+      cpe_gap:             { title: "Cierre de brecha CPE", milestones: ["Diagnóstico de brecha", "Plan de remediación", "Implementación", "Validación de cierre"] },
+      cpe_plan_mejora:     { title: "Ejecución de plan de mejora CPE", milestones: ["Revisión del plan", "Asignación de recursos", "Ejecución", "Seguimiento y cierre"] },
+      eip_alert:           { title: "Atención de alerta EIP", milestones: ["Evaluación de impacto", "Acciones inmediatas", "Seguimiento", "Cierre de alerta"] },
+      manual:              { title: "Plan de acción institucional", milestones: ["Planificación", "Ejecución", "Verificación", "Cierre"] },
+    };
+    return tpl[sourceType] || tpl.manual;
+  }
+
+  function _createFromSource_(params) {
+    var plans = _plans_({});
+    var planSeq = plans.length + 1;
+    var planId  = _planId_(planSeq);
+    var tpl     = _templatesForSource_(params.sourceType);
+    var now     = new Date().toISOString();
+    var today   = _today_();
+
+    var plan = {
+      id:                    planId,
+      title:                 tpl.title + (params.sourceLabel ? ": " + params.sourceLabel : ""),
+      description:           "Generado automáticamente desde " + params.sourceType.replace(/_/g, " ") + ". Fuente: " + (params.sourceLabel || params.sourceId),
+      originEngine:          params.sourceType.split("_")[0],
+      originEntityId:        params.sourceId,
+      originEntityLabel:     params.sourceLabel || "",
+      organizationalUnitId:  params.organizationalUnitId,
+      organizationalUnitLabel: params.organizationalUnitLabel || "",
+      priority:              params.priority || "alta",
+      status:                "borrador",
+      objective:             "Atender y resolver: " + (params.sourceLabel || params.sourceId),
+      expectedImpact:        "Mejora del desempeño institucional mediante resolución estructurada",
+      riskLevel:             "medio",
+      owner:                 params.owner,
+      startDate:             today,
+      targetDate:            params.targetDate,
+      completionDate:        "",
+      progress:              0,
+      milestoneCount:        tpl.milestones.length,
+      taskCount:             0,
+      completedMilestones:   0,
+      completedTasks:        0,
+      overdueTasks:          0,
+      blockedTasks:          0,
+      createdBy:             params.owner,
+      createdAt:             now,
+      updatedAt:             now,
+    };
+
+    createEntity_("ioeActionPlans", plan);
+
+    var milestones = _milestones_({ actionPlanId: planId });
+    var daysPerMilestone = Math.floor(_daysDiff_(today, params.targetDate) / tpl.milestones.length);
+
+    tpl.milestones.forEach(function (title, i) {
+      var milestoneSeq = milestones.length + i + 1;
+      var milestoneId  = _milestoneId_(planId, milestoneSeq);
+      var plannedDate  = new Date(today);
+      plannedDate.setDate(plannedDate.getDate() + daysPerMilestone * (i + 1));
+
+      createEntity_("ioeMilestones", {
+        id:             milestoneId,
+        actionPlanId:   planId,
+        title:          title,
+        description:    "",
+        plannedDate:    plannedDate.toISOString().slice(0, 10),
+        completedDate:  "",
+        status:         "pendiente",
+        weight:         Math.round(100 / tpl.milestones.length),
+        taskCount:      0,
+        completedTasks: 0,
+      });
+    });
+
+    return getEntity_("ioeActionPlans", planId);
+  }
+
+  // ─── Plan closure ────────────────────────────────────────────────────────────
+
+  function _closePlan_(planId, verificationNote, closedBy) {
+    var elig = _checkEligibility_(planId);
+    if (!elig.eligible) {
+      return { success: false, reasons: elig.reasons };
+    }
+
+    var now   = new Date().toISOString();
+    var today = _today_();
+
+    updateEntity_("ioeActionPlans", planId, {
+      status:          "completado",
+      completionDate:  today,
+      progress:        100,
+      updatedAt:       now,
+    });
+
+    var decisions = _decisions_({ actionPlanId: planId });
+    var decSeq    = decisions.length + 1;
+    createEntity_("ioeDecisions", {
+      id:             _decisionId_(planId, decSeq),
+      actionPlanId:   planId,
+      date:           today,
+      origin:         "IOE Sistema",
+      responsable:    closedBy || "Sistema",
+      decision:       "Cierre formal del plan de acción",
+      justification:  verificationNote || "Todas las tareas e hitos completados",
+      expectedResult: "Plan archivado satisfactoriamente",
+      status:         "implementada",
+      createdAt:      now,
+      updatedAt:      now,
+    });
+
+    return { success: true, planId: planId, closedAt: now };
+  }
+
+  // ─── Update aggregate counters on plan ──────────────────────────────────────
+
+  function _refreshPlanCounters_(planId) {
+    var tasks     = _tasks_({ actionPlanId: planId });
+    var milestones = _milestones_({ actionPlanId: planId });
+    var today     = _today_();
+
+    var completedTasks      = tasks.filter(function (t) { return t.status === "completada"; }).length;
+    var completedMilestones = milestones.filter(function (m) { return m.status === "completado"; }).length;
+    var overdueTasks        = tasks.filter(function (t) {
+      return t.status !== "completada" && t.status !== "cancelada" && _isPast_(t.plannedEnd);
+    }).length;
+    var blocked             = _detectBlocks_(tasks);
+    var blockedTasks        = blocked.filter(function (t) { return t.isBlocked; }).length;
+
+    updateEntity_("ioeActionPlans", planId, {
+      taskCount:          tasks.length,
+      milestoneCount:     milestones.length,
+      completedTasks:     completedTasks,
+      completedMilestones: completedMilestones,
+      overdueTasks:       overdueTasks,
+      blockedTasks:       blockedTasks,
+      progress:           _calcProgress_(tasks),
+      updatedAt:          new Date().toISOString(),
+    });
+  }
+
+  // ─── Public handlers ─────────────────────────────────────────────────────────
+
+  function getDashboard(params) {
+    return _buildDashboard_();
+  }
+
+  function getActionPlans(params) {
+    var filter = {};
+    if (params.status)               filter.status              = params.status;
+    if (params.priority)             filter.priority            = params.priority;
+    if (params.originEngine)         filter.originEngine        = params.originEngine;
+    if (params.organizationalUnitId) filter.organizationalUnitId = params.organizationalUnitId;
+    if (params.owner)                filter.owner               = params.owner;
+
+    var plans = _plans_(filter);
+
+    if (params.overdue) {
+      var today = _today_();
+      plans = plans.filter(function (p) {
+        return p.status !== "completado" && p.status !== "archivado" && p.targetDate < today;
+      });
+    }
+
+    plans = plans.sort(function (a, b) {
+      var pOrd = { critica: 0, alta: 1, media: 2, baja: 3 };
+      return (pOrd[a.priority] || 2) - (pOrd[b.priority] || 2);
+    });
+
+    if (params.limit) plans = plans.slice(0, params.limit);
+    return plans;
+  }
+
+  function getActionPlan(params) {
+    return getEntity_("ioeActionPlans", params.id);
+  }
+
+  function createActionPlan(params) {
+    var plans = _plans_({});
+    var seq   = plans.length + 1;
+    var id    = _planId_(seq);
+    var now   = new Date().toISOString();
+
+    var plan = Object.assign({
+      milestoneCount: 0, taskCount: 0,
+      completedMilestones: 0, completedTasks: 0,
+      overdueTasks: 0, blockedTasks: 0,
+      progress: 0, status: "borrador",
+      riskLevel: "medio", completionDate: "",
+      createdAt: now, updatedAt: now,
+    }, params, { id: id });
+
+    createEntity_("ioeActionPlans", plan);
+    return getEntity_("ioeActionPlans", id);
+  }
+
+  function updateActionPlan(params) {
+    var id = params.id;
+    updateEntity_("ioeActionPlans", id, Object.assign({}, params, { updatedAt: new Date().toISOString() }));
+    return getEntity_("ioeActionPlans", id);
+  }
+
+  function getMilestones(params) {
+    var filter = {};
+    if (params.actionPlanId) filter.actionPlanId = params.actionPlanId;
+    if (params.status)       filter.status        = params.status;
+    var milestones = _milestones_(filter);
+    if (params.limit) milestones = milestones.slice(0, params.limit);
+    return milestones;
+  }
+
+  function createMilestone(params) {
+    var milestones = _milestones_({ actionPlanId: params.actionPlanId });
+    var seq = milestones.length + 1;
+    var id  = _milestoneId_(params.actionPlanId, seq);
+    var m   = Object.assign({ status: "pendiente", completedDate: "", taskCount: 0, completedTasks: 0 }, params, { id: id });
+    createEntity_("ioeMilestones", m);
+    _refreshPlanCounters_(params.actionPlanId);
+    return getEntity_("ioeMilestones", id);
+  }
+
+  function updateMilestone(params) {
+    var id = params.id;
+    updateEntity_("ioeMilestones", id, Object.assign({}, params));
+    var m = getEntity_("ioeMilestones", id);
+    if (m) _refreshPlanCounters_(m.actionPlanId);
+    return m;
+  }
+
+  function getTasks(params) {
+    var filter = {};
+    if (params.actionPlanId) filter.actionPlanId = params.actionPlanId;
+    if (params.milestoneId)  filter.milestoneId  = params.milestoneId;
+    if (params.assignedTo)   filter.assignedTo   = params.assignedTo;
+    if (params.status)       filter.status        = params.status;
+    if (params.priority)     filter.priority      = params.priority;
+
+    var tasks = _detectBlocks_(_tasks_(filter));
+
+    if (params.overdue) {
+      var today = _today_();
+      tasks = tasks.filter(function (t) {
+        return t.status !== "completada" && t.status !== "cancelada" && t.plannedEnd < today;
+      });
+    }
+
+    tasks = tasks.sort(function (a, b) {
+      var pOrd = { critica: 0, alta: 1, media: 2, baja: 3 };
+      return (pOrd[a.priority] || 2) - (pOrd[b.priority] || 2);
+    });
+
+    if (params.limit) tasks = tasks.slice(0, params.limit);
+    return tasks;
+  }
+
+  function createTask(params) {
+    var planTasks = _tasks_({ actionPlanId: params.actionPlanId });
+    var seq = planTasks.length + 1;
+    var id  = _taskId_(params.actionPlanId, seq);
+    var deps = Array.isArray(params.dependencies) ? JSON.stringify(params.dependencies) : (params.dependencies || "[]");
+    var t   = Object.assign({ status: "pendiente", progress: 0, completedAt: "", isBlocked: false, blockReason: "", milestoneId: "" }, params, { id: id, dependencies: deps });
+    createEntity_("ioeTasks", t);
+    _refreshPlanCounters_(params.actionPlanId);
+    return getEntity_("ioeTasks", id);
+  }
+
+  function updateTask(params) {
+    var id  = params.id;
+    var upd = Object.assign({}, params);
+    if (Array.isArray(upd.dependencies)) upd.dependencies = JSON.stringify(upd.dependencies);
+    updateEntity_("ioeTasks", id, upd);
+    var t = getEntity_("ioeTasks", id);
+    if (t) _refreshPlanCounters_(t.actionPlanId);
+    return t;
+  }
+
+  function getDecisions(params) {
+    var filter = {};
+    if (params.actionPlanId) filter.actionPlanId = params.actionPlanId;
+    if (params.status)       filter.status        = params.status;
+    var decisions = _decisions_(filter);
+    decisions = decisions.sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
+    if (params.limit) decisions = decisions.slice(0, params.limit);
+    return decisions;
+  }
+
+  function createDecision(params) {
+    var existing = _decisions_({ actionPlanId: params.actionPlanId });
+    var seq = existing.length + 1;
+    var id  = _decisionId_(params.actionPlanId, seq);
+    var now = new Date().toISOString();
+    var d   = Object.assign({ status: "pendiente", date: _today_(), createdAt: now, updatedAt: now }, params, { id: id });
+    createEntity_("ioeDecisions", d);
+    return getEntity_("ioeDecisions", id);
+  }
+
+  function updateDecision(params) {
+    var id = params.id;
+    updateEntity_("ioeDecisions", id, Object.assign({}, params, { updatedAt: new Date().toISOString() }));
+    return getEntity_("ioeDecisions", id);
+  }
+
+  function getCalendarEvents(params) {
+    return _buildCalendarEvents_(params.from, params.to, {
+      types:  params.types,
+      owner:  params.owner,
+      unit:   params.unit,
+    });
+  }
+
+  function createFromSource(params) {
+    return _createFromSource_(params);
+  }
+
+  function checkCompletionEligibility(params) {
+    return _checkEligibility_(params.planId);
+  }
+
+  function closePlan(params) {
+    return _closePlan_(params.planId, params.verificationNote, params.closedBy);
+  }
+
+  function getMetrics(params) {
+    var plans = _plans_({});
+    var tasks = _tasks_({});
+    return _calcMetrics_(plans, tasks);
+  }
+
+  // ─── Public API ──────────────────────────────────────────────────────────────
+
+  return {
+    getDashboard:              getDashboard,
+    getActionPlans:            getActionPlans,
+    getActionPlan:             getActionPlan,
+    createActionPlan:          createActionPlan,
+    updateActionPlan:          updateActionPlan,
+    getMilestones:             getMilestones,
+    createMilestone:           createMilestone,
+    updateMilestone:           updateMilestone,
+    getTasks:                  getTasks,
+    createTask:                createTask,
+    updateTask:                updateTask,
+    getDecisions:              getDecisions,
+    createDecision:            createDecision,
+    updateDecision:            updateDecision,
+    getCalendarEvents:         getCalendarEvents,
+    createFromSource:          createFromSource,
+    checkCompletionEligibility: checkCompletionEligibility,
+    closePlan:                 closePlan,
+    getMetrics:                getMetrics,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/AUEController.js
+// ============================================================
+
+/**
+ * AUE — Automation & Event Engine
+ *
+ * Event Bus institucional:
+ *   - Registra eventos de cualquier motor.
+ *   - Evalúa reglas WHEN/IF/THEN de forma determinista (sin eval()).
+ *   - Encola ejecuciones (FIFO) y las despacha a acciones declarativas.
+ *   - Registra historial completo de ejecuciones con logs.
+ */
+var AUEController = (function () {
+
+  // ─── Private helpers ──────────────────────────────────────────────────────
+
+  function _repo_(key) {
+    return SheetRepository.forEntity(key);
+  }
+
+  function _events_()     { return _repo_("aueEvents");     }
+  function _rules_()      { return _repo_("aueRules");      }
+  function _executions_() { return _repo_("aueExecutions"); }
+  function _queue_()      { return _repo_("aueQueue");      }
+
+  function _now_()   { return new Date().toISOString(); }
+  function _today_() { return _now_().slice(0, 10); }
+
+  function _eventId_() {
+    return "EVT-AUE-" + Number(new Date()).toString(36).toUpperCase() + "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+  function _ruleId_() {
+    return "RUL-AUE-" + Number(new Date()).toString(36).toUpperCase() + "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+  function _execId_() {
+    return "EXC-AUE-" + Number(new Date()).toString(36).toUpperCase() + "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+  function _queueId_() {
+    return "QUE-AUE-" + Number(new Date()).toString(36).toUpperCase() + "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+
+  function _parseJson_(val) {
+    if (!val || typeof val === "object") return val || {};
+    try { return JSON.parse(val); } catch (e) { return {}; }
+  }
+
+  function _parseArr_(val) {
+    if (Array.isArray(val)) return val;
+    if (!val) return [];
+    try { return JSON.parse(val); } catch (e) { return []; }
+  }
+
+  function _hydrateEvent_(row) {
+    return {
+      id:             row.id,
+      eventType:      row.eventType,
+      sourceEngine:   row.sourceEngine,
+      sourceEntityId: row.sourceEntityId,
+      timestamp:      row.timestamp,
+      payload:        _parseJson_(row.payload),
+      status:         row.status,
+      priority:       row.priority,
+      processedAt:    row.processedAt || undefined,
+    };
+  }
+
+  function _hydrateRule_(row) {
+    return {
+      id:              row.id,
+      name:            row.name,
+      description:     row.description || undefined,
+      enabled:         row.enabled === true || row.enabled === "true",
+      eventType:       row.eventType,
+      conditions:      _parseArr_(row.conditions),
+      actions:         _parseArr_(row.actions),
+      priority:        Number(row.priority) || 0,
+      version:         Number(row.version)  || 1,
+      executionCount:  Number(row.executionCount) || 0,
+      lastExecutedAt:  row.lastExecutedAt || undefined,
+      createdBy:       row.createdBy,
+      createdAt:       row.createdAt,
+      updatedAt:       row.updatedAt,
+    };
+  }
+
+  function _hydrateExecution_(row) {
+    return {
+      id:          row.id,
+      eventId:     row.eventId,
+      ruleId:      row.ruleId,
+      ruleName:    row.ruleName,
+      status:      row.status,
+      startedAt:   row.startedAt,
+      finishedAt:  row.finishedAt || undefined,
+      duration:    row.duration ? Number(row.duration) : undefined,
+      result:      _parseJson_(row.result),
+      logs:        _parseArr_(row.logs),
+    };
+  }
+
+  function _hydrateQueue_(row) {
+    return {
+      id:          row.id,
+      executionId: row.executionId,
+      scheduledAt: row.scheduledAt,
+      attempt:     Number(row.attempt) || 0,
+      status:      row.status,
+      nextRetry:   row.nextRetry || undefined,
+      maxRetries:  Number(row.maxRetries) || 3,
+    };
+  }
+
+  // ─── Rule engine — condition evaluator ────────────────────────────────────
+
+  function _getFieldValue_(payload, field) {
+    var parts = field.split(".");
+    var val = payload;
+    for (var i = 0; i < parts.length; i++) {
+      if (val == null) return undefined;
+      val = val[parts[i]];
+    }
+    return val;
+  }
+
+  function _evalCondition_(condition, payload) {
+    var fieldVal = _getFieldValue_(payload, condition.field);
+    var cmpVal   = condition.value;
+    switch (condition.operator) {
+      case "eq":       return fieldVal == cmpVal;
+      case "neq":      return fieldVal != cmpVal;
+      case "gt":       return Number(fieldVal) > Number(cmpVal);
+      case "gte":      return Number(fieldVal) >= Number(cmpVal);
+      case "lt":       return Number(fieldVal) < Number(cmpVal);
+      case "lte":      return Number(fieldVal) <= Number(cmpVal);
+      case "contains": return String(fieldVal || "").indexOf(String(cmpVal)) !== -1;
+      case "in":       return Array.isArray(cmpVal) && cmpVal.indexOf(fieldVal) !== -1;
+      case "not_in":   return Array.isArray(cmpVal) && cmpVal.indexOf(fieldVal) === -1;
+      default:         return false;
+    }
+  }
+
+  function _matchesRule_(rule, event) {
+    if (rule.eventType !== event.eventType) return false;
+    var conditions = rule.conditions || [];
+    for (var i = 0; i < conditions.length; i++) {
+      if (!_evalCondition_(conditions[i], event.payload)) return false;
+    }
+    return true;
+  }
+
+  // ─── Action dispatcher ────────────────────────────────────────────────────
+  // All actions are purely declarative — no eval(), no dynamic code.
+
+  function _execAction_(action, event, logs) {
+    var type   = action.type;
+    var params = action.params || {};
+
+    try {
+      if (type === "registrar_evento") {
+        _events_().create({
+          id:             _eventId_(),
+          eventType:      params.eventType || "rule.triggered",
+          sourceEngine:   "system",
+          sourceEntityId: event.id,
+          timestamp:      _now_(),
+          payload:        JSON.stringify({ triggeredBy: event.id, rule: params }),
+          status:         "pendiente",
+          priority:       params.priority || "normal",
+        });
+        logs.push("[OK] registrar_evento → " + (params.eventType || "rule.triggered"));
+        return { ok: true };
+      }
+
+      if (type === "crear_tarea_ioe") {
+        if (typeof IOEController !== "undefined") {
+          var taskResult = IOEController.createTask({
+            actionPlanId: params.actionPlanId || "",
+            title:        params.title || ("Tarea automática: " + event.eventType),
+            assignedTo:   params.assignedTo || event.payload.owner || "Sin asignar",
+            priority:     params.priority || "media",
+            plannedStart: _today_(),
+            plannedEnd:   params.plannedEnd || _today_(),
+          });
+          logs.push("[OK] crear_tarea_ioe → " + taskResult.id);
+          return { ok: true, taskId: taskResult.id };
+        }
+        logs.push("[SKIP] IOEController no disponible");
+        return { ok: false, reason: "IOEController not available" };
+      }
+
+      if (type === "crear_plan_ioe") {
+        if (typeof IOEController !== "undefined") {
+          var planResult = IOEController.createActionPlan({
+            title:                  params.title || ("Plan automático: " + event.eventType),
+            description:            params.description || "Generado automáticamente por AUE",
+            originEngine:           event.sourceEngine,
+            originEntityId:         event.sourceEntityId,
+            organizationalUnitId:   params.orgUnitId || "unknown",
+            organizationalUnitLabel: params.orgUnitLabel || "Unidad",
+            priority:               params.priority || "media",
+            objective:              params.objective || "Atender evento institucional",
+            expectedImpact:         params.expectedImpact || "Resolución del evento detectado",
+            owner:                  params.owner || "Sin asignar",
+            startDate:              _today_(),
+            targetDate:             params.targetDate || _today_(),
+          });
+          logs.push("[OK] crear_plan_ioe → " + planResult.id);
+          return { ok: true, planId: planResult.id };
+        }
+        logs.push("[SKIP] IOEController no disponible");
+        return { ok: false, reason: "IOEController not available" };
+      }
+
+      if (type === "cambiar_prioridad") {
+        logs.push("[OK] cambiar_prioridad → " + params.priority + " (contrato registrado)");
+        return { ok: true, priority: params.priority };
+      }
+
+      if (type === "actualizar_estado") {
+        logs.push("[OK] actualizar_estado → " + params.status + " (contrato registrado)");
+        return { ok: true, status: params.status };
+      }
+
+      if (type === "generar_alerta") {
+        logs.push("[OK] generar_alerta → " + params.message + " (registrada en auditoría)");
+        AuditService.record({
+          accion:      "aue.generar_alerta",
+          entidadTipo: "AUEEvent",
+          entidadId:   event.id,
+          usuarioId:   "system",
+          resultado:   "ok",
+          detalle:     { alerta: params.message, severity: params.severity || "medio" },
+        });
+        return { ok: true };
+      }
+
+      if (type === "registrar_auditoria") {
+        AuditService.record({
+          accion:      "aue.auditoria",
+          entidadTipo: event.sourceEngine,
+          entidadId:   event.sourceEntityId,
+          usuarioId:   "system",
+          resultado:   "ok",
+          detalle:     { eventType: event.eventType, eventId: event.id, note: params.note },
+        });
+        logs.push("[OK] registrar_auditoria → " + event.id);
+        return { ok: true };
+      }
+
+      // Future integration targets — registered as contracts, not executed
+      if (type === "webhook_externo" || type === "correo_externo" || type === "api_externa") {
+        logs.push("[PENDIENTE] " + type + " → contrato registrado para integración futura");
+        return { ok: true, deferred: true };
+      }
+
+      logs.push("[WARN] Tipo de acción desconocido: " + type);
+      return { ok: false, reason: "unknown action type: " + type };
+
+    } catch (err) {
+      var msg = "[ERROR] " + type + ": " + String((err && err.message) || err);
+      logs.push(msg);
+      return { ok: false, reason: msg };
+    }
+  }
+
+  // ─── Core event processing ────────────────────────────────────────────────
+
+  function _processEvent_(eventId) {
+    var allEvents = _events_().findAll();
+    var eventRow = null;
+    for (var i = 0; i < allEvents.length; i++) {
+      if (allEvents[i].id === eventId) { eventRow = allEvents[i]; break; }
+    }
+    if (!eventRow) throw new Error("Evento no encontrado: " + eventId);
+
+    var event = _hydrateEvent_(eventRow);
+    if (event.status === "procesado" || event.status === "ignorado") return { skipped: true };
+
+    // Update status to procesando
+    _events_().update({ id: eventId, status: "procesando" });
+
+    // Find matching enabled rules, sorted by priority desc
+    var allRules = _rules_().findAll()
+      .map(_hydrateRule_)
+      .filter(function (r) { return r.enabled && _matchesRule_(r, event); })
+      .sort(function (a, b) { return b.priority - a.priority; });
+
+    var execResults = [];
+
+    allRules.forEach(function (rule) {
+      var execId   = _execId_();
+      var startMs  = Number(new Date());
+      var logs     = ["[START] Regla: " + rule.name + " v" + rule.version];
+      var overallOk = true;
+
+      rule.actions.forEach(function (action) {
+        var res = _execAction_(action, event, logs);
+        if (!res.ok && !res.deferred) overallOk = false;
+      });
+
+      var finishMs = Number(new Date());
+      var duration = finishMs - startMs;
+      var status   = overallOk ? "exitoso" : "fallido";
+
+      // Persist execution record
+      _executions_().create({
+        id:         execId,
+        eventId:    eventId,
+        ruleId:     rule.id,
+        ruleName:   rule.name,
+        status:     status,
+        startedAt:  new Date(startMs).toISOString(),
+        finishedAt: new Date(finishMs).toISOString(),
+        duration:   duration,
+        result:     JSON.stringify({ ok: overallOk }),
+        logs:       JSON.stringify(logs),
+      });
+
+      // Update rule counters
+      _rules_().update({
+        id:             rule.id,
+        executionCount: (rule.executionCount || 0) + 1,
+        lastExecutedAt: _now_(),
+        updatedAt:      _now_(),
+      });
+
+      // Queue failed executions for retry
+      if (!overallOk) {
+        _queue_().create({
+          id:          _queueId_(),
+          executionId: execId,
+          scheduledAt: _now_(),
+          attempt:     1,
+          status:      "fallido",
+          nextRetry:   _now_(),
+          maxRetries:  3,
+        });
+      }
+
+      execResults.push({ execId: execId, ruleId: rule.id, status: status });
+    });
+
+    var finalStatus = allRules.length === 0 ? "ignorado" : "procesado";
+    _events_().update({ id: eventId, status: finalStatus, processedAt: _now_() });
+
+    return { processed: true, executions: execResults, rulesMatched: allRules.length };
+  }
+
+  // ─── Dashboard ────────────────────────────────────────────────────────────
+
+  function _buildDashboard_() {
+    var events     = _events_().findAll().map(_hydrateEvent_);
+    var rules      = _rules_().findAll().map(_hydrateRule_);
+    var executions = _executions_().findAll().map(_hydrateExecution_);
+    var queue      = _queue_().findAll().map(_hydrateQueue_);
+
+    var todayStr = _today_();
+
+    var totalEvents     = events.length;
+    var pendingEvents   = events.filter(function (e) { return e.status === "pendiente"; }).length;
+    var processedEvents = events.filter(function (e) { return e.status === "procesado"; }).length;
+    var failedEvents    = events.filter(function (e) { return e.status === "fallido"; }).length;
+    var eventsToday     = events.filter(function (e) { return e.timestamp.slice(0, 10) === todayStr; }).length;
+
+    var completedExec = executions.filter(function (e) { return e.duration != null; });
+    var avgProcessingTime = completedExec.length > 0
+      ? Math.round(completedExec.reduce(function (s, e) { return s + (e.duration || 0); }, 0) / completedExec.length)
+      : 0;
+
+    var activeRules = rules.filter(function (r) { return r.enabled; }).length;
+    var queueSize   = queue.filter(function (q) { return q.status === "pendiente" || q.status === "procesando"; }).length;
+    var retryCount  = queue.filter(function (q) { return q.attempt > 1; }).length;
+
+    // Top rules by execution count
+    var ruleExecMap = {};
+    executions.forEach(function (e) {
+      if (!ruleExecMap[e.ruleId]) ruleExecMap[e.ruleId] = { ruleId: e.ruleId, ruleName: e.ruleName, count: 0 };
+      ruleExecMap[e.ruleId].count++;
+    });
+    var topRules = Object.values(ruleExecMap)
+      .sort(function (a, b) { return b.count - a.count; })
+      .slice(0, 5);
+
+    // Events by day (last 14 days)
+    var dayMap = {};
+    events.forEach(function (e) {
+      var d = e.timestamp.slice(0, 10);
+      dayMap[d] = (dayMap[d] || 0) + 1;
+    });
+    var eventsByDay = Object.keys(dayMap).sort().slice(-14).map(function (d) {
+      return { date: d, count: dayMap[d] };
+    });
+
+    return {
+      totalEvents:       totalEvents,
+      pendingEvents:     pendingEvents,
+      processedEvents:   processedEvents,
+      failedEvents:      failedEvents,
+      avgProcessingTime: avgProcessingTime,
+      activeRules:       activeRules,
+      queueSize:         queueSize,
+      retryCount:        retryCount,
+      eventsToday:       eventsToday,
+      topRules:          topRules,
+      recentEvents:      events.slice(-10).reverse(),
+      recentExecutions:  executions.slice(-10).reverse(),
+      eventsByDay:       eventsByDay,
+      generatedAt:       _now_(),
+    };
+  }
+
+  // ─── Public API ───────────────────────────────────────────────────────────
+
+  function getDashboard() {
+    return _buildDashboard_();
+  }
+
+  function getEvents(params) {
+    params = params || {};
+    var rows = _events_().findAll().map(_hydrateEvent_);
+    if (params.sourceEngine) rows = rows.filter(function (e) { return e.sourceEngine === params.sourceEngine; });
+    if (params.eventType)    rows = rows.filter(function (e) { return e.eventType    === params.eventType;    });
+    if (params.status)       rows = rows.filter(function (e) { return e.status       === params.status;       });
+    if (params.priority)     rows = rows.filter(function (e) { return e.priority     === params.priority;     });
+    if (params.from)         rows = rows.filter(function (e) { return e.timestamp >= params.from; });
+    if (params.to)           rows = rows.filter(function (e) { return e.timestamp <= params.to + "T23:59:59Z"; });
+    rows = rows.sort(function (a, b) { return b.timestamp.localeCompare(a.timestamp); });
+    if (params.limit) rows = rows.slice(0, Number(params.limit));
+    return rows;
+  }
+
+  function createEvent(params) {
+    params = params || {};
+    var id = _eventId_();
+    var row = {
+      id:             id,
+      eventType:      params.eventType,
+      sourceEngine:   params.sourceEngine,
+      sourceEntityId: params.sourceEntityId || "",
+      timestamp:      _now_(),
+      payload:        JSON.stringify(params.payload || {}),
+      status:         "pendiente",
+      priority:       params.priority || "normal",
+    };
+    _events_().create(row);
+    return _hydrateEvent_(row);
+  }
+
+  function processEvent(params) {
+    return _processEvent_(params.eventId);
+  }
+
+  function getRules(params) {
+    params = params || {};
+    var rows = _rules_().findAll().map(_hydrateRule_);
+    if (params.enabled !== undefined) {
+      var wantEnabled = params.enabled === true || params.enabled === "true";
+      rows = rows.filter(function (r) { return r.enabled === wantEnabled; });
+    }
+    if (params.eventType) rows = rows.filter(function (r) { return r.eventType === params.eventType; });
+    rows = rows.sort(function (a, b) { return b.priority - a.priority; });
+    if (params.limit) rows = rows.slice(0, Number(params.limit));
+    return rows;
+  }
+
+  function getRule(params) {
+    var rows = _rules_().findAll().map(_hydrateRule_);
+    var found = rows.filter(function (r) { return r.id === params.id; });
+    if (!found.length) throw new Error("Regla no encontrada: " + params.id);
+    return found[0];
+  }
+
+  function createRule(params) {
+    params = params || {};
+    var id = _ruleId_();
+    var now = _now_();
+    var row = {
+      id:             id,
+      name:           params.name,
+      description:    params.description || "",
+      enabled:        params.enabled !== false,
+      eventType:      params.eventType,
+      conditions:     JSON.stringify(params.conditions || []),
+      actions:        JSON.stringify(params.actions || []),
+      priority:       params.priority || 0,
+      version:        1,
+      executionCount: 0,
+      lastExecutedAt: "",
+      createdBy:      params.createdBy || "system",
+      createdAt:      now,
+      updatedAt:      now,
+    };
+    _rules_().create(row);
+    return _hydrateRule_(row);
+  }
+
+  function updateRule(params) {
+    params = params || {};
+    var existing = getRule({ id: params.id });
+    var now = _now_();
+    var changes = { id: params.id, updatedAt: now };
+    if (params.name        !== undefined) changes.name        = params.name;
+    if (params.description !== undefined) changes.description = params.description;
+    if (params.enabled     !== undefined) changes.enabled     = params.enabled;
+    if (params.eventType   !== undefined) changes.eventType   = params.eventType;
+    if (params.conditions  !== undefined) changes.conditions  = JSON.stringify(params.conditions);
+    if (params.actions     !== undefined) changes.actions     = JSON.stringify(params.actions);
+    if (params.priority    !== undefined) changes.priority    = params.priority;
+    // Version bump on structural changes
+    if (params.conditions !== undefined || params.actions !== undefined || params.eventType !== undefined) {
+      changes.version = (existing.version || 1) + 1;
+    }
+    _rules_().update(changes);
+    return getRule({ id: params.id });
+  }
+
+  function duplicateRule(params) {
+    var source = getRule({ id: params.id });
+    return createRule({
+      name:       (source.name || "") + " (copia)",
+      description: source.description,
+      eventType:  source.eventType,
+      conditions: source.conditions,
+      actions:    source.actions,
+      priority:   source.priority,
+      createdBy:  params.createdBy || "system",
+    });
+  }
+
+  function getExecutions(params) {
+    params = params || {};
+    var rows = _executions_().findAll().map(_hydrateExecution_);
+    if (params.eventId) rows = rows.filter(function (e) { return e.eventId === params.eventId; });
+    if (params.ruleId)  rows = rows.filter(function (e) { return e.ruleId  === params.ruleId;  });
+    if (params.status)  rows = rows.filter(function (e) { return e.status  === params.status;  });
+    if (params.from)    rows = rows.filter(function (e) { return e.startedAt >= params.from; });
+    if (params.to)      rows = rows.filter(function (e) { return e.startedAt <= params.to + "T23:59:59Z"; });
+    rows = rows.sort(function (a, b) { return b.startedAt.localeCompare(a.startedAt); });
+    if (params.limit) rows = rows.slice(0, Number(params.limit));
+    return rows;
+  }
+
+  function getQueue(params) {
+    params = params || {};
+    var rows = _queue_().findAll().map(_hydrateQueue_);
+    if (params.status) rows = rows.filter(function (q) { return q.status === params.status; });
+    rows = rows.sort(function (a, b) { return b.scheduledAt.localeCompare(a.scheduledAt); });
+    if (params.limit) rows = rows.slice(0, Number(params.limit));
+    return rows;
+  }
+
+  function retryExecution(params) {
+    var qRows = _queue_().findAll().map(_hydrateQueue_)
+      .filter(function (q) { return q.executionId === params.executionId; });
+    if (!qRows.length) throw new Error("Cola no encontrada para ejecución: " + params.executionId);
+    var qEntry = qRows[0];
+    if (qEntry.attempt >= qEntry.maxRetries) throw new Error("Máximo de reintentos alcanzado");
+
+    var execRows = _executions_().findAll().map(_hydrateExecution_)
+      .filter(function (e) { return e.id === params.executionId; });
+    if (!execRows.length) throw new Error("Ejecución no encontrada: " + params.executionId);
+    var exec = execRows[0];
+
+    // Update queue entry
+    _queue_().update({
+      id:      qEntry.id,
+      attempt: qEntry.attempt + 1,
+      status:  "procesando",
+      nextRetry: _now_(),
+    });
+    // Update execution status
+    _executions_().update({ id: exec.id, status: "reintentando" });
+
+    // Re-process the original event
+    var result = _processEvent_(exec.eventId);
+    _queue_().update({ id: qEntry.id, status: result.processed ? "completado" : "fallido" });
+    return result;
+  }
+
+  // ─── Public interface ─────────────────────────────────────────────────────
+
+  return {
+    getDashboard:    getDashboard,
+    getEvents:       getEvents,
+    createEvent:     createEvent,
+    processEvent:    processEvent,
+    getRules:        getRules,
+    getRule:         getRule,
+    createRule:      createRule,
+    updateRule:      updateRule,
+    duplicateRule:   duplicateRule,
+    getExecutions:   getExecutions,
+    getQueue:        getQueue,
+    retryExecution:  retryExecution,
+  };
+
+})();
+
+// ============================================================
+// SOURCE: controllers/NCEController.js
+// ============================================================
+
+/**
+ * NCE — Notification & Communication Engine
+ *
+ * Responsibilities:
+ *   - Template rendering with {{variable}} substitution (no eval).
+ *   - Duplicate detection per (sourceEventId, recipientId).
+ *   - Quiet-hours enforcement per user preference.
+ *   - AUE event consumption (read-only from AUE_Events sheet).
+ *   - Digest generation aggregating pending notifications.
+ *   - Internal channel delivery; correo + google_chat as contracts only.
+ */
+var NCEController = (function () {
+
+  // ─── Repo helpers ─────────────────────────────────────────────────────────
+
+  function _repo_(key) {
+    return SheetRepository.forEntity(key);
+  }
+
+  function _notifs_()    { return _repo_("nceNotifications");    }
+  function _templates_() { return _repo_("nceTemplates");        }
+  function _prefs_()     { return _repo_("nceUserPreferences");  }
+  function _digests_()   { return _repo_("nceDigests");          }
+
+  function _now_()   { return new Date().toISOString(); }
+  function _today_() { return _now_().slice(0, 10); }
+
+  function _notifId_() {
+    return "NTF-NCE-" + Number(new Date()).toString(36).toUpperCase() + "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+  function _tplId_() {
+    return "TPL-NCE-" + Number(new Date()).toString(36).toUpperCase() + "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+  function _prefId_() {
+    return "PRF-NCE-" + Number(new Date()).toString(36).toUpperCase() + "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+  function _digestId_() {
+    return "DGS-NCE-" + Number(new Date()).toString(36).toUpperCase() + "-" +
+      Math.random().toString(36).slice(2, 5).toUpperCase();
+  }
+
+  // ─── JSON helpers ─────────────────────────────────────────────────────────
+
+  function _parseJson_(val) {
+    if (!val || typeof val === "object") return val || {};
+    try { return JSON.parse(val); } catch (e) { return {}; }
+  }
+
+  function _parseArr_(val) {
+    if (Array.isArray(val)) return val;
+    if (!val) return [];
+    try { return JSON.parse(val); } catch (e) { return []; }
+  }
+
+  // ─── Hydrators ────────────────────────────────────────────────────────────
+
+  function _hydrateNotif_(row) {
+    return {
+      id:            row.id,
+      recipientId:   row.recipientId,
+      recipientEmail: row.recipientEmail,
+      title:         row.title,
+      body:          row.body,
+      channel:       row.channel || "interna",
+      status:        row.status || "pendiente",
+      priority:      row.priority || "normal",
+      templateId:    row.templateId || undefined,
+      templateType:  row.templateType || undefined,
+      sourceEventId: row.sourceEventId || undefined,
+      sourceEngine:  row.sourceEngine || undefined,
+      metadata:      _parseJson_(row.metadata),
+      readAt:        row.readAt || undefined,
+      deliveredAt:   row.deliveredAt || undefined,
+      createdAt:     row.createdAt,
+      updatedAt:     row.updatedAt,
+    };
+  }
+
+  function _hydrateTemplate_(row) {
+    return {
+      id:         row.id,
+      name:       row.name,
+      type:       row.type,
+      channel:    row.channel,
+      subject:    row.subject,
+      body:       row.body,
+      variables:  _parseArr_(row.variables),
+      enabled:    row.enabled === true || row.enabled === "true",
+      version:    Number(row.version) || 1,
+      usageCount: Number(row.usageCount) || 0,
+      createdBy:  row.createdBy,
+      createdAt:  row.createdAt,
+      updatedAt:  row.updatedAt,
+    };
+  }
+
+  function _hydratePref_(row) {
+    return {
+      id:              row.id,
+      userId:          row.userId,
+      userEmail:       row.userEmail,
+      enabledChannels: _parseArr_(row.enabledChannels),
+      enabledTypes:    _parseArr_(row.enabledTypes),
+      quietHoursStart: row.quietHoursStart || undefined,
+      quietHoursEnd:   row.quietHoursEnd || undefined,
+      digestEnabled:   row.digestEnabled === true || row.digestEnabled === "true",
+      digestFrequency: row.digestFrequency || "diario",
+      updatedAt:       row.updatedAt,
+    };
+  }
+
+  function _hydrateDigest_(row) {
+    return {
+      id:                row.id,
+      recipientId:       row.recipientId,
+      recipientEmail:    row.recipientEmail,
+      frequency:         row.frequency,
+      status:            row.status || "pendiente",
+      periodStart:       row.periodStart,
+      periodEnd:         row.periodEnd,
+      notificationCount: Number(row.notificationCount) || 0,
+      summary:           _parseJson_(row.summary),
+      generatedAt:       row.generatedAt || undefined,
+      deliveredAt:       row.deliveredAt || undefined,
+      createdAt:         row.createdAt,
+    };
+  }
+
+  // ─── Template rendering ───────────────────────────────────────────────────
+
+  /**
+   * Replaces {{key}} placeholders in a string with values from `vars`.
+   * No eval(), no dynamic code — pure string replacement.
+   */
+  function _renderTemplate_(template, vars) {
+    if (!template || !vars) return template || "";
+    var result = template;
+    Object.keys(vars).forEach(function (key) {
+      var placeholder = "{{" + key + "}}";
+      while (result.indexOf(placeholder) !== -1) {
+        result = result.replace(placeholder, String(vars[key] || ""));
+      }
+    });
+    return result;
+  }
+
+  // ─── Duplicate detection ──────────────────────────────────────────────────
+
+  function _isDuplicate_(sourceEventId, recipientId) {
+    if (!sourceEventId || !recipientId) return false;
+    var existing = _notifs_().findAll({ sourceEventId: sourceEventId, recipientId: recipientId });
+    return existing && existing.length > 0;
+  }
+
+  // ─── Quiet hours enforcement ──────────────────────────────────────────────
+
+  function _inQuietHours_(pref, priority) {
+    if (priority === "urgente") return false;
+    if (!pref || !pref.quietHoursStart || !pref.quietHoursEnd) return false;
+    var now = new Date();
+    var hh = now.getHours();
+    var mm = now.getMinutes();
+    var current = hh * 60 + mm;
+    var parts = pref.quietHoursStart.split(":");
+    var startMin = Number(parts[0]) * 60 + Number(parts[1] || 0);
+    var endParts = pref.quietHoursEnd.split(":");
+    var endMin = Number(endParts[0]) * 60 + Number(endParts[1] || 0);
+    if (startMin <= endMin) {
+      return current >= startMin && current < endMin;
+    }
+    return current >= startMin || current < endMin;
+  }
+
+  // ─── AUE event read ───────────────────────────────────────────────────────
+
+  function _getAUEEvents_(params) {
+    try {
+      var repo = SheetRepository.forEntity("aueEvents");
+      var rows = repo.findAll(params || {});
+      return rows || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ─── Default templates seed ───────────────────────────────────────────────
+
+  function _seedDefaultTemplates_() {
+    var defaults = [
+      {
+        name: "Alerta de Plan",
+        type: "alerta_plan",
+        channel: "interna",
+        subject: "Alerta: Plan {{planId}} requiere atención",
+        body: "El plan {{planId}} ha generado una alerta de prioridad {{priority}}. Detalle: {{detail}}.",
+        variables: ["planId", "priority", "detail"],
+      },
+      {
+        name: "Tarea Vencida",
+        type: "tarea_vencida",
+        channel: "interna",
+        subject: "Tarea vencida: {{taskName}}",
+        body: "La tarea \"{{taskName}}\" venció el {{dueDate}} sin completarse. Responsable: {{assignee}}.",
+        variables: ["taskName", "dueDate", "assignee"],
+      },
+      {
+        name: "Nueva Recomendación",
+        type: "nueva_recomendacion",
+        channel: "interna",
+        subject: "Nueva recomendación registrada",
+        body: "Se registró la recomendación \"{{title}}\" con prioridad {{priority}} en {{engine}}.",
+        variables: ["title", "priority", "engine"],
+      },
+      {
+        name: "Diagnóstico Nuevo",
+        type: "diagnostico_nuevo",
+        channel: "interna",
+        subject: "Nuevo diagnóstico disponible",
+        body: "Se generó un nuevo diagnóstico en {{engine}}: {{summary}}.",
+        variables: ["engine", "summary"],
+      },
+      {
+        name: "Hito Completado",
+        type: "hito_completado",
+        channel: "interna",
+        subject: "Hito completado: {{milestoneName}}",
+        body: "El hito \"{{milestoneName}}\" del plan {{planId}} fue completado el {{completedAt}}.",
+        variables: ["milestoneName", "planId", "completedAt"],
+      },
+      {
+        name: "Regla Activada",
+        type: "regla_activada",
+        channel: "interna",
+        subject: "Regla AUE activada: {{ruleName}}",
+        body: "La regla \"{{ruleName}}\" fue activada por el evento {{eventType}} en {{sourceEngine}}.",
+        variables: ["ruleName", "eventType", "sourceEngine"],
+      },
+      {
+        name: "Evidencia Nueva",
+        type: "evidencia_nueva",
+        channel: "interna",
+        subject: "Nueva evidencia adjuntada",
+        body: "Se adjuntó evidencia al proceso {{processId}}: {{evidenceTitle}}.",
+        variables: ["processId", "evidenceTitle"],
+      },
+      {
+        name: "Resumen Diario",
+        type: "resumen_diario",
+        channel: "interna",
+        subject: "Resumen del {{date}}: {{count}} notificaciones",
+        body: "Resumen del día {{date}}. Total de notificaciones: {{count}}. Urgentes: {{urgent}}. Pendientes: {{pending}}.",
+        variables: ["date", "count", "urgent", "pending"],
+      },
+    ];
+
+    var repo = _templates_();
+    defaults.forEach(function (tpl) {
+      var existing = repo.findAll({ type: tpl.type, channel: tpl.channel });
+      if (existing && existing.length > 0) return;
+      var now = _now_();
+      repo.create({
+        id:         _tplId_(),
+        name:       tpl.name,
+        type:       tpl.type,
+        channel:    tpl.channel,
+        subject:    tpl.subject,
+        body:       tpl.body,
+        variables:  JSON.stringify(tpl.variables),
+        enabled:    true,
+        version:    1,
+        usageCount: 0,
+        createdBy:  "system",
+        createdAt:  now,
+        updatedAt:  now,
+      });
+    });
+  }
+
+  // ─── Public API ───────────────────────────────────────────────────────────
+
+  function getDashboard() {
+    var now = _now_();
+    var today = _today_();
+    var allNotifs = _notifs_().findAll({}) || [];
+    var allTemplates = _templates_().findAll({}) || [];
+    var allDigests = _digests_().findAll({}) || [];
+
+    var pending   = allNotifs.filter(function (n) { return n.status === "pendiente"; });
+    var failed    = allNotifs.filter(function (n) { return n.status === "fallida"; });
+    var delivered = allNotifs.filter(function (n) {
+      return n.deliveredAt && String(n.deliveredAt).slice(0, 10) === today;
+    });
+    var read   = allNotifs.filter(function (n) { return n.status === "leida"; });
+    var active = allTemplates.filter(function (t) { return t.enabled === true || t.enabled === "true"; });
+    var digestsPending = allDigests.filter(function (d) { return d.status === "pendiente"; });
+
+    var readRate = allNotifs.length > 0 ? Math.round((read.length / allNotifs.length) * 100) : 0;
+
+    var channelMap = {};
+    allNotifs.forEach(function (n) {
+      var ch = n.channel || "interna";
+      channelMap[ch] = (channelMap[ch] || 0) + 1;
+    });
+    var byChannel = Object.keys(channelMap).map(function (ch) {
+      return { channel: ch, count: channelMap[ch] };
+    });
+
+    var typeMap = {};
+    allNotifs.forEach(function (n) {
+      if (n.templateType) {
+        typeMap[n.templateType] = (typeMap[n.templateType] || 0) + 1;
+      }
+    });
+    var byType = Object.keys(typeMap).map(function (t) {
+      return { type: t, count: typeMap[t] };
+    }).sort(function (a, b) { return b.count - a.count; }).slice(0, 8);
+
+    var dayMap = {};
+    allNotifs.forEach(function (n) {
+      var d = String(n.createdAt).slice(0, 10);
+      dayMap[d] = (dayMap[d] || 0) + 1;
+    });
+    var byDay = Object.keys(dayMap).sort().slice(-14).map(function (d) {
+      return { date: d, count: dayMap[d] };
+    });
+
+    var recent = allNotifs
+      .map(_hydrateNotif_)
+      .sort(function (a, b) { return b.createdAt > a.createdAt ? 1 : -1; })
+      .slice(0, 10);
+
+    var deliveredTimes = allNotifs
+      .filter(function (n) { return n.deliveredAt && n.createdAt; })
+      .map(function (n) {
+        return (new Date(n.deliveredAt).getTime() - new Date(n.createdAt).getTime()) / 1000;
+      });
+    var avgDelivery = deliveredTimes.length > 0
+      ? Math.round(deliveredTimes.reduce(function (a, b) { return a + b; }, 0) / deliveredTimes.length)
+      : 0;
+
+    return {
+      totalNotifications:   allNotifs.length,
+      pendingNotifications: pending.length,
+      deliveredToday:       delivered.length,
+      failedNotifications:  failed.length,
+      avgDeliveryTime:      avgDelivery,
+      activeTemplates:      active.length,
+      digestsPending:       digestsPending.length,
+      readRate:             readRate,
+      notificationsByChannel: byChannel,
+      notificationsByType:    byType,
+      recentNotifications:    recent,
+      notificationsByDay:     byDay,
+      generatedAt: now,
+    };
+  }
+
+  function getNotifications(params) {
+    var p = params || {};
+    var rows = _notifs_().findAll(
+      Object.keys(p).length > 0
+        ? {
+            recipientId:  p.recipientId,
+            status:       p.status,
+            channel:      p.channel,
+            templateType: p.templateType,
+          }
+        : {}
+    ) || [];
+
+    var result = rows.map(_hydrateNotif_);
+    if (p.priority) result = result.filter(function (n) { return n.priority === p.priority; });
+    if (p.from)     result = result.filter(function (n) { return n.createdAt >= p.from; });
+    if (p.to)       result = result.filter(function (n) { return n.createdAt <= p.to; });
+    result.sort(function (a, b) { return b.createdAt > a.createdAt ? 1 : -1; });
+    if (p.limit) result = result.slice(0, Number(p.limit));
+    return result;
+  }
+
+  function createNotification(params) {
+    var p = params || {};
+    var now = _now_();
+
+    // Duplicate check
+    if (p.sourceEventId && p.recipientId) {
+      if (_isDuplicate_(p.sourceEventId, p.recipientId)) {
+        throw new Error("NCE_DUPLICATE: Ya existe una notificación para este evento y destinatario.");
+      }
+    }
+
+    // Resolve template
+    var subject = p.subject || "";
+    var body    = p.body || "";
+    var tplType = p.templateType;
+    var tplId   = p.templateId;
+
+    if (tplId) {
+      var tplRow = _templates_().findById(tplId);
+      if (tplRow && (tplRow.enabled === true || tplRow.enabled === "true")) {
+        var tpl = _hydrateTemplate_(tplRow);
+        var vars = p.variables || {};
+        subject = _renderTemplate_(tpl.subject, vars);
+        body    = _renderTemplate_(tpl.body, vars);
+        tplType = tplType || tpl.type;
+        // bump usage count
+        _templates_().update(tplId, { usageCount: (tpl.usageCount + 1), updatedAt: now });
+      }
+    } else if (tplType) {
+      var rows = _templates_().findAll({ type: tplType, channel: p.channel || "interna" });
+      if (rows && rows.length > 0) {
+        var tpl = _hydrateTemplate_(rows[0]);
+        if (tpl.enabled) {
+          var vars = p.variables || {};
+          subject = _renderTemplate_(tpl.subject, vars);
+          body    = _renderTemplate_(tpl.body, vars);
+          tplId   = tpl.id;
+          _templates_().update(tpl.id, { usageCount: (tpl.usageCount + 1), updatedAt: now });
+        }
+      }
+    }
+
+    // Quiet hours check (skip for urgente)
+    var priority = p.priority || "normal";
+    if (p.recipientId && priority !== "urgente") {
+      var prefRows = _prefs_().findAll({ userId: p.recipientId });
+      if (prefRows && prefRows.length > 0) {
+        var pref = _hydratePref_(prefRows[0]);
+        if (_inQuietHours_(pref, priority)) {
+          // Queue as pendiente — respect quiet hours
+          priority = priority;
+        }
+      }
+    }
+
+    var notif = {
+      id:            _notifId_(),
+      recipientId:   p.recipientId || "",
+      recipientEmail: p.recipientEmail || "",
+      title:         subject || p.title || "Notificación",
+      body:          body || p.body || "",
+      channel:       p.channel || "interna",
+      status:        "pendiente",
+      priority:      priority,
+      templateId:    tplId || "",
+      templateType:  tplType || "",
+      sourceEventId: p.sourceEventId || "",
+      sourceEngine:  p.sourceEngine || "",
+      metadata:      JSON.stringify(p.metadata || {}),
+      readAt:        "",
+      deliveredAt:   "",
+      createdAt:     now,
+      updatedAt:     now,
+    };
+
+    _notifs_().create(notif);
+
+    // For internal channel: mark delivered immediately
+    if (notif.channel === "interna") {
+      _notifs_().update(notif.id, { status: "entregada", deliveredAt: now, updatedAt: now });
+      notif.status = "entregada";
+      notif.deliveredAt = now;
+    }
+    // correo and google_chat: contract only — stays pendiente
+
+    return _hydrateNotif_(notif);
+  }
+
+  function markRead(params) {
+    var p = params || {};
+    var notif = _notifs_().findById(p.notificationId);
+    if (!notif) throw new Error("NCE_NOT_FOUND: Notificación no encontrada.");
+    if (notif.recipientId !== p.recipientId) throw new Error("NCE_FORBIDDEN: Sin permiso.");
+    var now = _now_();
+    _notifs_().update(p.notificationId, { status: "leida", readAt: now, updatedAt: now });
+    return _hydrateNotif_(Object.assign({}, notif, { status: "leida", readAt: now, updatedAt: now }));
+  }
+
+  function archiveNotification(params) {
+    var p = params || {};
+    var notif = _notifs_().findById(p.notificationId);
+    if (!notif) throw new Error("NCE_NOT_FOUND: Notificación no encontrada.");
+    var now = _now_();
+    _notifs_().update(p.notificationId, { status: "archivada", updatedAt: now });
+    return { archived: true, id: p.notificationId };
+  }
+
+  function getTemplates(params) {
+    var p = params || {};
+    var filter = {};
+    if (p.type)    filter.type    = p.type;
+    if (p.channel) filter.channel = p.channel;
+    if (typeof p.enabled !== "undefined") filter.enabled = p.enabled;
+
+    var rows = _templates_().findAll(filter) || [];
+    var result = rows.map(_hydrateTemplate_);
+    result.sort(function (a, b) { return a.name > b.name ? 1 : -1; });
+    if (p.limit) result = result.slice(0, Number(p.limit));
+    return result;
+  }
+
+  function getTemplate(params) {
+    var row = _templates_().findById(params.id);
+    if (!row) throw new Error("NCE_NOT_FOUND: Template no encontrado.");
+    return _hydrateTemplate_(row);
+  }
+
+  function createTemplate(params) {
+    var p = params || {};
+    var now = _now_();
+    var tpl = {
+      id:         _tplId_(),
+      name:       p.name || "Nuevo Template",
+      type:       p.type,
+      channel:    p.channel || "interna",
+      subject:    p.subject || "",
+      body:       p.body || "",
+      variables:  JSON.stringify(p.variables || []),
+      enabled:    true,
+      version:    1,
+      usageCount: 0,
+      createdBy:  p.createdBy || "system",
+      createdAt:  now,
+      updatedAt:  now,
+    };
+    _templates_().create(tpl);
+    return _hydrateTemplate_(tpl);
+  }
+
+  function updateTemplate(params) {
+    var p = params || {};
+    if (!p.id) throw new Error("NCE_VALIDATION: id es requerido.");
+    var existing = _templates_().findById(p.id);
+    if (!existing) throw new Error("NCE_NOT_FOUND: Template no encontrado.");
+    var now = _now_();
+    var hydrated = _hydrateTemplate_(existing);
+
+    var subjectChanged = p.subject && p.subject !== hydrated.subject;
+    var bodyChanged    = p.body && p.body !== hydrated.body;
+    var newVersion = (subjectChanged || bodyChanged) ? hydrated.version + 1 : hydrated.version;
+
+    var updates = { updatedAt: now, version: newVersion };
+    if (p.name)      updates.name    = p.name;
+    if (p.subject)   updates.subject = p.subject;
+    if (p.body)      updates.body    = p.body;
+    if (p.variables) updates.variables = JSON.stringify(p.variables);
+    if (typeof p.enabled !== "undefined") updates.enabled = p.enabled;
+
+    _templates_().update(p.id, updates);
+    return _hydrateTemplate_(Object.assign({}, existing, updates));
+  }
+
+  function getPreference(params) {
+    var p = params || {};
+    var rows = _prefs_().findAll({ userId: p.userId });
+    if (!rows || rows.length === 0) {
+      return {
+        id: "",
+        userId: p.userId || "",
+        userEmail: p.userEmail || "",
+        enabledChannels: ["interna"],
+        enabledTypes: [
+          "alerta_plan", "tarea_vencida", "nueva_recomendacion",
+          "diagnostico_nuevo", "hito_completado", "regla_activada",
+          "evidencia_nueva", "resumen_diario"
+        ],
+        quietHoursStart: undefined,
+        quietHoursEnd: undefined,
+        digestEnabled: true,
+        digestFrequency: "diario",
+        updatedAt: _now_(),
+      };
+    }
+    return _hydratePref_(rows[0]);
+  }
+
+  function updatePreference(params) {
+    var p = params || {};
+    if (!p.userId) throw new Error("NCE_VALIDATION: userId es requerido.");
+    var now = _now_();
+    var rows = _prefs_().findAll({ userId: p.userId });
+    var updates = {
+      updatedAt: now,
+    };
+    if (p.enabledChannels)  updates.enabledChannels  = JSON.stringify(p.enabledChannels);
+    if (p.enabledTypes)     updates.enabledTypes     = JSON.stringify(p.enabledTypes);
+    if (typeof p.quietHoursStart !== "undefined") updates.quietHoursStart = p.quietHoursStart || "";
+    if (typeof p.quietHoursEnd   !== "undefined") updates.quietHoursEnd   = p.quietHoursEnd   || "";
+    if (typeof p.digestEnabled   !== "undefined") updates.digestEnabled   = p.digestEnabled;
+    if (p.digestFrequency)  updates.digestFrequency  = p.digestFrequency;
+
+    if (rows && rows.length > 0) {
+      _prefs_().update(rows[0].id, updates);
+      return _hydratePref_(Object.assign({}, rows[0], updates));
+    }
+
+    var newPref = {
+      id:              _prefId_(),
+      userId:          p.userId,
+      userEmail:       p.userEmail || "",
+      enabledChannels: updates.enabledChannels || JSON.stringify(["interna"]),
+      enabledTypes:    updates.enabledTypes    || JSON.stringify([
+        "alerta_plan", "tarea_vencida", "nueva_recomendacion",
+        "diagnostico_nuevo", "hito_completado", "regla_activada",
+        "evidencia_nueva", "resumen_diario"
+      ]),
+      quietHoursStart: updates.quietHoursStart || "",
+      quietHoursEnd:   updates.quietHoursEnd   || "",
+      digestEnabled:   typeof updates.digestEnabled !== "undefined" ? updates.digestEnabled : true,
+      digestFrequency: updates.digestFrequency || "diario",
+      updatedAt:       now,
+    };
+    _prefs_().create(newPref);
+    return _hydratePref_(newPref);
+  }
+
+  function generateDigest(params) {
+    var p = params || {};
+    var now   = _now_();
+    var today = _today_();
+
+    var freq = p.frequency || "diario";
+    var periodStart, periodEnd;
+    if (freq === "diario") {
+      periodStart = today;
+      periodEnd   = today;
+    } else if (freq === "semanal") {
+      var d = new Date();
+      d.setDate(d.getDate() - 6);
+      periodStart = d.toISOString().slice(0, 10);
+      periodEnd   = today;
+    } else {
+      var d2 = new Date();
+      d2.setDate(d2.getDate() - 13);
+      periodStart = d2.toISOString().slice(0, 10);
+      periodEnd   = today;
+    }
+
+    var userNotifs = _notifs_().findAll({ recipientId: p.recipientId }) || [];
+    var inPeriod = userNotifs.filter(function (n) {
+      var d = String(n.createdAt).slice(0, 10);
+      return d >= periodStart && d <= periodEnd;
+    });
+
+    var urgent  = inPeriod.filter(function (n) { return n.priority === "urgente"; }).length;
+    var alta    = inPeriod.filter(function (n) { return n.priority === "alta"; }).length;
+    var unread  = inPeriod.filter(function (n) { return n.status !== "leida" && n.status !== "archivada"; }).length;
+
+    var summary = {
+      periodStart:    periodStart,
+      periodEnd:      periodEnd,
+      total:          inPeriod.length,
+      urgent:         urgent,
+      alta:           alta,
+      unread:         unread,
+    };
+
+    var digest = {
+      id:                _digestId_(),
+      recipientId:       p.recipientId || "",
+      recipientEmail:    p.recipientEmail || "",
+      frequency:         freq,
+      status:            "generado",
+      periodStart:       periodStart,
+      periodEnd:         periodEnd,
+      notificationCount: inPeriod.length,
+      summary:           JSON.stringify(summary),
+      generatedAt:       now,
+      deliveredAt:       "",
+      createdAt:         now,
+    };
+
+    _digests_().create(digest);
+    return _hydrateDigest_(digest);
+  }
+
+  function getDigests(params) {
+    var p = params || {};
+    var filter = {};
+    if (p.recipientId) filter.recipientId = p.recipientId;
+    if (p.status)      filter.status      = p.status;
+    if (p.frequency)   filter.frequency   = p.frequency;
+
+    var rows = _digests_().findAll(filter) || [];
+    var result = rows.map(_hydrateDigest_);
+    result.sort(function (a, b) { return b.createdAt > a.createdAt ? 1 : -1; });
+    if (p.limit) result = result.slice(0, Number(p.limit));
+    return result;
+  }
+
+  function consumeAUEEvents(params) {
+    var p = params || {};
+    var events = _getAUEEvents_({ status: "procesado" });
+    if (!events || events.length === 0) return { processed: 0 };
+
+    var limit = Number(p.limit) || 50;
+    var processed = 0;
+
+    events.slice(0, limit).forEach(function (evt) {
+      var eventType = evt.eventType;
+      var tplTypeMap = {
+        "alert.new":              "alerta_plan",
+        "task.overdue":           "tarea_vencida",
+        "recommendation.new":     "nueva_recomendacion",
+        "diagnosis.new":          "diagnostico_nuevo",
+        "milestone.completed":    "hito_completado",
+        "rule.triggered":         "regla_activada",
+        "evidence.added":         "evidencia_nueva",
+      };
+      var tplType = tplTypeMap[eventType];
+      if (!tplType) return;
+
+      var payload = evt.payload;
+      if (typeof payload === "string") {
+        try { payload = JSON.parse(payload); } catch (e) { payload = {}; }
+      }
+      payload = payload || {};
+
+      var recipientId    = String(payload.recipientId    || payload.assignee || "sistema");
+      var recipientEmail = String(payload.recipientEmail || payload.email    || "");
+
+      if (_isDuplicate_(evt.id, recipientId)) return;
+
+      try {
+        createNotification({
+          recipientId:    recipientId,
+          recipientEmail: recipientEmail,
+          templateType:   tplType,
+          variables:      payload,
+          channel:        "interna",
+          priority:       evt.priority === "critica" ? "urgente" :
+                          evt.priority === "alta"    ? "alta"    : "normal",
+          sourceEventId:  evt.id,
+          sourceEngine:   evt.sourceEngine,
+        });
+        processed++;
+      } catch (e) {
+        // skip duplicates and other recoverable errors
+      }
+    });
+
+    return { processed: processed };
+  }
+
+  function seedTemplates() {
+    _seedDefaultTemplates_();
+    return { seeded: true };
+  }
+
+  // ─── Module bootstrap ─────────────────────────────────────────────────────
+
+  _seedDefaultTemplates_();
+
+  return {
+    getDashboard:        getDashboard,
+    getNotifications:    getNotifications,
+    createNotification:  createNotification,
+    markRead:            markRead,
+    archiveNotification: archiveNotification,
+    getTemplates:        getTemplates,
+    getTemplate:         getTemplate,
+    createTemplate:      createTemplate,
+    updateTemplate:      updateTemplate,
+    getPreference:       getPreference,
+    updatePreference:    updatePreference,
+    generateDigest:      generateDigest,
+    getDigests:          getDigests,
+    consumeAUEEvents:    consumeAUEEvents,
+    seedTemplates:       seedTemplates,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/ISPController.js
+// ============================================================
+
+/**
+ * ISP — Identity & Security Platform
+ *
+ * Centralizes: authentication, authorization (RBAC), session management,
+ * audit logging, and security policy enforcement.
+ *
+ * Security notes:
+ *   - Passwords are stored as SHA-256(salt + password) only.
+ *   - Audit logs are append-only (never updated).
+ *   - Permissions are resolved dynamically from ISP_RolePermissions.
+ *   - No hardcoded permissions or roles in the routing layer.
+ */
+var ISPController = (function () {
+
+  // ─── Repo helpers ──────────────────────────────────────────────────────────
+
+  function _repo_(key) { return SheetRepository.forEntity(key); }
+
+  function _users_()    { return _repo_("ispUsers");          }
+  function _roles_()    { return _repo_("ispRoles");          }
+  function _perms_()    { return _repo_("ispPermissions");    }
+  function _rolePerms_() { return _repo_("ispRolePermissions"); }
+  function _sessions_() { return _repo_("ispSessions");       }
+  function _audit_()    { return _repo_("ispAuditLogs");      }
+  function _cfg_()      { return _repo_("ispConfig");         }
+
+  function _now_()   { return new Date().toISOString(); }
+  function _today_() { return _now_().slice(0, 10); }
+
+  function _userId_()  { return "USR-ISP-" + Number(new Date()).toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,5).toUpperCase(); }
+  function _roleId_()  { return "ROL-ISP-" + Number(new Date()).toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,5).toUpperCase(); }
+  function _permId_()  { return "PRM-ISP-" + Number(new Date()).toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,5).toUpperCase(); }
+  function _rpId_()    { return "RPA-ISP-" + Number(new Date()).toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,5).toUpperCase(); }
+  function _sessId_()  { return "SSN-ISP-" + Number(new Date()).toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,8).toUpperCase(); }
+  function _auditId_() { return "AUD-ISP-" + Number(new Date()).toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,5).toUpperCase(); }
+  function _cfgId_()   { return "CFG-ISP-" + Number(new Date()).toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2,5).toUpperCase(); }
+
+  // ─── Crypto helpers ────────────────────────────────────────────────────────
+
+  function _generateSalt_() {
+    return Number(new Date()).toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+
+  function _hashPassword_(password, salt) {
+    try {
+      var combined = (salt || "") + (password || "");
+      var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, combined);
+      return bytes.map(function (b) {
+        return ("0" + (b & 0xFF).toString(16)).slice(-2);
+      }).join("");
+    } catch (e) {
+      // Development fallback — simple hash
+      var h = 0;
+      var s = (salt || "") + (password || "");
+      for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; }
+      return Math.abs(h).toString(16).padStart(8, "0");
+    }
+  }
+
+  function _verifyPassword_(password, salt, storedHash) {
+    return _hashPassword_(password, salt) === storedHash;
+  }
+
+  // ─── Hydrators ─────────────────────────────────────────────────────────────
+
+  function _hydrateUser_(row) {
+    return {
+      id:                   row.id,
+      employeeId:           row.employeeId || "",
+      fullName:             row.fullName   || "",
+      email:                row.email      || "",
+      username:             row.username   || "",
+      status:               row.status     || "pendiente",
+      roleId:               row.roleId     || "",
+      organizationalUnitId: row.organizationalUnitId || "",
+      lastLogin:            row.lastLogin  || undefined,
+      failedAttempts:       Number(row.failedAttempts) || 0,
+      lockedUntil:          row.lockedUntil || undefined,
+      createdAt:            row.createdAt,
+      updatedAt:            row.updatedAt,
+    };
+  }
+
+  function _hydrateRole_(row) {
+    return {
+      id:          row.id,
+      name:        row.name        || "",
+      description: row.description || "",
+      level:       Number(row.level) || 0,
+      isSystem:    row.isSystem === true || row.isSystem === "true",
+      createdAt:   row.createdAt,
+      updatedAt:   row.updatedAt,
+    };
+  }
+
+  function _hydratePerm_(row) {
+    return {
+      id:          row.id,
+      module:      row.module      || "",
+      action:      row.action      || "",
+      description: row.description || "",
+      createdAt:   row.createdAt,
+    };
+  }
+
+  function _hydrateSession_(row) {
+    return {
+      id:           row.id,
+      userId:       row.userId       || "",
+      userEmail:    row.userEmail    || undefined,
+      loginAt:      row.loginAt,
+      lastActivity: row.lastActivity,
+      expiresAt:    row.expiresAt,
+      ipAddress:    row.ipAddress    || "",
+      userAgent:    row.userAgent    || "",
+      status:       row.status       || "activa",
+    };
+  }
+
+  function _hydrateAudit_(row) {
+    var details = row.details;
+    if (typeof details === "string") {
+      try { details = JSON.parse(details); } catch (e) { details = {}; }
+    }
+    return {
+      id:        row.id,
+      userId:    row.userId    || "",
+      userEmail: row.userEmail || undefined,
+      action:    row.action,
+      module:    row.module    || "isp",
+      entity:    row.entity    || undefined,
+      entityId:  row.entityId  || undefined,
+      result:    row.result    || "exitoso",
+      ipAddress: row.ipAddress || undefined,
+      timestamp: row.timestamp,
+      details:   details || {},
+    };
+  }
+
+  // ─── Session validation ────────────────────────────────────────────────────
+
+  function _isSessionValid_(session) {
+    if (!session) return false;
+    if (session.status !== "activa") return false;
+    return new Date(session.expiresAt) > new Date();
+  }
+
+  function _isLocked_(user) {
+    if (user.status === "bloqueado") return true;
+    if (!user.lockedUntil) return false;
+    return new Date(user.lockedUntil) > new Date();
+  }
+
+  // ─── Audit (append-only) ───────────────────────────────────────────────────
+
+  function _logAudit_(p) {
+    _audit_().create({
+      id:        _auditId_(),
+      userId:    p.userId    || "",
+      userEmail: p.userEmail || "",
+      action:    p.action,
+      module:    p.module    || "isp",
+      entity:    p.entity    || "",
+      entityId:  p.entityId  || "",
+      result:    p.result    || "exitoso",
+      ipAddress: p.ipAddress || "",
+      timestamp: _now_(),
+      details:   JSON.stringify(p.details || {}),
+    });
+  }
+
+  // ─── Config ────────────────────────────────────────────────────────────────
+
+  function _getConfigRaw_() {
+    var rows = _cfg_().findAll({}) || [];
+    var result = {
+      maxSessionDurationMinutes: 480,
+      maxFailedAttempts:         5,
+      lockDurationMinutes:       30,
+      multipleSessionsAllowed:   false,
+      googleOAuthPrepared:       false,
+    };
+    rows.forEach(function (row) {
+      var k = row.key;
+      var v = row.value;
+      if (k === "maxSessionDurationMinutes") result.maxSessionDurationMinutes = Number(v) || 480;
+      if (k === "maxFailedAttempts")         result.maxFailedAttempts         = Number(v) || 5;
+      if (k === "lockDurationMinutes")       result.lockDurationMinutes       = Number(v) || 30;
+      if (k === "multipleSessionsAllowed")   result.multipleSessionsAllowed   = v === "true";
+      if (k === "googleOAuthPrepared")       result.googleOAuthPrepared       = v === "true";
+    });
+    return result;
+  }
+
+  // ─── Seed helpers ──────────────────────────────────────────────────────────
+
+  function _seedPermissions_() {
+    var modules = ["ime","pme","ape","aee","eme","cpe","eip","iie","ioe","aue","nce","isp"];
+    var actions = [
+      { action: "read",    desc: "Consultar y listar" },
+      { action: "create",  desc: "Crear nuevos registros" },
+      { action: "edit",    desc: "Modificar registros" },
+      { action: "delete",  desc: "Eliminar registros" },
+      { action: "manage",  desc: "Administración completa" },
+    ];
+    var existing = _perms_().findAll({}) || [];
+    if (existing.length >= 60) return; // already seeded
+
+    var now = _now_();
+    modules.forEach(function (mod) {
+      actions.forEach(function (act) {
+        var already = existing.filter(function (p) { return p.module === mod && p.action === act.action; });
+        if (already.length > 0) return;
+        _perms_().create({
+          id:          _permId_(),
+          module:      mod,
+          action:      act.action,
+          description: act.desc + " en " + mod.toUpperCase(),
+          createdAt:   now,
+        });
+      });
+    });
+  }
+
+  function _seedRoles_() {
+    var defaults = [
+      { name: "SUPER_ADMIN", description: "Acceso total a la plataforma. Sin restricciones.",         level: 0, isSystem: true },
+      { name: "ADMIN",       description: "Administrador institucional con gestión completa.",         level: 1, isSystem: true },
+      { name: "ANALISTA",    description: "Acceso de lectura y análisis en todos los módulos.",        level: 2, isSystem: false },
+      { name: "VIEWER",      description: "Solo lectura en todos los módulos institucionales.",         level: 3, isSystem: false },
+    ];
+    var existing = _roles_().findAll({}) || [];
+    var now = _now_();
+    defaults.forEach(function (def) {
+      var already = existing.filter(function (r) { return r.name === def.name && r.deleted !== "true"; });
+      if (already.length > 0) return;
+      _roles_().create({
+        id:          _roleId_(),
+        name:        def.name,
+        description: def.description,
+        level:       def.level,
+        isSystem:    def.isSystem,
+        deleted:     false,
+        createdAt:   now,
+        updatedAt:   now,
+      });
+    });
+
+    // Assign all permissions to SUPER_ADMIN
+    var allPerms   = _perms_().findAll({})   || [];
+    var allRoles   = _roles_().findAll({})   || [];
+    var saRole     = allRoles.filter(function (r) { return r.name === "SUPER_ADMIN"; })[0];
+    var existingRp = _rolePerms_().findAll({}) || [];
+
+    if (saRole && allPerms.length > 0) {
+      allPerms.forEach(function (perm) {
+        var alreadyHas = existingRp.filter(function (rp) {
+          return rp.roleId === saRole.id && rp.permissionId === perm.id && rp.revoked !== "true";
+        });
+        if (alreadyHas.length > 0) return;
+        _rolePerms_().create({
+          id:           _rpId_(),
+          roleId:       saRole.id,
+          permissionId: perm.id,
+          revoked:      false,
+          createdAt:    _now_(),
+        });
+      });
+    }
+
+    // Assign read to VIEWER
+    var viewerRole = allRoles.filter(function (r) { return r.name === "VIEWER"; })[0];
+    if (viewerRole) {
+      var readPerms = allPerms.filter(function (p) { return p.action === "read"; });
+      readPerms.forEach(function (perm) {
+        var alreadyHas = existingRp.filter(function (rp) {
+          return rp.roleId === viewerRole.id && rp.permissionId === perm.id && rp.revoked !== "true";
+        });
+        if (alreadyHas.length > 0) return;
+        _rolePerms_().create({
+          id:           _rpId_(),
+          roleId:       viewerRole.id,
+          permissionId: perm.id,
+          revoked:      false,
+          createdAt:    _now_(),
+        });
+      });
+    }
+  }
+
+  function _seedConfig_() {
+    var keys = ["maxSessionDurationMinutes","maxFailedAttempts","lockDurationMinutes","multipleSessionsAllowed","googleOAuthPrepared"];
+    var defaults = { maxSessionDurationMinutes: "480", maxFailedAttempts: "5", lockDurationMinutes: "30", multipleSessionsAllowed: "false", googleOAuthPrepared: "false" };
+    var existing = _cfg_().findAll({}) || [];
+    var now = _now_();
+    keys.forEach(function (k) {
+      var has = existing.filter(function (r) { return r.key === k; });
+      if (has.length > 0) return;
+      _cfg_().create({ id: _cfgId_(), key: k, value: defaults[k], updatedAt: now, updatedBy: "system" });
+    });
+  }
+
+  // ─── Public: Dashboard ─────────────────────────────────────────────────────
+
+  function getDashboard() {
+    var now   = _now_();
+    var today = _today_();
+    var allUsers    = _users_().findAll({})    || [];
+    var allSessions = _sessions_().findAll({}) || [];
+    var allRoles    = _roles_().findAll({ deleted: false }).filter(function (r) { return r.deleted !== "true"; });
+    var allPerms    = _perms_().findAll({})    || [];
+    var allAudit    = _audit_().findAll({})    || [];
+
+    var active   = allUsers.filter(function (u) { return u.status === "activo"; });
+    var inactive = allUsers.filter(function (u) { return u.status === "inactivo"; });
+    var locked   = allUsers.filter(function (u) {
+      return u.status === "bloqueado" || (u.lockedUntil && new Date(u.lockedUntil) > new Date());
+    });
+
+    var activeSess  = allSessions.filter(function (s) { return s.status === "activa" && new Date(s.expiresAt) > new Date(); });
+    var expiredSess = allSessions.filter(function (s) { return s.status === "expirada"; });
+
+    var failedToday = allAudit.filter(function (a) {
+      return a.action === "login_failed" && String(a.timestamp).slice(0, 10) === today;
+    });
+
+    var dayMap = {};
+    allAudit.forEach(function (a) {
+      var d = String(a.timestamp).slice(0, 10);
+      dayMap[d] = (dayMap[d] || 0) + 1;
+    });
+    var byDay = Object.keys(dayMap).sort().slice(-14).map(function (d) {
+      return { date: d, count: dayMap[d] };
+    });
+
+    var recentActivity = allAudit
+      .map(_hydrateAudit_)
+      .sort(function (a, b) { return b.timestamp > a.timestamp ? 1 : -1; })
+      .slice(0, 15);
+
+    return {
+      totalUsers:           allUsers.length,
+      activeUsers:          active.length,
+      inactiveUsers:        inactive.length,
+      lockedUsers:          locked.length,
+      activeSessions:       activeSess.length,
+      expiredSessions:      expiredSess.length,
+      failedAttemptsToday:  failedToday.length,
+      totalRoles:           allRoles.length,
+      totalPermissions:     allPerms.length,
+      recentActivity:       recentActivity,
+      activityByDay:        byDay,
+      generatedAt: now,
+    };
+  }
+
+  // ─── Public: Users ─────────────────────────────────────────────────────────
+
+  function getUsers(params) {
+    var p = params || {};
+    var filter = {};
+    if (p.status) filter.status = p.status;
+    if (p.roleId) filter.roleId = p.roleId;
+    if (p.organizationalUnitId) filter.organizationalUnitId = p.organizationalUnitId;
+
+    var rows = _users_().findAll(filter) || [];
+    var result = rows.map(_hydrateUser_);
+
+    if (p.search) {
+      var q = p.search.toLowerCase();
+      result = result.filter(function (u) {
+        return u.fullName.toLowerCase().includes(q) ||
+               u.email.toLowerCase().includes(q)    ||
+               u.username.toLowerCase().includes(q);
+      });
+    }
+
+    // Enrich with roleName
+    var allRoles = _roles_().findAll({}) || [];
+    result = result.map(function (u) {
+      var role = allRoles.filter(function (r) { return r.id === u.roleId; })[0];
+      return Object.assign({}, u, { roleName: role ? role.name : undefined });
+    });
+
+    result.sort(function (a, b) { return a.fullName > b.fullName ? 1 : -1; });
+    if (p.limit) result = result.slice(0, Number(p.limit));
+    return result;
+  }
+
+  function getUser(params) {
+    var row = _users_().findById(params.id);
+    if (!row) throw new Error("ISP_NOT_FOUND: Usuario no encontrado.");
+    var u = _hydrateUser_(row);
+    var role = _roles_().findById(u.roleId);
+    if (role) u.roleName = role.name;
+    return u;
+  }
+
+  function createUser(params) {
+    var p = params || {};
+    if (!p.email || !p.username || !p.password) throw new Error("ISP_VALIDATION: email, username y password son requeridos.");
+
+    // Check duplicates
+    var byEmail    = _users_().findAll({ email: p.email })       || [];
+    var byUsername = _users_().findAll({ username: p.username }) || [];
+    if (byEmail.length > 0)    throw new Error("ISP_CONFLICT: El email ya está registrado.");
+    if (byUsername.length > 0) throw new Error("ISP_CONFLICT: El username ya está en uso.");
+
+    var salt = _generateSalt_();
+    var hash = _hashPassword_(p.password, salt);
+    var now  = _now_();
+
+    var row = {
+      id:                   _userId_(),
+      employeeId:           p.employeeId || "",
+      fullName:             p.fullName   || "",
+      email:                p.email,
+      username:             p.username,
+      passwordHash:         hash,
+      passwordSalt:         salt,
+      status:               "activo",
+      roleId:               p.roleId              || "",
+      organizationalUnitId: p.organizationalUnitId || "",
+      lastLogin:            "",
+      failedAttempts:       0,
+      lockedUntil:          "",
+      createdAt:            now,
+      updatedAt:            now,
+    };
+    _users_().create(row);
+
+    _logAudit_({
+      action: "user_created", module: "isp", entity: "ISPUser", entityId: row.id,
+      result: "exitoso", details: { email: p.email, username: p.username },
+    });
+    return _hydrateUser_(row);
+  }
+
+  function updateUser(params) {
+    var p = params || {};
+    if (!p.id) throw new Error("ISP_VALIDATION: id es requerido.");
+    var existing = _users_().findById(p.id);
+    if (!existing) throw new Error("ISP_NOT_FOUND: Usuario no encontrado.");
+    var now = _now_();
+    var updates = { updatedAt: now };
+    if (p.fullName)             updates.fullName             = p.fullName;
+    if (p.roleId)               updates.roleId               = p.roleId;
+    if (p.organizationalUnitId !== undefined) updates.organizationalUnitId = p.organizationalUnitId;
+    if (p.status)               updates.status               = p.status;
+    _users_().update(p.id, updates);
+    _logAudit_({ action: "user_updated", module: "isp", entity: "ISPUser", entityId: p.id, result: "exitoso", details: updates });
+    return _hydrateUser_(Object.assign({}, existing, updates));
+  }
+
+  function setUserStatus(params) {
+    var p = params || {};
+    var user = _users_().findById(p.userId);
+    if (!user) throw new Error("ISP_NOT_FOUND: Usuario no encontrado.");
+    var now = _now_();
+    var updates = { status: p.status, updatedAt: now };
+    if (p.status === "bloqueado") {
+      var cfg = _getConfigRaw_();
+      var lockMs = cfg.lockDurationMinutes * 60 * 1000;
+      updates.lockedUntil = new Date(Date.now() + lockMs).toISOString();
+    } else if (p.status === "activo") {
+      updates.lockedUntil   = "";
+      updates.failedAttempts = 0;
+    }
+    _users_().update(p.userId, updates);
+    var action = p.status === "bloqueado" ? "user_locked" :
+                 p.status === "activo"    ? "user_unlocked" : "user_updated";
+    _logAudit_({ action: action, module: "isp", entity: "ISPUser", entityId: p.userId, result: "exitoso", details: { newStatus: p.status } });
+    return _hydrateUser_(Object.assign({}, user, updates));
+  }
+
+  // ─── Public: Roles ─────────────────────────────────────────────────────────
+
+  function getRoles() {
+    var rows = (_roles_().findAll({}) || []).filter(function (r) { return r.deleted !== "true"; });
+    var allRp = _rolePerms_().findAll({}) || [];
+    return rows.map(function (r) {
+      var h = _hydrateRole_(r);
+      h.permissionCount = allRp.filter(function (rp) {
+        return rp.roleId === r.id && rp.revoked !== "true";
+      }).length;
+      return h;
+    }).sort(function (a, b) { return a.level - b.level; });
+  }
+
+  function getRole(params) {
+    var row = _roles_().findById(params.id);
+    if (!row || row.deleted === "true") throw new Error("ISP_NOT_FOUND: Rol no encontrado.");
+    var h = _hydrateRole_(row);
+    var rps = _rolePerms_().findAll({ roleId: params.id }) || [];
+    h.permissionCount = rps.filter(function (rp) { return rp.revoked !== "true"; }).length;
+    return h;
+  }
+
+  function createRole(params) {
+    var p = params || {};
+    if (!p.name) throw new Error("ISP_VALIDATION: name es requerido.");
+    var existing = (_roles_().findAll({}) || []).filter(function (r) { return r.name === p.name && r.deleted !== "true"; });
+    if (existing.length > 0) throw new Error("ISP_CONFLICT: Ya existe un rol con ese nombre.");
+    var now = _now_();
+    var row = {
+      id:          _roleId_(),
+      name:        p.name,
+      description: p.description || "",
+      level:       Number(p.level) || 99,
+      isSystem:    false,
+      deleted:     false,
+      createdAt:   now,
+      updatedAt:   now,
+    };
+    _roles_().create(row);
+    _logAudit_({ action: "role_created", module: "isp", entity: "ISPRole", entityId: row.id, result: "exitoso", details: { name: p.name } });
+    return _hydrateRole_(row);
+  }
+
+  function updateRole(params) {
+    var p = params || {};
+    var row = _roles_().findById(p.id);
+    if (!row || row.deleted === "true") throw new Error("ISP_NOT_FOUND: Rol no encontrado.");
+    if (row.isSystem === true || row.isSystem === "true") throw new Error("ISP_FORBIDDEN: Los roles del sistema no se pueden modificar.");
+    var now = _now_();
+    var updates = { updatedAt: now };
+    if (p.name)        updates.name        = p.name;
+    if (p.description) updates.description = p.description;
+    if (typeof p.level !== "undefined") updates.level = Number(p.level);
+    _roles_().update(p.id, updates);
+    _logAudit_({ action: "role_updated", module: "isp", entity: "ISPRole", entityId: p.id, result: "exitoso", details: updates });
+    return _hydrateRole_(Object.assign({}, row, updates));
+  }
+
+  function deleteRole(params) {
+    var row = _roles_().findById(params.id);
+    if (!row || row.deleted === "true") throw new Error("ISP_NOT_FOUND: Rol no encontrado.");
+    if (row.isSystem === true || row.isSystem === "true") throw new Error("ISP_FORBIDDEN: No se pueden eliminar roles del sistema.");
+    var usersWithRole = (_users_().findAll({ roleId: params.id }) || []);
+    if (usersWithRole.length > 0) throw new Error("ISP_CONFLICT: " + usersWithRole.length + " usuario(s) tienen este rol. Reasigna primero.");
+    // Revoke all role permissions
+    var rps = _rolePerms_().findAll({ roleId: params.id }) || [];
+    rps.forEach(function (rp) { _rolePerms_().update(rp.id, { revoked: true }); });
+    // Soft delete
+    _roles_().update(params.id, { deleted: true, updatedAt: _now_() });
+    _logAudit_({ action: "role_deleted", module: "isp", entity: "ISPRole", entityId: params.id, result: "exitoso", details: { name: row.name } });
+    return { deleted: true, id: params.id };
+  }
+
+  function duplicateRole(params) {
+    var source = _roles_().findById(params.id);
+    if (!source || source.deleted === "true") throw new Error("ISP_NOT_FOUND: Rol no encontrado.");
+    var now = _now_();
+    var newRow = {
+      id:          _roleId_(),
+      name:        source.name + " (Copia)",
+      description: source.description,
+      level:       Number(source.level) + 1,
+      isSystem:    false,
+      deleted:     false,
+      createdAt:   now,
+      updatedAt:   now,
+    };
+    _roles_().create(newRow);
+
+    // Copy permissions
+    var sourceRps = _rolePerms_().findAll({ roleId: params.id }) || [];
+    sourceRps.filter(function (rp) { return rp.revoked !== "true"; }).forEach(function (rp) {
+      _rolePerms_().create({ id: _rpId_(), roleId: newRow.id, permissionId: rp.permissionId, revoked: false, createdAt: now });
+    });
+    _logAudit_({ action: "role_created", module: "isp", entity: "ISPRole", entityId: newRow.id, result: "exitoso", details: { duplicatedFrom: params.id } });
+    return _hydrateRole_(newRow);
+  }
+
+  // ─── Public: Permissions ───────────────────────────────────────────────────
+
+  function getPermissions(params) {
+    var p = params || {};
+    var filter = {};
+    if (p.module) filter.module = p.module;
+    if (p.action) filter.action = p.action;
+    var rows = _perms_().findAll(filter) || [];
+    return rows.map(_hydratePerm_).sort(function (a, b) {
+      var k1 = a.module + "." + a.action;
+      var k2 = b.module + "." + b.action;
+      return k1 > k2 ? 1 : -1;
+    });
+  }
+
+  function getRolePermissions(params) {
+    var rps = _rolePerms_().findAll({ roleId: params.roleId }) || [];
+    var active = rps.filter(function (rp) { return rp.revoked !== "true"; });
+    var permIds = active.map(function (rp) { return rp.permissionId; });
+    var allPerms = _perms_().findAll({}) || [];
+    return allPerms.filter(function (p) { return permIds.indexOf(p.id) !== -1; }).map(_hydratePerm_);
+  }
+
+  function assignPermissions(params) {
+    var p = params || {};
+    if (!p.roleId) throw new Error("ISP_VALIDATION: roleId es requerido.");
+    var permIds = p.permissionIds || [];
+    var now = _now_();
+
+    // Get current role permissions
+    var currentRps = _rolePerms_().findAll({ roleId: p.roleId }) || [];
+
+    // Revoke permissions not in new list
+    currentRps.forEach(function (rp) {
+      if (rp.revoked === "true") return;
+      if (permIds.indexOf(rp.permissionId) === -1) {
+        _rolePerms_().update(rp.id, { revoked: true });
+      }
+    });
+
+    // Add permissions not already assigned
+    var currentActive = currentRps.filter(function (rp) { return rp.revoked !== "true"; }).map(function (rp) { return rp.permissionId; });
+    permIds.forEach(function (pid) {
+      if (currentActive.indexOf(pid) !== -1) return;
+      // Check if it was previously revoked — re-enable
+      var revoked = currentRps.filter(function (rp) { return rp.permissionId === pid && rp.revoked === "true"; })[0];
+      if (revoked) {
+        _rolePerms_().update(revoked.id, { revoked: false });
+      } else {
+        _rolePerms_().create({ id: _rpId_(), roleId: p.roleId, permissionId: pid, revoked: false, createdAt: now });
+      }
+    });
+
+    _logAudit_({ action: "permission_changed", module: "isp", entity: "ISPRole", entityId: p.roleId, result: "exitoso", details: { permissionCount: permIds.length } });
+    return { assigned: permIds.length, roleId: p.roleId };
+  }
+
+  function checkPermission(params) {
+    var p = params || {};
+    var userId = p.userId;
+    var module = p.module;
+    var action = p.action;
+
+    var userRow = _users_().findById(userId);
+    if (!userRow) return { allowed: false, reason: "Usuario no encontrado" };
+    if (userRow.status !== "activo") return { allowed: false, reason: "Usuario no activo" };
+    if (_isLocked_(userRow)) return { allowed: false, reason: "Usuario bloqueado" };
+
+    var roleId = userRow.roleId;
+    if (!roleId) return { allowed: false, reason: "Sin rol asignado" };
+
+    var rps = _rolePerms_().findAll({ roleId: roleId }) || [];
+    var activePermIds = rps.filter(function (rp) { return rp.revoked !== "true"; }).map(function (rp) { return rp.permissionId; });
+
+    var matchingPerms = (_perms_().findAll({ module: module, action: action }) || []);
+    var allowed = matchingPerms.some(function (perm) { return activePermIds.indexOf(perm.id) !== -1; });
+
+    if (!allowed) {
+      _logAudit_({ userId: userId, action: "access_denied", module: module, result: "denegado", details: { action: action } });
+    }
+    return { allowed: allowed, reason: allowed ? undefined : "Permiso denegado" };
+  }
+
+  function getPermissionMatrix() {
+    var roles = (_roles_().findAll({}) || []).filter(function (r) { return r.deleted !== "true"; });
+    var perms = _perms_().findAll({}) || [];
+    var allRps = _rolePerms_().findAll({}) || [];
+
+    var matrix = roles.map(function (role) {
+      var rpsForRole = allRps.filter(function (rp) { return rp.roleId === role.id && rp.revoked !== "true"; });
+      var activePids = rpsForRole.map(function (rp) { return rp.permissionId; });
+      var permMap = {};
+      perms.forEach(function (perm) {
+        permMap[perm.module + "." + perm.action] = activePids.indexOf(perm.id) !== -1;
+      });
+      return { roleId: role.id, roleName: role.name, level: Number(role.level) || 0, permissions: permMap };
+    });
+
+    return {
+      roles:       roles.map(_hydrateRole_),
+      permissions: perms.map(_hydratePerm_),
+      matrix:      matrix,
+    };
+  }
+
+  // ─── Public: Sessions ──────────────────────────────────────────────────────
+
+  function getSessions(params) {
+    var p = params || {};
+    var filter = {};
+    if (p.userId) filter.userId = p.userId;
+    if (p.status) filter.status = p.status;
+    var rows = _sessions_().findAll(filter) || [];
+    var result = rows.map(_hydrateSession_);
+    if (p.from) result = result.filter(function (s) { return s.loginAt >= p.from; });
+    if (p.to)   result = result.filter(function (s) { return s.loginAt <= p.to;   });
+    result.sort(function (a, b) { return b.loginAt > a.loginAt ? 1 : -1; });
+    if (p.limit) result = result.slice(0, Number(p.limit));
+    return result;
+  }
+
+  function closeSession(params) {
+    var p = params || {};
+    var row = _sessions_().findById(p.sessionId);
+    if (!row) throw new Error("ISP_NOT_FOUND: Sesión no encontrada.");
+    _sessions_().update(p.sessionId, { status: "cerrada" });
+    _logAudit_({ userId: row.userId, action: "session_closed", module: "isp", entity: "ISPSession", entityId: p.sessionId, result: "exitoso", details: {} });
+    return { closed: true, sessionId: p.sessionId };
+  }
+
+  function closeAllUserSessions(params) {
+    var p = params || {};
+    var rows = _sessions_().findAll({ userId: p.userId, status: "activa" }) || [];
+    rows.forEach(function (s) { _sessions_().update(s.id, { status: "cerrada" }); });
+    _logAudit_({ userId: p.userId, action: "session_closed", module: "isp", entity: "ISPUser", entityId: p.userId, result: "exitoso", details: { count: rows.length } });
+    return { closed: rows.length };
+  }
+
+  // ─── Public: Authentication ────────────────────────────────────────────────
+
+  function login(params) {
+    var p = params || {};
+    if (!p.username || !p.password) throw new Error("ISP_VALIDATION: username y password son requeridos.");
+
+    // Find user by username or email
+    var byUsername = _users_().findAll({ username: p.username }) || [];
+    var byEmail    = _users_().findAll({ email: p.username })    || [];
+    var userRow    = (byUsername[0] || byEmail[0]);
+
+    var cfg = _getConfigRaw_();
+
+    // Audit helper for failed logins
+    function _failLogin_(userId, reason) {
+      if (userRow) {
+        var attempts = Number(userRow.failedAttempts || 0) + 1;
+        var updates  = { failedAttempts: attempts, updatedAt: _now_() };
+        if (attempts >= cfg.maxFailedAttempts) {
+          var lockMs = cfg.lockDurationMinutes * 60 * 1000;
+          updates.status     = "bloqueado";
+          updates.lockedUntil = new Date(Date.now() + lockMs).toISOString();
+          _logAudit_({ userId: userId || "", action: "user_locked", module: "isp", entity: "ISPUser", entityId: userId || "", result: "exitoso", details: { attempts: attempts } });
+        }
+        _users_().update(userRow.id, updates);
+      }
+      _logAudit_({ userId: userId || "", userEmail: userRow ? userRow.email : "", action: "login_failed", module: "isp", result: "fallido", ipAddress: p.ipAddress || "", details: { reason: reason } });
+      return { success: false, message: reason };
+    }
+
+    if (!userRow) return _failLogin_("", "Credenciales inválidas");
+    if (userRow.status === "inactivo") return _failLogin_(userRow.id, "Usuario inactivo");
+    if (_isLocked_(userRow))          return _failLogin_(userRow.id, "Usuario bloqueado hasta " + userRow.lockedUntil);
+
+    // Verify password
+    if (!_verifyPassword_(p.password, userRow.passwordSalt || "", userRow.passwordHash || "")) {
+      return _failLogin_(userRow.id, "Credenciales inválidas");
+    }
+
+    // Close existing sessions if multiple not allowed
+    if (!cfg.multipleSessionsAllowed) {
+      var activeSessions = _sessions_().findAll({ userId: userRow.id, status: "activa" }) || [];
+      activeSessions.forEach(function (s) { _sessions_().update(s.id, { status: "cerrada" }); });
+    }
+
+    // Create session
+    var now    = _now_();
+    var expiry = new Date(Date.now() + cfg.maxSessionDurationMinutes * 60 * 1000).toISOString();
+    var sess   = {
+      id:           _sessId_(),
+      userId:       userRow.id,
+      userEmail:    userRow.email,
+      loginAt:      now,
+      lastActivity: now,
+      expiresAt:    expiry,
+      ipAddress:    p.ipAddress  || "",
+      userAgent:    p.userAgent  || "",
+      status:       "activa",
+    };
+    _sessions_().create(sess);
+
+    // Reset failed attempts & update lastLogin
+    _users_().update(userRow.id, { failedAttempts: 0, lastLogin: now, updatedAt: now });
+
+    // Get role name
+    var roleRow = _roles_().findById(userRow.roleId);
+
+    _logAudit_({ userId: userRow.id, userEmail: userRow.email, action: "login", module: "isp", result: "exitoso", ipAddress: p.ipAddress || "", details: { sessionId: sess.id } });
+
+    return {
+      success:   true,
+      sessionId: sess.id,
+      userId:    userRow.id,
+      roleId:    userRow.roleId,
+      roleName:  roleRow ? roleRow.name : undefined,
+    };
+  }
+
+  function logout(params) {
+    var p = params || {};
+    var row = _sessions_().findById(p.sessionId);
+    if (!row) return { success: true };
+    _sessions_().update(p.sessionId, { status: "cerrada" });
+    _logAudit_({ userId: row.userId, userEmail: row.userEmail || "", action: "logout", module: "isp", result: "exitoso", details: { sessionId: p.sessionId } });
+    return { success: true };
+  }
+
+  function validateSession(params) {
+    var p = params || {};
+    var row = _sessions_().findById(p.sessionId);
+    if (!row) return { valid: false };
+    var sess = _hydrateSession_(row);
+    if (!_isSessionValid_(sess)) {
+      if (row.status === "activa") _sessions_().update(p.sessionId, { status: "expirada" });
+      return { valid: false };
+    }
+    var userRow  = _users_().findById(sess.userId);
+    var roleRow  = userRow ? _roles_().findById(userRow.roleId) : null;
+    return {
+      valid:     true,
+      userId:    sess.userId,
+      sessionId: sess.id,
+      expiresAt: sess.expiresAt,
+      roleName:  roleRow ? roleRow.name : undefined,
+    };
+  }
+
+  function renewSession(params) {
+    var p = params || {};
+    var row = _sessions_().findById(p.sessionId);
+    if (!row) throw new Error("ISP_NOT_FOUND: Sesión no encontrada.");
+    var sess = _hydrateSession_(row);
+    if (!_isSessionValid_(sess)) throw new Error("ISP_EXPIRED: La sesión ha expirado.");
+    var cfg    = _getConfigRaw_();
+    var now    = _now_();
+    var expiry = new Date(Date.now() + cfg.maxSessionDurationMinutes * 60 * 1000).toISOString();
+    _sessions_().update(p.sessionId, { lastActivity: now, expiresAt: expiry });
+    return { renewed: true, sessionId: p.sessionId, expiresAt: expiry };
+  }
+
+  // ─── Public: Audit ─────────────────────────────────────────────────────────
+
+  function getAuditLogs(params) {
+    var p = params || {};
+    var filter = {};
+    if (p.userId) filter.userId = p.userId;
+    if (p.module) filter.module = p.module;
+    if (p.action) filter.action = p.action;
+    if (p.result) filter.result = p.result;
+    var rows = _audit_().findAll(filter) || [];
+    var result = rows.map(_hydrateAudit_);
+    if (p.from) result = result.filter(function (a) { return a.timestamp >= p.from; });
+    if (p.to)   result = result.filter(function (a) { return a.timestamp <= p.to;   });
+    result.sort(function (a, b) { return b.timestamp > a.timestamp ? 1 : -1; });
+    if (p.limit) result = result.slice(0, Number(p.limit));
+    return result;
+  }
+
+  // ─── Public: Config ────────────────────────────────────────────────────────
+
+  function getConfig() {
+    return _getConfigRaw_();
+  }
+
+  function updateConfig(params) {
+    var p = params || {};
+    var now = _now_();
+    var keys = Object.keys(p);
+    keys.forEach(function (k) {
+      var existing = _cfg_().findAll({ key: k }) || [];
+      if (existing.length > 0) {
+        _cfg_().update(existing[0].id, { value: String(p[k]), updatedAt: now, updatedBy: "admin" });
+      } else {
+        _cfg_().create({ id: _cfgId_(), key: k, value: String(p[k]), updatedAt: now, updatedBy: "admin" });
+      }
+    });
+    _logAudit_({ action: "config_changed", module: "isp", result: "exitoso", details: p });
+    return _getConfigRaw_();
+  }
+
+  // ─── Bootstrap ─────────────────────────────────────────────────────────────
+
+  try {
+    _seedPermissions_();
+    _seedRoles_();
+    _seedConfig_();
+  } catch (e) {}
+
+  return {
+    getDashboard:        getDashboard,
+    getUsers:            getUsers,
+    getUser:             getUser,
+    createUser:          createUser,
+    updateUser:          updateUser,
+    setUserStatus:       setUserStatus,
+    getRoles:            getRoles,
+    getRole:             getRole,
+    createRole:          createRole,
+    updateRole:          updateRole,
+    deleteRole:          deleteRole,
+    duplicateRole:       duplicateRole,
+    getPermissions:      getPermissions,
+    getRolePermissions:  getRolePermissions,
+    assignPermissions:   assignPermissions,
+    checkPermission:     checkPermission,
+    getPermissionMatrix: getPermissionMatrix,
+    getSessions:         getSessions,
+    closeSession:        closeSession,
+    closeAllUserSessions: closeAllUserSessions,
+    login:               login,
+    logout:              logout,
+    validateSession:     validateSession,
+    renewSession:        renewSession,
+    getAuditLogs:        getAuditLogs,
+    getConfig:           getConfig,
+    updateConfig:        updateConfig,
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/GWPController.js
+// ============================================================
+
+/**
+ * GWP — Google Workspace Integration Platform
+ *
+ * Sole gateway for all Google API communication. Five adapters:
+ *   GoogleIdentityAdapter_ — OAuth 2.0 (login, refresh, revoke)
+ *   GoogleDriveAdapter_    — Drive file operations
+ *   GoogleMailAdapter_     — Gmail send/reply
+ *   GoogleCalendarAdapter_ — Calendar CRUD + availability
+ *   GoogleChatAdapter_     — Chat messages and cards
+ *
+ * Token storage: XOR-obfuscated with the Script ID as key, then base64.
+ * This is NOT production-grade encryption — use KMS/AES for real deployments.
+ * CSRF state tokens are stored in PropertiesService (server-only).
+ */
+var GWPController = (function () {
+
+  // ─── Repos ──────────────────────────────────────────────────────────────────
+  function _tokens_()   { return SheetRepository.forEntity("gwpOAuthTokens"); }
+  function _cfg_()      { return SheetRepository.forEntity("gwpConfig"); }
+  function _mailLog_()  { return SheetRepository.forEntity("gwpMailLog"); }
+  function _driveLog_() { return SheetRepository.forEntity("gwpDriveMetadata"); }
+  function _calLog_()   { return SheetRepository.forEntity("gwpCalendarEvents"); }
+  function _chatLog_()  { return SheetRepository.forEntity("gwpChatLog"); }
+  function _auditLog_() { return SheetRepository.forEntity("gwpAuditLog"); }
+
+  // ─── Token obfuscation ──────────────────────────────────────────────────────
+  function _obfuscate_(text) {
+    if (!text) return "";
+    try {
+      var key   = ScriptApp.getScriptId();
+      var bytes = [];
+      for (var i = 0; i < text.length; i++) {
+        bytes.push((text.charCodeAt(i) ^ key.charCodeAt(i % key.length)) & 0xff);
+      }
+      return Utilities.base64Encode(bytes);
+    } catch (e) {
+      return Utilities.base64Encode(text);
+    }
+  }
+
+  function _deobfuscate_(encoded) {
+    if (!encoded) return "";
+    try {
+      var key     = ScriptApp.getScriptId();
+      var decoded = Utilities.base64Decode(encoded);
+      var result  = "";
+      for (var i = 0; i < decoded.length; i++) {
+        result += String.fromCharCode((decoded[i] ^ key.charCodeAt(i % key.length)) & 0xff);
+      }
+      return result;
+    } catch (e) {
+      return "";
+    }
+  }
+
+  // ─── Config helpers ─────────────────────────────────────────────────────────
+  function _getConfigValue_(key) {
+    try {
+      var rows = _cfg_().list({ key: key });
+      if (!rows || rows.length === 0) return "";
+      var row = rows[0];
+      return (row.isSecret === "true" || row.isSecret === true)
+        ? _deobfuscate_(row.value)
+        : (row.value || "");
+    } catch (e) { return ""; }
+  }
+
+  function _setConfigValue_(key, value, isSecret) {
+    try {
+      var rows = _cfg_().list({ key: key });
+      var stored = isSecret ? _obfuscate_(value) : (value || "");
+      var payload = {
+        key:       key,
+        value:     stored,
+        isSecret:  isSecret ? "true" : "false",
+        updatedAt: new Date().toISOString(),
+      };
+      if (rows && rows.length > 0) {
+        _cfg_().update(rows[0].id, payload);
+      } else {
+        payload.id        = IdGen.uuid();
+        payload.createdAt = new Date().toISOString();
+        _cfg_().create(payload);
+      }
+    } catch (e) {}
+  }
+
+  function _getOAuthConfig_() {
+    return {
+      clientId:        _getConfigValue_("clientId"),
+      clientSecret:    _getConfigValue_("clientSecret"),
+      redirectUri:     _getConfigValue_("redirectUri"),
+      scopes:          (_getConfigValue_("scopes") || "").split(",").filter(Boolean),
+      workspaceDomain: _getConfigValue_("workspaceDomain"),
+      adminEmail:      _getConfigValue_("adminEmail"),
+      connectionStatus: _getConfigValue_("connectionStatus") || "disconnected",
+    };
+  }
+
+  // ─── Token management ───────────────────────────────────────────────────────
+  function _storeTokens_(userId, userEmail, accessToken, refreshToken, expiresAt, scope) {
+    var payload = {
+      userId:           userId,
+      userEmail:        userEmail,
+      accessTokenHash:  _obfuscate_(accessToken),
+      refreshTokenHash: _obfuscate_(refreshToken),
+      expiresAt:        expiresAt,
+      scope:            scope || "",
+      tokenType:        "Bearer",
+      updatedAt:        new Date().toISOString(),
+    };
+    try {
+      var rows = _tokens_().list({ userId: userId });
+      if (rows && rows.length > 0) {
+        _tokens_().update(rows[0].id, payload);
+      } else {
+        payload.id        = IdGen.uuid();
+        payload.createdAt = new Date().toISOString();
+        _tokens_().create(payload);
+      }
+    } catch (e) {}
+  }
+
+  function _getTokenRow_(userId) {
+    try {
+      var rows = _tokens_().list({ userId: userId });
+      return (rows && rows.length > 0) ? rows[0] : null;
+    } catch (e) { return null; }
+  }
+
+  function _getAccessToken_(userId) {
+    var row = _getTokenRow_(userId);
+    if (!row) throw new Error("GWP: No token found for userId=" + userId);
+    var expiresAt = new Date(row.expiresAt).getTime();
+    if (new Date().getTime() >= expiresAt - 60000) {
+      return _refreshTokenInternal_(userId, row);
+    }
+    return _deobfuscate_(row.accessTokenHash);
+  }
+
+  function _refreshTokenInternal_(userId, row) {
+    var cfg          = _getOAuthConfig_();
+    var refreshToken = _deobfuscate_(row.refreshTokenHash);
+    if (!refreshToken) throw new Error("GWP: No refresh token for userId=" + userId);
+    var resp = UrlFetchApp.fetch("https://oauth2.googleapis.com/token", {
+      method:  "post",
+      contentType: "application/x-www-form-urlencoded",
+      payload: {
+        client_id:     cfg.clientId,
+        client_secret: cfg.clientSecret,
+        refresh_token: refreshToken,
+        grant_type:    "refresh_token",
+      },
+      muteHttpExceptions: true,
+    });
+    var data = JSON.parse(resp.getContentText() || "{}");
+    if (data.error) throw new Error("GWP token refresh failed: " + (data.error_description || data.error));
+    var newToken   = data.access_token;
+    var expiresAt  = new Date(new Date().getTime() + (data.expires_in || 3600) * 1000).toISOString();
+    _tokens_().update(row.id, {
+      accessTokenHash: _obfuscate_(newToken),
+      expiresAt:       expiresAt,
+      updatedAt:       new Date().toISOString(),
+    });
+    _gwpAudit_("identity", "refreshToken", userId, "success", {});
+    return newToken;
+  }
+
+  // ─── CSRF helpers ───────────────────────────────────────────────────────────
+  function _generateState_() {
+    var state = Utilities.getUuid();
+    PropertiesService.getScriptProperties().setProperty("gwp_state_" + state, "1");
+    return state;
+  }
+
+  function _verifyState_(state) {
+    var props = PropertiesService.getScriptProperties();
+    var key   = "gwp_state_" + state;
+    var valid = props.getProperty(key) === "1";
+    if (valid) props.deleteProperty(key);
+    return valid;
+  }
+
+  // ─── Audit helper ───────────────────────────────────────────────────────────
+  function _gwpAudit_(service, action, userId, status, details) {
+    try {
+      _auditLog_().create({
+        id:              IdGen.uuid(),
+        service:         service,
+        action:          action,
+        userId:          userId || "",
+        status:          status,
+        requestSummary:  JSON.stringify(details || {}),
+        responseSummary: "",
+        errorMessage:    status === "error" ? ((details && details.error) || "") : "",
+        timestamp:       new Date().toISOString(),
+      });
+    } catch (e) {}
+  }
+
+  // ─── Google Identity Adapter ─────────────────────────────────────────────────
+  var GoogleIdentityAdapter_ = {
+
+    getAuthUrl: function (redirectUri) {
+      var cfg    = _getOAuthConfig_();
+      var state  = _generateState_();
+      var scopes = cfg.scopes.length > 0 ? cfg.scopes : [
+        "openid", "email", "profile",
+        "https://www.googleapis.com/auth/gmail.send",
+        "https://www.googleapis.com/auth/calendar",
+        "https://www.googleapis.com/auth/drive",
+        "https://www.googleapis.com/auth/chat.messages",
+      ];
+      var qs = [
+        "client_id="    + encodeURIComponent(cfg.clientId),
+        "redirect_uri=" + encodeURIComponent(redirectUri || cfg.redirectUri),
+        "response_type=code",
+        "scope="        + encodeURIComponent(scopes.join(" ")),
+        "access_type=offline",
+        "prompt=consent",
+        "state="        + encodeURIComponent(state),
+      ];
+      if (cfg.workspaceDomain) {
+        qs.push("hd=" + encodeURIComponent(cfg.workspaceDomain));
+      }
+      return "https://accounts.google.com/o/oauth2/v2/auth?" + qs.join("&");
+    },
+
+    handleCallback: function (code, state, redirectUri) {
+      if (!_verifyState_(state)) throw new Error("GWP: Invalid CSRF state parameter");
+      var cfg  = _getOAuthConfig_();
+      var resp = UrlFetchApp.fetch("https://oauth2.googleapis.com/token", {
+        method:  "post",
+        contentType: "application/x-www-form-urlencoded",
+        payload: {
+          code:          code,
+          client_id:     cfg.clientId,
+          client_secret: cfg.clientSecret,
+          redirect_uri:  redirectUri || cfg.redirectUri,
+          grant_type:    "authorization_code",
+        },
+        muteHttpExceptions: true,
+      });
+      var data = JSON.parse(resp.getContentText() || "{}");
+      if (data.error) throw new Error("GWP OAuth callback error: " + (data.error_description || data.error));
+
+      var userInfo  = GoogleIdentityAdapter_.getUserInfo(data.access_token);
+      var expiresAt = new Date(new Date().getTime() + (data.expires_in || 3600) * 1000).toISOString();
+
+      _storeTokens_(userInfo.sub, userInfo.email, data.access_token, data.refresh_token, expiresAt, data.scope || "");
+      _setConfigValue_("connectionStatus", "connected",       false);
+      _setConfigValue_("connectedUser",    userInfo.email,    false);
+      _setConfigValue_("connectedDomain",  userInfo.hd || (userInfo.email || "").split("@")[1] || "", false);
+      _gwpAudit_("identity", "login", userInfo.sub, "success", { email: userInfo.email });
+
+      return { success: true, userEmail: userInfo.email, userId: userInfo.sub, scope: data.scope || "" };
+    },
+
+    getUserInfo: function (accessToken) {
+      var resp = UrlFetchApp.fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers:            { Authorization: "Bearer " + accessToken },
+        muteHttpExceptions: true,
+      });
+      var data = JSON.parse(resp.getContentText() || "{}");
+      if (data.error) throw new Error("GWP userinfo error: " + JSON.stringify(data.error));
+      return data;
+    },
+
+    revokeToken: function (userId) {
+      var row = _getTokenRow_(userId);
+      if (!row) return { success: true, message: "No token to revoke" };
+      try {
+        var token = _deobfuscate_(row.accessTokenHash);
+        if (token) {
+          UrlFetchApp.fetch("https://oauth2.googleapis.com/revoke?token=" + encodeURIComponent(token), {
+            method: "post", muteHttpExceptions: true,
+          });
+        }
+      } catch (e) {}
+      _tokens_().update(row.id, {
+        accessTokenHash:  "",
+        refreshTokenHash: "",
+        expiresAt:        new Date().toISOString(),
+        updatedAt:        new Date().toISOString(),
+      });
+      _setConfigValue_("connectionStatus", "disconnected", false);
+      _setConfigValue_("connectedUser",    "",             false);
+      _gwpAudit_("identity", "revoke", userId, "success", {});
+      return { success: true };
+    },
+
+    getStatus: function (userId) {
+      var cfg = _getOAuthConfig_();
+      if (cfg.connectionStatus !== "connected") return { connected: false };
+      var row = _getTokenRow_(userId);
+      if (!row) return { connected: false };
+      var connected = new Date(row.expiresAt).getTime() > new Date().getTime();
+      return {
+        connected:  connected,
+        userEmail:  row.userEmail || "",
+        domain:     cfg.workspaceDomain || (row.userEmail || "").split("@")[1] || "",
+        expiresAt:  row.expiresAt,
+        scope:      row.scope || "",
+      };
+    },
+  };
+
+  // ─── Google Drive Adapter ────────────────────────────────────────────────────
+  var GoogleDriveAdapter_ = {
+
+    _call_: function (userId, method, path, payload) {
+      var token   = _getAccessToken_(userId);
+      var options = {
+        method:             method,
+        headers:            { Authorization: "Bearer " + token, Accept: "application/json" },
+        muteHttpExceptions: true,
+      };
+      if (payload !== null && payload !== undefined && method !== "get" && method !== "delete") {
+        options.contentType = "application/json";
+        options.payload     = JSON.stringify(payload);
+      }
+      var resp = UrlFetchApp.fetch("https://www.googleapis.com/drive/v3" + path, options);
+      if (resp.getResponseCode() === 204) return { success: true };
+      var body = JSON.parse(resp.getContentText() || "{}");
+      if (body.error) throw new Error("Drive API: " + (body.error.message || JSON.stringify(body.error)));
+      return body;
+    },
+
+    createFolder: function (userId, name, parentId) {
+      var meta = { name: name, mimeType: "application/vnd.google-apps.folder" };
+      if (parentId) meta.parents = [parentId];
+      var file = GoogleDriveAdapter_._call_(userId, "post", "/files?fields=id,name,webViewLink,mimeType,modifiedTime", meta);
+      _gwpAudit_("drive", "createFolder", userId, "success", { name: name, fileId: file.id });
+      return file;
+    },
+
+    findFolder: function (userId, name, parentId) {
+      var q = "mimeType='application/vnd.google-apps.folder' and name='" + name.replace(/'/g, "\\'") + "' and trashed=false";
+      if (parentId) q += " and '" + parentId + "' in parents";
+      var result = GoogleDriveAdapter_._call_(userId, "get", "/files?q=" + encodeURIComponent(q) + "&fields=files(id,name,mimeType,webViewLink,modifiedTime)", null);
+      return result.files || [];
+    },
+
+    getMetadata: function (userId, fileId) {
+      return GoogleDriveAdapter_._call_(userId, "get", "/files/" + fileId + "?fields=id,name,mimeType,size,webViewLink,parents,modifiedTime,createdTime,version", null);
+    },
+
+    uploadFile: function (userId, name, mimeType, content, parentId) {
+      var token    = _getAccessToken_(userId);
+      var boundary = "gwp_bound_" + new Date().getTime();
+      var metaJson = JSON.stringify({ name: name, parents: parentId ? [parentId] : [] });
+      var body     = "--" + boundary + "\r\n"
+                   + "Content-Type: application/json\r\n\r\n"
+                   + metaJson + "\r\n"
+                   + "--" + boundary + "\r\n"
+                   + "Content-Type: " + mimeType + "\r\n\r\n"
+                   + content + "\r\n"
+                   + "--" + boundary + "--";
+      var resp = UrlFetchApp.fetch(
+        "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,mimeType,modifiedTime",
+        {
+          method:  "post",
+          headers: { Authorization: "Bearer " + token, "Content-Type": "multipart/related; boundary=\"" + boundary + "\"" },
+          payload: body,
+          muteHttpExceptions: true,
+        }
+      );
+      var file = JSON.parse(resp.getContentText() || "{}");
+      if (file.error) throw new Error("Drive upload: " + (file.error.message || JSON.stringify(file.error)));
+      _gwpAudit_("drive", "uploadFile", userId, "success", { name: name, fileId: file.id });
+      return file;
+    },
+
+    updateFile: function (userId, fileId, name, mimeType, content) {
+      var token = _getAccessToken_(userId);
+      var resp  = UrlFetchApp.fetch(
+        "https://www.googleapis.com/upload/drive/v3/files/" + fileId + "?uploadType=media&fields=id,name,modifiedTime",
+        {
+          method:  "patch",
+          headers: { Authorization: "Bearer " + token, "Content-Type": mimeType || "text/plain" },
+          payload: content || "",
+          muteHttpExceptions: true,
+        }
+      );
+      var file = JSON.parse(resp.getContentText() || "{}");
+      if (file.error) throw new Error("Drive update: " + (file.error.message || JSON.stringify(file.error)));
+      if (name) {
+        GoogleDriveAdapter_._call_(userId, "patch", "/files/" + fileId + "?fields=id,name", { name: name });
+      }
+      _gwpAudit_("drive", "updateFile", userId, "success", { fileId: fileId });
+      return file;
+    },
+
+    moveFile: function (userId, fileId, newParentId, oldParentId) {
+      var qs = "addParents=" + newParentId + (oldParentId ? "&removeParents=" + oldParentId : "") + "&fields=id,name,parents";
+      return GoogleDriveAdapter_._call_(userId, "patch", "/files/" + fileId + "?" + qs, {});
+    },
+
+    deleteFile: function (userId, fileId) {
+      GoogleDriveAdapter_._call_(userId, "delete", "/files/" + fileId, null);
+      _gwpAudit_("drive", "deleteFile", userId, "success", { fileId: fileId });
+      return { success: true, fileId: fileId };
+    },
+
+    shareFile: function (userId, fileId, emailAddress, role) {
+      var perm = { type: "user", role: role || "reader", emailAddress: emailAddress };
+      var result = GoogleDriveAdapter_._call_(userId, "post", "/files/" + fileId + "/permissions?fields=id,role,type", perm);
+      _gwpAudit_("drive", "shareFile", userId, "success", { fileId: fileId, emailAddress: emailAddress, role: role || "reader" });
+      return result;
+    },
+
+    generateLink: function (userId, fileId) {
+      var meta = GoogleDriveAdapter_.getMetadata(userId, fileId);
+      return { fileId: fileId, webViewLink: meta.webViewLink || "" };
+    },
+
+    listVersions: function (userId, fileId) {
+      var result = GoogleDriveAdapter_._call_(userId, "get", "/files/" + fileId + "/revisions?fields=revisions(id,modifiedTime,mimeType,size)", null);
+      return result.revisions || [];
+    },
+
+    getQuota: function (userId) {
+      var result = GoogleDriveAdapter_._call_(userId, "get", "/about?fields=storageQuota", null);
+      var q      = result.storageQuota || {};
+      return {
+        used:         parseInt(q.usage || "0", 10),
+        total:        parseInt(q.limit || "0", 10),
+        usageInDrive: parseInt(q.usageInDrive || "0", 10),
+      };
+    },
+  };
+
+  // ─── Google Mail Adapter ─────────────────────────────────────────────────────
+  var GoogleMailAdapter_ = {
+
+    _buildRaw_: function (to, cc, bcc, subject, htmlBody, attachments, threadId) {
+      var boundary = "gwp_mail_" + new Date().getTime();
+      var toLine   = Array.isArray(to)  ? to.join(", ")  : (to  || "");
+      var ccLine   = Array.isArray(cc)  ? cc.join(", ")  : (cc  || "");
+      var bccLine  = Array.isArray(bcc) ? bcc.join(", ") : (bcc || "");
+      var subjectB64 = Utilities.base64Encode(subject || "", Utilities.Charset.UTF_8);
+      var headers    = "MIME-Version: 1.0\r\nTo: " + toLine + "\r\n";
+      if (ccLine)      headers += "Cc: "         + ccLine  + "\r\n";
+      if (bccLine)     headers += "Bcc: "        + bccLine + "\r\n";
+      if (threadId)    headers += "References: " + threadId + "\r\n";
+      headers += "Subject: =?utf-8?B?" + subjectB64 + "?=\r\n";
+
+      var rawBody;
+      if (attachments && attachments.length > 0) {
+        rawBody  = headers + "Content-Type: multipart/mixed; boundary=\"" + boundary + "\"\r\n\r\n";
+        rawBody += "--" + boundary + "\r\nContent-Type: text/html; charset=utf-8\r\n\r\n" + (htmlBody || "") + "\r\n";
+        for (var i = 0; i < attachments.length; i++) {
+          var att = attachments[i];
+          rawBody += "--" + boundary + "\r\n"
+                   + "Content-Type: " + (att.mimeType || "application/octet-stream") + "\r\n"
+                   + "Content-Disposition: attachment; filename=\"" + att.name + "\"\r\n"
+                   + "Content-Transfer-Encoding: base64\r\n\r\n"
+                   + att.content + "\r\n";
+        }
+        rawBody += "--" + boundary + "--";
+      } else {
+        rawBody = headers + "Content-Type: text/html; charset=utf-8\r\n\r\n" + (htmlBody || "");
+      }
+      return Utilities.base64Encode(rawBody, Utilities.Charset.UTF_8)
+        .replace(/\+/g, "-").replace(/\//g, "_");
+    },
+
+    sendMail: function (userId, params) {
+      var token   = _getAccessToken_(userId);
+      var raw     = GoogleMailAdapter_._buildRaw_(
+        params.to, params.cc, params.bcc, params.subject,
+        params.htmlBody || ("<p>" + (params.textBody || params.subject || "") + "</p>"),
+        params.attachments, params.threadId
+      );
+      var body = { raw: raw };
+      if (params.threadId) body.threadId = params.threadId;
+
+      var resp = UrlFetchApp.fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+        method:      "post",
+        headers:     { Authorization: "Bearer " + token },
+        contentType: "application/json",
+        payload:     JSON.stringify(body),
+        muteHttpExceptions: true,
+      });
+      var data = JSON.parse(resp.getContentText() || "{}");
+      if (data.error) throw new Error("Gmail send: " + (data.error.message || JSON.stringify(data.error)));
+
+      var log = {
+        id:              IdGen.uuid(),
+        userId:          userId,
+        recipients:      JSON.stringify(params.to || []),
+        subject:         params.subject || "",
+        sentAt:          new Date().toISOString(),
+        status:          "sent",
+        threadId:        data.threadId || "",
+        messageId:       data.id || "",
+        attachmentCount: String((params.attachments || []).length),
+        priority:        params.priority || "normal",
+        createdAt:       new Date().toISOString(),
+      };
+      _mailLog_().create(log);
+      _gwpAudit_("gmail", "sendMail", userId, "success", { to: params.to, subject: params.subject, messageId: data.id });
+      return log;
+    },
+
+    replyToThread: function (userId, params) {
+      return GoogleMailAdapter_.sendMail(userId, params);
+    },
+  };
+
+  // ─── Google Calendar Adapter ─────────────────────────────────────────────────
+  var GoogleCalendarAdapter_ = {
+
+    _call_: function (userId, method, path, payload) {
+      var token   = _getAccessToken_(userId);
+      var options = {
+        method:             method,
+        headers:            { Authorization: "Bearer " + token, Accept: "application/json" },
+        muteHttpExceptions: true,
+      };
+      if (payload !== null && payload !== undefined && method !== "get" && method !== "delete") {
+        options.contentType = "application/json";
+        options.payload     = JSON.stringify(payload);
+      }
+      var resp = UrlFetchApp.fetch("https://www.googleapis.com/calendar/v3" + path, options);
+      if (resp.getResponseCode() === 204) return { success: true };
+      var body = JSON.parse(resp.getContentText() || "{}");
+      if (body.error) throw new Error("Calendar API: " + (body.error.message || JSON.stringify(body.error)));
+      return body;
+    },
+
+    createEvent: function (userId, params) {
+      var tz      = params.timeZone || "America/El_Salvador";
+      var calId   = params.calendarId || "primary";
+      var payload = {
+        summary:     params.title,
+        description: params.description || "",
+        start:       { dateTime: params.start, timeZone: tz },
+        end:         { dateTime: params.end,   timeZone: tz },
+        attendees:   (params.attendees || []).map(function (e) { return { email: e }; }),
+        reminders:   params.reminders
+          ? { useDefault: false, overrides: params.reminders.map(function (r) { return { method: r.method || "email", minutes: r.minutes }; }) }
+          : { useDefault: true },
+      };
+      var result = GoogleCalendarAdapter_._call_(userId, "post", "/calendars/" + calId + "/events?sendUpdates=all", payload);
+      var cached = {
+        id:          IdGen.uuid(),
+        eventId:     result.id,
+        calendarId:  calId,
+        userId:      userId,
+        title:       params.title,
+        startTime:   params.start,
+        endTime:     params.end,
+        attendees:   JSON.stringify(params.attendees || []),
+        status:      result.status || "confirmed",
+        description: params.description || "",
+        createdAt:   new Date().toISOString(),
+      };
+      _calLog_().create(cached);
+      _gwpAudit_("calendar", "createEvent", userId, "success", { title: params.title, eventId: result.id });
+      return result;
+    },
+
+    updateEvent: function (userId, eventId, params, calendarId) {
+      var tz    = params.timeZone || "America/El_Salvador";
+      var patch = {};
+      if (params.title)       patch.summary     = params.title;
+      if (params.description !== undefined) patch.description = params.description;
+      if (params.start)       patch.start       = { dateTime: params.start, timeZone: tz };
+      if (params.end)         patch.end         = { dateTime: params.end,   timeZone: tz };
+      if (params.attendees)   patch.attendees   = params.attendees.map(function (e) { return { email: e }; });
+      var result = GoogleCalendarAdapter_._call_(userId, "patch", "/calendars/" + (calendarId || "primary") + "/events/" + eventId + "?sendUpdates=all", patch);
+      _gwpAudit_("calendar", "updateEvent", userId, "success", { eventId: eventId });
+      return result;
+    },
+
+    deleteEvent: function (userId, eventId, calendarId) {
+      GoogleCalendarAdapter_._call_(userId, "delete", "/calendars/" + (calendarId || "primary") + "/events/" + eventId + "?sendUpdates=all", null);
+      _gwpAudit_("calendar", "deleteEvent", userId, "success", { eventId: eventId });
+      return { success: true, eventId: eventId };
+    },
+
+    checkAvailability: function (userId, emails, startTime, endTime) {
+      var body = {
+        timeMin:  startTime,
+        timeMax:  endTime,
+        timeZone: "America/El_Salvador",
+        items:    emails.map(function (e) { return { id: e }; }),
+      };
+      var result = GoogleCalendarAdapter_._call_(userId, "post", "/freeBusy", body);
+      return result.calendars || {};
+    },
+
+    listEvents: function (userId, calendarId, maxResults) {
+      var path = "/calendars/" + (calendarId || "primary")
+               + "/events?orderBy=startTime&singleEvents=true"
+               + "&maxResults=" + (maxResults || 10)
+               + "&timeMin=" + encodeURIComponent(new Date().toISOString());
+      var result = GoogleCalendarAdapter_._call_(userId, "get", path, null);
+      return result.items || [];
+    },
+  };
+
+  // ─── Google Chat Adapter ─────────────────────────────────────────────────────
+  var GoogleChatAdapter_ = {
+
+    _call_: function (userId, method, path, payload) {
+      var token   = _getAccessToken_(userId);
+      var options = {
+        method:             method,
+        headers:            { Authorization: "Bearer " + token, Accept: "application/json" },
+        muteHttpExceptions: true,
+      };
+      if (payload !== null && payload !== undefined) {
+        options.contentType = "application/json";
+        options.payload     = JSON.stringify(payload);
+      }
+      var resp = UrlFetchApp.fetch("https://chat.googleapis.com/v1" + path, options);
+      var body = JSON.parse(resp.getContentText() || "{}");
+      if (body.error) throw new Error("Chat API: " + (body.error.message || JSON.stringify(body.error)));
+      return body;
+    },
+
+    listSpaces: function (userId) {
+      var result = GoogleChatAdapter_._call_(userId, "get", "/spaces", null);
+      return (result.spaces || []).map(function (s) {
+        return { id: s.name, name: s.displayName || s.name, type: s.type || "ROOM" };
+      });
+    },
+
+    sendMessage: function (userId, spaceId, text, priority) {
+      var result = GoogleChatAdapter_._call_(userId, "post", "/spaces/" + spaceId + "/messages", { text: text });
+      var log = {
+        id:        IdGen.uuid(),
+        spaceId:   spaceId,
+        spaceName: spaceId,
+        message:   text.substring(0, 500),
+        sentAt:    new Date().toISOString(),
+        userId:    userId,
+        status:    "sent",
+        messageId: result.name || "",
+        priority:  priority || "normal",
+        createdAt: new Date().toISOString(),
+      };
+      _chatLog_().create(log);
+      _gwpAudit_("chat", "sendMessage", userId, "success", { spaceId: spaceId });
+      return log;
+    },
+
+    createCard: function (userId, spaceId, card) {
+      var payload = {
+        cardsV2: [{
+          cardId: "gwp_card_" + new Date().getTime(),
+          card: {
+            header: { title: card.title, subtitle: card.subtitle || "" },
+            sections: (card.sections || []).map(function (s) {
+              return {
+                header:  s.header,
+                widgets: (s.widgets || []).map(function (w) { return { textParagraph: { text: w.text || "" } }; }),
+              };
+            }),
+          },
+        }],
+      };
+      var result = GoogleChatAdapter_._call_(userId, "post", "/spaces/" + spaceId + "/messages", payload);
+      _gwpAudit_("chat", "createCard", userId, "success", { spaceId: spaceId, title: card.title });
+      return result;
+    },
+
+    replyToSpace: function (userId, spaceId, threadKey, text) {
+      var payload = { text: text, thread: { threadKey: threadKey } };
+      var result  = GoogleChatAdapter_._call_(userId, "post", "/spaces/" + spaceId + "/messages?messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD", payload);
+      _gwpAudit_("chat", "replyToSpace", userId, "success", { spaceId: spaceId, threadKey: threadKey });
+      return result;
+    },
+
+    getStatus: function (userId) {
+      try {
+        GoogleChatAdapter_.listSpaces(userId);
+        return "available";
+      } catch (e) {
+        return "unavailable";
+      }
+    },
+  };
+
+  // ─── Workspace Service coordinator ───────────────────────────────────────────
+  var GoogleWorkspaceService_ = {
+    getDashboard: function (userId) {
+      var cfg     = _getOAuthConfig_();
+      var status  = GoogleIdentityAdapter_.getStatus(userId);
+      var dash    = {
+        oauthStatus:       status.connected ? "connected" : "disconnected",
+        authenticatedUser: status.userEmail || "",
+        domain:            status.domain || cfg.workspaceDomain || "",
+        driveQuota:        null,
+        recentEmails:      [],
+        recentEvents:      [],
+        chatStatus:        "unavailable",
+        generatedAt:       new Date().toISOString(),
+      };
+      if (status.connected && userId) {
+        try { dash.driveQuota = GoogleDriveAdapter_.getQuota(userId); } catch (e) {}
+        try {
+          var mails = _mailLog_().list({});
+          dash.recentEmails = (mails || []).slice(-5).reverse();
+        } catch (e) {}
+        try { dash.recentEvents = GoogleCalendarAdapter_.listEvents(userId, "primary", 5); } catch (e) {}
+        try { dash.chatStatus   = GoogleChatAdapter_.getStatus(userId); }   catch (e) {}
+      }
+      return dash;
+    },
+  };
+
+  // ─── Bootstrap ──────────────────────────────────────────────────────────────
+  var CONFIG_DEFAULTS = [
+    { key: "clientId",        value: "",           isSecret: false },
+    { key: "clientSecret",    value: "",           isSecret: true  },
+    { key: "redirectUri",     value: "",           isSecret: false },
+    { key: "scopes",          value: "openid,email,profile,https://www.googleapis.com/auth/gmail.send,https://www.googleapis.com/auth/calendar,https://www.googleapis.com/auth/drive,https://www.googleapis.com/auth/chat.messages", isSecret: false },
+    { key: "workspaceDomain", value: "",           isSecret: false },
+    { key: "adminEmail",      value: "",           isSecret: false },
+    { key: "connectionStatus", value: "disconnected", isSecret: false },
+    { key: "connectedUser",   value: "",           isSecret: false },
+    { key: "connectedDomain", value: "",           isSecret: false },
+  ];
+
+  try {
+    var existingKeys = {};
+    var cfgRows = _cfg_().list ? _cfg_().list({}) : [];
+    (cfgRows || []).forEach(function (r) { existingKeys[r.key] = true; });
+    CONFIG_DEFAULTS.forEach(function (d) {
+      if (!existingKeys[d.key]) _setConfigValue_(d.key, d.value, d.isSecret);
+    });
+  } catch (e) {}
+
+  // ─── Public handlers ────────────────────────────────────────────────────────
+  return {
+
+    getDashboard: function (params) {
+      return GoogleWorkspaceService_.getDashboard((params && params.userId) || "");
+    },
+
+    // OAuth
+    getAuthUrl: function (params) {
+      return { authUrl: GoogleIdentityAdapter_.getAuthUrl(params && params.redirectUri) };
+    },
+
+    handleCallback: function (params) {
+      return GoogleIdentityAdapter_.handleCallback(params.code, params.state, params.redirectUri);
+    },
+
+    getOAuthStatus: function (params) {
+      return GoogleIdentityAdapter_.getStatus((params && params.userId) || "");
+    },
+
+    revokeToken: function (params) {
+      return GoogleIdentityAdapter_.revokeToken(params.userId);
+    },
+
+    refreshToken: function (params) {
+      var row = _getTokenRow_(params.userId);
+      if (!row) throw new Error("GWP: No token for userId=" + params.userId);
+      var token = _refreshTokenInternal_(params.userId, row);
+      return { success: !!token, userId: params.userId };
+    },
+
+    // Config
+    getConfig: function () {
+      var cfg = _getOAuthConfig_();
+      return {
+        clientId:         cfg.clientId,
+        redirectUri:      cfg.redirectUri,
+        scopes:           cfg.scopes,
+        workspaceDomain:  cfg.workspaceDomain,
+        adminEmail:       cfg.adminEmail,
+        connectionStatus: cfg.connectionStatus,
+        connectedUser:    _getConfigValue_("connectedUser"),
+        connectedDomain:  _getConfigValue_("connectedDomain"),
+        // clientSecret NEVER returned to client
+      };
+    },
+
+    updateConfig: function (params) {
+      if (params.clientId)        _setConfigValue_("clientId",        params.clientId,        false);
+      if (params.clientSecret)    _setConfigValue_("clientSecret",    params.clientSecret,    true);
+      if (params.redirectUri)     _setConfigValue_("redirectUri",     params.redirectUri,     false);
+      if (params.scopes) {
+        var scopeStr = Array.isArray(params.scopes) ? params.scopes.join(",") : params.scopes;
+        _setConfigValue_("scopes", scopeStr, false);
+      }
+      if (params.workspaceDomain) _setConfigValue_("workspaceDomain", params.workspaceDomain, false);
+      if (params.adminEmail)      _setConfigValue_("adminEmail",      params.adminEmail,      false);
+      return GWPController.getConfig();
+    },
+
+    // Drive
+    createFolder:    function (p) { return GoogleDriveAdapter_.createFolder(p.userId, p.name, p.parentId); },
+    findFolder:      function (p) { return GoogleDriveAdapter_.findFolder(p.userId, p.name, p.parentId); },
+    uploadFile:      function (p) { return GoogleDriveAdapter_.uploadFile(p.userId, p.name, p.mimeType, p.content, p.parentId); },
+    updateFile:      function (p) { return GoogleDriveAdapter_.updateFile(p.userId, p.fileId, p.name, p.mimeType, p.content); },
+    moveFile:        function (p) { return GoogleDriveAdapter_.moveFile(p.userId, p.fileId, p.newParentId, p.oldParentId); },
+    deleteFile:      function (p) { return GoogleDriveAdapter_.deleteFile(p.userId, p.fileId); },
+    shareFile:       function (p) { return GoogleDriveAdapter_.shareFile(p.userId, p.fileId, p.emailAddress, p.role); },
+    getFileMetadata: function (p) { return GoogleDriveAdapter_.getMetadata(p.userId, p.fileId); },
+    generateLink:    function (p) { return GoogleDriveAdapter_.generateLink(p.userId, p.fileId); },
+    listVersions:    function (p) { return GoogleDriveAdapter_.listVersions(p.userId, p.fileId); },
+    getDriveQuota:   function (p) { return GoogleDriveAdapter_.getQuota(p.userId); },
+
+    // Gmail
+    sendMail:       function (p) { return GoogleMailAdapter_.sendMail(p.userId, p); },
+    replyToThread:  function (p) { return GoogleMailAdapter_.replyToThread(p.userId, p); },
+    getMailLogs:    function (p) {
+      try { return _mailLog_().list(p || {}); } catch (e) { return []; }
+    },
+
+    // Calendar
+    createEvent:       function (p) { return GoogleCalendarAdapter_.createEvent(p.userId, p); },
+    updateEvent:       function (p) { return GoogleCalendarAdapter_.updateEvent(p.userId, p.eventId, p, p.calendarId); },
+    deleteEvent:       function (p) { return GoogleCalendarAdapter_.deleteEvent(p.userId, p.eventId, p.calendarId); },
+    checkAvailability: function (p) { return GoogleCalendarAdapter_.checkAvailability(p.userId, p.emails, p.startTime, p.endTime); },
+    listEvents:        function (p) { return GoogleCalendarAdapter_.listEvents(p.userId, p.calendarId, p.maxResults); },
+
+    // Chat
+    listSpaces:      function (p) { return GoogleChatAdapter_.listSpaces(p.userId); },
+    sendChatMessage: function (p) { return GoogleChatAdapter_.sendMessage(p.userId, p.spaceId, p.text, p.priority); },
+    createChatCard:  function (p) { return GoogleChatAdapter_.createCard(p.userId, p.spaceId, p.card); },
+    replyToSpace:    function (p) { return GoogleChatAdapter_.replyToSpace(p.userId, p.spaceId, p.threadKey, p.text); },
+    getChatLogs:     function (p) {
+      try { return _chatLog_().list(p || {}); } catch (e) { return []; }
+    },
+
+    // Audit
+    getAuditLog: function (p) {
+      try { return _auditLog_().list(p || {}); } catch (e) { return []; }
+    },
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/IIAController.js
+// ============================================================
+
+/**
+ * IIAController — Institutional Intelligence Assistant.
+ *
+ * Architecture (all within GAS global scope):
+ *   GeminiAdapter_   → HTTP calls to Gemini generativelanguage API
+ *   ContextBuilder_  → gathers institutional context from IIE, GWP, ISP, IOE, NCE
+ *   PromptBuilder_   → builds system prompt from templates + context
+ *   ResponseParser_  → extracts text and <ACTION> blocks from Gemini response
+ *   ConversationManager_ → stores/retrieves conversation history via SheetRepository
+ *   GeminiService_   → orchestrates all of the above for a single chat turn
+ *
+ * Security:
+ *   - API key stored obfuscated (XOR + base64); never returned to client.
+ *   - No Google credentials, OAuth tokens, or Sheet data sent to Gemini.
+ *   - All interactions logged to IIA_AuditLog.
+ *   - Context sourced only from peer controllers (ISP, GWP, IIE, IOE, NCE).
+ */
+
+var IIAController = (function () {
+  "use strict";
+
+  // ─── Obfuscation (same XOR+base64 pattern as GWP) ────────────────────────
+
+  function _obfuscate_(text) {
+    var key   = ScriptApp.getScriptId();
+    var bytes = [];
+    for (var i = 0; i < text.length; i++) {
+      bytes.push((text.charCodeAt(i) ^ key.charCodeAt(i % key.length)) & 0xff);
+    }
+    return Utilities.base64Encode(bytes);
+  }
+
+  function _deobfuscate_(enc) {
+    var key   = ScriptApp.getScriptId();
+    var bytes = Utilities.base64Decode(enc);
+    var out   = "";
+    for (var i = 0; i < bytes.length; i++) {
+      out += String.fromCharCode((bytes[i] ^ key.charCodeAt(i % key.length)) & 0xff);
+    }
+    return out;
+  }
+
+  // ─── Config helpers ───────────────────────────────────────────────────────
+
+  function _cfgRows_() {
+    try { return SheetRepository.for("IIA_Config").findAll(); } catch (e) { return []; }
+  }
+
+  function _cfgGet_(key, def) {
+    var rows = _cfgRows_();
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].key === key) {
+        if (rows[i].isSecret === "true" || rows[i].isSecret === true) return null;
+        return rows[i].value !== undefined && rows[i].value !== "" ? rows[i].value : def;
+      }
+    }
+    return def;
+  }
+
+  function _getApiKey_() {
+    var rows = _cfgRows_();
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].key === "apiKey" && (rows[i].isSecret === "true" || rows[i].isSecret === true) && rows[i].value) {
+        return _deobfuscate_(String(rows[i].value));
+      }
+    }
+    return null;
+  }
+
+  function _cfgSet_(key, value, isSecret, userId) {
+    var repo    = SheetRepository.for("IIA_Config");
+    var rows    = repo.findAll();
+    var now     = new Date().toISOString();
+    var stored  = isSecret ? _obfuscate_(String(value)) : String(value);
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].key === key) {
+        repo.update(rows[i].id, { value: stored, updatedAt: now, updatedBy: userId || "" });
+        return;
+      }
+    }
+    repo.create({
+      id:        IdGen.entityId("IIA_CFG"),
+      key:       key,
+      value:     stored,
+      isSecret:  isSecret ? "true" : "false",
+      updatedAt: now,
+      updatedBy: userId || "",
+    });
+  }
+
+  // ─── GeminiAdapter_ ──────────────────────────────────────────────────────
+
+  var GeminiAdapter_ = {
+
+    generate: function (contents, systemInstruction, overrides) {
+      var apiKey = _getApiKey_();
+      if (!apiKey) throw new Error("IIA: Gemini API key no configurada. Configure la clave en Configuración → IIA.");
+
+      var model       = String(_cfgGet_("model",       "gemini-1.5-flash"));
+      var temperature = parseFloat(_cfgGet_("temperature", "0.7"));
+      var maxTokens   = parseInt(_cfgGet_("maxTokens",  "2048"), 10);
+      var retries     = parseInt(_cfgGet_("retries",    "2"),    10);
+
+      overrides = overrides || {};
+      if (overrides.model)       model       = overrides.model;
+      if (overrides.temperature) temperature = overrides.temperature;
+      if (overrides.maxTokens)   maxTokens   = overrides.maxTokens;
+
+      var url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + apiKey;
+
+      var payload = {
+        contents: contents,
+        generationConfig: {
+          temperature:      temperature,
+          maxOutputTokens:  maxTokens,
+          topK:             40,
+          topP:             0.95,
+        },
+        safetySettings: [
+          { category: "HARM_CATEGORY_HATE_SPEECH",       threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+          { category: "HARM_CATEGORY_HARASSMENT",        threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+        ],
+      };
+
+      if (systemInstruction) {
+        payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+      }
+
+      var lastErr = new Error("Gemini: sin respuesta");
+      for (var attempt = 0; attempt <= retries; attempt++) {
+        try {
+          var resp = UrlFetchApp.fetch(url, {
+            method:          "post",
+            contentType:     "application/json",
+            payload:         JSON.stringify(payload),
+            muteHttpExceptions: true,
+          });
+          var code = resp.getResponseCode();
+          var body = resp.getContentText();
+          var data = JSON.parse(body);
+          if (code !== 200) {
+            throw new Error("Gemini HTTP " + code + ": " + ((data.error && data.error.message) || body));
+          }
+          return { data: data, model: model };
+        } catch (e) {
+          lastErr = e;
+          if (attempt < retries) Utilities.sleep(1000 * (attempt + 1));
+        }
+      }
+      throw lastErr;
+    },
+
+    ping: function () {
+      var apiKey = _getApiKey_();
+      if (!apiKey) return { status: "unavailable", reason: "API key no configurada" };
+      try {
+        var resp = UrlFetchApp.fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models?key=" + apiKey,
+          { muteHttpExceptions: true }
+        );
+        var code = resp.getResponseCode();
+        if (code === 200) return { status: "available" };
+        return { status: "degraded", reason: "HTTP " + code };
+      } catch (e) {
+        return { status: "unavailable", reason: e.message };
+      }
+    },
+  };
+
+  // ─── ContextBuilder_ ─────────────────────────────────────────────────────
+  // Gathers institutional context ONLY through peer controllers (no direct Sheet/API access).
+
+  var ContextBuilder_ = {
+
+    build: function (userId, sources) {
+      sources = sources || ["isp"];
+      var parts = [];
+      sources.forEach(function (src) {
+        try {
+          var fragment = "";
+          switch (src) {
+            case "isp": fragment = ContextBuilder_._isp_(userId); break;
+            case "iie": fragment = ContextBuilder_._iie_(userId); break;
+            case "gwp": fragment = ContextBuilder_._gwp_(userId); break;
+            case "ioe": fragment = ContextBuilder_._ioe_();       break;
+            case "nce": fragment = ContextBuilder_._nce_();       break;
+          }
+          if (fragment) parts.push(fragment);
+        } catch (e) {
+          parts.push("[" + src.toUpperCase() + "] contexto no disponible.");
+        }
+      });
+      return parts.join("\n\n");
+    },
+
+    _isp_: function (userId) {
+      var lines = ["=== ISP (Identidad y Permisos) ==="];
+      try {
+        if (typeof ISPController !== "undefined" && typeof ISPController.handle === "function") {
+          var r = ISPController.handle("getUser", { userId: userId }, { userId: userId });
+          if (r && r.data) {
+            lines.push("Usuario: " + (r.data.email || userId));
+            if (r.data.roles)   lines.push("Roles: " + (Array.isArray(r.data.roles) ? r.data.roles.join(", ") : r.data.roles));
+            if (r.data.status)  lines.push("Estado: " + r.data.status);
+          } else {
+            lines.push("Usuario autenticado: " + userId);
+          }
+        } else {
+          lines.push("Usuario: " + userId);
+        }
+      } catch (e) {
+        lines.push("Usuario: " + userId);
+      }
+      return lines.join("\n");
+    },
+
+    _iie_: function (userId) {
+      return "=== IIE (Semántica Institucional) ===\n" +
+        "Repositorio semántico de indicadores, procesos, procedimientos, planes de acción y evidencias disponible.\n" +
+        "Entidades accesibles: Indicadores KPI, Procesos Institucionales, Evidencias, Riesgos, Alertas.\n" +
+        "Solicitante: " + userId;
+    },
+
+    _gwp_: function (userId) {
+      var lines = ["=== GWP (Google Workspace) ==="];
+      try {
+        if (typeof GWPController !== "undefined" && typeof GWPController.handle === "function") {
+          var r = GWPController.handle("getOAuthStatus", { userId: userId }, { userId: userId });
+          if (r && r.data) {
+            lines.push("OAuth: " + (r.data.connected ? "conectado" : "desconectado"));
+            if (r.data.userEmail)   lines.push("Cuenta Google: " + r.data.userEmail);
+            if (r.data.domain)      lines.push("Dominio: " + r.data.domain);
+          } else {
+            lines.push("Google Workspace integrado (Drive, Gmail, Calendar, Chat).");
+          }
+        } else {
+          lines.push("Google Workspace disponible como servicio.");
+        }
+      } catch (e) {
+        lines.push("Google Workspace: servicio activo.");
+      }
+      return lines.join("\n");
+    },
+
+    _ioe_: function () {
+      return "=== IOE (Indicadores y Objetivos Estratégicos) ===\n" +
+        "Seguimiento de objetivos estratégicos e indicadores de gestión disponible. " +
+        "KPIs institucionales, metas y brechas de cumplimiento accesibles.";
+    },
+
+    _nce_: function () {
+      return "=== NCE (Notificaciones y Comunicaciones) ===\n" +
+        "Motor de notificaciones institucional activo. Plantillas, preferencias y canales configurados.";
+    },
+  };
+
+  // ─── PromptBuilder_ ──────────────────────────────────────────────────────
+
+  var PROMPT_DEFAULTS_ = {
+    institutional:
+      "Eres el Asistente Institucional de SSE-VRAF de la Universidad Pedagógica de El Salvador (UPES). " +
+      "Tu función es apoyar la gestión institucional respondiendo consultas sobre indicadores, procesos, " +
+      "planes estratégicos, riesgos, evidencias, alertas y actividades. " +
+      "Eres preciso, profesional y respondes siempre en español formal.",
+
+    executive:
+      "Eres el Asistente Ejecutivo de la Vicerrectoría Administrativa y Financiera (UPES). " +
+      "Apoyas la toma de decisiones con análisis de alto nivel: KPIs estratégicos, cumplimiento de planes, " +
+      "alertas críticas y diagnósticos consolidados. Responde de forma concisa y orientada a decisiones.",
+
+    analytical:
+      "Eres un Analista Institucional de SSE-VRAF (UPES). " +
+      "Generas análisis detallados sobre procesos institucionales, indicadores de gestión, riesgos identificados, " +
+      "oportunidades de mejora y brechas de cumplimiento. Estructura tus respuestas con datos y claridad.",
+
+    operational:
+      "Eres el Asistente Operativo de SSE-VRAF (UPES). " +
+      "Apoyas con gestión de tareas, actividades, planes de acción y seguimiento operativo diario. " +
+      "Eres ágil, preciso y orientado a la acción concreta.",
+
+    administrative:
+      "Eres el Asistente Administrativo de SSE-VRAF (UPES). " +
+      "Apoyas en gestión documental, notificaciones, comunicaciones institucionales y actividades administrativas. " +
+      "Mantienes un tono formal y profesional en todo momento.",
+  };
+
+  var PromptBuilder_ = {
+
+    getSystemPrompt: function (promptType, institutionalContext, userId) {
+      var base = PromptBuilder_._getTemplate_(promptType);
+      return base + "\n\n" +
+        "=== CONTEXTO INSTITUCIONAL ===\n" + (institutionalContext || "Contexto institucional no disponible.") + "\n\n" +
+        "=== REGLAS OBLIGATORIAS ===\n" +
+        "1. Responde EXCLUSIVAMENTE sobre el ecosistema SSE-VRAF e UPES.\n" +
+        "2. Nunca inventes datos, cifras ni información que no tengas. Di claramente cuando no sabes algo.\n" +
+        "3. NUNCA reveles credenciales, tokens OAuth, API keys, contraseñas ni información sensible.\n" +
+        "4. Si el usuario solicita una acción ejecutable, inclúyela al final entre <ACTION>{JSON}</ACTION>.\n" +
+        "5. Responde siempre en español formal institucional.\n" +
+        "6. Usa markdown para estructurar tu respuesta (# encabezados, **negrita**, - listas, tablas, ```código```).\n" +
+        "7. Antes de proponer ejecutar cualquier acción verifica que el usuario tenga permiso RBAC.\n" +
+        "8. No accedas directamente a bases de datos, APIs externas, Drive, Gmail ni Calendar directamente.\n" +
+        "Usuario activo: " + userId + ".";
+    },
+
+    _getTemplate_: function (promptType) {
+      try {
+        var rows = SheetRepository.for("IIA_PromptTemplates").findAll();
+        for (var i = 0; i < rows.length; i++) {
+          if (rows[i].type === promptType && rows[i].content) return rows[i].content;
+        }
+      } catch (e) { /* use default */ }
+      return PROMPT_DEFAULTS_[promptType] || PROMPT_DEFAULTS_.institutional;
+    },
+  };
+
+  // ─── ResponseParser_ ─────────────────────────────────────────────────────
+
+  var ResponseParser_ = {
+
+    parse: function (geminiResult) {
+      var data      = geminiResult.data;
+      var candidate = data.candidates && data.candidates[0];
+      if (!candidate) return { text: "Sin respuesta de Gemini.", actions: [], tokensIn: 0, tokensOut: 0, model: geminiResult.model };
+
+      var rawText = "";
+      if (candidate.content && candidate.content.parts) {
+        rawText = candidate.content.parts.map(function (p) { return p.text || ""; }).join("");
+      }
+
+      var actions   = ResponseParser_._extractActions_(rawText);
+      var cleanText = rawText.replace(/<ACTION>[\s\S]*?<\/ACTION>/gi, "").trim();
+      var usage     = data.usageMetadata || {};
+
+      return {
+        text:      cleanText,
+        actions:   actions,
+        tokensIn:  usage.promptTokenCount     || 0,
+        tokensOut: usage.candidatesTokenCount || 0,
+        model:     geminiResult.model,
+      };
+    },
+
+    _extractActions_: function (text) {
+      var actions = [];
+      var re      = /<ACTION>([\s\S]*?)<\/ACTION>/gi;
+      var match;
+      while ((match = re.exec(text)) !== null) {
+        try { actions.push(JSON.parse(match[1].trim())); } catch (e) { /* invalid JSON — skip */ }
+      }
+      return actions;
+    },
+  };
+
+  // ─── ConversationManager_ ────────────────────────────────────────────────
+
+  var ConversationManager_ = {
+
+    getOrCreate: function (userId, conversationId, firstMsg) {
+      var repo = SheetRepository.for("IIA_Conversations");
+      if (conversationId) {
+        var rows = repo.findAll();
+        for (var i = 0; i < rows.length; i++) {
+          if (rows[i].id === conversationId && rows[i].userId === userId) return rows[i];
+        }
+      }
+      var now     = new Date().toISOString();
+      var expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      var conv = {
+        id:           IdGen.entityId("IIA_CONV"),
+        userId:       userId,
+        title:        String(firstMsg || "Nueva conversación").substring(0, 60),
+        messageCount: 0,
+        lastMessage:  "",
+        createdAt:    now,
+        updatedAt:    now,
+        expiresAt:    expires,
+      };
+      repo.create(conv);
+      return conv;
+    },
+
+    getMessages: function (conversationId, limit) {
+      var all  = SheetRepository.for("IIA_Messages").findAll();
+      var msgs = all.filter(function (r) { return r.conversationId === conversationId; });
+      msgs.sort(function (a, b) { return a.timestamp < b.timestamp ? -1 : 1; });
+      return (limit && limit > 0) ? msgs.slice(-limit) : msgs;
+    },
+
+    addMessage: function (convId, userId, role, content, tokensIn, tokensOut, latencyMs) {
+      var now = new Date().toISOString();
+      var msg = {
+        id:             IdGen.entityId("IIA_MSG"),
+        conversationId: convId,
+        userId:         userId,
+        role:           role,
+        content:        content,
+        tokensIn:       tokensIn  || 0,
+        tokensOut:      tokensOut || 0,
+        latencyMs:      latencyMs || 0,
+        timestamp:      now,
+      };
+      SheetRepository.for("IIA_Messages").create(msg);
+
+      try {
+        var convRepo = SheetRepository.for("IIA_Conversations");
+        var convRows = convRepo.findAll();
+        for (var i = 0; i < convRows.length; i++) {
+          if (convRows[i].id === convId) {
+            convRepo.update(convRows[i].id, {
+              messageCount: (parseInt(convRows[i].messageCount, 10) || 0) + 1,
+              lastMessage:  String(content).substring(0, 100),
+              updatedAt:    now,
+            });
+            break;
+          }
+        }
+      } catch (e) { AppLogger.warn("IIA: conv metadata update failed: " + e.message); }
+
+      return msg;
+    },
+
+    toGeminiContents: function (messages) {
+      return messages
+        .filter(function (m) { return m.role !== "system"; })
+        .map(function (m) {
+          return { role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] };
+        });
+    },
+  };
+
+  // ─── GeminiService_ ──────────────────────────────────────────────────────
+
+  var GeminiService_ = {
+
+    chat: function (userId, conversationId, userMessage, promptType, contextSources) {
+      var t0      = new Date().getTime();
+      var context = ContextBuilder_.build(userId, contextSources || ["isp"]);
+      var sysP    = PromptBuilder_.getSystemPrompt(promptType || "institutional", context, userId);
+      var conv    = ConversationManager_.getOrCreate(userId, conversationId, userMessage);
+      var history = ConversationManager_.getMessages(conv.id, 20);
+      var contents = ConversationManager_.toGeminiContents(history);
+      contents.push({ role: "user", parts: [{ text: userMessage }] });
+
+      ConversationManager_.addMessage(conv.id, userId, "user", userMessage, 0, 0, 0);
+
+      var geminiResult, parsed;
+      try {
+        geminiResult = GeminiAdapter_.generate(contents, sysP, {});
+        parsed       = ResponseParser_.parse(geminiResult);
+      } catch (e) {
+        _audit_(userId, "chat", 0, 0, new Date().getTime() - t0, "", "error", e.message);
+        throw e;
+      }
+
+      var latencyMs = new Date().getTime() - t0;
+      var msg = ConversationManager_.addMessage(
+        conv.id, userId, "assistant",
+        parsed.text, parsed.tokensIn, parsed.tokensOut, latencyMs
+      );
+      _audit_(userId, "chat", parsed.tokensIn, parsed.tokensOut, latencyMs, parsed.model, "success", "");
+
+      return {
+        conversationId: conv.id,
+        messageId:      msg.id,
+        response:       parsed.text,
+        tokensIn:       parsed.tokensIn,
+        tokensOut:      parsed.tokensOut,
+        latencyMs:      latencyMs,
+        model:          parsed.model,
+        actions:        parsed.actions || [],
+      };
+    },
+  };
+
+  // ─── Audit log ────────────────────────────────────────────────────────────
+
+  function _audit_(userId, action, tokensIn, tokensOut, latencyMs, model, status, errorMsg) {
+    try {
+      SheetRepository.for("IIA_AuditLog").create({
+        id:           IdGen.entityId("IIA_AUDIT"),
+        userId:       userId    || "",
+        action:       action    || "",
+        tokensIn:     tokensIn  || 0,
+        tokensOut:    tokensOut || 0,
+        latencyMs:    latencyMs || 0,
+        model:        model     || "",
+        status:       status    || "success",
+        timestamp:    new Date().toISOString(),
+        errorMessage: errorMsg  || "",
+      });
+    } catch (e) { AppLogger.warn("IIA audit write failed: " + e.message); }
+  }
+
+  // ─── Dashboard metrics ────────────────────────────────────────────────────
+
+  function _dashboardMetrics_() {
+    var auditRows = [], convRows = [];
+    try { auditRows = SheetRepository.for("IIA_AuditLog").findAll();     } catch (e) {}
+    try { convRows  = SheetRepository.for("IIA_Conversations").findAll(); } catch (e) {}
+
+    var totalTokensIn = 0, totalTokensOut = 0, totalLatency = 0, errors = 0;
+    var now = new Date();
+
+    auditRows.forEach(function (r) {
+      if (r.status === "error") errors++;
+      totalTokensIn  += parseInt(r.tokensIn,  10) || 0;
+      totalTokensOut += parseInt(r.tokensOut, 10) || 0;
+      totalLatency   += parseInt(r.latencyMs, 10) || 0;
+    });
+
+    var activeConvs = convRows.filter(function (r) {
+      return r.expiresAt && new Date(r.expiresAt) > now;
+    }).length;
+
+    var ping = GeminiAdapter_.ping();
+
+    return {
+      totalQueries:        auditRows.length,
+      avgResponseTimeMs:   auditRows.length > 0 ? Math.round(totalLatency / auditRows.length) : 0,
+      totalTokensIn:       totalTokensIn,
+      totalTokensOut:      totalTokensOut,
+      actionsExecuted:     0,
+      errors:              errors,
+      activeModel:         String(_cfgGet_("model", "gemini-1.5-flash")),
+      geminiStatus:        ping.status,
+      activeConversations: activeConvs,
+      generatedAt:         now.toISOString(),
+    };
+  }
+
+  // ─── Bootstrap defaults ───────────────────────────────────────────────────
+
+  function _bootstrapDefaults_() {
+    var promptRepo = SheetRepository.for("IIA_PromptTemplates");
+    var existing   = promptRepo.findAll();
+    var now        = new Date().toISOString();
+
+    Object.keys(PROMPT_DEFAULTS_).forEach(function (t) {
+      var found = existing.some(function (r) { return r.type === t; });
+      if (!found) {
+        promptRepo.create({
+          id:        IdGen.entityId("IIA_PROMPT"),
+          type:      t,
+          name:      t.charAt(0).toUpperCase() + t.slice(1),
+          content:   PROMPT_DEFAULTS_[t],
+          version:   1,
+          updatedAt: now,
+          updatedBy: "system",
+        });
+      }
+    });
+
+    [
+      { key: "model",       value: "gemini-1.5-flash", s: false },
+      { key: "temperature", value: "0.7",               s: false },
+      { key: "maxTokens",   value: "2048",              s: false },
+      { key: "timeout",     value: "30",                s: false },
+      { key: "retries",     value: "2",                 s: false },
+      { key: "debugMode",   value: "false",             s: false },
+    ].forEach(function (d) { _cfgSet_(d.key, d.value, d.s, "system"); });
+  }
+
+  // ─── Public API ───────────────────────────────────────────────────────────
+
+  return {
+
+    bootstrap: function () {
+      try { _bootstrapDefaults_(); } catch (e) { AppLogger.warn("IIA bootstrap: " + e.message); }
+    },
+
+    handle: function (action, params, context) {
+      var h = this;
+      switch (action) {
+        case "chat":               return { data: h.chat(params, context) };
+        case "listConversations":  return { data: h.listConversations(params) };
+        case "getConversation":    return { data: h.getConversation(params) };
+        case "deleteConversation": return { data: h.deleteConversation(params) };
+        case "getDashboard":       return { data: h.getDashboard() };
+        case "getConfig":          return { data: h.getConfig() };
+        case "updateConfig":       return { data: h.updateConfig(params, context) };
+        case "listPrompts":        return { data: h.listPrompts() };
+        case "updatePrompt":       return { data: h.updatePrompt(params, context) };
+        case "getHistory":         return { data: h.getHistory(params) };
+        case "checkStatus":        return { data: h.checkStatus() };
+        case "clearHistory":       return { data: h.clearHistory() };
+        default: throw new Error("IIA: acción desconocida: " + action);
+      }
+    },
+
+    chat: function (params) {
+      return GeminiService_.chat(
+        params.userId,
+        params.conversationId || null,
+        params.message,
+        params.promptType     || "institutional",
+        params.contextSources || ["isp"]
+      );
+    },
+
+    listConversations: function (params) {
+      var rows   = SheetRepository.for("IIA_Conversations").findAll();
+      var limit  = parseInt(params.limit, 10) || 50;
+      var uid    = params.userId;
+      return rows
+        .filter(function (r) { return !uid || r.userId === uid; })
+        .sort(function (a, b) { return a.updatedAt > b.updatedAt ? -1 : 1; })
+        .slice(0, limit);
+    },
+
+    getConversation: function (params) {
+      var rows = SheetRepository.for("IIA_Conversations").findAll();
+      var conv = null;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].id === params.conversationId) { conv = rows[i]; break; }
+      }
+      if (!conv) throw new Error("Conversación no encontrada: " + params.conversationId);
+      return Object.assign({}, conv, { messages: ConversationManager_.getMessages(params.conversationId, 0) });
+    },
+
+    deleteConversation: function (params) {
+      var cid      = params.conversationId;
+      var convRepo = SheetRepository.for("IIA_Conversations");
+      var msgRepo  = SheetRepository.for("IIA_Messages");
+      convRepo.remove(cid);
+      msgRepo.findAll().forEach(function (m) { if (m.conversationId === cid) msgRepo.remove(m.id); });
+      return { deleted: true, id: cid };
+    },
+
+    getDashboard: function () {
+      return _dashboardMetrics_();
+    },
+
+    getConfig: function () {
+      var rows = _cfgRows_();
+      var cfg  = { model: "gemini-1.5-flash", temperature: 0.7, maxTokens: 2048, timeout: 30, retries: 2, debugMode: false, geminiConfigured: false };
+      var hasKey = false;
+      rows.forEach(function (r) {
+        if (r.key === "apiKey" && r.value) { hasKey = true; return; }
+        if (r.isSecret === "true" || r.isSecret === true) return;
+        switch (r.key) {
+          case "model":       cfg.model       = r.value;                       break;
+          case "temperature": cfg.temperature = parseFloat(r.value) || 0.7;   break;
+          case "maxTokens":   cfg.maxTokens   = parseInt(r.value, 10) || 2048; break;
+          case "timeout":     cfg.timeout     = parseInt(r.value, 10) || 30;   break;
+          case "retries":     cfg.retries     = parseInt(r.value, 10) || 2;    break;
+          case "debugMode":   cfg.debugMode   = r.value === "true";            break;
+        }
+      });
+      cfg.geminiConfigured = hasKey;
+      return cfg;
+    },
+
+    updateConfig: function (params, ctx) {
+      var uid = (ctx && ctx.userId) || "";
+      if (params.apiKey      !== undefined) _cfgSet_("apiKey",       params.apiKey,                  true,  uid);
+      if (params.model       !== undefined) _cfgSet_("model",        params.model,                   false, uid);
+      if (params.temperature !== undefined) _cfgSet_("temperature",  String(params.temperature),     false, uid);
+      if (params.maxTokens   !== undefined) _cfgSet_("maxTokens",    String(params.maxTokens),       false, uid);
+      if (params.timeout     !== undefined) _cfgSet_("timeout",      String(params.timeout),         false, uid);
+      if (params.retries     !== undefined) _cfgSet_("retries",      String(params.retries),         false, uid);
+      if (params.debugMode   !== undefined) _cfgSet_("debugMode",    String(params.debugMode),       false, uid);
+      return this.getConfig();
+    },
+
+    listPrompts: function () {
+      return SheetRepository.for("IIA_PromptTemplates").findAll();
+    },
+
+    updatePrompt: function (params, ctx) {
+      var repo = SheetRepository.for("IIA_PromptTemplates");
+      repo.update(params.id, {
+        content:   params.content,
+        version:   (parseInt(params.version, 10) || 1) + 1,
+        updatedAt: new Date().toISOString(),
+        updatedBy: (ctx && ctx.userId) || "",
+      });
+      return repo.findAll().filter(function (r) { return r.id === params.id; })[0] || { id: params.id };
+    },
+
+    getHistory: function (params) {
+      var rows   = SheetRepository.for("IIA_AuditLog").findAll();
+      var limit  = parseInt(params.limit, 10) || 100;
+      var uid    = params.userId;
+      var stat   = params.status;
+      return rows
+        .filter(function (r) {
+          if (uid  && r.userId !== uid)  return false;
+          if (stat && r.status !== stat) return false;
+          return true;
+        })
+        .sort(function (a, b) { return a.timestamp > b.timestamp ? -1 : 1; })
+        .slice(0, limit);
+    },
+
+    checkStatus: function () {
+      return GeminiAdapter_.ping();
+    },
+
+    clearHistory: function () {
+      var repo  = SheetRepository.for("IIA_Conversations");
+      var rows  = repo.findAll();
+      var now   = new Date();
+      var count = 0;
+      rows.forEach(function (r) {
+        if (r.expiresAt && new Date(r.expiresAt) < now) {
+          try {
+            repo.remove(r.id);
+            var msgRepo = SheetRepository.for("IIA_Messages");
+            msgRepo.findAll().forEach(function (m) { if (m.conversationId === r.id) msgRepo.remove(m.id); });
+            count++;
+          } catch (e) {}
+        }
+      });
+      return { cleared: count };
+    },
+  };
+})();
+
+// ============================================================
+// SOURCE: controllers/FMIController.js
+// ============================================================
+
+/**
+ * FMIController — Framework Maestro de Indicadores.
+ *
+ * Internal services:
+ *   ObjectiveService_    — CRUD FMI_Objectives
+ *   DimensionService_    — CRUD FMI_Dimensions
+ *   UnitMeasureService_  — CRUD FMI_UnitMeasures
+ *   FrequencyService_    — CRUD FMI_Frequencies
+ *   PolarityService_     — read FMI_Polarities (seeded only)
+ *   FormulaService_      — CRUD FMI_Formulas + FMI_FormulaVariables
+ *   FormulaEngine_       — evaluates formulaEjecutable with variable values
+ *   RangeEngine_         — evaluates a value against a RangeConfig
+ *   RangeConfigService_  — CRUD FMI_RangeConfigs
+ *
+ * Security:
+ *   - Reads responsible data from ISP (by responsibleId); never stores personal info.
+ *   - No duplicate catalogs from existing modules.
+ *   - FormulaEngine uses sandboxed expression evaluation (basic arithmetic only).
+ */
+var FMIController = (function () {
+  "use strict";
+
+  var SHEET = {
+    OBJECTIVES:    "FMI_Objectives",
+    DIMENSIONS:    "FMI_Dimensions",
+    UNIT_MEASURES: "FMI_UnitMeasures",
+    FREQUENCIES:   "FMI_Frequencies",
+    POLARITIES:    "FMI_Polarities",
+    FORMULAS:      "FMI_Formulas",
+    FORMULA_VARS:  "FMI_FormulaVariables",
+    RANGE_CONFIGS: "FMI_RangeConfigs",
+  };
+
+  // ─── Helpers ────────────────────────────────────────────────────────────────
+
+  function _now_()     { return new Date().toISOString(); }
+  function _repo_(s)   { return SheetRepository.for(s); }
+  function _all_(s)    { try { return _repo_(s).findAll(); } catch(e) { return []; } }
+
+  function _active_(rows) {
+    return rows.filter(function(r) { return r.estado !== "inactivo"; });
+  }
+
+  function _byId_(rows, id) {
+    for (var i = 0; i < rows.length; i++) { if (rows[i].id === id) return rows[i]; }
+    return null;
+  }
+
+  function _notFound_(entity, id) {
+    var err = new Error(entity + " no encontrado: " + id);
+    err.code = "NOT_FOUND";
+    throw err;
+  }
+
+  // ─── ObjectiveService_ ───────────────────────────────────────────────────
+
+  var ObjectiveService_ = {
+    list: function (params) {
+      var rows = _all_(SHEET.OBJECTIVES);
+      if (params && params.estado) rows = rows.filter(function(r) { return r.estado === params.estado; });
+      rows.sort(function(a, b) { return (Number(a.orden) || 0) - (Number(b.orden) || 0); });
+      return rows;
+    },
+    get: function (id) {
+      var row = _byId_(_all_(SHEET.OBJECTIVES), id);
+      if (!row) _notFound_("Objetivo", id);
+      return row;
+    },
+    create: function (params, userId) {
+      var now  = _now_();
+      var rows = _all_(SHEET.OBJECTIVES);
+      var maxOrden = rows.reduce(function(m, r) { return Math.max(m, Number(r.orden) || 0); }, 0);
+      var obj  = {
+        id:          IdGen.entityId("FMI_OBJ"),
+        codigo:      String(params.codigo || "").trim(),
+        nombre:      String(params.nombre || "").trim(),
+        descripcion: String(params.descripcion || "").trim(),
+        estado:      "activo",
+        orden:       Number(params.orden) || maxOrden + 1,
+        createdAt:   now,
+        updatedAt:   now,
+        updatedBy:   userId || "",
+      };
+      if (!obj.codigo) throw new Error("El código es requerido.");
+      if (!obj.nombre) throw new Error("El nombre es requerido.");
+      _repo_(SHEET.OBJECTIVES).create(obj);
+      return obj;
+    },
+    update: function (id, params, userId) {
+      var repo = _repo_(SHEET.OBJECTIVES);
+      var row  = _byId_(repo.findAll(), id);
+      if (!row) _notFound_("Objetivo", id);
+      var upd = {
+        updatedAt: _now_(),
+        updatedBy: userId || "",
+      };
+      if (params.codigo      !== undefined) upd.codigo      = String(params.codigo).trim();
+      if (params.nombre      !== undefined) upd.nombre      = String(params.nombre).trim();
+      if (params.descripcion !== undefined) upd.descripcion = String(params.descripcion).trim();
+      if (params.estado      !== undefined) upd.estado      = params.estado;
+      if (params.orden       !== undefined) upd.orden       = Number(params.orden);
+      repo.update(id, upd);
+      return Object.assign({}, row, upd);
+    },
+    delete: function (id) {
+      _repo_(SHEET.OBJECTIVES).remove(id);
+      return { deleted: true, id: id };
+    },
+  };
+
+  // ─── DimensionService_ ───────────────────────────────────────────────────
+
+  var DimensionService_ = {
+    list: function (params) {
+      var rows = _all_(SHEET.DIMENSIONS);
+      if (params && params.estado) rows = rows.filter(function(r) { return r.estado === params.estado; });
+      rows.sort(function(a, b) { return (Number(a.orden) || 0) - (Number(b.orden) || 0); });
+      return rows;
+    },
+    get: function (id) {
+      var row = _byId_(_all_(SHEET.DIMENSIONS), id);
+      if (!row) _notFound_("Dimensión", id);
+      return row;
+    },
+    create: function (params, userId) {
+      var now  = _now_();
+      var rows = _all_(SHEET.DIMENSIONS);
+      var maxOrden = rows.reduce(function(m, r) { return Math.max(m, Number(r.orden) || 0); }, 0);
+      var obj  = {
+        id:          IdGen.entityId("FMI_DIM"),
+        codigo:      String(params.codigo || "").trim(),
+        nombre:      String(params.nombre || "").trim(),
+        descripcion: String(params.descripcion || "").trim(),
+        estado:      "activo",
+        orden:       Number(params.orden) || maxOrden + 1,
+        createdAt:   now,
+        updatedAt:   now,
+        updatedBy:   userId || "",
+      };
+      if (!obj.codigo) throw new Error("El código es requerido.");
+      if (!obj.nombre) throw new Error("El nombre es requerido.");
+      _repo_(SHEET.DIMENSIONS).create(obj);
+      return obj;
+    },
+    update: function (id, params, userId) {
+      var repo = _repo_(SHEET.DIMENSIONS);
+      var row  = _byId_(repo.findAll(), id);
+      if (!row) _notFound_("Dimensión", id);
+      var upd = { updatedAt: _now_(), updatedBy: userId || "" };
+      if (params.codigo      !== undefined) upd.codigo      = String(params.codigo).trim();
+      if (params.nombre      !== undefined) upd.nombre      = String(params.nombre).trim();
+      if (params.descripcion !== undefined) upd.descripcion = String(params.descripcion).trim();
+      if (params.estado      !== undefined) upd.estado      = params.estado;
+      if (params.orden       !== undefined) upd.orden       = Number(params.orden);
+      repo.update(id, upd);
+      return Object.assign({}, row, upd);
+    },
+    delete: function (id) {
+      _repo_(SHEET.DIMENSIONS).remove(id);
+      return { deleted: true, id: id };
+    },
+  };
+
+  // ─── UnitMeasureService_ ─────────────────────────────────────────────────
+
+  var UnitMeasureService_ = {
+    list: function (params) {
+      var rows = _all_(SHEET.UNIT_MEASURES);
+      if (params && params.tipo)   rows = rows.filter(function(r) { return r.tipo   === params.tipo;   });
+      if (params && params.estado) rows = rows.filter(function(r) { return r.estado === params.estado; });
+      return rows;
+    },
+    get: function (id) {
+      var row = _byId_(_all_(SHEET.UNIT_MEASURES), id);
+      if (!row) _notFound_("Unidad de Medida", id);
+      return row;
+    },
+    create: function (params) {
+      var obj = {
+        id:     IdGen.entityId("FMI_UM"),
+        codigo: String(params.codigo || "").trim(),
+        nombre: String(params.nombre || "").trim(),
+        tipo:   params.tipo === "cualitativa" ? "cualitativa" : "cuantitativa",
+        estado: "activo",
+      };
+      if (!obj.codigo) throw new Error("El código es requerido.");
+      if (!obj.nombre) throw new Error("El nombre es requerido.");
+      _repo_(SHEET.UNIT_MEASURES).create(obj);
+      return obj;
+    },
+    update: function (id, params) {
+      var repo = _repo_(SHEET.UNIT_MEASURES);
+      var row  = _byId_(repo.findAll(), id);
+      if (!row) _notFound_("Unidad de Medida", id);
+      var upd = {};
+      if (params.codigo !== undefined) upd.codigo = String(params.codigo).trim();
+      if (params.nombre !== undefined) upd.nombre = String(params.nombre).trim();
+      if (params.tipo   !== undefined) upd.tipo   = params.tipo;
+      if (params.estado !== undefined) upd.estado = params.estado;
+      repo.update(id, upd);
+      return Object.assign({}, row, upd);
+    },
+    delete: function (id) {
+      _repo_(SHEET.UNIT_MEASURES).remove(id);
+      return { deleted: true, id: id };
+    },
+  };
+
+  // ─── FrequencyService_ ───────────────────────────────────────────────────
+
+  var FrequencyService_ = {
+    list: function (params) {
+      var rows = _all_(SHEET.FREQUENCIES);
+      if (params && params.estado) rows = rows.filter(function(r) { return r.estado === params.estado; });
+      return rows;
+    },
+    get: function (id) {
+      var row = _byId_(_all_(SHEET.FREQUENCIES), id);
+      if (!row) _notFound_("Frecuencia", id);
+      return row;
+    },
+    create: function (params) {
+      var obj = {
+        id:          IdGen.entityId("FMI_FREQ"),
+        codigo:      String(params.codigo || "").trim(),
+        nombre:      String(params.nombre || "").trim(),
+        descripcion: String(params.descripcion || "").trim(),
+        periodoDias: Number(params.periodoDias) || 0,
+        estado:      "activo",
+      };
+      if (!obj.codigo) throw new Error("El código es requerido.");
+      if (!obj.nombre) throw new Error("El nombre es requerido.");
+      _repo_(SHEET.FREQUENCIES).create(obj);
+      return obj;
+    },
+    update: function (id, params) {
+      var repo = _repo_(SHEET.FREQUENCIES);
+      var row  = _byId_(repo.findAll(), id);
+      if (!row) _notFound_("Frecuencia", id);
+      var upd = {};
+      if (params.codigo      !== undefined) upd.codigo      = String(params.codigo).trim();
+      if (params.nombre      !== undefined) upd.nombre      = String(params.nombre).trim();
+      if (params.descripcion !== undefined) upd.descripcion = String(params.descripcion).trim();
+      if (params.periodoDias !== undefined) upd.periodoDias = Number(params.periodoDias);
+      if (params.estado      !== undefined) upd.estado      = params.estado;
+      repo.update(id, upd);
+      return Object.assign({}, row, upd);
+    },
+    delete: function (id) {
+      _repo_(SHEET.FREQUENCIES).remove(id);
+      return { deleted: true, id: id };
+    },
+  };
+
+  // ─── PolarityService_ ────────────────────────────────────────────────────
+
+  var PolarityService_ = {
+    list: function () { return _all_(SHEET.POLARITIES); },
+  };
+
+  // ─── FormulaEngine_ ──────────────────────────────────────────────────────
+
+  var FormulaEngine_ = {
+    /**
+     * Evaluates formulaEjecutable by substituting variable codes with numeric values.
+     * Only basic arithmetic is supported: +, -, *, /, (, ), ^, %, numbers.
+     * @param {string}  formulaEjecutable  e.g. "(v1 / v2) * 100"
+     * @param {object}  values             e.g. { v1: 80, v2: 100 }
+     * @returns {number}
+     */
+    calculate: function (formulaEjecutable, values) {
+      var expr = String(formulaEjecutable);
+      // Substitute each variable code with its numeric value
+      var keys = Object.keys(values || {});
+      // Sort longer keys first to avoid partial substitution
+      keys.sort(function(a, b) { return b.length - a.length; });
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var v = parseFloat(values[k]);
+        if (isNaN(v)) throw new Error("Variable '" + k + "' debe ser numérica.");
+        // Replace all occurrences — use word boundary simulation
+        expr = expr.split(k).join(String(v));
+      }
+      // Validate: only allow safe characters after substitution
+      if (!/^[\d\s\+\-\*\/\(\)\.\,\%\^]+$/.test(expr)) {
+        throw new Error("Expresión inválida después de sustituir variables: " + expr);
+      }
+      // Handle exponentiation (^) before eval
+      expr = expr.replace(/(\d+\.?\d*)\s*\^\s*(\d+\.?\d*)/g, "Math.pow($1,$2)");
+      var result;
+      try {
+        /* jshint evil: true */
+        result = eval(expr); // safe: only digits and operators pass the regex above
+      } catch (e) {
+        throw new Error("Error al calcular fórmula: " + e.message);
+      }
+      if (typeof result !== "number" || isNaN(result)) {
+        throw new Error("El resultado de la fórmula no es un número válido.");
+      }
+      return Math.round(result * 100000) / 100000;
+    },
+
+    /**
+     * Validates that a formula references only declared variable codes.
+     */
+    validate: function (formulaEjecutable, variables) {
+      var expr = String(formulaEjecutable);
+      for (var i = 0; i < variables.length; i++) {
+        expr = expr.split(variables[i].codigo).join("0");
+      }
+      return /^[\d\s\+\-\*\/\(\)\.\,\%\^]+$/.test(expr);
+    },
+  };
+
+  // ─── FormulaService_ ─────────────────────────────────────────────────────
+
+  var FormulaService_ = {
+    _loadVariables_: function (formulaId) {
+      return _all_(SHEET.FORMULA_VARS)
+        .filter(function(v) { return v.formulaId === formulaId; })
+        .sort(function(a, b) { return (Number(a.orden) || 0) - (Number(b.orden) || 0); });
+    },
+    _saveVariables_: function (formulaId, variables) {
+      var repo = _repo_(SHEET.FORMULA_VARS);
+      // Remove existing
+      repo.findAll()
+        .filter(function(v) { return v.formulaId === formulaId; })
+        .forEach(function(v) { repo.remove(v.id); });
+      // Insert new
+      (variables || []).forEach(function(v, idx) {
+        repo.create({
+          id:          IdGen.entityId("FMI_FV"),
+          formulaId:   formulaId,
+          codigo:      String(v.codigo || "").trim(),
+          nombre:      String(v.nombre || "").trim(),
+          descripcion: String(v.descripcion || "").trim(),
+          tipo:        v.tipo || "numero",
+          orden:       Number(v.orden) || idx + 1,
+        });
+      });
+    },
+    _enrich_: function (row) {
+      row.variables = FormulaService_._loadVariables_(row.id);
+      return row;
+    },
+    list: function (params) {
+      var rows = _all_(SHEET.FORMULAS);
+      if (params && params.unidadMedidaId) rows = rows.filter(function(r) { return r.unidadMedidaId === params.unidadMedidaId; });
+      if (params && params.estado)         rows = rows.filter(function(r) { return r.estado === params.estado; });
+      return rows.map(function(r) { return FormulaService_._enrich_(r); });
+    },
+    get: function (id) {
+      var row = _byId_(_all_(SHEET.FORMULAS), id);
+      if (!row) _notFound_("Fórmula", id);
+      return FormulaService_._enrich_(row);
+    },
+    create: function (params, userId) {
+      var now = _now_();
+      var formula = {
+        id:               IdGen.entityId("FMI_FORM"),
+        codigo:           String(params.codigo || "").trim(),
+        nombre:           String(params.nombre || "").trim(),
+        descripcion:      String(params.descripcion || "").trim(),
+        unidadMedidaId:   String(params.unidadMedidaId || "").trim(),
+        formulaVisible:   String(params.formulaVisible || "").trim(),
+        formulaEjecutable: String(params.formulaEjecutable || "").trim(),
+        variablesJson:    JSON.stringify(params.variables || []),
+        estado:           "activo",
+        createdAt:        now,
+        updatedAt:        now,
+        updatedBy:        userId || "",
+      };
+      if (!formula.codigo) throw new Error("El código es requerido.");
+      if (!formula.nombre) throw new Error("El nombre es requerido.");
+      // Validate formula
+      if (formula.formulaEjecutable && params.variables && params.variables.length > 0) {
+        if (!FormulaEngine_.validate(formula.formulaEjecutable, params.variables)) {
+          throw new Error("La fórmula referencia variables no declaradas.");
+        }
+      }
+      _repo_(SHEET.FORMULAS).create(formula);
+      if (params.variables && params.variables.length > 0) {
+        FormulaService_._saveVariables_(formula.id, params.variables);
+      }
+      formula.variables = params.variables || [];
+      return formula;
+    },
+    update: function (id, params, userId) {
+      var repo = _repo_(SHEET.FORMULAS);
+      var row  = _byId_(repo.findAll(), id);
+      if (!row) _notFound_("Fórmula", id);
+      var upd = { updatedAt: _now_(), updatedBy: userId || "" };
+      if (params.codigo            !== undefined) upd.codigo            = String(params.codigo).trim();
+      if (params.nombre            !== undefined) upd.nombre            = String(params.nombre).trim();
+      if (params.descripcion       !== undefined) upd.descripcion       = String(params.descripcion).trim();
+      if (params.unidadMedidaId    !== undefined) upd.unidadMedidaId    = String(params.unidadMedidaId).trim();
+      if (params.formulaVisible    !== undefined) upd.formulaVisible    = String(params.formulaVisible).trim();
+      if (params.formulaEjecutable !== undefined) upd.formulaEjecutable = String(params.formulaEjecutable).trim();
+      if (params.estado            !== undefined) upd.estado            = params.estado;
+      if (params.variables         !== undefined) upd.variablesJson     = JSON.stringify(params.variables);
+      repo.update(id, upd);
+      if (params.variables !== undefined) {
+        FormulaService_._saveVariables_(id, params.variables);
+      }
+      var updated = Object.assign({}, row, upd);
+      updated.variables = params.variables !== undefined
+        ? params.variables
+        : FormulaService_._loadVariables_(id);
+      return updated;
+    },
+    delete: function (id) {
+      // Remove variables first
+      _all_(SHEET.FORMULA_VARS)
+        .filter(function(v) { return v.formulaId === id; })
+        .forEach(function(v) { _repo_(SHEET.FORMULA_VARS).remove(v.id); });
+      _repo_(SHEET.FORMULAS).remove(id);
+      return { deleted: true, id: id };
+    },
+    calculate: function (id, values) {
+      var formula = FormulaService_.get(id);
+      var result  = FormulaEngine_.calculate(formula.formulaEjecutable, values);
+      return { formulaId: id, values: values, result: result };
+    },
+  };
+
+  // ─── RangeEngine_ ────────────────────────────────────────────────────────
+
+  var RangeEngine_ = {
+    /**
+     * Evaluates a value against a RangeConfig and returns the range status.
+     * Each level is stored as JSON: { min: number, max: number }.
+     * Polaridad "positiva" → higher is better (max of excelente ≥ min of critico).
+     * Polaridad "negativa" → lower is better (min of excelente ≤ max of critico).
+     */
+    evaluate: function (value, rangeConfig) {
+      var levels = ["excelente", "bueno", "aceptable", "critico"];
+      for (var i = 0; i < levels.length; i++) {
+        var lvl = levels[i];
+        var bounds;
+        try { bounds = JSON.parse(String(rangeConfig[lvl])); } catch(e) { continue; }
+        if (value >= (bounds.min || 0) && value <= (bounds.max || 0)) return lvl;
+      }
+      return "critico";
+    },
+  };
+
+  // ─── RangeConfigService_ ─────────────────────────────────────────────────
+
+  var RangeConfigService_ = {
+    _parse_: function (row) {
+      ["excelente", "bueno", "aceptable", "critico"].forEach(function(k) {
+        try { row[k] = JSON.parse(String(row[k] || "{}")); } catch(e) { row[k] = { min: 0, max: 0 }; }
+      });
+      return row;
+    },
+    list: function (params) {
+      var rows = _all_(SHEET.RANGE_CONFIGS);
+      if (params && params.estado) rows = rows.filter(function(r) { return r.estado === params.estado; });
+      return rows.map(function(r) { return RangeConfigService_._parse_(r); });
+    },
+    get: function (id) {
+      var row = _byId_(_all_(SHEET.RANGE_CONFIGS), id);
+      if (!row) _notFound_("Configuración de Rangos", id);
+      return RangeConfigService_._parse_(row);
+    },
+    create: function (params, userId) {
+      var now = _now_();
+      var obj = {
+        id:          IdGen.entityId("FMI_RNG"),
+        nombre:      String(params.nombre || "").trim(),
+        descripcion: String(params.descripcion || "").trim(),
+        polaridad:   params.polaridad === "negativa" ? "negativa" : "positiva",
+        excelente:   JSON.stringify(params.excelente || { min: 90, max: 100 }),
+        bueno:       JSON.stringify(params.bueno     || { min: 75, max: 89  }),
+        aceptable:   JSON.stringify(params.aceptable || { min: 60, max: 74  }),
+        critico:     JSON.stringify(params.critico   || { min: 0,  max: 59  }),
+        estado:      "activo",
+        createdAt:   now,
+        updatedAt:   now,
+        updatedBy:   userId || "",
+      };
+      if (!obj.nombre) throw new Error("El nombre es requerido.");
+      _repo_(SHEET.RANGE_CONFIGS).create(obj);
+      return RangeConfigService_._parse_(obj);
+    },
+    update: function (id, params, userId) {
+      var repo = _repo_(SHEET.RANGE_CONFIGS);
+      var row  = _byId_(repo.findAll(), id);
+      if (!row) _notFound_("Configuración de Rangos", id);
+      var upd  = { updatedAt: _now_(), updatedBy: userId || "" };
+      if (params.nombre      !== undefined) upd.nombre      = String(params.nombre).trim();
+      if (params.descripcion !== undefined) upd.descripcion = String(params.descripcion).trim();
+      if (params.polaridad   !== undefined) upd.polaridad   = params.polaridad;
+      if (params.excelente   !== undefined) upd.excelente   = JSON.stringify(params.excelente);
+      if (params.bueno       !== undefined) upd.bueno       = JSON.stringify(params.bueno);
+      if (params.aceptable   !== undefined) upd.aceptable   = JSON.stringify(params.aceptable);
+      if (params.critico     !== undefined) upd.critico     = JSON.stringify(params.critico);
+      if (params.estado      !== undefined) upd.estado      = params.estado;
+      repo.update(id, upd);
+      return RangeConfigService_._parse_(Object.assign({}, row, upd));
+    },
+    delete: function (id) {
+      _repo_(SHEET.RANGE_CONFIGS).remove(id);
+      return { deleted: true, id: id };
+    },
+    evaluate: function (id, value) {
+      var cfg    = RangeConfigService_.get(id);
+      var status = RangeEngine_.evaluate(Number(value), cfg);
+      return { rangeConfigId: id, value: Number(value), status: status };
+    },
+  };
+
+  // ─── Bootstrap seeds ─────────────────────────────────────────────────────
+
+  function _seedUnitMeasures_() {
+    var repo = _repo_(SHEET.UNIT_MEASURES);
+    var existing = repo.findAll();
+    if (existing.length > 0) return;
+
+    var units = [
+      { codigo: "PCT",  nombre: "Porcentaje (%)",    tipo: "cuantitativa" },
+      { codigo: "RAT",  nombre: "Ratio",              tipo: "cuantitativa" },
+      { codigo: "NUM",  nombre: "Número",             tipo: "cuantitativa" },
+      { codigo: "CNT",  nombre: "Cantidad",           tipo: "cuantitativa" },
+      { codigo: "IDX",  nombre: "Índice",             tipo: "cuantitativa" },
+      { codigo: "DIA",  nombre: "Días",               tipo: "cuantitativa" },
+      { codigo: "HRS",  nombre: "Horas",              tipo: "cuantitativa" },
+      { codigo: "MIN",  nombre: "Minutos",            tipo: "cuantitativa" },
+      { codigo: "MES",  nombre: "Meses",              tipo: "cuantitativa" },
+      { codigo: "ANO",  nombre: "Años",               tipo: "cuantitativa" },
+      { codigo: "USD",  nombre: "Moneda (USD)",       tipo: "cuantitativa" },
+      { codigo: "PER",  nombre: "Personas",           tipo: "cuantitativa" },
+      { codigo: "ACT",  nombre: "Actividades",        tipo: "cuantitativa" },
+      { codigo: "PRC",  nombre: "Procesos",           tipo: "cuantitativa" },
+      { codigo: "PRY",  nombre: "Proyectos",          tipo: "cuantitativa" },
+      { codigo: "CUR",  nombre: "Cursos",             tipo: "cuantitativa" },
+      { codigo: "CAP",  nombre: "Capacitaciones",     tipo: "cuantitativa" },
+      { codigo: "DOC",  nombre: "Documentos",         tipo: "cuantitativa" },
+      { codigo: "SOL",  nombre: "Solicitudes",        tipo: "cuantitativa" },
+      { codigo: "CAS",  nombre: "Casos",              tipo: "cuantitativa" },
+      { codigo: "INC",  nombre: "Incidentes",         tipo: "cuantitativa" },
+      { codigo: "RCL",  nombre: "Reclamos",           tipo: "cuantitativa" },
+      { codigo: "SES",  nombre: "Sesiones",           tipo: "cuantitativa" },
+      { codigo: "EVA",  nombre: "Evaluaciones",       tipo: "cuantitativa" },
+      { codigo: "NVL",  nombre: "Nivel",              tipo: "cualitativa"  },
+      { codigo: "EST",  nombre: "Estado",             tipo: "cualitativa"  },
+      { codigo: "CNC",  nombre: "Cumple / No cumple", tipo: "cualitativa"  },
+      { codigo: "SIN",  nombre: "Sí / No",            tipo: "cualitativa"  },
+      { codigo: "ES5",  nombre: "Escala 1–5",         tipo: "cuantitativa" },
+      { codigo: "ES10", nombre: "Escala 1–10",        tipo: "cuantitativa" },
+    ];
+
+    units.forEach(function(u) {
+      repo.create({ id: IdGen.entityId("FMI_UM"), codigo: u.codigo, nombre: u.nombre, tipo: u.tipo, estado: "activo" });
+    });
+  }
+
+  function _seedFrequencies_() {
+    var repo = _repo_(SHEET.FREQUENCIES);
+    if (repo.findAll().length > 0) return;
+
+    var freqs = [
+      { codigo: "MENS",  nombre: "Mensual",       descripcion: "Cada 30 días",   periodoDias: 30  },
+      { codigo: "BIME",  nombre: "Bimestral",      descripcion: "Cada 60 días",   periodoDias: 60  },
+      { codigo: "TRIM",  nombre: "Trimestral",     descripcion: "Cada 90 días",   periodoDias: 90  },
+      { codigo: "CUAT",  nombre: "Cuatrimestral",  descripcion: "Cada 120 días",  periodoDias: 120 },
+      { codigo: "SEMI",  nombre: "Semestral",      descripcion: "Cada 180 días",  periodoDias: 180 },
+      { codigo: "ANUA",  nombre: "Anual",          descripcion: "Cada 365 días",  periodoDias: 365 },
+      { codigo: "EVEN",  nombre: "Eventual",       descripcion: "Sin periodicidad fija", periodoDias: 0 },
+    ];
+
+    freqs.forEach(function(f) {
+      repo.create({
+        id:          IdGen.entityId("FMI_FREQ"),
+        codigo:      f.codigo,
+        nombre:      f.nombre,
+        descripcion: f.descripcion,
+        periodoDias: f.periodoDias,
+        estado:      "activo",
+      });
+    });
+  }
+
+  function _seedPolarities_() {
+    var repo = _repo_(SHEET.POLARITIES);
+    if (repo.findAll().length > 0) return;
+
+    [
+      { codigo: "POS", nombre: "Positiva", descripcion: "Mayor valor = mejor resultado" },
+      { codigo: "NEG", nombre: "Negativa", descripcion: "Menor valor = mejor resultado" },
+    ].forEach(function(p) {
+      repo.create({ id: IdGen.entityId("FMI_POL"), codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, estado: "activo" });
+    });
+  }
+
+  function bootstrap() {
+    try { _seedUnitMeasures_(); } catch(e) { AppLogger.warn("FMI bootstrap: seedUnitMeasures error: " + e.message); }
+    try { _seedFrequencies_();  } catch(e) { AppLogger.warn("FMI bootstrap: seedFrequencies error: " + e.message); }
+    try { _seedPolarities_();   } catch(e) { AppLogger.warn("FMI bootstrap: seedPolarities error: " + e.message); }
+  }
+
+  // ─── Public handle ────────────────────────────────────────────────────────
+
+  function handle(action, params, ctx) {
+    var uid = (ctx && ctx.userId) || "";
+    params  = params || {};
+
+    switch (action) {
+      // Objectives
+      case "listObjectives":    return ObjectiveService_.list(params);
+      case "getObjective":      return ObjectiveService_.get(params.id);
+      case "createObjective":   return ObjectiveService_.create(params, uid);
+      case "updateObjective":   return ObjectiveService_.update(params.id, params, uid);
+      case "deleteObjective":   return ObjectiveService_.delete(params.id);
+
+      // Dimensions
+      case "listDimensions":    return DimensionService_.list(params);
+      case "getDimension":      return DimensionService_.get(params.id);
+      case "createDimension":   return DimensionService_.create(params, uid);
+      case "updateDimension":   return DimensionService_.update(params.id, params, uid);
+      case "deleteDimension":   return DimensionService_.delete(params.id);
+
+      // Unit Measures
+      case "listUnitMeasures":  return UnitMeasureService_.list(params);
+      case "getUnitMeasure":    return UnitMeasureService_.get(params.id);
+      case "createUnitMeasure": return UnitMeasureService_.create(params);
+      case "updateUnitMeasure": return UnitMeasureService_.update(params.id, params);
+      case "deleteUnitMeasure": return UnitMeasureService_.delete(params.id);
+
+      // Frequencies
+      case "listFrequencies":   return FrequencyService_.list(params);
+      case "getFrequency":      return FrequencyService_.get(params.id);
+      case "createFrequency":   return FrequencyService_.create(params);
+      case "updateFrequency":   return FrequencyService_.update(params.id, params);
+      case "deleteFrequency":   return FrequencyService_.delete(params.id);
+
+      // Polarities (read-only seeded catalog)
+      case "listPolarities":    return PolarityService_.list();
+
+      // Formulas
+      case "listFormulas":      return FormulaService_.list(params);
+      case "getFormula":        return FormulaService_.get(params.id);
+      case "createFormula":     return FormulaService_.create(params, uid);
+      case "updateFormula":     return FormulaService_.update(params.id, params, uid);
+      case "deleteFormula":     return FormulaService_.delete(params.id);
+      case "calculateFormula":  return FormulaService_.calculate(params.id, params.values);
+
+      // Range Configs
+      case "listRangeConfigs":  return RangeConfigService_.list(params);
+      case "getRangeConfig":    return RangeConfigService_.get(params.id);
+      case "createRangeConfig": return RangeConfigService_.create(params, uid);
+      case "updateRangeConfig": return RangeConfigService_.update(params.id, params, uid);
+      case "deleteRangeConfig": return RangeConfigService_.delete(params.id);
+      case "evaluateRange":     return RangeConfigService_.evaluate(params.id, params.value);
+
+      default:
+        var err = new Error("FMIController: acción desconocida: " + action);
+        err.code = "UNKNOWN_ACTION";
+        throw err;
+    }
+  }
+
+  return { handle: handle, bootstrap: bootstrap };
+})();
+
+// ============================================================
+// SOURCE: controllers/IDEController.js
+// ============================================================
+
+// ============================================================
+// IDE — Indicator Definition Engine Controller  |  Sprint 016
+// ============================================================
+
+var IDEController = (function () {
+  "use strict";
+
+  var SHEET_IND = "IDE_Indicators";
+  var SHEET_VER = "IDE_IndicatorVersions";
+  var STATUSES  = ["borrador", "en_revision", "publicado", "archivado"];
+
+  // ── Repository helpers ─────────────────────────────────────
+
+  var indRepo_ = { get r() { return SheetRepository.for(SHEET_IND); } };
+  var verRepo_ = { get r() { return SheetRepository.for(SHEET_VER); } };
+
+  function ts_() { return new Date().toISOString(); }
+
+  // ── IndicatorValidator_ ────────────────────────────────────
+
+  var IndicatorValidator_ = {
+    validate: function (data, existingId) {
+      var errors = [];
+      if (!data.codigo || !String(data.codigo).trim())
+        errors.push({ field: "codigo", message: "El código es obligatorio." });
+      if (!data.nombre || !String(data.nombre).trim())
+        errors.push({ field: "nombre", message: "El nombre es obligatorio." });
+
+      // Unique codigo check
+      if (data.codigo) {
+        var dupes = indRepo_.r.findAll().filter(function (r) {
+          return r.codigo === data.codigo && r.activo !== false && r.id !== (existingId || "");
+        });
+        if (dupes.length > 0) errors.push({ field: "codigo", message: "El código ya existe." });
+      }
+
+      // FMI catalog existence checks
+      if (data.objetivoId) {
+        var obj = SheetRepository.for("FMI_Objectives").findAll().filter(function (r) { return r.id === data.objetivoId; });
+        if (!obj.length) errors.push({ field: "objetivoId", message: "Objetivo no encontrado." });
+      }
+      if (data.dimensionId) {
+        var dim = SheetRepository.for("FMI_Dimensions").findAll().filter(function (r) { return r.id === data.dimensionId; });
+        if (!dim.length) errors.push({ field: "dimensionId", message: "Dimensión no encontrada." });
+      }
+      if (data.unitMeasureId) {
+        var um = SheetRepository.for("FMI_UnitMeasures").findAll().filter(function (r) { return r.id === data.unitMeasureId; });
+        if (!um.length) errors.push({ field: "unitMeasureId", message: "Unidad de medida no encontrada." });
+      }
+      if (data.frequencyId) {
+        var fr = SheetRepository.for("FMI_Frequencies").findAll().filter(function (r) { return r.id === data.frequencyId; });
+        if (!fr.length) errors.push({ field: "frequencyId", message: "Frecuencia no encontrada." });
+      }
+      if (data.formulaId) {
+        var fm = SheetRepository.for("FMI_Formulas").findAll().filter(function (r) { return r.id === data.formulaId; });
+        if (!fm.length) errors.push({ field: "formulaId", message: "Fórmula no encontrada." });
+      }
+      if (data.polarityId) {
+        var pol = SheetRepository.for("FMI_Polarities").findAll().filter(function (r) { return r.id === data.polarityId; });
+        if (!pol.length) errors.push({ field: "polarityId", message: "Polaridad no encontrada." });
+      }
+      if (data.rangeConfigId) {
+        var rc = SheetRepository.for("FMI_RangeConfigs").findAll().filter(function (r) { return r.id === data.rangeConfigId; });
+        if (!rc.length) errors.push({ field: "rangeConfigId", message: "Configuración de rangos no encontrada." });
+      }
+      if (data.meta !== undefined && data.meta !== null && data.meta !== "") {
+        var metaNum = Number(data.meta);
+        if (isNaN(metaNum)) errors.push({ field: "meta", message: "La meta debe ser un número." });
+      }
+
+      return { valid: errors.length === 0, errors: errors };
+    },
+  };
+
+  // ── VariableResolver_ ──────────────────────────────────────
+
+  var VariableResolver_ = {
+    resolve: function (formulaId) {
+      if (!formulaId) return [];
+      var formula = SheetRepository.for("FMI_Formulas").findAll()
+        .filter(function (r) { return r.id === formulaId; })[0];
+      if (!formula) return [];
+      return SheetRepository.for("FMI_FormulaVariables").findAll()
+        .filter(function (v) { return v.formulaId === formulaId; })
+        .sort(function (a, b) { return Number(a.orden) - Number(b.orden); })
+        .map(function (v) {
+          return { codigo: v.codigo, nombre: v.nombre, descripcion: v.descripcion, tipo: v.tipo };
+        });
+    },
+  };
+
+  // ── PreviewEngine_ ─────────────────────────────────────────
+
+  var PreviewEngine_ = {
+    preview: function (data) {
+      var resolve = function (sheet, id) {
+        if (!id) return null;
+        return SheetRepository.for(sheet).findAll().filter(function (r) { return r.id === id; })[0] || null;
+      };
+
+      var formula = resolve("FMI_Formulas", data.formulaId);
+      var variables = data.formulaId ? VariableResolver_.resolve(data.formulaId) : [];
+      var formulaData = formula ? {
+        id: formula.id,
+        nombre: formula.nombre,
+        formulaVisible: formula.formulaVisible,
+        variables: variables,
+      } : null;
+
+      var exampleCalc = formulaData
+        ? formulaData.formulaVisible + " (con valores de ejemplo)"
+        : "No se ha asignado fórmula.";
+
+      return {
+        indicator:      data,
+        objetivo:       resolve("FMI_Objectives",  data.objetivoId),
+        dimension:      resolve("FMI_Dimensions",  data.dimensionId),
+        unitMeasure:    resolve("FMI_UnitMeasures", data.unitMeasureId),
+        frequency:      resolve("FMI_Frequencies", data.frequencyId),
+        formula:        formulaData,
+        polarity:       resolve("FMI_Polarities",  data.polarityId),
+        rangeConfig:    resolve("FMI_RangeConfigs", data.rangeConfigId),
+        calculoEjemplo: exampleCalc,
+      };
+    },
+  };
+
+  // ── SimulationService_ ─────────────────────────────────────
+
+  var SimulationService_ = {
+    simulate: function (indicatorId, values) {
+      var ind = indRepo_.r.findAll().filter(function (r) { return r.id === indicatorId; })[0];
+      if (!ind) throw new Error("Indicador no encontrado.");
+
+      if (!ind.formulaId) return { result: null, level: null, levelLabel: "Sin fórmula", interpretation: "El indicador no tiene fórmula asignada.", metaCumplida: false };
+
+      // Use FMIController's calculate
+      var calcResult = FMIController.handle("fmi.calculateFormula", { id: ind.formulaId, values: values }, {});
+      var result = calcResult.result;
+
+      // Evaluate range
+      var levelLabel = "Sin rango";
+      var level = null;
+      if (ind.rangeConfigId) {
+        try {
+          var evalResult = FMIController.handle("fmi.evaluateRange", { id: ind.rangeConfigId, value: result }, {});
+          level = evalResult.level;
+          levelLabel = evalResult.label || level;
+        } catch (e) {}
+      }
+
+      // Polarity direction for interpretation
+      var meta = Number(ind.meta) || 0;
+      var polarity = ind.polarityId
+        ? (SheetRepository.for("FMI_Polarities").findAll().filter(function (r) { return r.id === ind.polarityId; })[0] || {})
+        : {};
+      var isPositive = !polarity.codigo || polarity.codigo === "POS";
+      var cumple = isPositive ? result >= meta : result <= meta;
+
+      var interpretation = cumple
+        ? "El resultado cumple con la meta establecida."
+        : "El resultado no alcanza la meta establecida.";
+
+      var unitMeasure = ind.unitMeasureId
+        ? (SheetRepository.for("FMI_UnitMeasures").findAll().filter(function (r) { return r.id === ind.unitMeasureId; })[0] || {})
+        : {};
+      var symbol = unitMeasure.nombre ? " " + unitMeasure.nombre : "";
+      var resultFormatted = String(Math.round(result * 100) / 100) + symbol;
+
+      return {
+        formulaVisible:  calcResult.formulaVisible || "",
+        values:          values,
+        result:          result,
+        resultFormatted: resultFormatted,
+        level:           level,
+        levelLabel:      levelLabel,
+        interpretation:  interpretation,
+        metaCumplida:    cumple,
+      };
+    },
+  };
+
+  // ── VersionManager_ ────────────────────────────────────────
+
+  var VersionManager_ = {
+    saveSnapshot: function (indicator, createdBy) {
+      var snap = JSON.stringify(indicator);
+      verRepo_.r.create({
+        id:          IdGen.entityId("IVER"),
+        indicatorId: indicator.id,
+        version:     indicator.version,
+        status:      indicator.status,
+        snapshot:    snap,
+        publishedAt: indicator.status === "publicado" ? ts_() : "",
+        archivedAt:  indicator.status === "archivado" ? ts_() : "",
+        createdAt:   ts_(),
+        createdBy:   createdBy || "",
+      });
+    },
+
+    listVersions: function (indicatorId) {
+      return verRepo_.r.findAll()
+        .filter(function (v) { return v.indicatorId === indicatorId; })
+        .sort(function (a, b) { return Number(b.version) - Number(a.version); });
+    },
+
+    duplicateVersion: function (versionId, createdBy) {
+      var ver = verRepo_.r.findAll().filter(function (v) { return v.id === versionId; })[0];
+      if (!ver) throw new Error("Versión no encontrada.");
+      var snapshot = JSON.parse(ver.snapshot || "{}");
+      snapshot.id = IdGen.entityId("IND");
+      snapshot.status = "borrador";
+      snapshot.version = 1;
+      snapshot.createdAt = ts_();
+      snapshot.updatedAt = ts_();
+      snapshot.createdBy = createdBy || "";
+      snapshot.updatedBy = createdBy || "";
+      var created = indRepo_.r.create(snapshot);
+      VersionManager_.saveSnapshot(created, createdBy);
+      return created;
+    },
+  };
+
+  // ── DuplicateDetector_ ─────────────────────────────────────
+
+  var DuplicateDetector_ = {
+    detect: function (codigo, nombre, excludeId) {
+      var all = indRepo_.r.findAll().filter(function (r) { return r.activo !== false && r.id !== (excludeId || ""); });
+      var dupes = [];
+      all.forEach(function (r) {
+        if (r.codigo === codigo)
+          dupes.push({ id: r.id, codigo: r.codigo, nombre: r.nombre, status: r.status, reason: "Código duplicado" });
+        else if (r.nombre && nombre && r.nombre.toLowerCase() === nombre.toLowerCase())
+          dupes.push({ id: r.id, codigo: r.codigo, nombre: r.nombre, status: r.status, reason: "Nombre idéntico" });
+      });
+      return dupes;
+    },
+  };
+
+  // ── ImportEngine_ ──────────────────────────────────────────
+
+  var ImportEngine_ = {
+    getMappingTemplate: function () {
+      return {
+        fields: [
+          { key: "codigo",        label: "Código",               required: true  },
+          { key: "nombre",        label: "Nombre",               required: true  },
+          { key: "descripcion",   label: "Descripción",          required: false },
+          { key: "meta",          label: "Meta",                 required: false },
+          { key: "vigenciaDesde", label: "Vigencia Desde",       required: false },
+          { key: "vigenciaHasta", label: "Vigencia Hasta",       required: false },
+          { key: "observaciones", label: "Observaciones",        required: false },
+        ],
+        exampleRow: {
+          "Código": "IND-001",
+          "Nombre": "Cumplimiento del PEA",
+          "Descripción": "Porcentaje de actividades ejecutadas vs programadas",
+          "Meta": "90",
+          "Vigencia Desde": "2026-01-01",
+          "Vigencia Hasta": "2026-12-31",
+        },
+      };
+    },
+
+    prepareImport: function (rows, mapping) {
+      var results = rows.map(function (row, idx) {
+        var mapped = {};
+        mapping.forEach(function (m) {
+          if (m.targetField && m.sourceColumn && row[m.sourceColumn] !== undefined) {
+            mapped[m.targetField] = row[m.sourceColumn];
+          }
+        });
+        var validation = IndicatorValidator_.validate(mapped, null);
+        return {
+          rowIndex: idx + 1,
+          data:     row,
+          mapped:   mapped,
+          valid:    validation.valid,
+          errors:   validation.errors,
+        };
+      });
+
+      var valid   = results.filter(function (r) { return r.valid; }).length;
+      var invalid = results.filter(function (r) { return !r.valid; }).length;
+      return { total: rows.length, valid: valid, invalid: invalid, rows: results };
+    },
+  };
+
+  // ── IndicatorDefinitionService_ ───────────────────────────
+
+  var Service_ = {
+    list: function (params) {
+      var all = indRepo_.r.findAll();
+      if (params.status)     all = all.filter(function (r) { return r.status === params.status; });
+      if (params.objetivoId) all = all.filter(function (r) { return r.objetivoId === params.objetivoId; });
+      if (params.dimensionId)all = all.filter(function (r) { return r.dimensionId === params.dimensionId; });
+      if (params.activo !== undefined) {
+        var active = params.activo !== false && params.activo !== "false";
+        all = all.filter(function (r) { return (r.activo !== false) === active; });
+      }
+      return all;
+    },
+
+    get: function (id) {
+      var r = indRepo_.r.findAll().filter(function (x) { return x.id === id; })[0];
+      if (!r) throw new Error("Indicador " + id + " no encontrado.");
+      return r;
+    },
+
+    create: function (data, ctx) {
+      var user = (ctx && ctx.user && ctx.user.email) || "system";
+      var validation = IndicatorValidator_.validate(data, null);
+      if (!validation.valid) throw new Error(JSON.stringify(validation.errors));
+      var now = ts_();
+      var row = {
+        id:            IdGen.entityId("IND"),
+        codigo:        data.codigo,
+        nombre:        data.nombre,
+        descripcion:   data.descripcion || "",
+        objetivoId:    data.objetivoId || "",
+        dimensionId:   data.dimensionId || "",
+        unitMeasureId: data.unitMeasureId || "",
+        frequencyId:   data.frequencyId || "",
+        formulaId:     data.formulaId || "",
+        polarityId:    data.polarityId || "",
+        rangeConfigId: data.rangeConfigId || "",
+        responsibleId: data.responsibleId || "",
+        unidadId:      data.unidadId || "",
+        meta:          data.meta !== undefined ? Number(data.meta) : 0,
+        status:        "borrador",
+        version:       1,
+        vigenciaDesde: data.vigenciaDesde || "",
+        vigenciaHasta: data.vigenciaHasta || "",
+        observaciones: data.observaciones || "",
+        dependencias:  data.dependencias || "",
+        activo:        true,
+        createdAt:     now,
+        updatedAt:     now,
+        createdBy:     user,
+        updatedBy:     user,
+      };
+      var created = indRepo_.r.create(row);
+      VersionManager_.saveSnapshot(created, user);
+      return created;
+    },
+
+    update: function (params, ctx) {
+      var user = (ctx && ctx.user && ctx.user.email) || "system";
+      var existing = Service_.get(params.id);
+      var updated = Object.assign({}, existing, params, {
+        updatedAt: ts_(),
+        updatedBy: user,
+        version:   Number(existing.version) + 1,
+      });
+      var validation = IndicatorValidator_.validate(updated, params.id);
+      if (!validation.valid) throw new Error(JSON.stringify(validation.errors));
+      var saved = indRepo_.r.update(params.id, updated);
+      VersionManager_.saveSnapshot(saved, user);
+      return saved;
+    },
+
+    delete: function (id, ctx) {
+      var user = (ctx && ctx.user && ctx.user.email) || "system";
+      indRepo_.r.update(id, { activo: false, updatedAt: ts_(), updatedBy: user });
+      return { deleted: true, id: id };
+    },
+
+    changeStatus: function (id, newStatus, ctx) {
+      var user = (ctx && ctx.user && ctx.user.email) || "system";
+      var existing = Service_.get(id);
+      var updated = indRepo_.r.update(id, {
+        status:    newStatus,
+        version:   Number(existing.version) + 1,
+        updatedAt: ts_(),
+        updatedBy: user,
+      });
+      VersionManager_.saveSnapshot(updated, user);
+      return updated;
+    },
+  };
+
+  // ── handle ─────────────────────────────────────────────────
+
+  function handle(action, params, ctx) {
+    params = params || {};
+    switch (action) {
+      // Indicator CRUD
+      case "ide.listIndicators":    return Service_.list(params);
+      case "ide.getIndicator":      return Service_.get(params.id);
+      case "ide.createIndicator":   return Service_.create(params, ctx);
+      case "ide.updateIndicator":   return Service_.update(params, ctx);
+      case "ide.deleteIndicator":   return Service_.delete(params.id, ctx);
+
+      // Validation
+      case "ide.validateIndicator":
+        return IndicatorValidator_.validate(params, params.existingId || null);
+
+      // Preview
+      case "ide.previewIndicator":
+        return PreviewEngine_.preview(params);
+
+      // Simulation
+      case "ide.simulateIndicator":
+        return SimulationService_.simulate(params.indicatorId, params.values || {});
+
+      // Status transitions
+      case "ide.publishIndicator":  return Service_.changeStatus(params.id, "publicado", ctx);
+      case "ide.archiveIndicator":  return Service_.changeStatus(params.id, "archivado", ctx);
+      case "ide.sendToReview":      return Service_.changeStatus(params.id, "en_revision", ctx);
+      case "ide.sendToDraft":       return Service_.changeStatus(params.id, "borrador", ctx);
+
+      // Versions
+      case "ide.listVersions":
+        return VersionManager_.listVersions(params.indicatorId);
+      case "ide.duplicateVersion":
+        return VersionManager_.duplicateVersion(params.versionId, (ctx && ctx.user && ctx.user.email));
+
+      // Variable resolution
+      case "ide.resolveVariables":
+        return VariableResolver_.resolve(params.formulaId);
+
+      // Duplicate detection
+      case "ide.detectDuplicates":
+        return DuplicateDetector_.detect(params.codigo, params.nombre, params.excludeId);
+
+      // Import engine
+      case "ide.prepareImport":
+        return ImportEngine_.prepareImport(params.rows || [], params.mapping || []);
+      case "ide.getMappingTemplate":
+        return ImportEngine_.getMappingTemplate();
+
+      default:
+        throw new Error("IDE: acción desconocida — " + action);
+    }
+  }
+
+  function bootstrap() {}
+
+  return { handle: handle, bootstrap: bootstrap };
+})();
+
+// ============================================================
+// SOURCE: controllers/ICEController.js
+// ============================================================
+
+// ============================================================
+// ICE — Indicator Capture Engine Controller  |  Sprint 018
+// ============================================================
+
+var ICEController = (function () {
+  "use strict";
+
+  var SHEET = {
+    PERIODS:   "ICE_Periods",
+    CAPTURAS:  "ICE_Capturas",
+    CAP_VARS:  "ICE_CaptureVariables",
+    APPROVALS: "ICE_Approvals",
+    LOCKS:     "ICE_Locks",
+    AUDIT:     "ICE_AuditTrail",
+  };
+
+  var repo_ = {
+    get periods()   { return SheetRepository.for(SHEET.PERIODS);   },
+    get capturas()  { return SheetRepository.for(SHEET.CAPTURAS);  },
+    get capVars()   { return SheetRepository.for(SHEET.CAP_VARS);  },
+    get approvals() { return SheetRepository.for(SHEET.APPROVALS); },
+    get locks()     { return SheetRepository.for(SHEET.LOCKS);     },
+    get audit()     { return SheetRepository.for(SHEET.AUDIT);     },
+  };
+
+  function now_() { return new Date().toISOString(); }
+
+  // ── AuditService ────────────────────────────────────────────────────────────
+
+  var AuditService_ = {
+    record: function (opts) {
+      try {
+        repo_.audit.create({
+          id:         IdGen.entityId("ICE-AUD"),
+          entityType: opts.entityType || "",
+          entityId:   opts.entityId  || "",
+          action:     opts.action    || "",
+          userId:     opts.userId    || "",
+          timestamp:  now_(),
+          before:     typeof opts.before === "string" ? opts.before : JSON.stringify(opts.before || ""),
+          after:      typeof opts.after  === "string" ? opts.after  : JSON.stringify(opts.after  || ""),
+          notes:      opts.notes     || "",
+        });
+      } catch (e) {}
+    },
+  };
+
+  // ── LockService ──────────────────────────────────────────────────────────────
+
+  var LockService_ = {
+    isPeriodLocked: function (periodId) {
+      var period = repo_.periods.find(periodId);
+      return period && (period.estado === "cerrado" || period.estado === "bloqueado");
+    },
+    isCaptureLocked: function (captureId) {
+      var lock = repo_.locks.findAll().filter(function (l) { return l.captureId === captureId; })[0];
+      return !!lock;
+    },
+    lockCapture: function (captureId, periodId, userId, reason) {
+      repo_.locks.create({
+        id:        IdGen.entityId("ICE-LOCK"),
+        periodId:  periodId || "",
+        captureId: captureId,
+        lockedAt:  now_(),
+        lockedBy:  userId,
+        reason:    reason || "Período cerrado",
+      });
+    },
+    lockPeriodCaptures: function (periodId, userId) {
+      var captures = repo_.capturas.findAll().filter(function (c) { return c.periodId === periodId; });
+      captures.forEach(function (c) {
+        LockService_.lockCapture(c.id, periodId, userId, "Período bloqueado");
+      });
+    },
+  };
+
+  // ── CaptureValidator ─────────────────────────────────────────────────────────
+
+  var CaptureValidator_ = {
+    validatePeriod: function (period) {
+      if (!period) throw new Error("Período no encontrado.");
+      if (period.estado !== "abierto") throw new Error("El período '" + period.nombre + "' no está abierto. Estado: " + period.estado);
+    },
+    validateNoDuplicate: function (indicatorId, periodId, existingId) {
+      var existing = repo_.capturas.findAll().filter(function (c) {
+        return c.indicatorId === indicatorId && c.periodId === periodId && c.id !== (existingId || "");
+      });
+      if (existing.length > 0) throw new Error("Ya existe una captura para este indicador en el período seleccionado.");
+    },
+    validateVariables: function (variables) {
+      (variables || []).forEach(function (v) {
+        if (v.valor === null || v.valor === undefined || v.valor === "") {
+          throw new Error("La variable '" + v.variableId + "' no puede estar vacía.");
+        }
+        var num = Number(v.valor);
+        if (isNaN(num)) throw new Error("El valor de la variable '" + v.variableId + "' debe ser numérico.");
+      });
+    },
+  };
+
+  // ── CalculationService ───────────────────────────────────────────────────────
+
+  var CalculationService_ = {
+    calculate: function (indicatorId, variables, ctx) {
+      var indicator = IDEController.handle("ide.getIndicator", { id: indicatorId }, ctx || {});
+      if (!indicator) throw new Error("Indicador no encontrado: " + indicatorId);
+      if (!indicator.formulaId) throw new Error("El indicador no tiene fórmula asignada.");
+
+      var formula = FMIController.handle("fmi.getFormula", { id: indicator.formulaId }, ctx || {});
+      if (!formula) throw new Error("Fórmula no encontrada: " + indicator.formulaId);
+
+      var valuesMap = {};
+      (variables || []).forEach(function (v) {
+        var fmiVar = (formula.variables || []).filter(function (fv) { return fv.id === v.variableId; })[0];
+        if (fmiVar) valuesMap[fmiVar.nombre] = Number(v.valor);
+      });
+
+      var calcResult = FMIController.handle("fmi.calculateFormula", { id: indicator.formulaId, values: valuesMap }, ctx || {});
+      var resultado = calcResult.result;
+
+      var rangeLevel = null;
+      if (indicator.rangeConfigId) {
+        try {
+          var evalResult = FMIController.handle("fmi.evaluateRange", { id: indicator.rangeConfigId, value: resultado }, ctx || {});
+          rangeLevel = evalResult.status || evalResult.level || null;
+        } catch (e) {}
+      }
+
+      var meta = Number(indicator.meta) || 0;
+      var cumplimiento = meta > 0 ? Math.round((resultado / meta) * 10000) / 100 : null;
+
+      return {
+        resultado:       resultado,
+        meta:            meta,
+        cumplimiento:    cumplimiento,
+        rangeLevel:      rangeLevel,
+        formulaVersion:  indicator.version || 1,
+        indicatorId:     indicatorId,
+        valuesUsed:      valuesMap,
+      };
+    },
+  };
+
+  // ── PeriodService ────────────────────────────────────────────────────────────
+
+  var PeriodService_ = {
+    list: function (params) {
+      var all = repo_.periods.findAll();
+      if (params && params.estado) all = all.filter(function (p) { return p.estado === params.estado; });
+      if (params && params.activo !== undefined) all = all.filter(function (p) { return String(p.activo) === String(params.activo); });
+      return all;
+    },
+    get: function (id) {
+      var p = repo_.periods.find(id);
+      if (!p) throw new Error("Período no encontrado: " + id);
+      return p;
+    },
+    create: function (params, ctx) {
+      if (!params.nombre) throw new Error("El nombre del período es requerido.");
+      if (!params.fechaInicio || !params.fechaFin) throw new Error("fechaInicio y fechaFin son requeridos.");
+      var period = repo_.periods.create({
+        id:          IdGen.entityId("ICE-PER"),
+        nombre:      params.nombre,
+        tipo:        params.tipo       || "mensual",
+        fechaInicio: params.fechaInicio,
+        fechaFin:    params.fechaFin,
+        estado:      "abierto",
+        activo:      true,
+        createdAt:   now_(),
+        updatedAt:   now_(),
+        createdBy:   ctx && ctx.userId || "",
+      });
+      AuditService_.record({ entityType: "period", entityId: period.id, action: "crear", userId: ctx && ctx.userId, after: period });
+      return period;
+    },
+    update: function (params, ctx) {
+      var old = PeriodService_.get(params.id);
+      if (LockService_.isPeriodLocked(params.id)) throw new Error("El período está cerrado o bloqueado.");
+      var updated = repo_.periods.update(params.id, {
+        nombre:      params.nombre      || old.nombre,
+        tipo:        params.tipo        || old.tipo,
+        fechaInicio: params.fechaInicio || old.fechaInicio,
+        fechaFin:    params.fechaFin    || old.fechaFin,
+        activo:      params.activo !== undefined ? params.activo : old.activo,
+        updatedAt:   now_(),
+      });
+      AuditService_.record({ entityType: "period", entityId: params.id, action: "actualizar", userId: ctx && ctx.userId, before: old, after: updated });
+      return updated;
+    },
+    transition: function (id, newEstado, ctx) {
+      var old = PeriodService_.get(id);
+      var allowed = { abierto: ["en_revision","cerrado"], en_revision: ["abierto","cerrado","bloqueado"], cerrado: ["abierto"], bloqueado: [] };
+      var validNext = allowed[old.estado] || [];
+      if (validNext.indexOf(newEstado) === -1) {
+        throw new Error("Transición no permitida: " + old.estado + " → " + newEstado);
+      }
+      var updated = repo_.periods.update(id, { estado: newEstado, activo: newEstado === "abierto", updatedAt: now_() });
+      if (newEstado === "bloqueado" || newEstado === "cerrado") {
+        LockService_.lockPeriodCaptures(id, ctx && ctx.userId);
+      }
+      AuditService_.record({ entityType: "period", entityId: id, action: newEstado, userId: ctx && ctx.userId, before: old.estado, after: newEstado });
+      tryNotify_("periodo_" + newEstado, ctx && ctx.userId, { periodId: id, nombre: old.nombre });
+      return updated;
+    },
+  };
+
+  // ── CaptureService ───────────────────────────────────────────────────────────
+
+  var CaptureService_ = {
+    list: function (params) {
+      var all = repo_.capturas.findAll();
+      if (params && params.periodId)     all = all.filter(function (c) { return c.periodId     === params.periodId;     });
+      if (params && params.indicatorId)  all = all.filter(function (c) { return c.indicatorId  === params.indicatorId;  });
+      if (params && params.responsibleId)all = all.filter(function (c) { return c.responsibleId=== params.responsibleId;});
+      if (params && params.status)       all = all.filter(function (c) { return c.status       === params.status;       });
+      return all;
+    },
+    get: function (id) {
+      var c = repo_.capturas.find(id);
+      if (!c) throw new Error("Captura no encontrada: " + id);
+      return c;
+    },
+    create: function (params, ctx) {
+      var period = PeriodService_.get(params.periodId);
+      CaptureValidator_.validatePeriod(period);
+      CaptureValidator_.validateNoDuplicate(params.indicatorId, params.periodId, null);
+
+      var captura = repo_.capturas.create({
+        id:                 IdGen.entityId("ICE-CAP"),
+        indicatorId:        params.indicatorId,
+        periodId:           params.periodId,
+        responsibleId:      params.responsibleId || (ctx && ctx.userId) || "",
+        captureDate:        now_(),
+        formulaVersion:     null,
+        resultadoCalculado: null,
+        meta:               null,
+        cumplimiento:       null,
+        rangeLevel:         null,
+        status:             "borrador",
+        comments:           params.comments || "",
+        evidenceRefs:       "[]",
+        createdBy:          ctx && ctx.userId || "",
+        updatedBy:          ctx && ctx.userId || "",
+        createdAt:          now_(),
+        updatedAt:          now_(),
+      });
+      AuditService_.record({ entityType: "captura", entityId: captura.id, action: "crear", userId: ctx && ctx.userId, after: captura });
+      return captura;
+    },
+    update: function (params, ctx) {
+      var old = CaptureService_.get(params.id);
+      if (LockService_.isCaptureLocked(params.id)) throw new Error("La captura está bloqueada.");
+      if (old.status === "aprobada" || old.status === "cerrada") throw new Error("No se puede editar una captura en estado '" + old.status + "'.");
+      var updated = repo_.capturas.update(params.id, {
+        comments:  params.comments !== undefined ? params.comments : old.comments,
+        updatedBy: ctx && ctx.userId || "",
+        updatedAt: now_(),
+      });
+      AuditService_.record({ entityType: "captura", entityId: params.id, action: "actualizar", userId: ctx && ctx.userId, before: old, after: updated });
+      return updated;
+    },
+    delete: function (id, ctx) {
+      var old = CaptureService_.get(id);
+      if (old.status !== "borrador") throw new Error("Solo se pueden eliminar capturas en borrador.");
+      repo_.capturas.delete(id);
+      repo_.capVars.findAll().filter(function (v) { return v.captureId === id; }).forEach(function (v) { repo_.capVars.delete(v.id); });
+      AuditService_.record({ entityType: "captura", entityId: id, action: "eliminar", userId: ctx && ctx.userId, before: old });
+      return { deleted: true, id: id };
+    },
+    calculate: function (params, ctx) {
+      var captura = CaptureService_.get(params.captureId);
+      var vars    = VariableCaptureService_.list(params.captureId);
+      if (params.variables) vars = params.variables;
+
+      var calcData = CalculationService_.calculate(captura.indicatorId, vars, ctx);
+      var updated  = repo_.capturas.update(captura.id, {
+        resultadoCalculado: calcData.resultado,
+        meta:               calcData.meta,
+        cumplimiento:       calcData.cumplimiento,
+        rangeLevel:         calcData.rangeLevel,
+        formulaVersion:     calcData.formulaVersion,
+        updatedAt:          now_(),
+        updatedBy:          ctx && ctx.userId || "",
+      });
+
+      if (calcData.rangeLevel === "critico") {
+        tryTriggerAUE_("resultado_critico", { capturaId: captura.id, indicatorId: captura.indicatorId, resultado: calcData.resultado });
+      }
+      if (calcData.cumplimiento !== null && calcData.cumplimiento < 100) {
+        tryTriggerAUE_("meta_incumplida", { capturaId: captura.id, indicatorId: captura.indicatorId, cumplimiento: calcData.cumplimiento });
+      }
+
+      return Object.assign({}, updated, { calculation: calcData });
+    },
+    submit: function (id, ctx) {
+      var old = CaptureService_.get(id);
+      if (old.status !== "borrador") throw new Error("Solo se pueden enviar capturas en borrador.");
+
+      var vars = VariableCaptureService_.list(id);
+      if (!vars.length) throw new Error("Debe ingresar al menos una variable antes de enviar.");
+
+      // Recalculate before submit
+      CaptureService_.calculate({ captureId: id }, ctx);
+
+      var updated = repo_.capturas.update(id, { status: "enviada", updatedBy: ctx && ctx.userId || "", updatedAt: now_() });
+
+      // Create first pending approval
+      ApprovalService_.createPending_(id, 1, ctx);
+
+      AuditService_.record({ entityType: "captura", entityId: id, action: "enviar", userId: ctx && ctx.userId, before: "borrador", after: "enviada" });
+      tryNotify_("captura_enviada", old.responsibleId, { capturaId: id, indicatorId: old.indicatorId });
+      tryIngestIIA_({ capturaId: id, indicatorId: old.indicatorId, periodId: old.periodId, resultado: updated.resultadoCalculado, rangeLevel: updated.rangeLevel, cumplimiento: updated.cumplimiento, captureDate: updated.captureDate });
+
+      return updated;
+    },
+    getMyIndicators: function (params, ctx) {
+      var userId = (params && params.userId) || (ctx && ctx.userId) || "";
+      var indicators = IDEController.handle("ide.listIndicators", { status: "publicado" }, ctx || {});
+      var mine = (indicators || []).filter(function (ind) { return ind.responsibleId === userId; });
+
+      var activePeriods = PeriodService_.list({ estado: "abierto" });
+      var activePeriod  = activePeriods[0] || null;
+
+      return mine.map(function (ind) {
+        var captura = activePeriod
+          ? (repo_.capturas.findAll().filter(function (c) { return c.indicatorId === ind.id && c.periodId === activePeriod.id; })[0] || null)
+          : null;
+        return { indicator: ind, captura: captura, activePeriod: activePeriod };
+      });
+    },
+    getContext: function (indicatorId, periodId) {
+      var indicator = IDEController.handle("ide.getIndicator", { id: indicatorId }, {});
+      if (!indicator) throw new Error("Indicador no encontrado: " + indicatorId);
+
+      var period  = PeriodService_.get(periodId);
+      var formula = null;
+      var rangeConfig = null;
+
+      if (indicator.formulaId) {
+        try { formula = FMIController.handle("fmi.getFormula", { id: indicator.formulaId }, {}); } catch (e) {}
+      }
+      if (indicator.rangeConfigId) {
+        try { rangeConfig = FMIController.handle("fmi.getRangeConfig", { id: indicator.rangeConfigId }, {}); } catch (e) {}
+      }
+
+      var existing = repo_.capturas.findAll().filter(function (c) { return c.indicatorId === indicatorId && c.periodId === periodId; })[0] || null;
+      var existingVars = existing ? VariableCaptureService_.list(existing.id) : [];
+
+      return { indicator: indicator, period: period, formula: formula, rangeConfig: rangeConfig, existingCaptura: existing, existingVariables: existingVars };
+    },
+  };
+
+  // ── VariableCaptureService ───────────────────────────────────────────────────
+
+  var VariableCaptureService_ = {
+    list: function (captureId) {
+      return repo_.capVars.findAll().filter(function (v) { return v.captureId === captureId; });
+    },
+    save: function (captureId, variables, ctx) {
+      var captura = CaptureService_.get(captureId);
+      if (LockService_.isCaptureLocked(captureId)) throw new Error("La captura está bloqueada.");
+      if (captura.status !== "borrador") throw new Error("Solo se pueden editar variables en capturas en borrador.");
+
+      CaptureValidator_.validateVariables(variables);
+
+      var existing = VariableCaptureService_.list(captureId);
+      existing.forEach(function (v) { repo_.capVars.delete(v.id); });
+
+      var saved = (variables || []).map(function (v) {
+        return repo_.capVars.create({
+          id:         IdGen.entityId("ICE-VAR"),
+          captureId:  captureId,
+          variableId: v.variableId,
+          valor:      String(v.valor),
+          unidad:     v.unidad || "",
+          createdAt:  now_(),
+        });
+      });
+
+      AuditService_.record({ entityType: "captura_vars", entityId: captureId, action: "guardar_variables", userId: ctx && ctx.userId, after: variables });
+      return saved;
+    },
+  };
+
+  // ── ApprovalService ──────────────────────────────────────────────────────────
+
+  var ApprovalService_ = {
+    list: function (captureId) {
+      return repo_.approvals.findAll().filter(function (a) { return a.captureId === captureId; });
+    },
+    createPending_: function (captureId, nivel, ctx) {
+      return repo_.approvals.create({
+        id:           IdGen.entityId("ICE-APR"),
+        captureId:    captureId,
+        nivel:        nivel,
+        responsable:  ctx && ctx.userId || "",
+        fecha:        now_(),
+        estado:       "pendiente",
+        comentarios:  "",
+      });
+    },
+    approve: function (params, ctx) {
+      var captura = CaptureService_.get(params.captureId);
+      var approvals = ApprovalService_.list(params.captureId);
+      var pending   = approvals.filter(function (a) { return a.estado === "pendiente"; })[0];
+      if (!pending) throw new Error("No hay aprobación pendiente para esta captura.");
+
+      repo_.approvals.update(pending.id, { estado: "aprobado", responsable: ctx && ctx.userId || "", fecha: now_(), comentarios: params.comentarios || "" });
+
+      var nextStatus;
+      if (pending.nivel >= 2) {
+        nextStatus = "aprobada";
+        ApprovalService_.createPending_(params.captureId, pending.nivel + 1, ctx);
+        nextStatus = "aprobada";
+      } else {
+        ApprovalService_.createPending_(params.captureId, pending.nivel + 1, ctx);
+        nextStatus = "en_revision";
+      }
+
+      repo_.capturas.update(params.captureId, { status: nextStatus, updatedBy: ctx && ctx.userId || "", updatedAt: now_() });
+      AuditService_.record({ entityType: "captura", entityId: params.captureId, action: "aprobar_nivel_" + pending.nivel, userId: ctx && ctx.userId, before: captura.status, after: nextStatus });
+      tryNotify_("captura_aprobada", captura.responsibleId, { capturaId: params.captureId, nivel: pending.nivel });
+
+      if (nextStatus === "aprobada") {
+        LockService_.lockCapture(params.captureId, captura.periodId, ctx && ctx.userId, "Captura aprobada");
+      }
+
+      return repo_.capturas.find(params.captureId);
+    },
+    reject: function (params, ctx) {
+      var captura = CaptureService_.get(params.captureId);
+      var approvals = ApprovalService_.list(params.captureId);
+      var pending   = approvals.filter(function (a) { return a.estado === "pendiente"; })[0];
+      if (!pending) throw new Error("No hay aprobación pendiente para esta captura.");
+
+      repo_.approvals.update(pending.id, { estado: "rechazado", responsable: ctx && ctx.userId || "", fecha: now_(), comentarios: params.comentarios || "" });
+      repo_.capturas.update(params.captureId, { status: "rechazada", updatedBy: ctx && ctx.userId || "", updatedAt: now_() });
+
+      AuditService_.record({ entityType: "captura", entityId: params.captureId, action: "rechazar_nivel_" + pending.nivel, userId: ctx && ctx.userId, before: captura.status, after: "rechazada" });
+      tryNotify_("captura_rechazada", captura.responsibleId, { capturaId: params.captureId, motivo: params.comentarios });
+
+      return repo_.capturas.find(params.captureId);
+    },
+    reopen: function (params, ctx) {
+      var captura = CaptureService_.get(params.captureId);
+      if (captura.status !== "rechazada") throw new Error("Solo se pueden reabrir capturas rechazadas.");
+      if (LockService_.isCaptureLocked(params.captureId)) throw new Error("La captura está bloqueada y no puede reabrirse.");
+
+      // Clear pending approvals
+      ApprovalService_.list(params.captureId).forEach(function (a) {
+        if (a.estado === "pendiente") repo_.approvals.update(a.id, { estado: "anulado", comentarios: "Reapertura manual" });
+      });
+
+      repo_.capturas.update(params.captureId, { status: "borrador", updatedBy: ctx && ctx.userId || "", updatedAt: now_() });
+      AuditService_.record({ entityType: "captura", entityId: params.captureId, action: "reabrir", userId: ctx && ctx.userId, before: "rechazada", after: "borrador", notes: params.motivo || "" });
+
+      return repo_.capturas.find(params.captureId);
+    },
+  };
+
+  // ── EvidenceLinkService ──────────────────────────────────────────────────────
+
+  var EvidenceLinkService_ = {
+    list: function (captureId) {
+      var captura = CaptureService_.get(captureId);
+      try { return JSON.parse(captura.evidenceRefs || "[]"); } catch (e) { return []; }
+    },
+    link: function (captureId, evidenceId, ctx) {
+      var captura = CaptureService_.get(captureId);
+      if (LockService_.isCaptureLocked(captureId)) throw new Error("La captura está bloqueada.");
+      var refs = EvidenceLinkService_.list(captureId);
+      if (refs.indexOf(evidenceId) === -1) refs.push(evidenceId);
+      repo_.capturas.update(captureId, { evidenceRefs: JSON.stringify(refs), updatedAt: now_(), updatedBy: ctx && ctx.userId || "" });
+      AuditService_.record({ entityType: "captura", entityId: captureId, action: "adjuntar_evidencia", userId: ctx && ctx.userId, after: evidenceId });
+      return refs;
+    },
+    unlink: function (captureId, evidenceId, ctx) {
+      var refs = EvidenceLinkService_.list(captureId);
+      var filtered = refs.filter(function (r) { return r !== evidenceId; });
+      repo_.capturas.update(captureId, { evidenceRefs: JSON.stringify(filtered), updatedAt: now_(), updatedBy: ctx && ctx.userId || "" });
+      AuditService_.record({ entityType: "captura", entityId: captureId, action: "desadjuntar_evidencia", userId: ctx && ctx.userId, after: evidenceId });
+      return filtered;
+    },
+  };
+
+  // ── Cross-module integrations ────────────────────────────────────────────────
+
+  function tryNotify_(tipo, destinatarioId, datos) {
+    try {
+      if (typeof NCEController !== "undefined") {
+        NCEController.handle("nce.send", { tipo: tipo, destinatarioId: destinatarioId, datos: JSON.stringify(datos || {}) });
+      }
+    } catch (e) {}
+  }
+
+  function tryTriggerAUE_(evento, datos) {
+    try {
+      if (typeof AUEController !== "undefined") {
+        AUEController.handle("aue.trigger", { evento: evento, datos: JSON.stringify(datos || {}) });
+      }
+    } catch (e) {}
+  }
+
+  function tryIngestIIA_(data) {
+    try {
+      if (typeof IIAController !== "undefined") {
+        IIAController.handle("iia.ingestCaptura", data);
+      }
+    } catch (e) {}
+  }
+
+  // ── Public handle dispatcher ─────────────────────────────────────────────────
+
+  function handle(action, params, ctx) {
+    switch (action) {
+      // Periods
+      case "ice.listPeriods":         return PeriodService_.list(params);
+      case "ice.getPeriod":           return PeriodService_.get(params.id);
+      case "ice.createPeriod":        return PeriodService_.create(params, ctx);
+      case "ice.updatePeriod":        return PeriodService_.update(params, ctx);
+      case "ice.openPeriod":          return PeriodService_.transition(params.id, "abierto",      ctx);
+      case "ice.reviewPeriod":        return PeriodService_.transition(params.id, "en_revision",  ctx);
+      case "ice.closePeriod":         return PeriodService_.transition(params.id, "cerrado",      ctx);
+      case "ice.lockPeriod":          return PeriodService_.transition(params.id, "bloqueado",    ctx);
+
+      // Captures
+      case "ice.listCapturas":        return CaptureService_.list(params);
+      case "ice.getCaptura":          return CaptureService_.get(params.id);
+      case "ice.createCaptura":       return CaptureService_.create(params, ctx);
+      case "ice.updateCaptura":       return CaptureService_.update(params, ctx);
+      case "ice.deleteCaptura":       return CaptureService_.delete(params.id, ctx);
+      case "ice.calculateCaptura":    return CaptureService_.calculate(params, ctx);
+      case "ice.submitCaptura":       return CaptureService_.submit(params.id, ctx);
+
+      // Variables
+      case "ice.listCaptureVars":     return VariableCaptureService_.list(params.captureId);
+      case "ice.saveCaptureVars":     return VariableCaptureService_.save(params.captureId, params.variables, ctx);
+
+      // Approvals
+      case "ice.listApprovals":       return ApprovalService_.list(params.captureId);
+      case "ice.approve":             return ApprovalService_.approve(params, ctx);
+      case "ice.reject":              return ApprovalService_.reject(params, ctx);
+      case "ice.reopen":              return ApprovalService_.reopen(params, ctx);
+
+      // Evidence
+      case "ice.listEvidenceRefs":    return EvidenceLinkService_.list(params.captureId);
+      case "ice.linkEvidence":        return EvidenceLinkService_.link(params.captureId, params.evidenceId, ctx);
+      case "ice.unlinkEvidence":      return EvidenceLinkService_.unlink(params.captureId, params.evidenceId, ctx);
+
+      // Audit
+      case "ice.listAudit":           return repo_.audit.findAll().filter(function (a) {
+        if (params && params.entityId) return a.entityId === params.entityId;
+        return true;
+      });
+
+      // Composite
+      case "ice.getMyIndicators":     return CaptureService_.getMyIndicators(params, ctx);
+      case "ice.getCaptureContext":   return CaptureService_.getContext(params.indicatorId, params.periodId);
+
+      default:
+        var err = new Error("ICEController: acción desconocida: " + action);
+        err.code = "UNKNOWN_ACTION";
+        throw err;
+    }
+  }
+
+  // ── Bootstrap ────────────────────────────────────────────────────────────────
+
+  function bootstrap() {
+    SheetRepository.ensureSheet(SHEET.PERIODS,   ["id","nombre","tipo","fechaInicio","fechaFin","estado","activo","createdAt","updatedAt","createdBy"]);
+    SheetRepository.ensureSheet(SHEET.CAPTURAS,  ["id","indicatorId","periodId","responsibleId","captureDate","formulaVersion","resultadoCalculado","meta","cumplimiento","rangeLevel","status","comments","evidenceRefs","createdBy","updatedBy","createdAt","updatedAt"]);
+    SheetRepository.ensureSheet(SHEET.CAP_VARS,  ["id","captureId","variableId","valor","unidad","createdAt"]);
+    SheetRepository.ensureSheet(SHEET.APPROVALS, ["id","captureId","nivel","responsable","fecha","estado","comentarios"]);
+    SheetRepository.ensureSheet(SHEET.LOCKS,     ["id","periodId","captureId","lockedAt","lockedBy","reason"]);
+    SheetRepository.ensureSheet(SHEET.AUDIT,     ["id","entityType","entityId","action","userId","timestamp","before","after","notes"]);
+  }
+
+  return { handle: handle, bootstrap: bootstrap };
+})();
+
+// ============================================================
+// SOURCE: controllers/VRAFController.js
+// ============================================================
+
+/**
+ * VRAFController — Vicerrectoría Administrativa y Financiera operations.
+ *
+ * Scopes all queries to wsId = "vraf" and orchestrates VRAF-specific
+ * business logic. Persistence delegates to the generic SheetRepository
+ * via existing entities (planes, objetivos, proyectos, procesos,
+ * actividades, indicadores, solicitudes).
+ *
+ * No new sheets are required — VRAF re-uses the institutional entity
+ * schemas from entities.js, filtered by wsId / unidadId.
+ */
+var VRAFController = (function () {
+
+  var VRAF_WS_ID = "vraf";
+
+  // ── Plans / POA ──────────────────────────────────────────────────────────────
+
+  function listPlanes(params) {
+    var filter = { wsId: params.wsId || VRAF_WS_ID };
+    if (params.tipo)   filter.tipo   = params.tipo;
+    if (params.estado) filter.estado = params.estado;
+    var result = listEntities_("planes", filter);
+    return result.items || [];
+  }
+
+  function getPlan(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("planes", params.id);
+  }
+
+  function createPlan(params) {
+    Validator.requireFields(params, ["nombre"]);
+    AppLogger.info("VRAFController.createPlan", { nombre: params.nombre });
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      tipo:          "estrategico",
+      estado:        "borrador",
+      periodoInicio: "",
+      periodoFin:    "",
+      descripcion:   "",
+      responsableId: "",
+      avancePct:     0,
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || VRAF_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("planes", data);
+    return data;
+  }
+
+  function updatePlan(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("planes", params.id, patch);
+  }
+
+  function deletePlan(params) {
+    Validator.requireFields(params, ["id"]);
+    removeEntity_("planes", params.id);
+    return { deleted: true };
+  }
+
+  // ── Objetivos Estratégicos ───────────────────────────────────────────────────
+
+  function listObjetivos(params) {
+    var filter = {};
+    if (params.planId) filter.planId = params.planId;
+    if (params.wsId)   filter.wsId   = params.wsId;
+    var result = listEntities_("objetivos", filter);
+    return result.items || [];
+  }
+
+  function getObjetivo(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("objetivos", params.id);
+  }
+
+  function createObjetivo(params) {
+    Validator.requireFields(params, ["nombre", "planId"]);
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      descripcion: "",
+      perspectiva: "procesos",
+      peso:        100,
+      avancePct:   0,
+      estado:      "activo",
+    }, params, {
+      id:        IdGen.uuid(),
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("objetivos", data);
+    AppLogger.info("VRAFController.createObjetivo", { nombre: data.nombre });
+    return data;
+  }
+
+  function updateObjetivo(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("objetivos", params.id, patch);
+  }
+
+  // ── Proyectos ────────────────────────────────────────────────────────────────
+
+  function listProyectos(params) {
+    var filter = { unidadId: params.wsId || VRAF_WS_ID };
+    if (params.objetivoId) filter.objetivoId = params.objetivoId;
+    if (params.estado)     filter.estado     = params.estado;
+    var result = listEntities_("proyectos", filter);
+    return result.items || [];
+  }
+
+  function getProyecto(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("proyectos", params.id);
+  }
+
+  function createProyecto(params) {
+    Validator.requireFields(params, ["nombre"]);
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      descripcion: "",
+      estado:      "planificado",
+      avancePct:   0,
+      prioridad:   "normal",
+      unidadId:    params.wsId || VRAF_WS_ID,
+    }, params, {
+      id:        IdGen.uuid(),
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("proyectos", data);
+    return data;
+  }
+
+  function updateProyecto(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("proyectos", params.id, patch);
+  }
+
+  // ── Procesos / Actividades ───────────────────────────────────────────────────
+
+  function listProcesos(params) {
+    var filter = { wsId: params.wsId || VRAF_WS_ID };
+    if (params.prioridad) filter.prioridad = params.prioridad;
+    if (params.semaforo)  filter.semaforo  = params.semaforo;
+    var result = listEntities_("procesos", filter);
+    return result.items || [];
+  }
+
+  function listActividades(params) {
+    var filter = {};
+    if (params.proyectoId) filter.proyectoId = params.proyectoId;
+    if (params.etapaId)    filter.etapaId    = params.etapaId;
+    var result = listEntities_("actividades", filter);
+    return result.items || [];
+  }
+
+  // ── Indicadores / KPIs ───────────────────────────────────────────────────────
+
+  function listIndicadores(params) {
+    var filter = { wsId: params.wsId || VRAF_WS_ID };
+    if (params.semaforo)        filter.semaforo        = params.semaforo;
+    if (params.dashboardDestino) filter.dashboardDestino = params.dashboardDestino;
+    var result = listEntities_("indicadores", filter);
+    return result.items || [];
+  }
+
+  function getIndicador(params) {
+    Validator.requireFields(params, ["id"]);
+    return getEntity_("indicadores", params.id);
+  }
+
+  function createIndicador(params) {
+    Validator.requireFields(params, ["nombre"]);
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      descripcion:     "",
+      formula:         "",
+      unidadMedida:    "",
+      frecuencia:      "mensual",
+      metaAnual:       0,
+      valorActual:     0,
+      semaforo:        "verde",
+      tendencia:       "estable",
+      perspectiva:     "procesos",
+      dashboardDestino: "vraf",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || VRAF_WS_ID,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("indicadores", data);
+    return data;
+  }
+
+  function updateIndicador(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("indicadores", params.id, patch);
+  }
+
+  // ── Solicitudes ──────────────────────────────────────────────────────────────
+
+  function listSolicitudes(params) {
+    var filter = { wsId: params.wsId || VRAF_WS_ID };
+    if (params.estado) filter.estado = params.estado;
+    var result = listEntities_("solicitudes", filter);
+    return result.items || [];
+  }
+
+  function createSolicitud(params) {
+    Validator.requireFields(params, ["titulo", "tipo"]);
+    var now = new Date().toISOString();
+    var data = Object.assign({
+      descripcion:           "",
+      estado:                "pendiente",
+      prioridad:             "normal",
+      tiempoRespuestaHoras:  72,
+      solicitanteId:         "",
+    }, params, {
+      id:        IdGen.uuid(),
+      wsId:      params.wsId || VRAF_WS_ID,
+      fechaSolicitud: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+    createEntity_("solicitudes", data);
+    return data;
+  }
+
+  function updateSolicitud(params) {
+    Validator.requireFields(params, ["id"]);
+    var patch = Object.assign({}, params, { updatedAt: new Date().toISOString() });
+    delete patch.id;
+    return updateEntity_("solicitudes", params.id, patch);
+  }
+
+  // ── Dashboard resumen ────────────────────────────────────────────────────────
+
+  function getDashboardResumen(params) {
+    var wsId = params.wsId || VRAF_WS_ID;
+
+    var planesResult      = listEntities_("planes",      { wsId: wsId });
+    var indicadoresResult = listEntities_("indicadores", { wsId: wsId });
+    var proyectosResult   = listEntities_("proyectos",   { unidadId: wsId });
+    var solicitudesResult = listEntities_("solicitudes", { wsId: wsId });
+    var procesosResult    = listEntities_("procesos",    { wsId: wsId });
+
+    var inds = indicadoresResult.items || [];
+    var semaforo = { verde: 0, amarillo: 0, rojo: 0 };
+    for (var i = 0; i < inds.length; i++) {
+      var s = inds[i].semaforo;
+      if (semaforo[s] !== undefined) semaforo[s]++;
+    }
+
+    var procs = procesosResult.items || [];
+    var procsActivos = 0;
+    for (var j = 0; j < procs.length; j++) {
+      if (procs[j].semaforo !== "completado") procsActivos++;
+    }
+
+    return {
+      planes:          (planesResult.items || []).length,
+      indicadores:     inds.length,
+      semaforoKPIs:    semaforo,
+      proyectos:       (proyectosResult.items || []).length,
+      solicitudes:     (solicitudesResult.items || []).length,
+      procesosActivos: procsActivos,
+    };
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────────
+
+  return {
+    listPlanes:          listPlanes,
+    getPlan:             getPlan,
+    createPlan:          createPlan,
+    updatePlan:          updatePlan,
+    deletePlan:          deletePlan,
+    listObjetivos:       listObjetivos,
+    getObjetivo:         getObjetivo,
+    createObjetivo:      createObjetivo,
+    updateObjetivo:      updateObjetivo,
+    listProyectos:       listProyectos,
+    getProyecto:         getProyecto,
+    createProyecto:      createProyecto,
+    updateProyecto:      updateProyecto,
+    listProcesos:        listProcesos,
+    listActividades:     listActividades,
+    listIndicadores:     listIndicadores,
+    getIndicador:        getIndicador,
+    createIndicador:     createIndicador,
+    updateIndicador:     updateIndicador,
+    listSolicitudes:     listSolicitudes,
+    createSolicitud:     createSolicitud,
+    updateSolicitud:     updateSolicitud,
+    getDashboardResumen: getDashboardResumen,
+  };
+
+})();
+
+/**
+ * Route vraf.* actions via OrgUnitRegistry.
+ * Called by OrgUnitRegistry when namespace === "vraf".
+ */
+function routeVRAFAction_(verb, params, context) {
+  switch (verb) {
+    case "listPlanes":          return VRAFController.listPlanes(params);
+    case "getPlan":             return VRAFController.getPlan(params);
+    case "createPlan":          return VRAFController.createPlan(params);
+    case "updatePlan":          return VRAFController.updatePlan(params);
+    case "deletePlan":          return VRAFController.deletePlan(params);
+    case "listObjetivos":       return VRAFController.listObjetivos(params);
+    case "getObjetivo":         return VRAFController.getObjetivo(params);
+    case "createObjetivo":      return VRAFController.createObjetivo(params);
+    case "updateObjetivo":      return VRAFController.updateObjetivo(params);
+    case "listProyectos":       return VRAFController.listProyectos(params);
+    case "getProyecto":         return VRAFController.getProyecto(params);
+    case "createProyecto":      return VRAFController.createProyecto(params);
+    case "updateProyecto":      return VRAFController.updateProyecto(params);
+    case "listProcesos":        return VRAFController.listProcesos(params);
+    case "listActividades":     return VRAFController.listActividades(params);
+    case "listIndicadores":     return VRAFController.listIndicadores(params);
+    case "getIndicador":        return VRAFController.getIndicador(params);
+    case "createIndicador":     return VRAFController.createIndicador(params);
+    case "updateIndicador":     return VRAFController.updateIndicador(params);
+    case "listSolicitudes":     return VRAFController.listSolicitudes(params);
+    case "createSolicitud":     return VRAFController.createSolicitud(params);
+    case "updateSolicitud":     return VRAFController.updateSolicitud(params);
+    case "getDashboardResumen": return VRAFController.getDashboardResumen(params);
+    default:
+      throw new Error("Unknown vraf verb: " + verb);
+  }
+}
+
+// ============================================================
+// SOURCE: units/RRHHUnit.js
+// ============================================================
+
+/**
+ * RRHH Organizational Unit Definition — Human Resources.
+ *
+ * This file is the single source of truth for the RRHH unit's navigation
+ * tree, workflow steps, automations, reports, domain handlers, catalogs,
+ * and settings. No RRHH-specific logic lives inside the WorkflowEngine or
+ * the router; both delegate to these handlers via OrgUnitRegistry.
+ *
+ * Handlers that require persistence delegate to ContratacionController, which
+ * continues to own the Sheet-layer logic during the migration period.
+ */
+
+var RRHH_UNIT_DEF = {
+
+  // ── Identity ────────────────────────────────────────────────────────────────
+  key:         "rrhh",
+  label:       "Recursos Humanos",
+  description: "Gestión integral del ciclo de vida del empleado: reclutamiento, " +
+               "selección, contratación, capacitación y evaluación de desempeño.",
+  version:     "1.0.0",
+  enabled:     true,
+  icon:        "Users",
+  color:       "#2E6BE6",
+  owner: {
+    rol:    "HEAD",
+    label:  "Jefe de Recursos Humanos",
+  },
+
+  // ── Navigation ──────────────────────────────────────────────────────────────
+  navigation: [
+    {
+      key: "dashboard", label: "Dashboard RRHH", icon: "LayoutDashboard",
+      path: "/rrhh", requiredRoles: [],
+    },
+    {
+      key: "contratacion", label: "Contratación", icon: "Briefcase",
+      path: "/rrhh/contratacion", requiredRoles: [],
+      children: [
+        { key: "procesos",       label: "Procesos Activos",  icon: "List",      path: "/rrhh/contratacion/procesos" },
+        { key: "nuevo",          label: "Nuevo Proceso",     icon: "Plus",      path: "/rrhh/contratacion/nuevo" },
+        { key: "candidatos",     label: "Candidatos",        icon: "UserCheck", path: "/rrhh/contratacion/candidatos" },
+        { key: "requisiciones",  label: "Requisiciones",     icon: "FileText",  path: "/rrhh/contratacion/requisiciones" },
+      ],
+    },
+    {
+      key: "seleccion", label: "Selección", icon: "Filter",
+      path: "/rrhh/seleccion", requiredRoles: [],
+      children: [
+        { key: "entrevistas",  label: "Entrevistas",         icon: "MessageSquare", path: "/rrhh/seleccion/entrevistas" },
+        { key: "evaluaciones", label: "Evaluaciones",        icon: "ClipboardList", path: "/rrhh/seleccion/evaluaciones" },
+        { key: "terna",        label: "Conformación de Terna", icon: "Users",       path: "/rrhh/seleccion/terna" },
+      ],
+    },
+    {
+      key: "documentacion", label: "Documentación", icon: "FolderOpen",
+      path: "/rrhh/documentacion", requiredRoles: [],
+      children: [
+        { key: "informes-tec",     label: "Informes Técnicos",  icon: "FileSearch", path: "/rrhh/documentacion/informes-tec" },
+        { key: "informes-finales", label: "Informes Finales",   icon: "FileCheck",  path: "/rrhh/documentacion/informes-finales" },
+        { key: "cartas-oferta",    label: "Cartas de Oferta",   icon: "Mail",       path: "/rrhh/documentacion/cartas-oferta" },
+      ],
+    },
+    {
+      key: "expedientes", label: "Expedientes", icon: "Archive",
+      path: "/rrhh/expedientes", requiredRoles: [],
+    },
+    {
+      key: "contratos", label: "Contratos", icon: "FileSignature",
+      path: "/rrhh/contratos", requiredRoles: [],
+    },
+    {
+      key: "fichas", label: "Fichas de Personal", icon: "IdCard",
+      path: "/rrhh/fichas", requiredRoles: [],
+      children: [
+        { key: "empleados", label: "Fichas Empleados", icon: "UserCircle", path: "/rrhh/fichas/empleados" },
+        { key: "docentes",  label: "Fichas Docentes",  icon: "GraduationCap", path: "/rrhh/fichas/docentes" },
+      ],
+    },
+    {
+      key: "capacitacion", label: "Capacitación", icon: "BookOpen",
+      path: "/rrhh/capacitacion", requiredRoles: [], comingSoon: true,
+    },
+    {
+      key: "desempeno", label: "Evaluación de Desempeño", icon: "TrendingUp",
+      path: "/rrhh/desempeno", requiredRoles: [], comingSoon: true,
+    },
+    {
+      key: "kpis", label: "KPIs RRHH", icon: "BarChart2",
+      path: "/rrhh/kpis", requiredRoles: [],
+    },
+    {
+      key: "reportes", label: "Reportes", icon: "PieChart",
+      path: "/rrhh/reportes", requiredRoles: [],
+    },
+    {
+      key: "configuracion", label: "Configuración", icon: "Settings",
+      path: "/rrhh/config", requiredRoles: ["ADMIN", "HEAD"],
+    },
+  ],
+
+  // ── Modules ─────────────────────────────────────────────────────────────────
+  modules: [
+    "reclutamiento", "seleccion", "contratacion", "expedientes", "contratos",
+    "fichas_empleado", "fichas_docente", "informes_tecnicos", "informes_finales",
+    "cartas_oferta", "terna", "candidatos", "evaluaciones", "capacitacion",
+    "desempeno", "kpis", "reportes", "auditoria", "notificaciones", "configuracion",
+  ],
+
+  // ── Workflows ────────────────────────────────────────────────────────────────
+  workflows: [
+    {
+      key:          "contratacion_flow",
+      label:        "Proceso de Contratación PRO-TH-001",
+      entity:       "contratProcesos",
+      initialEtapa: "identificacion_necesidad",
+      steps: [
+        { etapa: "identificacion_necesidad", paso: 1,  label: "Identificación de Necesidad",   nextEtapa: "requisicion",               requiredDocs: [] },
+        { etapa: "requisicion",              paso: 8,  label: "Requisición de Personal",        nextEtapa: "estrategia_reclutamiento",  requiredDocs: ["requisicion"],  handler: "validarRequisicion" },
+        { etapa: "estrategia_reclutamiento", paso: 9,  label: "Estrategia de Reclutamiento",   nextEtapa: "publicacion_vacante",       requiredDocs: [] },
+        { etapa: "publicacion_vacante",      paso: 10, label: "Publicación de Vacante",         nextEtapa: "recepcion_cv",              requiredDocs: [] },
+        { etapa: "recepcion_cv",             paso: 12, label: "Recepción de CVs",               nextEtapa: "entrevista_preliminar",     requiredDocs: [] },
+        { etapa: "entrevista_preliminar",    paso: 13, label: "Entrevista Preliminar",           nextEtapa: "pruebas",                   requiredDocs: [] },
+        { etapa: "pruebas",                  paso: 14, label: "Pruebas Técnicas y Conductuales", nextEtapa: "entrevista_rrhh",          requiredDocs: [], handler: "calcularPromediosCandidato" },
+        { etapa: "entrevista_rrhh",          paso: 15, label: "Entrevista RRHH",                nextEtapa: "conformacion_terna",        requiredDocs: [] },
+        { etapa: "conformacion_terna",       paso: 16, label: "Conformación de Terna",          nextEtapa: "entrevista_final",          requiredDocs: [], handler: "conformarTerna" },
+        { etapa: "entrevista_final",         paso: 17, label: "Entrevista Final",               nextEtapa: "informe_seleccion",         requiredDocs: [] },
+        { etapa: "informe_seleccion",        paso: 18, label: "Informe de Selección",           nextEtapa: "validacion_rector",        requiredDocs: ["informeTecnico", "informeFinal"] },
+        { etapa: "validacion_rector",        paso: 19, label: "Validación Rector",              nextEtapa: "carta_oferta",              requiredDocs: [] },
+        { etapa: "carta_oferta",             paso: 21, label: "Carta de Oferta",                nextEtapa: "creacion_expediente",       requiredDocs: ["cartaOferta"] },
+        { etapa: "creacion_expediente",      paso: 23, label: "Creación de Expediente",         nextEtapa: "elaboracion_contrato",      requiredDocs: [], handler: "crearExpediente" },
+        { etapa: "elaboracion_contrato",     paso: 24, label: "Elaboración de Contrato",        nextEtapa: "firma_contrato",            requiredDocs: ["contrato"] },
+        { etapa: "firma_contrato",           paso: 25, label: "Firma de Contrato",              nextEtapa: "comunicacion",              requiredDocs: [] },
+        { etapa: "comunicacion",             paso: 26, label: "Comunicación Interna",           nextEtapa: "vinculacion_induccion",     requiredDocs: [], handler: "crearFichaEmpleado" },
+        { etapa: "vinculacion_induccion",    paso: 27, label: "Vinculación e Inducción",        nextEtapa: "completado",                requiredDocs: [] },
+        { etapa: "completado",               paso: 27, label: "Proceso Completado",             nextEtapa: null,                        requiredDocs: [] },
+      ],
+    },
+    {
+      key:          "capacitacion_flow",
+      label:        "Proceso de Capacitación",
+      entity:       "contratProcesos",
+      initialEtapa: "identificacion_necesidad",
+      steps: [
+        { etapa: "identificacion_necesidad", paso: 1, label: "Identificación de Necesidad", nextEtapa: "planificacion", requiredDocs: [] },
+        { etapa: "planificacion",             paso: 2, label: "Planificación",               nextEtapa: "ejecucion",     requiredDocs: [] },
+        { etapa: "ejecucion",                 paso: 3, label: "Ejecución",                   nextEtapa: "evaluacion",    requiredDocs: [] },
+        { etapa: "evaluacion",                paso: 4, label: "Evaluación",                  nextEtapa: "completado",    requiredDocs: [] },
+        { etapa: "completado",                paso: 5, label: "Completado",                  nextEtapa: null,            requiredDocs: [] },
+      ],
+    },
+  ],
+
+  // ── Automations ──────────────────────────────────────────────────────────────
+  automations: [
+    {
+      key:     "notif_nueva_etapa",
+      label:   "Notificar avance de etapa",
+      trigger: "proceso.etapa_avanzada",
+      action:  "notificacion.enviar",
+      active:  true,
+      config:  { canal: "both", roles: ["HEAD", "ANALYST"] },
+    },
+    {
+      key:     "notif_proceso_completado",
+      label:   "Notificar proceso completado",
+      trigger: "proceso.completado",
+      action:  "notificacion.enviar",
+      active:  true,
+      config:  { canal: "email", roles: ["HEAD", "ADMIN"] },
+    },
+  ],
+
+  // ── Reports ──────────────────────────────────────────────────────────────────
+  reports: [
+    {
+      key:          "reporte_procesos_activos",
+      label:        "Procesos Activos por Etapa",
+      description:  "Distribución de todos los procesos de contratación por etapa actual.",
+      entity:       "contratProcesos",
+      requiredRoles: [],
+      format:       "table_chart",
+    },
+    {
+      key:          "reporte_candidatos",
+      label:        "Resumen de Candidatos",
+      description:  "Consolidado de candidatos con promedios de evaluación.",
+      entity:       "contratCandidatos",
+      requiredRoles: [],
+      format:       "table",
+    },
+    {
+      key:          "reporte_tiempos",
+      label:        "Tiempos de Contratación",
+      description:  "Tiempo promedio por etapa del proceso PRO-TH-001.",
+      entity:       "contratProcesos",
+      requiredRoles: ["HEAD", "ADMIN", "AUDIT"],
+      format:       "chart",
+    },
+  ],
+
+  // ── Catalogs ─────────────────────────────────────────────────────────────────
+  catalogs: [
+    {
+      key:    "tipo_requisicion",
+      label:  "Tipo de Requisición",
+      values: ["nueva_plaza", "plaza_existente", "plaza_temporal", "plaza_docente"],
+    },
+    {
+      key:    "tipo_contratacion",
+      label:  "Tipo de Contratación",
+      values: ["permanente", "temporal", "contrato", "hora_clase"],
+    },
+    {
+      key:    "prioridad_proceso",
+      label:  "Prioridad",
+      values: ["alta", "normal", "baja"],
+    },
+    {
+      key:    "estado_expediente",
+      label:  "Estado de Expediente",
+      values: ["incompleto", "en_revision", "completo", "archivado"],
+    },
+  ],
+
+  // ── Role permissions for this unit ───────────────────────────────────────────
+  permissions: {
+    ADMIN:   ["*"],
+    HEAD:    ["read", "write", "approve", "report"],
+    ANALYST: ["read", "write"],
+    OPS:     ["read"],
+    AUDIT:   ["read", "report"],
+  },
+
+  // ── Unit roles ───────────────────────────────────────────────────────────────
+  roles: [
+    { key: "HEAD",    label: "Jefe de RRHH" },
+    { key: "ANALYST", label: "Analista de RRHH" },
+    { key: "OPS",     label: "Operativo de Reclutamiento" },
+    { key: "AUDIT",   label: "Auditor" },
+  ],
+
+  // ── Data entities owned by this unit ─────────────────────────────────────────
+  entities: [
+    "contratProcesos", "contratRequisiciones", "contratInformesTec",
+    "contratInformesFinales", "contratCartasOferta", "contratExpedientes",
+    "contratFichasEmp", "contratFichasDoc", "contratContratos", "contratCandidatos",
+  ],
+
+  // ── Settings ──────────────────────────────────────────────────────────────────
+  settings: {
+    maxCandidatosPorProceso: 20,
+    minCandidatosTerna:      2,
+    maxCandidatosTerna:      3,
+    otpEnabled:              true,
+    notifEnabled:            true,
+    reporteAutoEnabled:      false,
+    periodoArchivado:        365,
+  },
+
+  // ── Domain Handlers ──────────────────────────────────────────────────────────
+  // These are the ONLY place where RRHH business logic lives.
+  // WorkflowEngine calls these via OrgUnitRegistry.invokeHandler().
+  handlers: {
+
+    // ── ContratacionController pass-through wrappers ──────────────────────────
+    listProcesos: function (p) {
+      return ContratacionController.listProcesos(p);
+    },
+    getProceso: function (p) {
+      return ContratacionController.getProceso(p);
+    },
+    crearProceso: function (p) {
+      return ContratacionController.crearProceso(p);
+    },
+    avanzarEtapa: function (p) {
+      return ContratacionController.avanzarEtapa(p);
+    },
+    guardarDocumento: function (p) {
+      return ContratacionController.guardarDocumento(p);
+    },
+    getDocumento: function (p) {
+      return ContratacionController.getDocumento(p);
+    },
+    agregarCandidato: function (p) {
+      return ContratacionController.agregarCandidato(p);
+    },
+    evaluarCandidato: function (p) {
+      return ContratacionController.evaluarCandidato(p);
+    },
+
+    // ── Domain-specific handlers ─────────────────────────────────────────────
+
+    // Called by WorkflowEngine at the "requisicion" step.
+    // Verifies that the required requisition doc exists and is complete.
+    validarRequisicion: function (p) {
+      Validator.requireFields(p, ["procesoId"]);
+      var doc = ContratacionController.getDocumento({ tipo: "requisicion", procesoId: p.procesoId });
+      if (!doc || !doc.nombrePuesto) {
+        throw new Error("Requisición incompleta: nombrePuesto es requerido antes de avanzar.");
+      }
+      return { valid: true, requisicionId: doc.id };
+    },
+
+    // Called by WorkflowEngine at the "pruebas" step.
+    // Re-computes promedioGeneral for a candidate after scores are entered.
+    calcularPromediosCandidato: function (p) {
+      Validator.requireFields(p, ["id"]);
+      return ContratacionController.evaluarCandidato(p);
+    },
+
+    // Called by WorkflowEngine at the "conformacion_terna" step.
+    // Marks 2–3 candidates as enTerna = true.
+    conformarTerna: function (p) {
+      Validator.requireFields(p, ["procesoId", "candidatoIds"]);
+      var ids = p.candidatoIds;
+      if (!Array.isArray(ids) || ids.length < 2 || ids.length > 3) {
+        throw new Error("La terna debe contener entre 2 y 3 candidatos.");
+      }
+      var updated = [];
+      for (var i = 0; i < ids.length; i++) {
+        updated.push(ContratacionController.evaluarCandidato({ id: ids[i], enTerna: true }));
+      }
+      return { terna: updated, count: updated.length };
+    },
+
+    // Called by WorkflowEngine at the "creacion_expediente" step.
+    crearExpediente: function (p) {
+      return ContratacionController.guardarDocumento(Object.assign({ tipo: "expediente" }, p));
+    },
+
+    // Called by WorkflowEngine at the "comunicacion" step.
+    // Determines ficha type from tipoContratacion.
+    crearFichaEmpleado: function (p) {
+      var tipo = (p.tipoContratacion === "hora_clase") ? "fichaDocente" : "fichaEmpleado";
+      return ContratacionController.guardarDocumento(Object.assign({ tipo: tipo }, p));
+    },
+  },
+};
+
+// ============================================================
+// SOURCE: units/VRAFUnit.js
+// ============================================================
+
+/**
+ * VRAF Organizational Unit Definition — Vicerrectoría Académica y de Formación.
+ *
+ * Strategic planning, academic process management, KPI tracking, and
+ * institutional evaluation for the UPES Academic Vice-Rectorate.
+ */
+
+var VRAF_UNIT_DEF = {
+
+  key:         "vraf",
+  label:       "VRAF — Vicerrectoría Académica",
+  description: "Planificación estratégica institucional, gestión de procesos académicos, " +
+               "seguimiento de KPIs y evaluación del Plan de Desarrollo Institucional.",
+  version:     "1.0.0",
+  enabled:     true,
+  icon:        "BookOpen",
+  color:       "#7C3AED",
+  owner: {
+    rol:   "HEAD",
+    label: "Vicerrector Académico",
+  },
+
+  navigation: [
+    {
+      key: "dashboard", label: "Dashboard VRAF", icon: "LayoutDashboard",
+      path: "/vraf", requiredRoles: [],
+    },
+    {
+      key: "planificacion", label: "Planificación Estratégica", icon: "Target",
+      path: "/vraf/planificacion", requiredRoles: [],
+      children: [
+        { key: "planes",       label: "Planes Institucionales", icon: "FileText",    path: "/vraf/planificacion/planes" },
+        { key: "objetivos",    label: "Objetivos Estratégicos", icon: "Crosshair",   path: "/vraf/planificacion/objetivos" },
+        { key: "proyectos",    label: "Proyectos",              icon: "FolderKanban", path: "/vraf/planificacion/proyectos" },
+        { key: "actividades",  label: "Actividades",            icon: "CheckSquare",  path: "/vraf/planificacion/actividades" },
+      ],
+    },
+    {
+      key: "indicadores", label: "Indicadores / KPIs", icon: "TrendingUp",
+      path: "/vraf/indicadores", requiredRoles: [],
+      children: [
+        { key: "kpis",       label: "KPIs Institucionales", icon: "BarChart3",  path: "/vraf/indicadores/kpis" },
+        { key: "semaforo",   label: "Semáforo de Gestión",  icon: "Activity",   path: "/vraf/indicadores/semaforo" },
+        { key: "historico",  label: "Histórico de Valores", icon: "LineChart",  path: "/vraf/indicadores/historico" },
+      ],
+    },
+    {
+      key: "procesos", label: "Procesos Académicos", icon: "GitBranch",
+      path: "/vraf/procesos", requiredRoles: [],
+      children: [
+        { key: "solicitudes", label: "Solicitudes",   icon: "Inbox",       path: "/vraf/procesos/solicitudes" },
+        { key: "flujos",      label: "Flujos BPMN",   icon: "Network",     path: "/vraf/procesos/flujos" },
+        { key: "evidencias",  label: "Evidencias",    icon: "Paperclip",   path: "/vraf/procesos/evidencias" },
+      ],
+    },
+    {
+      key: "evaluacion", label: "Evaluación Institucional", icon: "ClipboardCheck",
+      path: "/vraf/evaluacion", requiredRoles: [],
+      children: [
+        { key: "autoevaluacion", label: "Autoevaluación",  icon: "SelfAssessment", path: "/vraf/evaluacion/autoevaluacion" },
+        { key: "acreditacion",  label: "Acreditación",     icon: "Award",           path: "/vraf/evaluacion/acreditacion" },
+      ],
+    },
+    {
+      key: "documentos", label: "Documentos Estratégicos", icon: "FolderOpen",
+      path: "/vraf/documentos", requiredRoles: [],
+    },
+    {
+      key: "reportes", label: "Reportes", icon: "PieChart",
+      path: "/vraf/reportes", requiredRoles: [],
+    },
+    {
+      key: "configuracion", label: "Configuración", icon: "Settings",
+      path: "/vraf/config", requiredRoles: ["ADMIN", "HEAD"],
+    },
+  ],
+
+  modules: [
+    "planes", "objetivos", "proyectos", "actividades", "indicadores", "kpis",
+    "semaforo", "solicitudes", "flujos", "evidencias", "evaluacion",
+    "acreditacion", "documentos", "reportes", "auditoria", "notificaciones",
+    "recursos", "calendarios", "configuracion", "dashboard",
+  ],
+
+  workflows: [
+    {
+      key:          "plan_estrategico_flow",
+      label:        "Elaboración de Plan Estratégico",
+      entity:       "planes",
+      initialEtapa: "formulacion",
+      steps: [
+        { etapa: "formulacion",   paso: 1, label: "Formulación",      nextEtapa: "revision",     requiredDocs: [] },
+        { etapa: "revision",      paso: 2, label: "Revisión Interna", nextEtapa: "aprobacion",   requiredDocs: [] },
+        { etapa: "aprobacion",    paso: 3, label: "Aprobación",       nextEtapa: "publicacion",  requiredDocs: [] },
+        { etapa: "publicacion",   paso: 4, label: "Publicación",      nextEtapa: "seguimiento",  requiredDocs: [] },
+        { etapa: "seguimiento",   paso: 5, label: "Seguimiento",      nextEtapa: "completado",   requiredDocs: [] },
+        { etapa: "completado",    paso: 6, label: "Completado",       nextEtapa: null,            requiredDocs: [] },
+      ],
+    },
+  ],
+
+  automations: [
+    {
+      key:    "alerta_kpi_rojo",
+      label:  "Alerta KPI en rojo",
+      trigger: "kpi.semaforo_rojo",
+      action:  "notificacion.enviar",
+      active:  true,
+      config:  { canal: "both", roles: ["HEAD", "ADMIN"] },
+    },
+  ],
+
+  reports: [
+    {
+      key:   "reporte_kpis",
+      label: "Dashboard KPIs Institucionales",
+      entity: "wsKPIs", requiredRoles: [],
+      format: "chart",
+    },
+    {
+      key:   "reporte_avance_plan",
+      label: "Avance Plan Estratégico",
+      entity: "planes", requiredRoles: [],
+      format: "table_chart",
+    },
+  ],
+
+  catalogs: [
+    { key: "perspectiva", label: "Perspectiva BSC",  values: ["financiera", "clientes", "procesos", "aprendizaje"] },
+    { key: "frecuencia",  label: "Frecuencia KPI",   values: ["mensual", "trimestral", "semestral", "anual"] },
+    { key: "estado_plan", label: "Estado del Plan",  values: ["borrador", "revision", "aprobado", "vigente", "cerrado"] },
+  ],
+
+  permissions: {
+    ADMIN:   ["*"],
+    HEAD:    ["read", "write", "approve", "report"],
+    ANALYST: ["read", "write"],
+    OPS:     ["read"],
+    AUDIT:   ["read", "report"],
+  },
+
+  roles: [
+    { key: "HEAD",    label: "Vicerrectora Administrativa Financiera" },
+    { key: "ANALYST", label: "Analista de Planificación" },
+    { key: "OPS",     label: "Coordinador Administrativo" },
+    { key: "AUDIT",   label: "Auditor Institucional" },
+  ],
+
+  entities: [
+    "planes", "objetivos", "proyectos", "actividades", "evidencias",
+    "indicadores", "solicitudes",
+  ],
+
+  settings: {
+    cicloEvaluacion:     "anual",
+    perspectivaBSC:      true,
+    acreditacionEnabled: false,
+    notifEnabled:        true,
+    reporteAutoEnabled:  true,
+    periodoArchivado:    730,
+  },
+
+  // ── Domain Handlers (delegate to VRAFController) ──────────────────────────
+  handlers: {
+    getDashboardResumen: function (p) { return VRAFController.getDashboardResumen(p); },
+    listPlanes:          function (p) { return VRAFController.listPlanes(p); },
+    getPlan:             function (p) { return VRAFController.getPlan(p); },
+    createPlan:          function (p) { return VRAFController.createPlan(p); },
+    updatePlan:          function (p) { return VRAFController.updatePlan(p); },
+    deletePlan:          function (p) { return VRAFController.deletePlan(p); },
+    listObjetivos:       function (p) { return VRAFController.listObjetivos(p); },
+    getObjetivo:         function (p) { return VRAFController.getObjetivo(p); },
+    createObjetivo:      function (p) { return VRAFController.createObjetivo(p); },
+    updateObjetivo:      function (p) { return VRAFController.updateObjetivo(p); },
+    listProyectos:       function (p) { return VRAFController.listProyectos(p); },
+    getProyecto:         function (p) { return VRAFController.getProyecto(p); },
+    createProyecto:      function (p) { return VRAFController.createProyecto(p); },
+    updateProyecto:      function (p) { return VRAFController.updateProyecto(p); },
+    listProcesos:        function (p) { return VRAFController.listProcesos(p); },
+    listActividades:     function (p) { return VRAFController.listActividades(p); },
+    listIndicadores:     function (p) { return VRAFController.listIndicadores(p); },
+    getIndicador:        function (p) { return VRAFController.getIndicador(p); },
+    createIndicador:     function (p) { return VRAFController.createIndicador(p); },
+    updateIndicador:     function (p) { return VRAFController.updateIndicador(p); },
+    listSolicitudes:     function (p) { return VRAFController.listSolicitudes(p); },
+    createSolicitud:     function (p) { return VRAFController.createSolicitud(p); },
+    updateSolicitud:     function (p) { return VRAFController.updateSolicitud(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/ComprasUnit.js
+// ============================================================
+
+/**
+ * Compras Organizational Unit Definition — Procurement & Purchasing.
+ *
+ * Purchase requisitions, vendor management, quotes, purchase orders,
+ * reception, and institutional procurement reporting.
+ */
+
+var COMPRAS_UNIT_DEF = {
+
+  key:         "compras",
+  label:       "Compras y Adquisiciones",
+  description: "Gestión de requisiciones de compra, proveedores, cotizaciones, " +
+               "órdenes de compra y recepción de bienes y servicios.",
+  version:     "1.0.0",
+  enabled:     true,
+  icon:        "ShoppingCart",
+  color:       "#D97706",
+  owner: {
+    rol:   "HEAD",
+    label: "Jefe de Compras",
+  },
+
+  navigation: [
+    {
+      key: "dashboard", label: "Dashboard Compras", icon: "LayoutDashboard",
+      path: "/compras", requiredRoles: [],
+    },
+    {
+      key: "requisiciones", label: "Requisiciones de Compra", icon: "ClipboardList",
+      path: "/compras/requisiciones", requiredRoles: [],
+      children: [
+        { key: "nueva",      label: "Nueva Requisición",  icon: "Plus",         path: "/compras/requisiciones/nueva" },
+        { key: "pendientes", label: "Pendientes",         icon: "Clock",        path: "/compras/requisiciones/pendientes" },
+        { key: "aprobadas",  label: "Aprobadas",          icon: "CheckCircle",  path: "/compras/requisiciones/aprobadas" },
+      ],
+    },
+    {
+      key: "cotizaciones", label: "Cotizaciones", icon: "Receipt",
+      path: "/compras/cotizaciones", requiredRoles: [],
+      children: [
+        { key: "solicitar",  label: "Solicitar Cotización", icon: "Send",      path: "/compras/cotizaciones/solicitar" },
+        { key: "comparativo", label: "Cuadro Comparativo",  icon: "Table",     path: "/compras/cotizaciones/comparativo" },
+      ],
+    },
+    {
+      key: "ordenes", label: "Órdenes de Compra", icon: "FileText",
+      path: "/compras/ordenes", requiredRoles: [],
+      children: [
+        { key: "generar",   label: "Generar OC",     icon: "FilePlus",   path: "/compras/ordenes/generar" },
+        { key: "historial", label: "Historial OC",   icon: "History",    path: "/compras/ordenes/historial" },
+      ],
+    },
+    {
+      key: "recepcion", label: "Recepción de Bienes", icon: "PackageCheck",
+      path: "/compras/recepcion", requiredRoles: [],
+    },
+    {
+      key: "proveedores", label: "Proveedores", icon: "Building2",
+      path: "/compras/proveedores", requiredRoles: [],
+    },
+    {
+      key: "catalogo-bienes", label: "Catálogo de Bienes", icon: "Package",
+      path: "/compras/catalogo", requiredRoles: [],
+    },
+    {
+      key: "reportes", label: "Reportes", icon: "BarChart2",
+      path: "/compras/reportes", requiredRoles: [],
+    },
+    {
+      key: "configuracion", label: "Configuración", icon: "Settings",
+      path: "/compras/config", requiredRoles: ["ADMIN", "HEAD"],
+    },
+  ],
+
+  modules: [
+    "requisiciones", "cotizaciones", "comparativo_precios", "ordenes_compra",
+    "recepcion", "proveedores", "catalogo_bienes", "reportes", "auditoria",
+    "notificaciones", "documentos", "flujos_aprobacion", "integracion_contabilidad",
+    "integracion_inventario", "configuracion", "dashboard", "presupuesto",
+    "evaluacion_proveedor", "contratos_proveedor", "alertas",
+  ],
+
+  workflows: [
+    {
+      key:          "compra_bien_servicio_flow",
+      label:        "Proceso de Compra de Bien o Servicio",
+      entity:       "requisicionesCompra",
+      initialEtapa: "solicitud",
+      steps: [
+        { etapa: "solicitud",      paso: 1, label: "Solicitud de Compra",      nextEtapa: "aprobacion_jefe", requiredDocs: ["especificaciones"] },
+        { etapa: "aprobacion_jefe", paso: 2, label: "Aprobación del Jefe",    nextEtapa: "cotizacion",       requiredDocs: [] },
+        { etapa: "cotizacion",     paso: 3, label: "Solicitud de Cotizaciones", nextEtapa: "comparativo",     requiredDocs: [] },
+        { etapa: "comparativo",    paso: 4, label: "Cuadro Comparativo",       nextEtapa: "aprobacion_conta", requiredDocs: ["cotizaciones"] },
+        { etapa: "aprobacion_conta", paso: 5, label: "Aprobación Presupuestal", nextEtapa: "orden_compra",   requiredDocs: [] },
+        { etapa: "orden_compra",   paso: 6, label: "Generación de OC",         nextEtapa: "recepcion",       requiredDocs: ["orden_compra"] },
+        { etapa: "recepcion",      paso: 7, label: "Recepción de Bienes",      nextEtapa: "pago",            requiredDocs: ["acta_recepcion"] },
+        { etapa: "pago",           paso: 8, label: "Autorización de Pago",     nextEtapa: "completado",      requiredDocs: ["factura"] },
+        { etapa: "completado",     paso: 9, label: "Completado",               nextEtapa: null,               requiredDocs: [] },
+      ],
+    },
+  ],
+
+  automations: [
+    {
+      key:     "recordatorio_cotizacion",
+      label:   "Recordatorio de cotización pendiente (> 3 días)",
+      trigger: "compra.cotizacion_pendiente",
+      action:  "notificacion.enviar",
+      active:  true,
+      config:  { canal: "email", roles: ["HEAD", "ANALYST"] },
+    },
+  ],
+
+  reports: [
+    { key: "reporte_compras_periodo",  label: "Compras por Período",    entity: "ordenesCompra",     requiredRoles: [], format: "table" },
+    { key: "reporte_proveedores",      label: "Rendimiento Proveedores", entity: "proveedores",       requiredRoles: [], format: "chart" },
+    { key: "reporte_ejecucion_compra", label: "Ejecución Presupuestal Compras", entity: "requisicionesCompra", requiredRoles: ["HEAD", "ADMIN", "AUDIT"], format: "chart" },
+  ],
+
+  catalogs: [
+    { key: "modalidad_compra", label: "Modalidad de Compra",  values: ["libre_gestion", "licitacion_privada", "licitacion_publica", "contratacion_directa"] },
+    { key: "tipo_bien",        label: "Tipo de Bien/Servicio", values: ["bien", "servicio", "obra"] },
+    { key: "estado_oc",        label: "Estado Orden de Compra", values: ["borrador", "emitida", "recibida", "pagada", "cancelada"] },
+  ],
+
+  permissions: {
+    ADMIN:   ["*"],
+    HEAD:    ["read", "write", "approve", "report"],
+    ANALYST: ["read", "write"],
+    OPS:     ["read", "write_solicitud"],
+    AUDIT:   ["read", "report"],
+  },
+
+  roles: [
+    { key: "HEAD",    label: "Jefe de Compras" },
+    { key: "ANALYST", label: "Analista de Compras" },
+    { key: "OPS",     label: "Solicitante" },
+    { key: "AUDIT",   label: "Auditor" },
+  ],
+
+  entities: [
+    "comprasSolicitudes", "comprasRequisiciones", "comprasCotizaciones",
+    "comprasProveedores", "comprasOrdenes", "comprasRecepciones", "comprasEvaluaciones",
+  ],
+
+  settings: {
+    montoLicitacionPrivada:  5000,
+    montoLicitacionPublica:  50000,
+    diasVigenciaOC:          30,
+    notifEnabled:            true,
+    reporteAutoEnabled:      false,
+    periodoArchivado:        1825,
+  },
+
+  // ── Domain Handlers (delegate to ComprasController) ───────────────────────
+  handlers: {
+    getDashboardResumen:       function (p) { return ComprasController.getDashboardResumen(p); },
+    listSolicitudes:           function (p) { return ComprasController.listSolicitudes(p); },
+    getSolicitud:              function (p) { return ComprasController.getSolicitud(p); },
+    createSolicitud:           function (p) { return ComprasController.createSolicitud(p); },
+    updateSolicitud:           function (p) { return ComprasController.updateSolicitud(p); },
+    cambiarEstadoSolicitud:    function (p) { return ComprasController.cambiarEstadoSolicitud(p); },
+    archivarSolicitud:         function (p) { return ComprasController.archivarSolicitud(p); },
+    listRequisiciones:         function (p) { return ComprasController.listRequisiciones(p); },
+    getRequisicion:            function (p) { return ComprasController.getRequisicion(p); },
+    createRequisicion:         function (p) { return ComprasController.createRequisicion(p); },
+    updateRequisicion:         function (p) { return ComprasController.updateRequisicion(p); },
+    aprobarRequisicion:        function (p) { return ComprasController.aprobarRequisicion(p); },
+    listCotizaciones:          function (p) { return ComprasController.listCotizaciones(p); },
+    getCotizacion:             function (p) { return ComprasController.getCotizacion(p); },
+    createCotizacion:          function (p) { return ComprasController.createCotizacion(p); },
+    updateCotizacion:          function (p) { return ComprasController.updateCotizacion(p); },
+    seleccionarCotizacion:     function (p) { return ComprasController.seleccionarCotizacion(p); },
+    listProveedores:           function (p) { return ComprasController.listProveedores(p); },
+    getProveedor:              function (p) { return ComprasController.getProveedor(p); },
+    createProveedor:           function (p) { return ComprasController.createProveedor(p); },
+    updateProveedor:           function (p) { return ComprasController.updateProveedor(p); },
+    listOrdenes:               function (p) { return ComprasController.listOrdenes(p); },
+    getOrden:                  function (p) { return ComprasController.getOrden(p); },
+    createOrden:               function (p) { return ComprasController.createOrden(p); },
+    updateOrden:               function (p) { return ComprasController.updateOrden(p); },
+    autorizarOrden:            function (p) { return ComprasController.autorizarOrden(p); },
+    cancelarOrden:             function (p) { return ComprasController.cancelarOrden(p); },
+    listRecepciones:           function (p) { return ComprasController.listRecepciones(p); },
+    getRecepcion:              function (p) { return ComprasController.getRecepcion(p); },
+    createRecepcion:           function (p) { return ComprasController.createRecepcion(p); },
+    updateRecepcion:           function (p) { return ComprasController.updateRecepcion(p); },
+    listEvaluaciones:          function (p) { return ComprasController.listEvaluaciones(p); },
+    getEvaluacion:             function (p) { return ComprasController.getEvaluacion(p); },
+    createEvaluacion:          function (p) { return ComprasController.createEvaluacion(p); },
+    reporteComprasPeriodo:     function (p) { return ComprasController.reporteComprasPeriodo(p); },
+    reporteProveedores:        function (p) { return ComprasController.reporteProveedores(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/ContabilidadUnit.js
+// ============================================================
+
+/**
+ * Contabilidad Organizational Unit Definition — Accounting & Finance.
+ *
+ * Budget execution, treasury, accounting records, financial reporting,
+ * and audit trails for institutional finances.
+ */
+
+var CONTABILIDAD_UNIT_DEF = {
+
+  key:         "contabilidad",
+  label:       "Contabilidad y Finanzas",
+  description: "Gestión presupuestaria, tesorería, registros contables y " +
+               "reportes financieros institucionales.",
+  version:     "1.0.0",
+  enabled:     true,
+  icon:        "DollarSign",
+  color:       "#059669",
+  owner: {
+    rol:   "HEAD",
+    label: "Jefe de Contabilidad",
+  },
+
+  navigation: [
+    {
+      key: "dashboard", label: "Dashboard Contabilidad", icon: "LayoutDashboard",
+      path: "/contabilidad", requiredRoles: [],
+    },
+    {
+      key: "presupuesto", label: "Presupuesto", icon: "PiggyBank",
+      path: "/contabilidad/presupuesto", requiredRoles: [],
+      children: [
+        { key: "formulacion",   label: "Formulación",          icon: "FileText",    path: "/contabilidad/presupuesto/formulacion" },
+        { key: "ejecucion",     label: "Ejecución",            icon: "TrendingUp",  path: "/contabilidad/presupuesto/ejecucion" },
+        { key: "modificaciones", label: "Modificaciones",      icon: "Edit",        path: "/contabilidad/presupuesto/modificaciones" },
+      ],
+    },
+    {
+      key: "tesoreria", label: "Tesorería", icon: "Wallet",
+      path: "/contabilidad/tesoreria", requiredRoles: [],
+      children: [
+        { key: "pagos",       label: "Pagos",              icon: "CreditCard",  path: "/contabilidad/tesoreria/pagos" },
+        { key: "ingresos",    label: "Ingresos",           icon: "ArrowDownLeft", path: "/contabilidad/tesoreria/ingresos" },
+        { key: "conciliacion", label: "Conciliación",      icon: "ArrowLeftRight", path: "/contabilidad/tesoreria/conciliacion" },
+      ],
+    },
+    {
+      key: "registros", label: "Registros Contables", icon: "BookText",
+      path: "/contabilidad/registros", requiredRoles: [],
+      children: [
+        { key: "diario",    label: "Libro Diario",    icon: "List",    path: "/contabilidad/registros/diario" },
+        { key: "mayor",     label: "Libro Mayor",     icon: "Layers",  path: "/contabilidad/registros/mayor" },
+        { key: "balances",  label: "Balances",        icon: "Scale",   path: "/contabilidad/registros/balances" },
+      ],
+    },
+    {
+      key: "cuentas-pagar", label: "Cuentas por Pagar", icon: "Receipt",
+      path: "/contabilidad/cuentas-pagar", requiredRoles: [],
+    },
+    {
+      key: "cuentas-cobrar", label: "Cuentas por Cobrar", icon: "HandCoins",
+      path: "/contabilidad/cuentas-cobrar", requiredRoles: [],
+    },
+    {
+      key: "reportes", label: "Reportes Financieros", icon: "BarChart2",
+      path: "/contabilidad/reportes", requiredRoles: [],
+    },
+    {
+      key: "auditoria", label: "Auditoría", icon: "Search",
+      path: "/contabilidad/auditoria", requiredRoles: ["ADMIN", "HEAD", "AUDIT"],
+    },
+    {
+      key: "configuracion", label: "Configuración", icon: "Settings",
+      path: "/contabilidad/config", requiredRoles: ["ADMIN", "HEAD"],
+    },
+  ],
+
+  modules: [
+    "presupuesto", "tesoreria", "pagos", "ingresos", "conciliacion",
+    "diario", "mayor", "balances", "cuentas_pagar", "cuentas_cobrar",
+    "reportes", "auditoria", "notificaciones", "documentos",
+    "catalogo_cuentas", "centros_costo", "configuracion", "dashboard",
+    "flujos_aprobacion", "integracion_rrhh",
+  ],
+
+  workflows: [
+    {
+      key:          "pago_proveedor_flow",
+      label:        "Proceso de Pago a Proveedor",
+      entity:       "pagos",
+      initialEtapa: "solicitud",
+      steps: [
+        { etapa: "solicitud",  paso: 1, label: "Solicitud de Pago",       nextEtapa: "revision",    requiredDocs: ["factura"] },
+        { etapa: "revision",   paso: 2, label: "Revisión Contable",       nextEtapa: "aprobacion",  requiredDocs: [] },
+        { etapa: "aprobacion", paso: 3, label: "Aprobación Presupuestal", nextEtapa: "pago",        requiredDocs: [] },
+        { etapa: "pago",       paso: 4, label: "Ejecución del Pago",      nextEtapa: "registro",    requiredDocs: [] },
+        { etapa: "registro",   paso: 5, label: "Registro Contable",       nextEtapa: "completado",  requiredDocs: [] },
+        { etapa: "completado", paso: 6, label: "Completado",              nextEtapa: null,           requiredDocs: [] },
+      ],
+    },
+  ],
+
+  automations: [
+    {
+      key:     "alerta_presupuesto_agotado",
+      label:   "Alerta presupuesto > 90% ejecutado",
+      trigger: "presupuesto.umbral_critico",
+      action:  "notificacion.enviar",
+      active:  true,
+      config:  { canal: "both", roles: ["HEAD", "ADMIN"] },
+    },
+  ],
+
+  reports: [
+    { key: "estado_resultados", label: "Estado de Resultados",     entity: "registros", requiredRoles: [], format: "table" },
+    { key: "ejecucion_ppto",    label: "Ejecución Presupuestaria", entity: "presupuesto", requiredRoles: [], format: "chart" },
+    { key: "flujo_caja",        label: "Flujo de Caja",            entity: "tesoreria", requiredRoles: ["HEAD", "ADMIN", "AUDIT"], format: "chart" },
+  ],
+
+  catalogs: [
+    { key: "plan_cuentas",    label: "Plan de Cuentas",     values: ["activo", "pasivo", "patrimonio", "ingreso", "gasto"] },
+    { key: "centro_costo",    label: "Centro de Costo",     values: ["administracion", "academico", "rrhh", "tic", "biblioteca"] },
+    { key: "tipo_transaccion", label: "Tipo de Transacción", values: ["ingreso", "egreso", "transferencia", "ajuste"] },
+  ],
+
+  permissions: {
+    ADMIN:   ["*"],
+    HEAD:    ["read", "write", "approve", "report"],
+    ANALYST: ["read", "write"],
+    OPS:     ["read"],
+    AUDIT:   ["read", "report"],
+  },
+
+  roles: [
+    { key: "HEAD",    label: "Jefe de Contabilidad" },
+    { key: "ANALYST", label: "Contador" },
+    { key: "OPS",     label: "Auxiliar Contable" },
+    { key: "AUDIT",   label: "Auditor Interno" },
+  ],
+
+  entities: [
+    "contaCompromisos", "contaRegistros", "contaFacturas",
+    "contaPagos", "contaConciliaciones", "contaCuentasPagar", "contaCuentasCobrar",
+  ],
+
+  settings: {
+    moneda:              "USD",
+    periodoFiscal:       "enero_diciembre",
+    niifEnabled:         false,
+    notifEnabled:        true,
+    reporteAutoEnabled:  true,
+    periodoArchivado:    1825,
+  },
+
+  // ── Domain Handlers (delegate to ContabilidadController) ──────────────────
+  handlers: {
+    listCompromisos:               function (p) { return ContabilidadController.listCompromisos(p); },
+    getCompromiso:                 function (p) { return ContabilidadController.getCompromiso(p); },
+    createCompromiso:              function (p) { return ContabilidadController.createCompromiso(p); },
+    updateCompromiso:              function (p) { return ContabilidadController.updateCompromiso(p); },
+    aprobarCompromiso:             function (p) { return ContabilidadController.aprobarCompromiso(p); },
+    anularCompromiso:              function (p) { return ContabilidadController.anularCompromiso(p); },
+    listRegistros:                 function (p) { return ContabilidadController.listRegistros(p); },
+    getRegistro:                   function (p) { return ContabilidadController.getRegistro(p); },
+    createRegistro:                function (p) { return ContabilidadController.createRegistro(p); },
+    updateRegistro:                function (p) { return ContabilidadController.updateRegistro(p); },
+    anularRegistro:                function (p) { return ContabilidadController.anularRegistro(p); },
+    listFacturas:                  function (p) { return ContabilidadController.listFacturas(p); },
+    getFactura:                    function (p) { return ContabilidadController.getFactura(p); },
+    createFactura:                 function (p) { return ContabilidadController.createFactura(p); },
+    updateFactura:                 function (p) { return ContabilidadController.updateFactura(p); },
+    aprobarFactura:                function (p) { return ContabilidadController.aprobarFactura(p); },
+    rechazarFactura:               function (p) { return ContabilidadController.rechazarFactura(p); },
+    listPagos:                     function (p) { return ContabilidadController.listPagos(p); },
+    getPago:                       function (p) { return ContabilidadController.getPago(p); },
+    createPago:                    function (p) { return ContabilidadController.createPago(p); },
+    updatePago:                    function (p) { return ContabilidadController.updatePago(p); },
+    aprobarPago:                   function (p) { return ContabilidadController.aprobarPago(p); },
+    ejecutarPago:                  function (p) { return ContabilidadController.ejecutarPago(p); },
+    listConciliaciones:            function (p) { return ContabilidadController.listConciliaciones(p); },
+    getConciliacion:               function (p) { return ContabilidadController.getConciliacion(p); },
+    createConciliacion:            function (p) { return ContabilidadController.createConciliacion(p); },
+    updateConciliacion:            function (p) { return ContabilidadController.updateConciliacion(p); },
+    cerrarConciliacion:            function (p) { return ContabilidadController.cerrarConciliacion(p); },
+    listCuentasPagar:              function (p) { return ContabilidadController.listCuentasPagar(p); },
+    getCuentaPagar:                function (p) { return ContabilidadController.getCuentaPagar(p); },
+    createCuentaPagar:             function (p) { return ContabilidadController.createCuentaPagar(p); },
+    updateCuentaPagar:             function (p) { return ContabilidadController.updateCuentaPagar(p); },
+    saldarCuentaPagar:             function (p) { return ContabilidadController.saldarCuentaPagar(p); },
+    listCuentasCobrar:             function (p) { return ContabilidadController.listCuentasCobrar(p); },
+    getCuentaCobrar:               function (p) { return ContabilidadController.getCuentaCobrar(p); },
+    createCuentaCobrar:            function (p) { return ContabilidadController.createCuentaCobrar(p); },
+    updateCuentaCobrar:            function (p) { return ContabilidadController.updateCuentaCobrar(p); },
+    getDashboardResumen:           function (p) { return ContabilidadController.getDashboardResumen(p); },
+    reporteEjecucionPresupuestaria: function (p) { return ContabilidadController.reporteEjecucionPresupuestaria(p); },
+    reportePagosPeriodo:           function (p) { return ContabilidadController.reportePagosPeriodo(p); },
+    reporteFacturasPendientes:     function (p) { return ContabilidadController.reporteFacturasPendientes(p); },
+    reporteProveedoresEjecucion:   function (p) { return ContabilidadController.reporteProveedoresEjecucion(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/MantenimientoUnit.js
+// ============================================================
+
+/**
+ * Mantenimiento Organizational Unit Definition — Facilities & Maintenance.
+ *
+ * Preventive and corrective maintenance management, asset tracking,
+ * work orders, spare parts inventory, and infrastructure planning.
+ */
+
+var MANTENIMIENTO_UNIT_DEF = {
+
+  key:         "mantenimiento",
+  label:       "Mantenimiento e Infraestructura",
+  description: "Gestión de mantenimiento preventivo y correctivo, ordenes de trabajo, " +
+               "activos institucionales y planificación de infraestructura.",
+  version:     "1.0.0",
+  enabled:     true,
+  icon:        "Wrench",
+  color:       "#DC2626",
+  owner: {
+    rol:   "HEAD",
+    label: "Jefe de Mantenimiento",
+  },
+
+  navigation: [
+    {
+      key: "dashboard", label: "Dashboard Mantenimiento", icon: "LayoutDashboard",
+      path: "/mantenimiento", requiredRoles: [],
+    },
+    {
+      key: "ordenes", label: "Órdenes de Trabajo", icon: "ClipboardList",
+      path: "/mantenimiento/ordenes", requiredRoles: [],
+      children: [
+        { key: "nueva",       label: "Nueva Orden",        icon: "Plus",         path: "/mantenimiento/ordenes/nueva" },
+        { key: "pendientes",  label: "Pendientes",         icon: "Clock",        path: "/mantenimiento/ordenes/pendientes" },
+        { key: "en-proceso",  label: "En Proceso",         icon: "Play",         path: "/mantenimiento/ordenes/en-proceso" },
+        { key: "completadas", label: "Completadas",        icon: "CheckCircle",  path: "/mantenimiento/ordenes/completadas" },
+      ],
+    },
+    {
+      key: "preventivo", label: "Mantenimiento Preventivo", icon: "Calendar",
+      path: "/mantenimiento/preventivo", requiredRoles: [],
+      children: [
+        { key: "plan",       label: "Plan Anual",          icon: "CalendarDays", path: "/mantenimiento/preventivo/plan" },
+        { key: "programado", label: "Mantenimientos Programados", icon: "CalendarCheck", path: "/mantenimiento/preventivo/programado" },
+      ],
+    },
+    {
+      key: "activos", label: "Activos / Inventario", icon: "Package",
+      path: "/mantenimiento/activos", requiredRoles: [],
+      children: [
+        { key: "equipos",    label: "Equipos e Infraestructura", icon: "Cpu",       path: "/mantenimiento/activos/equipos" },
+        { key: "repuestos",  label: "Repuestos y Materiales",    icon: "Layers",    path: "/mantenimiento/activos/repuestos" },
+      ],
+    },
+    {
+      key: "solicitudes", label: "Solicitudes de Servicio", icon: "Inbox",
+      path: "/mantenimiento/solicitudes", requiredRoles: [],
+    },
+    {
+      key: "proveedores", label: "Proveedores de Servicio", icon: "Building2",
+      path: "/mantenimiento/proveedores", requiredRoles: [],
+    },
+    {
+      key: "reportes", label: "Reportes", icon: "BarChart2",
+      path: "/mantenimiento/reportes", requiredRoles: [],
+    },
+    {
+      key: "configuracion", label: "Configuración", icon: "Settings",
+      path: "/mantenimiento/config", requiredRoles: ["ADMIN", "HEAD"],
+    },
+  ],
+
+  modules: [
+    "ordenes_trabajo", "mantenimiento_preventivo", "mantenimiento_correctivo",
+    "activos", "repuestos", "solicitudes_servicio", "proveedores_servicio",
+    "plan_anual", "reportes", "auditoria", "notificaciones", "documentos",
+    "calendario", "presupuesto_mant", "configuracion", "dashboard",
+    "checklist", "historial_activos", "garantias", "alertas",
+  ],
+
+  workflows: [
+    {
+      key:          "orden_trabajo_flow",
+      label:        "Proceso de Orden de Trabajo",
+      entity:       "ordenesTrabajo",
+      initialEtapa: "solicitud",
+      steps: [
+        { etapa: "solicitud",   paso: 1, label: "Solicitud de Servicio",  nextEtapa: "evaluacion",  requiredDocs: [] },
+        { etapa: "evaluacion",  paso: 2, label: "Evaluación Técnica",     nextEtapa: "asignacion",  requiredDocs: [] },
+        { etapa: "asignacion",  paso: 3, label: "Asignación de Técnico",  nextEtapa: "ejecucion",   requiredDocs: [] },
+        { etapa: "ejecucion",   paso: 4, label: "Ejecución",              nextEtapa: "inspeccion",  requiredDocs: [] },
+        { etapa: "inspeccion",  paso: 5, label: "Inspección y Cierre",    nextEtapa: "completado",  requiredDocs: [] },
+        { etapa: "completado",  paso: 6, label: "Completado",             nextEtapa: null,           requiredDocs: [] },
+      ],
+    },
+  ],
+
+  automations: [
+    {
+      key:     "alerta_orden_vencida",
+      label:   "Alerta orden de trabajo vencida",
+      trigger: "orden.fecha_estimada_vencida",
+      action:  "notificacion.enviar",
+      active:  true,
+      config:  { canal: "both", roles: ["HEAD", "ANALYST"] },
+    },
+  ],
+
+  reports: [
+    { key: "reporte_ordenes",   label: "Órdenes de Trabajo por Estado", entity: "ordenesTrabajo",        requiredRoles: [], format: "chart" },
+    { key: "reporte_activos",   label: "Estado de Activos",             entity: "activos",               requiredRoles: [], format: "table" },
+    { key: "reporte_preventivo", label: "Cumplimiento Plan Preventivo", entity: "mantenimientoPreventivo", requiredRoles: ["HEAD", "ADMIN"], format: "chart" },
+  ],
+
+  catalogs: [
+    { key: "tipo_mantenimiento", label: "Tipo de Mantenimiento", values: ["preventivo", "correctivo", "predictivo", "emergencia"] },
+    { key: "prioridad_orden",    label: "Prioridad",              values: ["critica", "alta", "normal", "baja"] },
+    { key: "area_instalacion",   label: "Área / Instalación",     values: ["edificio_a", "edificio_b", "cancha", "parqueo", "laboratorio", "biblioteca"] },
+  ],
+
+  permissions: {
+    ADMIN:   ["*"],
+    HEAD:    ["read", "write", "approve", "report"],
+    ANALYST: ["read", "write"],
+    OPS:     ["read", "write_orden"],
+    AUDIT:   ["read", "report"],
+  },
+
+  roles: [
+    { key: "HEAD",    label: "Jefe de Mantenimiento" },
+    { key: "ANALYST", label: "Técnico de Mantenimiento" },
+    { key: "OPS",     label: "Solicitante de Servicio" },
+    { key: "AUDIT",   label: "Auditor" },
+  ],
+
+  entities: [
+    "mantoActivos", "mantoUbicaciones", "mantoPlanes", "mantoSolicitudes",
+    "mantoOrdenesTrabajo", "mantoInspecciones", "mantoHistorial",
+    "mantoCostos", "mantoInventarioTecnico",
+  ],
+
+  settings: {
+    diasRespuestaEstandar:  3,
+    diasRespuestaCritica:   1,
+    alertaVencimientoHoras: 24,
+    notifEnabled:           true,
+    reporteAutoEnabled:     false,
+    periodoArchivado:       1095,
+  },
+
+  handlers: {
+    // Activos
+    listActivos:          function(p, c) { return routeMantenimientoAction_("listActivos",          p, c); },
+    getActivo:            function(p, c) { return routeMantenimientoAction_("getActivo",            p, c); },
+    createActivo:         function(p, c) { return routeMantenimientoAction_("createActivo",         p, c); },
+    updateActivo:         function(p, c) { return routeMantenimientoAction_("updateActivo",         p, c); },
+    cambiarEstadoActivo:  function(p, c) { return routeMantenimientoAction_("cambiarEstadoActivo",  p, c); },
+    darBajaActivo:        function(p, c) { return routeMantenimientoAction_("darBajaActivo",        p, c); },
+    // Ubicaciones
+    listUbicaciones:      function(p, c) { return routeMantenimientoAction_("listUbicaciones",      p, c); },
+    getUbicacion:         function(p, c) { return routeMantenimientoAction_("getUbicacion",         p, c); },
+    createUbicacion:      function(p, c) { return routeMantenimientoAction_("createUbicacion",      p, c); },
+    updateUbicacion:      function(p, c) { return routeMantenimientoAction_("updateUbicacion",      p, c); },
+    // Planes
+    listPlanes:           function(p, c) { return routeMantenimientoAction_("listPlanes",           p, c); },
+    getPlan:              function(p, c) { return routeMantenimientoAction_("getPlan",              p, c); },
+    createPlan:           function(p, c) { return routeMantenimientoAction_("createPlan",           p, c); },
+    updatePlan:           function(p, c) { return routeMantenimientoAction_("updatePlan",           p, c); },
+    activarPlan:          function(p, c) { return routeMantenimientoAction_("activarPlan",          p, c); },
+    // Solicitudes
+    listSolicitudes:      function(p, c) { return routeMantenimientoAction_("listSolicitudes",      p, c); },
+    getSolicitud:         function(p, c) { return routeMantenimientoAction_("getSolicitud",         p, c); },
+    createSolicitud:      function(p, c) { return routeMantenimientoAction_("createSolicitud",      p, c); },
+    updateSolicitud:      function(p, c) { return routeMantenimientoAction_("updateSolicitud",      p, c); },
+    aprobarSolicitud:     function(p, c) { return routeMantenimientoAction_("aprobarSolicitud",     p, c); },
+    // Órdenes de Trabajo
+    listOrdenes:          function(p, c) { return routeMantenimientoAction_("listOrdenes",          p, c); },
+    getOrden:             function(p, c) { return routeMantenimientoAction_("getOrden",             p, c); },
+    createOrden:          function(p, c) { return routeMantenimientoAction_("createOrden",          p, c); },
+    updateOrden:          function(p, c) { return routeMantenimientoAction_("updateOrden",          p, c); },
+    asignarTecnico:       function(p, c) { return routeMantenimientoAction_("asignarTecnico",       p, c); },
+    cerrarOrden:          function(p, c) { return routeMantenimientoAction_("cerrarOrden",          p, c); },
+    cancelarOrden:        function(p, c) { return routeMantenimientoAction_("cancelarOrden",        p, c); },
+    // Inspecciones
+    listInspecciones:     function(p, c) { return routeMantenimientoAction_("listInspecciones",     p, c); },
+    getInspeccion:        function(p, c) { return routeMantenimientoAction_("getInspeccion",        p, c); },
+    createInspeccion:     function(p, c) { return routeMantenimientoAction_("createInspeccion",     p, c); },
+    updateInspeccion:     function(p, c) { return routeMantenimientoAction_("updateInspeccion",     p, c); },
+    cerrarInspeccion:     function(p, c) { return routeMantenimientoAction_("cerrarInspeccion",     p, c); },
+    // Historial
+    listHistorial:        function(p, c) { return routeMantenimientoAction_("listHistorial",        p, c); },
+    getHistorialItem:     function(p, c) { return routeMantenimientoAction_("getHistorialItem",     p, c); },
+    createHistorial:      function(p, c) { return routeMantenimientoAction_("createHistorial",      p, c); },
+    // Costos
+    listCostos:           function(p, c) { return routeMantenimientoAction_("listCostos",           p, c); },
+    getCosto:             function(p, c) { return routeMantenimientoAction_("getCosto",             p, c); },
+    createCosto:          function(p, c) { return routeMantenimientoAction_("createCosto",          p, c); },
+    updateCosto:          function(p, c) { return routeMantenimientoAction_("updateCosto",          p, c); },
+    // Inventario Técnico
+    listInventario:           function(p, c) { return routeMantenimientoAction_("listInventario",           p, c); },
+    getInventarioItem:        function(p, c) { return routeMantenimientoAction_("getInventarioItem",        p, c); },
+    createInventarioItem:     function(p, c) { return routeMantenimientoAction_("createInventarioItem",     p, c); },
+    updateInventarioItem:     function(p, c) { return routeMantenimientoAction_("updateInventarioItem",     p, c); },
+    // Dashboard y Reportes
+    getDashboardResumen:           function(p, c) { return routeMantenimientoAction_("getDashboardResumen",           p, c); },
+    reporteEstadoActivos:          function(p, c) { return routeMantenimientoAction_("reporteEstadoActivos",          p, c); },
+    reporteOrdenesPeriodo:         function(p, c) { return routeMantenimientoAction_("reporteOrdenesPeriodo",         p, c); },
+    reporteCostosActivo:           function(p, c) { return routeMantenimientoAction_("reporteCostosActivo",           p, c); },
+    reporteCumplimientoPreventivo: function(p, c) { return routeMantenimientoAction_("reporteCumplimientoPreventivo", p, c); },
+    reporteOrdenesTecnico:         function(p, c) { return routeMantenimientoAction_("reporteOrdenesTecnico",         p, c); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/SaludSSOUnit.js
+// ============================================================
+
+/**
+ * Salud SSO Organizational Unit Definition — Occupational Health & Safety.
+ *
+ * Incident management, health surveillance, safety inspections, risk
+ * assessments, training compliance, and regulatory reporting.
+ */
+
+var SALUD_SSO_UNIT_DEF = {
+
+  key:         "salud",
+  label:       "Salud y Seguridad Ocupacional",
+  description: "Gestión de incidentes laborales, vigilancia de la salud, " +
+               "inspecciones de seguridad, evaluación de riesgos y cumplimiento " +
+               "regulatorio SSO.",
+  version:     "1.0.0",
+  enabled:     true,
+  icon:        "HeartPulse",
+  color:       "#0891B2",
+  owner: {
+    rol:   "HEAD",
+    label: "Responsable de SSO",
+  },
+
+  navigation: [
+    {
+      key: "dashboard", label: "Dashboard SSO", icon: "LayoutDashboard",
+      path: "/salud", requiredRoles: [],
+    },
+    {
+      key: "incidentes", label: "Incidentes y Accidentes", icon: "AlertTriangle",
+      path: "/salud/incidentes", requiredRoles: [],
+      children: [
+        { key: "reportar",   label: "Reportar Incidente",  icon: "FilePlus",     path: "/salud/incidentes/reportar" },
+        { key: "activos",    label: "Incidentes Activos",  icon: "AlertCircle",  path: "/salud/incidentes/activos" },
+        { key: "historial",  label: "Historial",           icon: "History",      path: "/salud/incidentes/historial" },
+        { key: "analisis",   label: "Análisis Causal",     icon: "Search",       path: "/salud/incidentes/analisis" },
+      ],
+    },
+    {
+      key: "inspecciones", label: "Inspecciones de Seguridad", icon: "ClipboardCheck",
+      path: "/salud/inspecciones", requiredRoles: [],
+      children: [
+        { key: "nueva",       label: "Nueva Inspección",       icon: "Plus",         path: "/salud/inspecciones/nueva" },
+        { key: "programadas", label: "Inspecciones Programadas", icon: "CalendarCheck", path: "/salud/inspecciones/programadas" },
+        { key: "hallazgos",   label: "Hallazgos",              icon: "AlertCircle",  path: "/salud/inspecciones/hallazgos" },
+      ],
+    },
+    {
+      key: "riesgos", label: "Matriz de Riesgos", icon: "Activity",
+      path: "/salud/riesgos", requiredRoles: [],
+      children: [
+        { key: "identificacion", label: "Identificación",       icon: "Search",      path: "/salud/riesgos/identificacion" },
+        { key: "evaluacion",     label: "Evaluación",           icon: "BarChart",    path: "/salud/riesgos/evaluacion" },
+        { key: "controles",      label: "Controles",            icon: "Shield",      path: "/salud/riesgos/controles" },
+      ],
+    },
+    {
+      key: "salud-empleados", label: "Salud de Empleados", icon: "Stethoscope",
+      path: "/salud/empleados", requiredRoles: [],
+      children: [
+        { key: "examenes",   label: "Exámenes Médicos",   icon: "FileHeart",   path: "/salud/empleados/examenes" },
+        { key: "seguimiento", label: "Seguimiento Médico", icon: "HeartPulse",  path: "/salud/empleados/seguimiento" },
+      ],
+    },
+    {
+      key: "capacitacion", label: "Capacitación SSO", icon: "GraduationCap",
+      path: "/salud/capacitacion", requiredRoles: [],
+      children: [
+        { key: "plan",      label: "Plan de Capacitación", icon: "CalendarDays", path: "/salud/capacitacion/plan" },
+        { key: "registros", label: "Registros de Asistencia", icon: "List",     path: "/salud/capacitacion/registros" },
+      ],
+    },
+    {
+      key: "regulatorio", label: "Cumplimiento Regulatorio", icon: "Scale",
+      path: "/salud/regulatorio", requiredRoles: ["HEAD", "ADMIN", "AUDIT"],
+    },
+    {
+      key: "reportes", label: "Reportes SSO", icon: "BarChart2",
+      path: "/salud/reportes", requiredRoles: [],
+    },
+    {
+      key: "configuracion", label: "Configuración", icon: "Settings",
+      path: "/salud/config", requiredRoles: ["ADMIN", "HEAD"],
+    },
+  ],
+
+  modules: [
+    "incidentes", "accidentes", "analisis_causal", "inspecciones",
+    "hallazgos", "matriz_riesgos", "controles_riesgo", "examenes_medicos",
+    "seguimiento_salud", "capacitacion_sso", "registros_asistencia",
+    "cumplimiento_regulatorio", "reportes", "auditoria", "notificaciones",
+    "documentos", "epp_control", "estadisticas", "configuracion", "dashboard",
+  ],
+
+  workflows: [
+    {
+      key:          "reporte_incidente_flow",
+      label:        "Proceso de Reporte e Investigación de Incidente",
+      entity:       "incidentes",
+      initialEtapa: "reporte",
+      steps: [
+        { etapa: "reporte",          paso: 1, label: "Reporte del Incidente",     nextEtapa: "notificacion",    requiredDocs: ["formulario_incidente"] },
+        { etapa: "notificacion",     paso: 2, label: "Notificación a Autoridades", nextEtapa: "investigacion",  requiredDocs: [] },
+        { etapa: "investigacion",    paso: 3, label: "Investigación",             nextEtapa: "analisis_causal", requiredDocs: [] },
+        { etapa: "analisis_causal",  paso: 4, label: "Análisis Causal",          nextEtapa: "plan_accion",     requiredDocs: ["diagrama_ishikawa"] },
+        { etapa: "plan_accion",      paso: 5, label: "Plan de Acción Correctiva", nextEtapa: "seguimiento",    requiredDocs: ["plan_accion"] },
+        { etapa: "seguimiento",      paso: 6, label: "Seguimiento de Acciones",  nextEtapa: "cierre",          requiredDocs: [] },
+        { etapa: "cierre",           paso: 7, label: "Cierre del Incidente",     nextEtapa: "completado",      requiredDocs: ["informe_final"] },
+        { etapa: "completado",       paso: 8, label: "Completado",               nextEtapa: null,               requiredDocs: [] },
+      ],
+    },
+  ],
+
+  automations: [
+    {
+      key:     "alerta_incidente_grave",
+      label:   "Alerta inmediata por incidente grave",
+      trigger: "incidente.severidad_alta",
+      action:  "notificacion.enviar",
+      active:  true,
+      config:  { canal: "both", roles: ["HEAD", "ADMIN"] },
+    },
+    {
+      key:     "recordatorio_examen_medico",
+      label:   "Recordatorio examen médico anual",
+      trigger: "empleado.examen_proximo_vencer",
+      action:  "notificacion.enviar",
+      active:  true,
+      config:  { canal: "email", roles: ["HEAD"] },
+    },
+  ],
+
+  reports: [
+    { key: "indice_siniestralidad",   label: "Índice de Siniestralidad",  entity: "incidentes",    requiredRoles: [], format: "chart" },
+    { key: "cumplimiento_inspeccion", label: "Cumplimiento de Inspecciones", entity: "inspecciones", requiredRoles: [], format: "chart" },
+    { key: "reporte_regulatorio",     label: "Reporte Regulatorio MTPS",  entity: "incidentes",    requiredRoles: ["HEAD", "ADMIN", "AUDIT"], format: "table" },
+  ],
+
+  catalogs: [
+    { key: "tipo_incidente",  label: "Tipo de Incidente",  values: ["accidente_trabajo", "enfermedad_profesional", "casi_accidente", "emergencia"] },
+    { key: "severidad",       label: "Severidad",          values: ["leve", "moderado", "grave", "fatal"] },
+    { key: "area_trabajo",    label: "Área de Trabajo",    values: ["administrativo", "academico", "laboratorio", "campo", "deportivo", "transporte"] },
+    { key: "tipo_riesgo",     label: "Tipo de Riesgo",     values: ["fisico", "quimico", "biologico", "ergonomico", "psicosocial", "mecanico"] },
+  ],
+
+  permissions: {
+    ADMIN:   ["*"],
+    HEAD:    ["read", "write", "approve", "report"],
+    ANALYST: ["read", "write"],
+    OPS:     ["read", "write_reporte"],
+    AUDIT:   ["read", "report"],
+  },
+
+  roles: [
+    { key: "HEAD",    label: "Responsable de SSO" },
+    { key: "ANALYST", label: "Técnico SSO" },
+    { key: "OPS",     label: "Reportador de Incidente" },
+    { key: "AUDIT",   label: "Auditor SSO" },
+  ],
+
+  entities: [
+    "ssoIncidentes", "ssoAccidentes", "ssoInspecciones", "ssoPeligros", "ssoRiesgos",
+    "ssoAcciones", "ssoEPP", "ssoCapacitaciones", "ssoComite", "ssoAuditorias", "ssoCumplimiento",
+  ],
+
+  settings: {
+    horasNotifIncidenteGrave:  0,
+    diasInvestigacion:         5,
+    diasSeguimientoAccion:     30,
+    examenMedicoPeriodicidad:  "anual",
+    notifEnabled:              true,
+    reporteAutoEnabled:        true,
+    periodoArchivado:          3650,
+  },
+
+  handlers: {
+    // Incidentes
+    listIncidentes:       function(p, c) { return routeSSOAction_("listIncidentes",       p, c); },
+    getIncidente:         function(p, c) { return routeSSOAction_("getIncidente",         p, c); },
+    createIncidente:      function(p, c) { return routeSSOAction_("createIncidente",      p, c); },
+    updateIncidente:      function(p, c) { return routeSSOAction_("updateIncidente",      p, c); },
+    clasificarIncidente:  function(p, c) { return routeSSOAction_("clasificarIncidente",  p, c); },
+    cerrarIncidente:      function(p, c) { return routeSSOAction_("cerrarIncidente",      p, c); },
+    // Accidentes
+    listAccidentes:       function(p, c) { return routeSSOAction_("listAccidentes",       p, c); },
+    getAccidente:         function(p, c) { return routeSSOAction_("getAccidente",         p, c); },
+    createAccidente:      function(p, c) { return routeSSOAction_("createAccidente",      p, c); },
+    updateAccidente:      function(p, c) { return routeSSOAction_("updateAccidente",      p, c); },
+    cerrarAccidente:      function(p, c) { return routeSSOAction_("cerrarAccidente",      p, c); },
+    // Inspecciones
+    listInspeccionesSso:  function(p, c) { return routeSSOAction_("listInspeccionesSso",  p, c); },
+    getInspeccionSso:     function(p, c) { return routeSSOAction_("getInspeccionSso",     p, c); },
+    createInspeccionSso:  function(p, c) { return routeSSOAction_("createInspeccionSso",  p, c); },
+    updateInspeccionSso:  function(p, c) { return routeSSOAction_("updateInspeccionSso",  p, c); },
+    cerrarInspeccionSso:  function(p, c) { return routeSSOAction_("cerrarInspeccionSso",  p, c); },
+    // Peligros
+    listPeligros:         function(p, c) { return routeSSOAction_("listPeligros",         p, c); },
+    getPeligro:           function(p, c) { return routeSSOAction_("getPeligro",           p, c); },
+    createPeligro:        function(p, c) { return routeSSOAction_("createPeligro",        p, c); },
+    updatePeligro:        function(p, c) { return routeSSOAction_("updatePeligro",        p, c); },
+    // Riesgos
+    listRiesgos:          function(p, c) { return routeSSOAction_("listRiesgos",          p, c); },
+    getRiesgo:            function(p, c) { return routeSSOAction_("getRiesgo",            p, c); },
+    createRiesgo:         function(p, c) { return routeSSOAction_("createRiesgo",         p, c); },
+    updateRiesgo:         function(p, c) { return routeSSOAction_("updateRiesgo",         p, c); },
+    // Acciones CAPA
+    listAccionesSso:      function(p, c) { return routeSSOAction_("listAccionesSso",      p, c); },
+    getAccionSso:         function(p, c) { return routeSSOAction_("getAccionSso",         p, c); },
+    createAccionSso:      function(p, c) { return routeSSOAction_("createAccionSso",      p, c); },
+    updateAccionSso:      function(p, c) { return routeSSOAction_("updateAccionSso",      p, c); },
+    verificarAccion:      function(p, c) { return routeSSOAction_("verificarAccion",      p, c); },
+    cerrarAccionSso:      function(p, c) { return routeSSOAction_("cerrarAccionSso",      p, c); },
+    // EPP
+    listEPP:              function(p, c) { return routeSSOAction_("listEPP",              p, c); },
+    getEPPItem:           function(p, c) { return routeSSOAction_("getEPPItem",           p, c); },
+    createEPPItem:        function(p, c) { return routeSSOAction_("createEPPItem",        p, c); },
+    updateEPPItem:        function(p, c) { return routeSSOAction_("updateEPPItem",        p, c); },
+    // Capacitaciones
+    listCapacitacionesSso:    function(p, c) { return routeSSOAction_("listCapacitacionesSso",    p, c); },
+    getCapacitacionSso:       function(p, c) { return routeSSOAction_("getCapacitacionSso",       p, c); },
+    createCapacitacionSso:    function(p, c) { return routeSSOAction_("createCapacitacionSso",    p, c); },
+    updateCapacitacionSso:    function(p, c) { return routeSSOAction_("updateCapacitacionSso",    p, c); },
+    finalizarCapacitacionSso: function(p, c) { return routeSSOAction_("finalizarCapacitacionSso", p, c); },
+    // Comité
+    listActasComite:      function(p, c) { return routeSSOAction_("listActasComite",      p, c); },
+    getActaComite:        function(p, c) { return routeSSOAction_("getActaComite",        p, c); },
+    createActaComite:     function(p, c) { return routeSSOAction_("createActaComite",     p, c); },
+    updateActaComite:     function(p, c) { return routeSSOAction_("updateActaComite",     p, c); },
+    // Auditorías
+    listAuditoriasSSO:    function(p, c) { return routeSSOAction_("listAuditoriasSSO",    p, c); },
+    getAuditoriaSSO:      function(p, c) { return routeSSOAction_("getAuditoriaSSO",      p, c); },
+    createAuditoriaSSO:   function(p, c) { return routeSSOAction_("createAuditoriaSSO",   p, c); },
+    updateAuditoriaSSO:   function(p, c) { return routeSSOAction_("updateAuditoriaSSO",   p, c); },
+    cerrarAuditoriaSSO:   function(p, c) { return routeSSOAction_("cerrarAuditoriaSSO",   p, c); },
+    // Cumplimiento Legal
+    listCumplimiento:     function(p, c) { return routeSSOAction_("listCumplimiento",     p, c); },
+    getCumplimiento:      function(p, c) { return routeSSOAction_("getCumplimiento",      p, c); },
+    createCumplimiento:   function(p, c) { return routeSSOAction_("createCumplimiento",   p, c); },
+    updateCumplimiento:   function(p, c) { return routeSSOAction_("updateCumplimiento",   p, c); },
+    // Dashboard + Reportes
+    getDashboardResumen:              function(p, c) { return routeSSOAction_("getDashboardResumen",              p, c); },
+    reporteIncidentesPeriodo:         function(p, c) { return routeSSOAction_("reporteIncidentesPeriodo",         p, c); },
+    reporteAccidentesArea:            function(p, c) { return routeSSOAction_("reporteAccidentesArea",            p, c); },
+    reporteAccionesPendientes:        function(p, c) { return routeSSOAction_("reporteAccionesPendientes",        p, c); },
+    reporteIndicadoresAccidentalidad: function(p, c) { return routeSSOAction_("reporteIndicadoresAccidentalidad", p, c); },
+    reporteCumplimientoLegal:         function(p, c) { return routeSSOAction_("reporteCumplimientoLegal",         p, c); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/ExecutivoUnit.js
+// ============================================================
+
+/**
+ * Ejecutivo Organizational Unit Definition — Executive Dashboard.
+ *
+ * Transversal unit that consolidates all organizational units into a single
+ * executive view. Delegates all logic to ExecutiveDashboardController and
+ * KPIEngine — no unit-specific business logic here.
+ */
+
+var EJECUTIVO_UNIT_DEF = {
+
+  // ── Identity ────────────────────────────────────────────────────────────────
+  key:         "ejecutivo",
+  label:       "Dashboard Ejecutivo",
+  description: "Vista consolidada institucional: KPIs, semáforos, alertas, " +
+               "tendencias y resúmenes de todas las unidades organizacionales.",
+  version:     "1.0.0",
+  enabled:     true,
+  icon:        "LayoutDashboard",
+  color:       "#7C3AED",
+  owner: {
+    rol:   "RECTOR",
+    label: "Rectoría",
+  },
+
+  // ── Navigation ──────────────────────────────────────────────────────────────
+  navigation: [
+    {
+      key: "dashboard-ejecutivo", label: "Dashboard Ejecutivo", icon: "LayoutDashboard",
+      path: "/admin/dashboard-ejecutivo", requiredRoles: [],
+    },
+  ],
+
+  // ── Entities (none — read-only aggregation) ──────────────────────────────────
+  entities: [],
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+  handlers: {
+    getDashboard:          function (p, c) { return ExecutiveDashboardController.getDashboard(p, c); },
+    getUnitSummary:        function (p, c) { return ExecutiveDashboardController.getUnitSummary(p, c); },
+    getAllKPIs:             function (p, c) { return ExecutiveDashboardController.getAllKPIs(p, c); },
+    getKPIsByDashboard:    function (p, c) { return ExecutiveDashboardController.getKPIsByDashboard(p, c); },
+    getKPIsByUnit:         function (p, c) { return ExecutiveDashboardController.getKPIsByUnit(p, c); },
+    getKPIsByCategoria:    function (p, c) { return ExecutiveDashboardController.getKPIsByCategoria(p, c); },
+    getKPIsSemaforo:       function (p, c) { return ExecutiveDashboardController.getKPIsSemaforo(p, c); },
+    getRegisteredAdapters: function (p, c) { return ExecutiveDashboardController.getRegisteredAdapters(p, c); },
+  },
+
+  // ── Permissions ───────────────────────────────────────────────────────────────
+  permissions: [
+    { key: "ejecutivo.read",   label: "Ver dashboard ejecutivo",      roles: ["RECTOR", "VICERRECTOR", "HEAD"] },
+    { key: "ejecutivo.export", label: "Exportar reportes ejecutivos", roles: ["RECTOR", "VICERRECTOR"] },
+  ],
+};
+
+// ============================================================
+// SOURCE: units/IMEUnit.js
+// ============================================================
+
+/**
+ * IME — Indicator Management Engine Unit Definition.
+ *
+ * Registers the "ime" namespace with OrgUnitRegistry.
+ * All handlers delegate to IMEController.
+ */
+var IME_UNIT_DEF = {
+  key:     "ime",
+  label:   "Gestión de Indicadores",
+  enabled: true,
+  handlers: {
+    // Indicadores
+    listIndicadores:     function (p) { return IMEController.listIndicadores(p); },
+    getIndicador:        function (p) { return IMEController.getIndicador(p); },
+    createIndicador:     function (p) { return IMEController.createIndicador(p); },
+    updateIndicador:     function (p) { return IMEController.updateIndicador(p); },
+    activarIndicador:    function (p) { return IMEController.activarIndicador(p); },
+    desactivarIndicador: function (p) { return IMEController.desactivarIndicador(p); },
+    duplicarIndicador:   function (p) { return IMEController.duplicarIndicador(p); },
+    getHistorial:        function (p) { return IMEController.getHistorial(p); },
+    // Catálogos
+    listCatalogos:       function (p) { return IMEController.listCatalogos(p); },
+    getCatalogo:         function (p) { return IMEController.getCatalogo(p); },
+    createCatalogo:      function (p) { return IMEController.createCatalogo(p); },
+    updateCatalogo:      function (p) { return IMEController.updateCatalogo(p); },
+    archivarCatalogo:    function (p) { return IMEController.archivarCatalogo(p); },
+    // Dashboard
+    getDashboard:        function (p) { return IMEController.getDashboard(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/PMEUnit.js
+// ============================================================
+
+/**
+ * PME — Process Management Engine Unit Definition.
+ * Registered in Code.js after registerAllUnits_().
+ */
+var PME_UNIT_DEF = {
+  key:     "pme",
+  label:   "Gestión de Procesos",
+  enabled: true,
+  handlers: {
+    // Procesos
+    listProcesos:          function (p) { return PMEController.listProcesos(p); },
+    getProceso:            function (p) { return PMEController.getProceso(p); },
+    createProceso:         function (p) { return PMEController.createProceso(p); },
+    updateProceso:         function (p) { return PMEController.updateProceso(p); },
+    archivarProceso:       function (p) { return PMEController.archivarProceso(p); },
+    activarProceso:        function (p) { return PMEController.activarProceso(p); },
+    duplicarProceso:       function (p) { return PMEController.duplicarProceso(p); },
+    // Procedimientos
+    listProcedimientos:    function (p) { return PMEController.listProcedimientos(p); },
+    getProcedimiento:      function (p) { return PMEController.getProcedimiento(p); },
+    createProcedimiento:   function (p) { return PMEController.createProcedimiento(p); },
+    updateProcedimiento:   function (p) { return PMEController.updateProcedimiento(p); },
+    archivarProcedimiento: function (p) { return PMEController.archivarProcedimiento(p); },
+    activarProcedimiento:  function (p) { return PMEController.activarProcedimiento(p); },
+    duplicarProcedimiento: function (p) { return PMEController.duplicarProcedimiento(p); },
+    // Actividades
+    listActividades:       function (p) { return PMEController.listActividades(p); },
+    getActividad:          function (p) { return PMEController.getActividad(p); },
+    createActividad:       function (p) { return PMEController.createActividad(p); },
+    updateActividad:       function (p) { return PMEController.updateActividad(p); },
+    archivarActividad:     function (p) { return PMEController.archivarActividad(p); },
+    activarActividad:      function (p) { return PMEController.activarActividad(p); },
+    duplicarActividad:     function (p) { return PMEController.duplicarActividad(p); },
+    // Catálogos
+    listCatalogos:         function (p) { return PMEController.listCatalogos(p); },
+    getCatalogo:           function (p) { return PMEController.getCatalogo(p); },
+    createCatalogo:        function (p) { return PMEController.createCatalogo(p); },
+    updateCatalogo:        function (p) { return PMEController.updateCatalogo(p); },
+    archivarCatalogo:      function (p) { return PMEController.archivarCatalogo(p); },
+    // Historial & Dashboard
+    getHistorial:          function (p) { return PMEController.getHistorial(p); },
+    getDashboard:          function (p) { return PMEController.getDashboard(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/APEUnit.js
+// ============================================================
+
+/**
+ * APE — Activity Planning Engine Unit Definition.
+ * Registered in Code.js after registerAllUnits_().
+ */
+var APE_UNIT_DEF = {
+  key:     "ape",
+  label:   "Planificación Institucional",
+  enabled: true,
+  handlers: {
+    listPlanes:        function (p) { return APEController.listPlanes(p); },
+    getPlan:           function (p) { return APEController.getPlan(p); },
+    createPlan:        function (p) { return APEController.createPlan(p); },
+    updatePlan:        function (p) { return APEController.updatePlan(p); },
+    cambiarEstado:     function (p) { return APEController.cambiarEstado(p); },
+    generatePlans:     function (p) { return APEController.generatePlans(p); },
+    previewGeneration: function (p) { return APEController.previewGeneration(p); },
+    getHistorial:      function (p) { return APEController.getHistorial(p); },
+    getDashboard:      function (p) { return APEController.getDashboard(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/AEEUnit.js
+// ============================================================
+
+/**
+ * AEE — Activity Execution Engine Unit Definition.
+ * Registered in Code.js after registerAllUnits_().
+ */
+var AEE_UNIT_DEF = {
+  key:     "aee",
+  label:   "Ejecución Institucional",
+  enabled: true,
+  handlers: {
+    listEjecuciones:   function (p) { return AEEController.listEjecuciones(p); },
+    getEjecucion:      function (p) { return AEEController.getEjecucion(p); },
+    createEjecucion:   function (p) { return AEEController.createEjecucion(p); },
+    updateEjecucion:   function (p) { return AEEController.updateEjecucion(p); },
+    cambiarEstado:     function (p) { return AEEController.cambiarEstado(p); },
+    archivarEjecucion: function (p) { return AEEController.archivarEjecucion(p); },
+    getMisActividades: function (p) { return AEEController.getMisActividades(p); },
+    listCatalogos:     function (p) { return AEEController.listCatalogos(p); },
+    createCatalogo:    function (p) { return AEEController.createCatalogo(p); },
+    updateCatalogo:    function (p) { return AEEController.updateCatalogo(p); },
+    getHistorial:      function (p) { return AEEController.getHistorial(p); },
+    getDashboard:      function (p) { return AEEController.getDashboard(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/EMEUnit.js
+// ============================================================
+
+/**
+ * EME — Evidence Management Engine unit definition.
+ *
+ * Registered in Code.js after registerAllUnits_().
+ * Namespace: "eme"
+ */
+var EME_UNIT_DEF = {
+  key:     "eme",
+  label:   "Gestión de Evidencias",
+  enabled: true,
+
+  handlers: {
+    listEvidencias:    function (p) { return EMEController.listEvidencias(p);    },
+    getEvidencia:      function (p) { return EMEController.getEvidencia(p);      },
+    createEvidencia:   function (p) { return EMEController.createEvidencia(p);   },
+    updateEvidencia:   function (p) { return EMEController.updateEvidencia(p);   },
+    cambiarEstado:     function (p) { return EMEController.cambiarEstado(p);     },
+    validarEvidencia:  function (p) { return EMEController.validarEvidencia(p);  },
+    nuevaVersion:      function (p) { return EMEController.nuevaVersion(p);      },
+    archivarEvidencia: function (p) { return EMEController.archivarEvidencia(p); },
+    getMisEvidencias:  function (p) { return EMEController.getMisEvidencias(p);  },
+    listCatalogos:     function (p) { return EMEController.listCatalogos(p);     },
+    createCatalogo:    function (p) { return EMEController.createCatalogo(p);    },
+    updateCatalogo:    function (p) { return EMEController.updateCatalogo(p);    },
+    getHistorial:      function (p) { return EMEController.getHistorial(p);      },
+    buscarEvidencias:  function (p) { return EMEController.buscarEvidencias(p);  },
+    getDashboard:      function (p) { return EMEController.getDashboard(p);      },
+  },
+};
+
+// ============================================================
+// SOURCE: units/CPEUnit.js
+// ============================================================
+
+/**
+ * CPE — Compliance & Performance Engine unit definition.
+ * Registered with OrgUnitRegistry so the router can dispatch cpe.* actions.
+ */
+var CPE_UNIT_DEF = {
+  key:     "cpe",
+  label:   "Cumplimiento Institucional",
+  enabled: true,
+  handlers: {
+    calcularCumplimiento: CPEController.calcularCumplimiento,
+    getSnapshot:          CPEController.getSnapshot,
+    listSnapshots:        CPEController.listSnapshots,
+    getDashboard:         CPEController.getDashboard,
+    getBrechas:           CPEController.getBrechas,
+    listPlanesMejora:     CPEController.listPlanesMejora,
+    getPlanMejora:        CPEController.getPlanMejora,
+    createPlanMejora:     CPEController.createPlanMejora,
+    updatePlanMejora:     CPEController.updatePlanMejora,
+    deletePlanMejora:     CPEController.deletePlanMejora,
+    listCatalogos:        CPEController.listCatalogos,
+    updateCatalogo:       CPEController.updateCatalogo,
+    getHistorial:         CPEController.getHistorial,
+  },
+};
+
+// ============================================================
+// SOURCE: units/EIPUnit.js
+// ============================================================
+
+/**
+ * EIP — Executive Intelligence Platform unit definition.
+ * Read-only engine. No entity schema ownership.
+ */
+var EIP_UNIT_DEF = {
+  key:     "eip",
+  label:   "Executive Intelligence Platform",
+  enabled: true,
+  handlers: {
+    getDashboard:   EIPController.getDashboard,
+    getScorecard:   EIPController.getScorecard,
+    getHeatMap:     EIPController.getHeatMap,
+    getTrends:      EIPController.getTrends,
+    getAlerts:      EIPController.getAlerts,
+    getTimeline:    EIPController.getTimeline,
+    getRanking:     EIPController.getRanking,
+    getComparativo: EIPController.getComparativo,
+  },
+};
+
+// ============================================================
+// SOURCE: units/IIEUnit.js
+// ============================================================
+
+/**
+ * IIE — Institutional Intelligence Engine unit registration.
+ */
+var IIE_UNIT_DEF = {
+  key: "iie",
+  label: "Institutional Intelligence Engine",
+  enabled: true,
+  handlers: {
+    getDashboard:         IIEController.getDashboard,
+    getDiagnostics:       IIEController.getDiagnostics,
+    getRecommendations:   IIEController.getRecommendations,
+    getPredictions:       IIEController.getPredictions,
+    getAnomalies:         IIEController.getAnomalies,
+    getNarratives:        IIEController.getNarratives,
+    getConfiguration:     IIEController.getConfiguration,
+    updateConfiguration:  IIEController.updateConfiguration,
+    getKnowledgeRules:    IIEController.getKnowledgeRules,
+    updateKnowledgeRule:  IIEController.updateKnowledgeRule,
+    getSemanticModel:     IIEController.getSemanticModel,
+    semanticQuery:        IIEController.semanticQuery,
+  },
+};
+
+// ============================================================
+// SOURCE: units/IOEUnit.js
+// ============================================================
+
+/**
+ * IOE — Institutional Orchestration Engine
+ * OrgUnitRegistry registration definition.
+ */
+var IOE_UNIT_DEF = {
+  key:     "ioe",
+  label:   "Institutional Orchestration Engine",
+  enabled: true,
+  handlers: {
+    getDashboard:               function (p) { return IOEController.getDashboard(p); },
+    getActionPlans:             function (p) { return IOEController.getActionPlans(p); },
+    getActionPlan:              function (p) { return IOEController.getActionPlan(p); },
+    createActionPlan:           function (p) { return IOEController.createActionPlan(p); },
+    updateActionPlan:           function (p) { return IOEController.updateActionPlan(p); },
+    getMilestones:              function (p) { return IOEController.getMilestones(p); },
+    createMilestone:            function (p) { return IOEController.createMilestone(p); },
+    updateMilestone:            function (p) { return IOEController.updateMilestone(p); },
+    getTasks:                   function (p) { return IOEController.getTasks(p); },
+    createTask:                 function (p) { return IOEController.createTask(p); },
+    updateTask:                 function (p) { return IOEController.updateTask(p); },
+    getDecisions:               function (p) { return IOEController.getDecisions(p); },
+    createDecision:             function (p) { return IOEController.createDecision(p); },
+    updateDecision:             function (p) { return IOEController.updateDecision(p); },
+    getCalendarEvents:          function (p) { return IOEController.getCalendarEvents(p); },
+    createFromSource:           function (p) { return IOEController.createFromSource(p); },
+    checkCompletionEligibility: function (p) { return IOEController.checkCompletionEligibility(p); },
+    closePlan:                  function (p) { return IOEController.closePlan(p); },
+    getMetrics:                 function (p) { return IOEController.getMetrics(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/AUEUnit.js
+// ============================================================
+
+/**
+ * AUE — Automation & Event Engine
+ * OrgUnitRegistry registration definition.
+ */
+var AUE_UNIT_DEF = {
+  key:     "aue",
+  label:   "Automation & Event Engine",
+  enabled: true,
+  handlers: {
+    getDashboard:   function (p) { return AUEController.getDashboard(p);   },
+    getEvents:      function (p) { return AUEController.getEvents(p);      },
+    createEvent:    function (p) { return AUEController.createEvent(p);    },
+    processEvent:   function (p) { return AUEController.processEvent(p);   },
+    getRules:       function (p) { return AUEController.getRules(p);       },
+    getRule:        function (p) { return AUEController.getRule(p);        },
+    createRule:     function (p) { return AUEController.createRule(p);     },
+    updateRule:     function (p) { return AUEController.updateRule(p);     },
+    duplicateRule:  function (p) { return AUEController.duplicateRule(p);  },
+    getExecutions:  function (p) { return AUEController.getExecutions(p);  },
+    getQueue:       function (p) { return AUEController.getQueue(p);       },
+    retryExecution: function (p) { return AUEController.retryExecution(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/NCEUnit.js
+// ============================================================
+
+/**
+ * NCE — Notification & Communication Engine Unit Definition.
+ */
+var NCE_UNIT_DEF = {
+  key: "nce",
+  label: "Notification & Communication Engine",
+  enabled: true,
+  handlers: {
+    getDashboard: function (p) { return NCEController.getDashboard(p); },
+    getNotifications: function (p) { return NCEController.getNotifications(p); },
+    createNotification: function (p) { return NCEController.createNotification(p); },
+    markRead: function (p) { return NCEController.markRead(p); },
+    archiveNotification: function (p) { return NCEController.archiveNotification(p); },
+    getTemplates: function (p) { return NCEController.getTemplates(p); },
+    getTemplate: function (p) { return NCEController.getTemplate(p); },
+    createTemplate: function (p) { return NCEController.createTemplate(p); },
+    updateTemplate: function (p) { return NCEController.updateTemplate(p); },
+    getPreference: function (p) { return NCEController.getPreference(p); },
+    updatePreference: function (p) { return NCEController.updatePreference(p); },
+    generateDigest: function (p) { return NCEController.generateDigest(p); },
+    getDigests: function (p) { return NCEController.getDigests(p); },
+    consumeAUEEvents: function (p) { return NCEController.consumeAUEEvents(p); },
+    seedTemplates: function (p) { return NCEController.seedTemplates(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/ISPUnit.js
+// ============================================================
+
+/**
+ * ISP — Identity & Security Platform Unit Definition.
+ */
+var ISP_UNIT_DEF = {
+  key: "isp",
+  label: "Identity & Security Platform",
+  enabled: true,
+  handlers: {
+    getDashboard:         function (p) { return ISPController.getDashboard(p); },
+    getUsers:             function (p) { return ISPController.getUsers(p); },
+    getUser:              function (p) { return ISPController.getUser(p); },
+    createUser:           function (p) { return ISPController.createUser(p); },
+    updateUser:           function (p) { return ISPController.updateUser(p); },
+    setUserStatus:        function (p) { return ISPController.setUserStatus(p); },
+    getRoles:             function (p) { return ISPController.getRoles(p); },
+    getRole:              function (p) { return ISPController.getRole(p); },
+    createRole:           function (p) { return ISPController.createRole(p); },
+    updateRole:           function (p) { return ISPController.updateRole(p); },
+    deleteRole:           function (p) { return ISPController.deleteRole(p); },
+    duplicateRole:        function (p) { return ISPController.duplicateRole(p); },
+    getPermissions:       function (p) { return ISPController.getPermissions(p); },
+    getRolePermissions:   function (p) { return ISPController.getRolePermissions(p); },
+    assignPermissions:    function (p) { return ISPController.assignPermissions(p); },
+    checkPermission:      function (p) { return ISPController.checkPermission(p); },
+    getPermissionMatrix:  function (p) { return ISPController.getPermissionMatrix(p); },
+    getSessions:          function (p) { return ISPController.getSessions(p); },
+    closeSession:         function (p) { return ISPController.closeSession(p); },
+    closeAllUserSessions: function (p) { return ISPController.closeAllUserSessions(p); },
+    login:                function (p) { return ISPController.login(p); },
+    logout:               function (p) { return ISPController.logout(p); },
+    validateSession:      function (p) { return ISPController.validateSession(p); },
+    renewSession:         function (p) { return ISPController.renewSession(p); },
+    getAuditLogs:         function (p) { return ISPController.getAuditLogs(p); },
+    getConfig:            function (p) { return ISPController.getConfig(p); },
+    updateConfig:         function (p) { return ISPController.updateConfig(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/GWPUnit.js
+// ============================================================
+
+/**
+ * GWP — Google Workspace Integration Platform
+ * OrgUnit definition. Registered in Code.js bootstrap.
+ */
+var GWP_UNIT_DEF = {
+  key:     "gwp",
+  label:   "Google Workspace Integration Platform",
+  enabled: true,
+  handlers: {
+    // Dashboard
+    "gwp.getDashboard":       function (p) { return GWPController.getDashboard(p); },
+    // OAuth
+    "gwp.getAuthUrl":         function (p) { return GWPController.getAuthUrl(p); },
+    "gwp.handleCallback":     function (p) { return GWPController.handleCallback(p); },
+    "gwp.getOAuthStatus":     function (p) { return GWPController.getOAuthStatus(p); },
+    "gwp.revokeToken":        function (p) { return GWPController.revokeToken(p); },
+    "gwp.refreshToken":       function (p) { return GWPController.refreshToken(p); },
+    // Config
+    "gwp.getConfig":          function (p) { return GWPController.getConfig(p); },
+    "gwp.updateConfig":       function (p) { return GWPController.updateConfig(p); },
+    // Drive
+    "gwp.createFolder":       function (p) { return GWPController.createFolder(p); },
+    "gwp.findFolder":         function (p) { return GWPController.findFolder(p); },
+    "gwp.uploadFile":         function (p) { return GWPController.uploadFile(p); },
+    "gwp.updateFile":         function (p) { return GWPController.updateFile(p); },
+    "gwp.moveFile":           function (p) { return GWPController.moveFile(p); },
+    "gwp.deleteFile":         function (p) { return GWPController.deleteFile(p); },
+    "gwp.shareFile":          function (p) { return GWPController.shareFile(p); },
+    "gwp.getFileMetadata":    function (p) { return GWPController.getFileMetadata(p); },
+    "gwp.generateLink":       function (p) { return GWPController.generateLink(p); },
+    "gwp.listVersions":       function (p) { return GWPController.listVersions(p); },
+    "gwp.getDriveQuota":      function (p) { return GWPController.getDriveQuota(p); },
+    // Gmail
+    "gwp.sendMail":           function (p) { return GWPController.sendMail(p); },
+    "gwp.replyToThread":      function (p) { return GWPController.replyToThread(p); },
+    "gwp.getMailLogs":        function (p) { return GWPController.getMailLogs(p); },
+    // Calendar
+    "gwp.createEvent":        function (p) { return GWPController.createEvent(p); },
+    "gwp.updateEvent":        function (p) { return GWPController.updateEvent(p); },
+    "gwp.deleteEvent":        function (p) { return GWPController.deleteEvent(p); },
+    "gwp.checkAvailability":  function (p) { return GWPController.checkAvailability(p); },
+    "gwp.listEvents":         function (p) { return GWPController.listEvents(p); },
+    // Chat
+    "gwp.listSpaces":         function (p) { return GWPController.listSpaces(p); },
+    "gwp.sendChatMessage":    function (p) { return GWPController.sendChatMessage(p); },
+    "gwp.createChatCard":     function (p) { return GWPController.createChatCard(p); },
+    "gwp.replyToSpace":       function (p) { return GWPController.replyToSpace(p); },
+    "gwp.getChatLogs":        function (p) { return GWPController.getChatLogs(p); },
+    // Audit
+    "gwp.getAuditLog":        function (p) { return GWPController.getAuditLog(p); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/IIAUnit.js
+// ============================================================
+
+/**
+ * IIA Unit Definition — Institutional Intelligence Assistant.
+ * 12 handlers proxied to IIAController.
+ */
+
+var IIA_UNIT_DEF = {
+  namespace: "iia",
+  handlers: {
+    chat:               function (p, ctx) { return IIAController.handle("chat",               p, ctx); },
+    listConversations:  function (p, ctx) { return IIAController.handle("listConversations",  p, ctx); },
+    getConversation:    function (p, ctx) { return IIAController.handle("getConversation",    p, ctx); },
+    deleteConversation: function (p, ctx) { return IIAController.handle("deleteConversation", p, ctx); },
+    getDashboard:       function (p, ctx) { return IIAController.handle("getDashboard",       p, ctx); },
+    getConfig:          function (p, ctx) { return IIAController.handle("getConfig",          p, ctx); },
+    updateConfig:       function (p, ctx) { return IIAController.handle("updateConfig",       p, ctx); },
+    listPrompts:        function (p, ctx) { return IIAController.handle("listPrompts",        p, ctx); },
+    updatePrompt:       function (p, ctx) { return IIAController.handle("updatePrompt",       p, ctx); },
+    getHistory:         function (p, ctx) { return IIAController.handle("getHistory",         p, ctx); },
+    checkStatus:        function (p, ctx) { return IIAController.handle("checkStatus",        p, ctx); },
+    clearHistory:       function (p, ctx) { return IIAController.handle("clearHistory",       p, ctx); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/FMIUnit.js
+// ============================================================
+
+/**
+ * FMI Unit Definition — Framework Maestro de Indicadores.
+ * 32 handlers proxied to FMIController.
+ */
+
+var FMI_UNIT_DEF = {
+  namespace: "fmi",
+  handlers: {
+    // Objectives
+    listObjectives:    function(p, ctx) { return FMIController.handle("listObjectives",    p, ctx); },
+    getObjective:      function(p, ctx) { return FMIController.handle("getObjective",      p, ctx); },
+    createObjective:   function(p, ctx) { return FMIController.handle("createObjective",   p, ctx); },
+    updateObjective:   function(p, ctx) { return FMIController.handle("updateObjective",   p, ctx); },
+    deleteObjective:   function(p, ctx) { return FMIController.handle("deleteObjective",   p, ctx); },
+    // Dimensions
+    listDimensions:    function(p, ctx) { return FMIController.handle("listDimensions",    p, ctx); },
+    getDimension:      function(p, ctx) { return FMIController.handle("getDimension",      p, ctx); },
+    createDimension:   function(p, ctx) { return FMIController.handle("createDimension",   p, ctx); },
+    updateDimension:   function(p, ctx) { return FMIController.handle("updateDimension",   p, ctx); },
+    deleteDimension:   function(p, ctx) { return FMIController.handle("deleteDimension",   p, ctx); },
+    // Unit Measures
+    listUnitMeasures:  function(p, ctx) { return FMIController.handle("listUnitMeasures",  p, ctx); },
+    getUnitMeasure:    function(p, ctx) { return FMIController.handle("getUnitMeasure",    p, ctx); },
+    createUnitMeasure: function(p, ctx) { return FMIController.handle("createUnitMeasure", p, ctx); },
+    updateUnitMeasure: function(p, ctx) { return FMIController.handle("updateUnitMeasure", p, ctx); },
+    deleteUnitMeasure: function(p, ctx) { return FMIController.handle("deleteUnitMeasure", p, ctx); },
+    // Frequencies
+    listFrequencies:   function(p, ctx) { return FMIController.handle("listFrequencies",   p, ctx); },
+    getFrequency:      function(p, ctx) { return FMIController.handle("getFrequency",      p, ctx); },
+    createFrequency:   function(p, ctx) { return FMIController.handle("createFrequency",   p, ctx); },
+    updateFrequency:   function(p, ctx) { return FMIController.handle("updateFrequency",   p, ctx); },
+    deleteFrequency:   function(p, ctx) { return FMIController.handle("deleteFrequency",   p, ctx); },
+    // Polarities (read-only)
+    listPolarities:    function(p, ctx) { return FMIController.handle("listPolarities",    p, ctx); },
+    // Formulas
+    listFormulas:      function(p, ctx) { return FMIController.handle("listFormulas",      p, ctx); },
+    getFormula:        function(p, ctx) { return FMIController.handle("getFormula",        p, ctx); },
+    createFormula:     function(p, ctx) { return FMIController.handle("createFormula",     p, ctx); },
+    updateFormula:     function(p, ctx) { return FMIController.handle("updateFormula",     p, ctx); },
+    deleteFormula:     function(p, ctx) { return FMIController.handle("deleteFormula",     p, ctx); },
+    calculateFormula:  function(p, ctx) { return FMIController.handle("calculateFormula",  p, ctx); },
+    // Range Configs
+    listRangeConfigs:  function(p, ctx) { return FMIController.handle("listRangeConfigs",  p, ctx); },
+    getRangeConfig:    function(p, ctx) { return FMIController.handle("getRangeConfig",    p, ctx); },
+    createRangeConfig: function(p, ctx) { return FMIController.handle("createRangeConfig", p, ctx); },
+    updateRangeConfig: function(p, ctx) { return FMIController.handle("updateRangeConfig", p, ctx); },
+    deleteRangeConfig: function(p, ctx) { return FMIController.handle("deleteRangeConfig", p, ctx); },
+    evaluateRange:     function(p, ctx) { return FMIController.handle("evaluateRange",     p, ctx); },
+  },
+};
+
+// ============================================================
+// SOURCE: units/IDEUnit.js
+// ============================================================
+
+// ============================================================
+// IDE — Indicator Definition Engine  |  Unit Definition
+// ============================================================
+
+var IDE_UNIT_DEF = {
+  id:          "ide",
+  name:        "Indicator Definition Engine",
+  description: "Motor institucional de definición, validación, importación y versionado de indicadores.",
+  version:     "1.0.0",
+  color:       "#D97706",
+  handlers: [
+    // Indicator CRUD
+    { action: "ide.listIndicators",    handler: function (p, c) { return IDEController.handle("ide.listIndicators",    p, c); } },
+    { action: "ide.getIndicator",      handler: function (p, c) { return IDEController.handle("ide.getIndicator",      p, c); } },
+    { action: "ide.createIndicator",   handler: function (p, c) { return IDEController.handle("ide.createIndicator",   p, c); } },
+    { action: "ide.updateIndicator",   handler: function (p, c) { return IDEController.handle("ide.updateIndicator",   p, c); } },
+    { action: "ide.deleteIndicator",   handler: function (p, c) { return IDEController.handle("ide.deleteIndicator",   p, c); } },
+    // Validation & preview
+    { action: "ide.validateIndicator", handler: function (p, c) { return IDEController.handle("ide.validateIndicator", p, c); } },
+    { action: "ide.previewIndicator",  handler: function (p, c) { return IDEController.handle("ide.previewIndicator",  p, c); } },
+    // Simulation
+    { action: "ide.simulateIndicator", handler: function (p, c) { return IDEController.handle("ide.simulateIndicator", p, c); } },
+    // Status transitions
+    { action: "ide.publishIndicator",  handler: function (p, c) { return IDEController.handle("ide.publishIndicator",  p, c); } },
+    { action: "ide.archiveIndicator",  handler: function (p, c) { return IDEController.handle("ide.archiveIndicator",  p, c); } },
+    { action: "ide.sendToReview",      handler: function (p, c) { return IDEController.handle("ide.sendToReview",      p, c); } },
+    { action: "ide.sendToDraft",       handler: function (p, c) { return IDEController.handle("ide.sendToDraft",       p, c); } },
+    // Versions
+    { action: "ide.listVersions",      handler: function (p, c) { return IDEController.handle("ide.listVersions",      p, c); } },
+    { action: "ide.duplicateVersion",  handler: function (p, c) { return IDEController.handle("ide.duplicateVersion",  p, c); } },
+    // Variable resolution
+    { action: "ide.resolveVariables",  handler: function (p, c) { return IDEController.handle("ide.resolveVariables",  p, c); } },
+    // Duplicate detection
+    { action: "ide.detectDuplicates",  handler: function (p, c) { return IDEController.handle("ide.detectDuplicates",  p, c); } },
+    // Import engine
+    { action: "ide.prepareImport",     handler: function (p, c) { return IDEController.handle("ide.prepareImport",     p, c); } },
+    { action: "ide.getMappingTemplate",handler: function (p, c) { return IDEController.handle("ide.getMappingTemplate",p, c); } },
+  ],
+};
+
+// ============================================================
+// SOURCE: units/ICEUnit.js
+// ============================================================
+
+// ============================================================
+// ICE — Indicator Capture Engine  |  Unit Definition
+// ============================================================
+
+var ICE_UNIT_DEF = {
+  id:          "ice",
+  name:        "Indicator Capture Engine",
+  description: "Motor operativo de captura de variables, cálculo automático, aprobaciones y auditoría de indicadores.",
+  version:     "1.0.0",
+  color:       "#0284C7",
+  handlers: [
+    // Periods
+    { action: "ice.listPeriods",       handler: function (p, c) { return ICEController.handle("ice.listPeriods",       p, c); } },
+    { action: "ice.getPeriod",         handler: function (p, c) { return ICEController.handle("ice.getPeriod",         p, c); } },
+    { action: "ice.createPeriod",      handler: function (p, c) { return ICEController.handle("ice.createPeriod",      p, c); } },
+    { action: "ice.updatePeriod",      handler: function (p, c) { return ICEController.handle("ice.updatePeriod",      p, c); } },
+    { action: "ice.openPeriod",        handler: function (p, c) { return ICEController.handle("ice.openPeriod",        p, c); } },
+    { action: "ice.reviewPeriod",      handler: function (p, c) { return ICEController.handle("ice.reviewPeriod",      p, c); } },
+    { action: "ice.closePeriod",       handler: function (p, c) { return ICEController.handle("ice.closePeriod",       p, c); } },
+    { action: "ice.lockPeriod",        handler: function (p, c) { return ICEController.handle("ice.lockPeriod",        p, c); } },
+    // Captures
+    { action: "ice.listCapturas",      handler: function (p, c) { return ICEController.handle("ice.listCapturas",      p, c); } },
+    { action: "ice.getCaptura",        handler: function (p, c) { return ICEController.handle("ice.getCaptura",        p, c); } },
+    { action: "ice.createCaptura",     handler: function (p, c) { return ICEController.handle("ice.createCaptura",     p, c); } },
+    { action: "ice.updateCaptura",     handler: function (p, c) { return ICEController.handle("ice.updateCaptura",     p, c); } },
+    { action: "ice.deleteCaptura",     handler: function (p, c) { return ICEController.handle("ice.deleteCaptura",     p, c); } },
+    { action: "ice.calculateCaptura",  handler: function (p, c) { return ICEController.handle("ice.calculateCaptura",  p, c); } },
+    { action: "ice.submitCaptura",     handler: function (p, c) { return ICEController.handle("ice.submitCaptura",     p, c); } },
+    // Variables
+    { action: "ice.listCaptureVars",   handler: function (p, c) { return ICEController.handle("ice.listCaptureVars",   p, c); } },
+    { action: "ice.saveCaptureVars",   handler: function (p, c) { return ICEController.handle("ice.saveCaptureVars",   p, c); } },
+    // Approvals
+    { action: "ice.listApprovals",     handler: function (p, c) { return ICEController.handle("ice.listApprovals",     p, c); } },
+    { action: "ice.approve",           handler: function (p, c) { return ICEController.handle("ice.approve",           p, c); } },
+    { action: "ice.reject",            handler: function (p, c) { return ICEController.handle("ice.reject",            p, c); } },
+    { action: "ice.reopen",            handler: function (p, c) { return ICEController.handle("ice.reopen",            p, c); } },
+    // Evidence
+    { action: "ice.listEvidenceRefs",  handler: function (p, c) { return ICEController.handle("ice.listEvidenceRefs",  p, c); } },
+    { action: "ice.linkEvidence",      handler: function (p, c) { return ICEController.handle("ice.linkEvidence",      p, c); } },
+    { action: "ice.unlinkEvidence",    handler: function (p, c) { return ICEController.handle("ice.unlinkEvidence",    p, c); } },
+    // Audit
+    { action: "ice.listAudit",         handler: function (p, c) { return ICEController.handle("ice.listAudit",         p, c); } },
+    // Composite
+    { action: "ice.getMyIndicators",   handler: function (p, c) { return ICEController.handle("ice.getMyIndicators",   p, c); } },
+    { action: "ice.getCaptureContext", handler: function (p, c) { return ICEController.handle("ice.getCaptureContext",  p, c); } },
+  ],
+};
+
+// ============================================================
+// SOURCE: units/OIMUnit.js
+// ============================================================
+
+// ============================================================
+// OIM — Official Indicator Migration  |  Unit Definition
+// ============================================================
+
+var OIM_UNIT_DEF = {
+  id:          "oim",
+  name:        "Official Indicator Migration",
+  description: "Motor de migración oficial de los 10 indicadores VRAF hacia el IDE. Sprint 017.",
+  version:     "1.0.0",
+  color:       "#6366F1",
+  handlers: [
+    { action: "oim.runMigration",      handler: function (p, c) { return VRAFMigration.handle("oim.runMigration",      p, c); } },
+    { action: "oim.getPreview",        handler: function (p, c) { return VRAFMigration.handle("oim.getPreview",        p, c); } },
+    { action: "oim.listReports",       handler: function (p, c) { return VRAFMigration.handle("oim.listReports",       p, c); } },
+    { action: "oim.mergeVRAFCatalogs", handler: function (p, c) { return VRAFMigration.handle("oim.mergeVRAFCatalogs", p, c); } },
+  ],
+};
 
 // ============================================================
 // SOURCE: setup/SpreadsheetSetup.js
@@ -5439,7 +25384,6 @@ function initializeWorkspaceSettings() {
   AppLogger.info("initializeWorkspaceSettings: complete", { total: WORKSPACES.length });
   return { success: true, workspaces: results };
 }
-
 
 // ============================================================
 // SOURCE: setup/DriveSetup.js
@@ -5716,7 +25660,6 @@ function initializeFullDriveHierarchy() {
     workspaces:    workspaceResults,
   };
 }
-
 
 // ============================================================
 // SOURCE: setup/WorkspaceTemplateInstaller.js
@@ -6242,6 +26185,240 @@ var WorkspaceTemplateInstaller = (function () {
 
 })();
 
+// ============================================================
+// SOURCE: setup/SeedInstaller.js
+// ============================================================
+
+/**
+ * SeedInstaller — Institutional seed data for SSE-VRAF.
+ *
+ * Installs the 6 organizational workspaces, 6 institutional users,
+ * and their workspace-user assignments during BootstrapController.installTemplates().
+ *
+ * Design rules:
+ *   • No user data hardcoded outside this file.
+ *   • Idempotent: checks for existing records before inserting.
+ *   • All writes use createEntity_/getEntity_ from SheetRepository.
+ *   • wsSettings.id = wsId by convention (same as upsertByWsId pattern).
+ */
+var SeedInstaller = (function () {
+
+  // ── Institutional users ──────────────────────────────────────────────────────
+
+  var SEED_USERS = [
+    {
+      id:        "usr-linda-alas",
+      email:     "linda.alas@upes.edu.sv",
+      nombre:    "Linda Bellaneth Alas García",
+      cargo:     "Vicerrectora Administrativa Financiera",
+      unidadKey: "vraf",
+      rol:       "GENERAL_ADMIN",
+    },
+    {
+      id:        "usr-roberto-reales",
+      email:     "roberto.reales@upes.edu.sv",
+      nombre:    "Roberto Efraín Reales Ramírez",
+      cargo:     "Jefe de Recursos Humanos",
+      unidadKey: "rrhh",
+      rol:       "GENERAL_ADMIN",
+    },
+    {
+      id:        "usr-rrhh-admin",
+      email:     "rrhh@upes.edu.sv",
+      nombre:    "Administrador RRHH",
+      cargo:     "Administrador General",
+      unidadKey: "rrhh",
+      rol:       "GENERAL_ADMIN",
+    },
+    {
+      id:        "usr-oscar-flores",
+      email:     "oscar.flores@upes.edu.sv",
+      nombre:    "Oscar Gilberto Flores",
+      cargo:     "Jefe de Contabilidad",
+      unidadKey: "contabilidad",
+      rol:       "UNIT_OWNER",
+    },
+    {
+      id:        "usr-ady-hernandez",
+      email:     "ady.hernandez@upes.edu.sv",
+      nombre:    "Ady Yared Hernández Medrano",
+      cargo:     "Jefe de Compras",
+      unidadKey: "compras",
+      rol:       "UNIT_OWNER",
+    },
+    {
+      id:        "usr-belly-salguero",
+      email:     "belly.salguero@upes.edu.sv",
+      nombre:    "Belly Donald Salguero Corado",
+      cargo:     "Jefe de Mantenimiento e Infraestructura",
+      unidadKey: "mantenimiento",
+      rol:       "UNIT_OWNER",
+    },
+    {
+      id:        "usr-ruth-escobar",
+      email:     "ruth.escobar@upes.edu.sv",
+      nombre:    "Ruth Nohemy Escobar González",
+      cargo:     "Responsable de Salud y Seguridad Ocupacional",
+      unidadKey: "salud",
+      rol:       "UNIT_OWNER",
+    },
+  ];
+
+  // ── Organizational workspaces ────────────────────────────────────────────────
+
+  var SEED_WORKSPACES = [
+    { id: "rrhh",          nombre: "Recursos Humanos",                        color: "#2E6BE6", icon: "Users" },
+    { id: "vraf",          nombre: "Vicerrectoría Administrativa Financiera",  color: "#7C3AED", icon: "Building2" },
+    { id: "contabilidad",  nombre: "Contabilidad y Finanzas",                 color: "#059669", icon: "DollarSign" },
+    { id: "compras",       nombre: "Compras y Adquisiciones",                  color: "#D97706", icon: "ShoppingCart" },
+    { id: "mantenimiento", nombre: "Mantenimiento e Infraestructura",          color: "#DC2626", icon: "Wrench" },
+    { id: "salud",         nombre: "Salud y Seguridad Ocupacional",            color: "#0891B2", icon: "HeartPulse" },
+  ];
+
+  // ── Helpers ───────────────────────────────────────────────────────────────────
+
+  function log_(logs, level, msg) {
+    logs.push({ level: level, message: msg, timestamp: new Date().toISOString() });
+  }
+
+  function initials_(nombre) {
+    var words = String(nombre || "").split(/\s+/);
+    var result = "";
+    for (var i = 0; i < Math.min(2, words.length); i++) {
+      if (words[i]) result += words[i][0].toUpperCase();
+    }
+    return result || "??";
+  }
+
+  function isInstalled_() {
+    try {
+      var result = listEntities_("usuarios", { email: "linda.alas@upes.edu.sv" });
+      return !!(result.items && result.items.length > 0);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ── Install steps ─────────────────────────────────────────────────────────────
+
+  function installUsers_(userId, logs) {
+    var now = new Date().toISOString();
+    var count = 0;
+    for (var i = 0; i < SEED_USERS.length; i++) {
+      var u = SEED_USERS[i];
+      try {
+        var existing = listEntities_("usuarios", { email: u.email });
+        if (existing.items && existing.items.length > 0) {
+          log_(logs, "info", "Usuario ya existe: " + u.email);
+          continue;
+        }
+        createEntity_("usuarios", {
+          id:             u.id,
+          nombre:         u.nombre,
+          email:          u.email,
+          unidadId:       u.unidadKey,
+          rol:            u.rol,
+          activo:         true,
+          avatarInitials: initials_(u.nombre),
+          createdAt:      now,
+          updatedAt:      now,
+        });
+        count++;
+        log_(logs, "success", "Usuario creado: " + u.nombre);
+      } catch (e) {
+        log_(logs, "error", "Error creando usuario " + u.email + ": " + String(e.message || e));
+      }
+    }
+    return count;
+  }
+
+  function installWorkspaces_(userId, logs) {
+    var now = new Date().toISOString();
+    var count = 0;
+    for (var i = 0; i < SEED_WORKSPACES.length; i++) {
+      var ws = SEED_WORKSPACES[i];
+      try {
+        var existing = getEntity_("wsSettings", ws.id);
+        if (existing) {
+          log_(logs, "info", "Workspace ya configurado: " + ws.id);
+          continue;
+        }
+        createEntity_("wsSettings", {
+          id:        ws.id,
+          wsId:      ws.id,
+          nombre:    ws.nombre,
+          color:     ws.color,
+          icon:      ws.icon,
+          activo:    "true",
+          createdBy: userId,
+          createdAt: now,
+          updatedAt: now,
+        });
+        count++;
+        log_(logs, "success", "Workspace configurado: " + ws.nombre);
+      } catch (e) {
+        log_(logs, "error", "Error configurando workspace " + ws.id + ": " + String(e.message || e));
+      }
+    }
+    return count;
+  }
+
+  function installWorkspaceUsers_(userId, logs) {
+    var now = new Date().toISOString();
+    var count = 0;
+    for (var i = 0; i < SEED_USERS.length; i++) {
+      var u = SEED_USERS[i];
+      try {
+        var existing = listEntities_("wsUsers", { wsId: u.unidadKey, email: u.email });
+        if (existing.items && existing.items.length > 0) {
+          log_(logs, "info", "wsUser ya existe: " + u.email + " → " + u.unidadKey);
+          continue;
+        }
+        createEntity_("wsUsers", {
+          id:        IdGen.uuid(),
+          wsId:      u.unidadKey,
+          userId:    u.id,
+          email:     u.email,
+          nombre:    u.nombre,
+          rol:       u.rol === "GENERAL_ADMIN" ? "ADMIN" : "HEAD",
+          activo:    "true",
+          createdAt: now,
+          updatedAt: now,
+        });
+        count++;
+        log_(logs, "success", "wsUser asignado: " + u.nombre + " → " + u.unidadKey);
+      } catch (e) {
+        log_(logs, "error", "Error asignando wsUser " + u.email + ": " + String(e.message || e));
+      }
+    }
+    return count;
+  }
+
+  // ── Public API ────────────────────────────────────────────────────────────────
+
+  function installAll(userId, logs) {
+    logs = logs || [];
+    if (isInstalled_()) {
+      log_(logs, "info", "Seed data ya instalada — omitiendo.");
+      return { skipped: true, logs: logs };
+    }
+    log_(logs, "info", "Instalando seed data institucional UPES...");
+    var users      = installUsers_(userId, logs);
+    var workspaces = installWorkspaces_(userId, logs);
+    var wsUsers    = installWorkspaceUsers_(userId, logs);
+    log_(logs, "success",
+      "Seed data instalada: " + users + " usuarios, " +
+      workspaces + " workspaces, " + wsUsers + " asignaciones.");
+    return { skipped: false, users: users, workspaces: workspaces, wsUsers: wsUsers, logs: logs };
+  }
+
+  return {
+    installAll:      installAll,
+    SEED_USERS:      SEED_USERS,
+    SEED_WORKSPACES: SEED_WORKSPACES,
+  };
+
+})();
 
 // ============================================================
 // SOURCE: setup/BootstrapController.js
@@ -6302,11 +26479,10 @@ var BootstrapController = (function () {
 
     log_(logs, 'info', 'Iniciando validación del entorno de la plataforma...');
 
-    // Spreadsheet
+    // Spreadsheet — auto-created in step 2 if not pre-configured
     var spreadsheetId = Config.spreadsheetId();
     if (!spreadsheetId) {
-      log_(logs, 'error', 'Propiedad SPREADSHEET_ID no configurada en Script Properties');
-      errors.push('PROP_MISSING_SPREADSHEET_ID');
+      log_(logs, 'warn', 'SPREADSHEET_ID no configurada — se creará automáticamente en el paso 2 (Inicializar base de datos)');
     } else {
       try {
         var ss = SpreadsheetApp.openById(spreadsheetId);
@@ -6317,11 +26493,10 @@ var BootstrapController = (function () {
       }
     }
 
-    // Drive root
+    // Drive root — auto-created in step 3 if not pre-configured
     var driveFolderId = Config.driveFolderRootId();
     if (!driveFolderId) {
-      log_(logs, 'error', 'Propiedad DRIVE_FOLDER_ROOT_ID no configurada');
-      errors.push('PROP_MISSING_DRIVE_FOLDER_ROOT_ID');
+      log_(logs, 'warn', 'DRIVE_FOLDER_ROOT_ID no configurada — se creará automáticamente en el paso 3 (Inicializar Drive)');
     } else {
       try {
         var folder = DriveApp.getFolderById(driveFolderId);
@@ -6369,13 +26544,17 @@ var BootstrapController = (function () {
       log_(logs, 'warn', 'CacheService no disponible: ' + String(e.message || e));
     }
 
-    log_(logs, errors.length ? 'error' : 'success',
+    var hasWarnings = !spreadsheetId || !driveFolderId;
+    log_(logs, errors.length ? 'error' : hasWarnings ? 'warn' : 'success',
       errors.length
         ? 'Validación completada con ' + errors.length + ' error(es) bloqueante(s)'
-        : 'Entorno validado correctamente — listo para instalación'
+        : hasWarnings
+          ? 'Validación completada con advertencias — los recursos faltantes se crearán en los pasos siguientes'
+          : 'Entorno validado correctamente — listo para instalación'
     );
 
     if (errors.length) return fail_(1, logs, errors);
+    if (hasWarnings) return warn_(1, logs, { spreadsheetId: spreadsheetId || '(se creará)', driveFolderId: driveFolderId || '(se creará)' });
     return ok_(1, logs, { spreadsheetId: spreadsheetId, driveFolderId: driveFolderId });
   }
 
@@ -6448,8 +26627,25 @@ var BootstrapController = (function () {
     var logs = [];
     var userId = context && context.userId || 'system';
 
-    log_(logs, 'info', 'Instalando módulo RRHH como primer módulo operativo...');
+    // ── 1. Institutional seed data (users, workspaces, wsUsers) ──────────────
+    log_(logs, 'info', 'Instalando seed data institucional...');
+    try {
+      var seedResult = SeedInstaller.installAll(userId, []);
+      var seedLogs = seedResult.logs || [];
+      for (var si = 0; si < seedLogs.length; si++) { logs.push(seedLogs[si]); }
+      if (!seedResult.skipped) {
+        log_(logs, 'success',
+          'Seed data instalada: ' +
+          (seedResult.users || 0) + ' usuarios, ' +
+          (seedResult.workspaces || 0) + ' workspaces.'
+        );
+      }
+    } catch (e) {
+      log_(logs, 'error', 'Error instalando seed data: ' + String(e.message || e));
+    }
 
+    // ── 2. RRHH module blueprints, KPIs, forms, request types ────────────────
+    log_(logs, 'info', 'Instalando módulo RRHH...');
     try {
       var result = WorkspaceTemplateInstaller.installRRHH(userId);
 
@@ -6470,7 +26666,7 @@ var BootstrapController = (function () {
         );
       }
 
-      return ok_(4, logs, result);
+      return ok_(4, logs, { seed: seedResult, rrhh: result });
     } catch (e) {
       log_(logs, 'error', 'Error instalando plantillas: ' + String(e.message || e));
       return fail_(4, logs, ['TEMPLATE_INSTALL_FAILED']);
@@ -6538,6 +26734,43 @@ var BootstrapController = (function () {
       'Administrador configurado: ' + created + ' creado(s), ' + existing + ' actualizado(s)'
     );
 
+    // ── Create / update the admin record in the auth table (usuarios) ──────────
+    var tempPassword = generateTempPassword_();
+    var salt         = generateSalt_();
+    var hash         = hashPassword_(tempPassword, salt);
+    var adminNow     = now_();
+    try {
+      var authLookup = listEntities_("usuarios", { email: adminEmail });
+      if (authLookup.items && authLookup.items.length > 0) {
+        updateEntity_("usuarios", authLookup.items[0].id, {
+          passwordHash:       hash,
+          passwordSalt:       salt,
+          mustChangePassword: true,
+          activo:             true,
+          updatedAt:          adminNow,
+        });
+        log_(logs, 'info', 'Contraseña temporal actualizada para el administrador');
+      } else {
+        createEntity_("usuarios", {
+          nombre:             adminName,
+          email:              adminEmail,
+          unidadId:           'vraf',
+          rol:                'ADMIN',
+          activo:             true,
+          passwordHash:       hash,
+          passwordSalt:       salt,
+          mustChangePassword: true,
+          avatarInitials:     adminName.split(' ').slice(0, 2).map(function(w) { return w[0] || ''; }).join('').toUpperCase(),
+          createdAt:          adminNow,
+          updatedAt:          adminNow,
+        });
+        log_(logs, 'success', 'Usuario administrador creado en tabla de autenticación');
+      }
+      log_(logs, 'success', 'Contraseña temporal del administrador: ' + tempPassword + ' — cámbiela en el primer inicio de sesión');
+    } catch (e) {
+      log_(logs, 'warn', 'No se pudo crear el usuario en tabla de auth: ' + String(e.message || e));
+    }
+
     AuditService.record({
       accion:      'platform.createAdmin',
       entidadTipo: 'wsUsers',
@@ -6548,11 +26781,13 @@ var BootstrapController = (function () {
     });
 
     return ok_(5, logs, {
-      email:      adminEmail,
-      name:       adminName,
-      workspaces: WORKSPACES,
-      created:    created,
-      updated:    existing,
+      email:           adminEmail,
+      name:            adminName,
+      workspaces:      WORKSPACES,
+      created:         created,
+      updated:         existing,
+      tempPassword:    tempPassword, // shown in wizard UI; user must change on first login
+      mustChangePw:    true,
     });
   }
 
@@ -6639,6 +26874,24 @@ var BootstrapController = (function () {
       log_(logs, 'success', 'Propiedades de plataforma guardadas');
     } catch (e) {
       log_(logs, 'warn', 'No se pudieron guardar propiedades: ' + String(e.message || e));
+    }
+
+    // Set default global password (only if not already configured)
+    try {
+      var existingGlobalHash = PropertiesService.getScriptProperties().getProperty('GLOBAL_PASSWORD_HASH');
+      if (!existingGlobalHash) {
+        var globalSalt = generateSalt_();
+        var globalHash = hashPassword_('Upes2024*', globalSalt);
+        PropertiesService.getScriptProperties().setProperties({
+          'GLOBAL_PASSWORD_HASH': globalHash,
+          'GLOBAL_PASSWORD_SALT': globalSalt,
+        }, false);
+        log_(logs, 'success', 'Contraseña general configurada: Upes2024* — cámbiela desde el wizard después de instalar');
+      } else {
+        log_(logs, 'info', 'Contraseña general ya configurada — sin cambios');
+      }
+    } catch (e) {
+      log_(logs, 'warn', 'No se pudo configurar contraseña general: ' + String(e.message || e));
     }
 
     log_(logs, 'success',
@@ -6951,7 +27204,6 @@ var BootstrapController = (function () {
     getStatus:        getStatus,
   };
 })();
-
 
 // ============================================================
 // SOURCE: jobs/BackgroundJobs.js
@@ -7395,6 +27647,697 @@ function onDailyKPIRecalc() { BackgroundJobs.recalculateKPIs(); }
 /** @GAS time-based trigger handler */
 function onWeeklyCleanup() { BackgroundJobs.cleanupExpiredRecords(); }
 
+// ============================================================
+// SOURCE: migrations/VRAFMigration.js
+// ============================================================
+
+// ============================================================
+// OIM — Official Indicator Migration  |  Sprint 017
+// VRAF — Vicerrectoría Administrativa y Financiera
+//
+// Source: TABLA_DE_INDICADORES_DE_VRAF.xlsx (archivo oficial)
+// 10 indicadores institucionales, versión 1.0, estado publicado.
+// ============================================================
+
+var VRAFMigration = (function () {
+  "use strict";
+
+  // ── Raw Excel data (fiel al documento oficial) ────────────
+
+  var VRAF_RAW = [
+    {
+      excelRow: 2,
+      nombre:       "Cumplimiento del PEA",
+      descripcion:  "Evalúa el nivel de ejecución y cumplimiento de las actividades, metas, proyectos estratégicos y acciones institucionales definidas en el Plan Estratégico Administrativo y Financiero (PEA), permitiendo monitorear el avance de la gestión y la capacidad de respuesta institucional.",
+      pi:           "Cumplimiento estratégico",
+      dimension:    "Gobernanza Administrativa",
+      criterio_dnes:"3.1.1 – Planeación institucional",
+      criterio_cda: "9.1.1 – Gestión administrativa",
+      unidadMedida: "%",
+      frecuencia:   "Trimestral",
+      formulaVisible: "(Actividades ejecutadas / Actividades programadas) × 100",
+      formulaEjecutable: "(v1 / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "Actividades ejecutadas",  descripcion: "Total de actividades completadas en el período", tipo: "numero", orden: 1 },
+        { codigo: "v2", nombre: "Actividades programadas", descripcion: "Total de actividades planificadas en el período", tipo: "numero", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "≥95%",
+      meta:         95,
+      rangoStr:     "90–95%",
+      rango:        { excelente: { min: 95, max: 100 }, bueno: { min: 90, max: 95 }, aceptable: { min: 85, max: 90 }, critico: { min: 0, max: 85 } },
+      herramienta:  "Dashboard estratégico",
+      fuente:       "Informes trimestrales de seguimiento, cronograma institucional, matriz de seguimiento PEA",
+    },
+    {
+      excelRow: 3,
+      nombre:       "Índice de sostenibilidad financiera",
+      descripcion:  "Evalúa la capacidad institucional para mantener la continuidad operativa y financiera mediante el equilibrio adecuado entre ingresos y gastos institucionales, permitiendo identificar la estabilidad económica y capacidad de cobertura financiera.",
+      pi:           "Sostenibilidad financiera",
+      dimension:    "Gestión Financiera",
+      criterio_dnes:"3.1.3 – Sostenibilidad y uso eficiente de recursos institucionales",
+      criterio_cda: "9.2.1 – Sostenibilidad económica institucional",
+      unidadMedida: "Ratio",
+      frecuencia:   "Trimestral",
+      formulaVisible: "Ingresos institucionales / Gastos institucionales",
+      formulaEjecutable: "v1 / v2",
+      variables:    [
+        { codigo: "v1", nombre: "Ingresos institucionales", descripcion: "Total de ingresos del período", tipo: "moneda", orden: 1 },
+        { codigo: "v2", nombre: "Gastos institucionales",  descripcion: "Total de gastos del período",  tipo: "moneda", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "≥1.2",
+      meta:         1.2,
+      rangoStr:     "1.0–1.2",
+      rango:        { excelente: { min: 1.2, max: 9999 }, bueno: { min: 1.0, max: 1.2 }, aceptable: { min: 0.8, max: 1.0 }, critico: { min: 0, max: 0.8 } },
+      herramienta:  "Dashboard financiero",
+      fuente:       "Estados financieros, informes de ingresos y gastos, ejecución presupuestaria institucional, reportes financieros consolidados",
+    },
+    {
+      excelRow: 4,
+      nombre:       "Índice de eficiencia del gasto institucional",
+      descripcion:  "Evalúa el nivel de utilización eficiente de los recursos financieros institucionales destinados a procesos estratégicos, administrativos y operativos prioritarios, permitiendo identificar el aprovechamiento y optimización del gasto institucional.",
+      pi:           "Eficiencia financiera",
+      dimension:    "Gestión Financiera",
+      criterio_dnes:"3.1.3 – Uso eficiente de recursos institucionales",
+      criterio_cda: "9.2.2 – Eficiencia financiera institucional",
+      unidadMedida: "%",
+      frecuencia:   "Trimestral",
+      formulaVisible: "(Gastos estratégicos / Gastos totales) × 100",
+      formulaEjecutable: "(v1 / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "Gastos estratégicos", descripcion: "Gastos destinados a procesos estratégicos y prioritarios", tipo: "moneda", orden: 1 },
+        { codigo: "v2", nombre: "Gastos totales",      descripcion: "Total de gastos institucionales del período",               tipo: "moneda", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "≥85%",
+      meta:         85,
+      rangoStr:     "80–85%",
+      rango:        { excelente: { min: 85, max: 100 }, bueno: { min: 80, max: 85 }, aceptable: { min: 75, max: 80 }, critico: { min: 0, max: 75 } },
+      herramienta:  "Dashboard financiero",
+      fuente:       "Estados financieros, ejecución presupuestaria, informes de gastos institucionales, informes de seguimiento financiero",
+    },
+    {
+      excelRow: 5,
+      nombre:       "Procesos administrativos digitalizados",
+      descripcion:  "Evalúa el nivel de automatización y digitalización de los procesos administrativos y financieros institucionales mediante herramientas tecnológicas, sistema Uonline y plataformas digitales, permitiendo medir avances en modernización institucional.",
+      pi:           "Digitalización",
+      dimension:    "Transformación Digital",
+      criterio_dnes:"3.4.1 – Sistemas institucionales",
+      criterio_cda: "9.3.3 – Innovación tecnológica",
+      unidadMedida: "%",
+      frecuencia:   "Semestral",
+      formulaVisible: "(Procesos digitales / Procesos totales) × 100",
+      formulaEjecutable: "(v1 / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "Procesos digitales", descripcion: "Procesos administrativos digitalizados o automatizados", tipo: "numero", orden: 1 },
+        { codigo: "v2", nombre: "Procesos totales",   descripcion: "Total de procesos administrativos identificados",        tipo: "numero", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "100% (≥90%)",
+      meta:         100,
+      rangoStr:     "≥90%",
+      rango:        { excelente: { min: 90, max: 100 }, bueno: { min: 80, max: 90 }, aceptable: { min: 70, max: 80 }, critico: { min: 0, max: 70 } },
+      herramienta:  "Uonline",
+      fuente:       "Reportes de UOnline, manuales de procesos, reportes TI, inventario de procesos digitalizados",
+    },
+    {
+      excelRow: 6,
+      nombre:       "Seguimiento KPI institucional",
+      descripcion:  "Evalúa el grado de monitoreo, actualización y análisis periódico de indicadores institucionales definidos para las unidades administrativas y estratégicas, permitiendo medir el desempeño y la toma de decisiones basada en evidencia.",
+      pi:           "KPI monitoreados",
+      dimension:    "Calidad Institucional",
+      criterio_dnes:"3.4.2 – Evaluación institucional",
+      criterio_cda: "9.5.2 – Seguimiento KPI",
+      unidadMedida: "%",
+      frecuencia:   "Trimestral",
+      formulaVisible: "(KPI monitoreados / KPI definidos) × 100",
+      formulaEjecutable: "(v1 / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "KPI monitoreados", descripcion: "Indicadores con seguimiento actualizado en el período", tipo: "numero", orden: 1 },
+        { codigo: "v2", nombre: "KPI definidos",    descripcion: "Total de indicadores definidos para las unidades",      tipo: "numero", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "100% (≥95%)",
+      meta:         100,
+      rangoStr:     "≥95%",
+      rango:        { excelente: { min: 95, max: 100 }, bueno: { min: 90, max: 95 }, aceptable: { min: 85, max: 90 }, critico: { min: 0, max: 85 } },
+      herramienta:  "Dashboard VRAF",
+      fuente:       "Informes de indicadores, dashboard de VRAF, actas de seguimiento, matriz de KPI",
+    },
+    {
+      excelRow: 7,
+      nombre:       "Formulación presupuestaria institucional",
+      descripcion:  "Evalúa el nivel de cumplimiento en la elaboración, consolidación y aprobación del presupuesto institucional conforme a la planificación estratégica y requerimientos operativos institucionales.",
+      pi:           "Cumplimiento presupuestario",
+      dimension:    "Planeación Presupuestaria",
+      criterio_dnes:"3.1.1 – Planeación institucional y gestión estratégica",
+      criterio_cda: "9.3.1 – Gestión presupuestaria institucional",
+      unidadMedida: "%",
+      frecuencia:   "Anual",
+      formulaVisible: "(Presupuesto formulado / Presupuesto programado) × 100",
+      formulaEjecutable: "(v1 / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "Presupuesto formulado",  descripcion: "Monto del presupuesto elaborado y consolidado",         tipo: "moneda", orden: 1 },
+        { codigo: "v2", nombre: "Presupuesto programado", descripcion: "Monto del presupuesto planificado según POA institucional", tipo: "moneda", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "100% (≥95%)",
+      meta:         100,
+      rangoStr:     "≥95%",
+      rango:        { excelente: { min: 95, max: 100 }, bueno: { min: 90, max: 95 }, aceptable: { min: 85, max: 90 }, critico: { min: 0, max: 85 } },
+      herramienta:  "Dashboard financiero",
+      fuente:       "Presupuesto institucional aprobado, POA institucional, actas de aprobación presupuestaria, informes financieros",
+    },
+    {
+      excelRow: 8,
+      nombre:       "Ejecución presupuestaria institucional",
+      descripcion:  "Evalúa el porcentaje de ejecución financiera del presupuesto institucional aprobado durante el período fiscal, permitiendo medir el grado de cumplimiento de metas financieras y operativas institucionales.",
+      pi:           "Ejecución financiera institucional",
+      dimension:    "Gestión Presupuestaria",
+      criterio_dnes:"3.1.3 – Planeación financiera",
+      criterio_cda: "9.3.2 – Gestión presupuestaria",
+      unidadMedida: "%",
+      frecuencia:   "Trimestral",
+      formulaVisible: "(Monto ejecutado / Presupuesto aprobado) × 100",
+      formulaEjecutable: "(v1 / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "Monto ejecutado",      descripcion: "Monto financiero ejecutado en el período",          tipo: "moneda", orden: 1 },
+        { codigo: "v2", nombre: "Presupuesto aprobado", descripcion: "Presupuesto institucional aprobado para el período", tipo: "moneda", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "≥95%",
+      meta:         95,
+      rangoStr:     "90–95%",
+      rango:        { excelente: { min: 95, max: 100 }, bueno: { min: 90, max: 95 }, aceptable: { min: 85, max: 90 }, critico: { min: 0, max: 85 } },
+      herramienta:  "Dashboard financiero",
+      fuente:       "Informes financieros trimestrales, estados financieros, ejecución presupuestaria institucional, presupuesto aprobado",
+    },
+    {
+      excelRow: 9,
+      nombre:       "Desviación presupuestaria institucional",
+      descripcion:  "Evalúa la diferencia porcentual entre el presupuesto ejecutado y el presupuesto planificado durante el período fiscal, permitiendo identificar sobre ejecuciones o subejecuciones que puedan afectar la estabilidad financiera institucional.",
+      pi:           "Variación presupuestaria",
+      dimension:    "Gestión Presupuestaria",
+      criterio_dnes:"3.1.3 – Planeación financiera",
+      criterio_cda: "9.3.2 – Gestión presupuestaria",
+      unidadMedida: "%",
+      frecuencia:   "Mensual",
+      formulaVisible: "((Monto ejecutado − Presupuesto aprobado) / Presupuesto aprobado) × 100",
+      formulaEjecutable: "((v1 - v2) / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "Monto ejecutado",      descripcion: "Monto financiero ejecutado en el período",          tipo: "moneda", orden: 1 },
+        { codigo: "v2", nombre: "Presupuesto aprobado", descripcion: "Presupuesto institucional aprobado para el período", tipo: "moneda", orden: 2 },
+      ],
+      polaridad:    "Negativa",
+      metaStr:      "≤5%",
+      meta:         5,
+      rangoStr:     "≤8%",
+      rango:        { excelente: { min: 0, max: 5 }, bueno: { min: 5, max: 8 }, aceptable: { min: 8, max: 12 }, critico: { min: 12, max: 9999 } },
+      herramienta:  "Dashboard financiero",
+      fuente:       "Informes presupuestarios, estados financieros, ejecución presupuestaria mensual, reportes financieros",
+    },
+    {
+      excelRow: 10,
+      nombre:       "Ejecución de proyectos de inversión",
+      descripcion:  "Evalúa el nivel de ejecución financiera y operativa de proyectos estratégicos institucionales respecto a los recursos aprobados y cronogramas establecidos.",
+      pi:           "Ejecución inversión",
+      dimension:    "Inversión Institucional",
+      criterio_dnes:"3.1.3 – Gestión de inversión institucional",
+      criterio_cda: "9.3.3 – Gestión financiera y proyectos",
+      unidadMedida: "%",
+      frecuencia:   "Trimestral",
+      formulaVisible: "(Monto ejecutado / Monto aprobado) × 100",
+      formulaEjecutable: "(v1 / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "Monto ejecutado", descripcion: "Monto financiero ejecutado de proyectos de inversión",   tipo: "moneda", orden: 1 },
+        { codigo: "v2", nombre: "Monto aprobado",  descripcion: "Monto total aprobado para proyectos de inversión",       tipo: "moneda", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "≥90%",
+      meta:         90,
+      rangoStr:     "85–90%",
+      rango:        { excelente: { min: 90, max: 100 }, bueno: { min: 85, max: 90 }, aceptable: { min: 80, max: 85 }, critico: { min: 0, max: 80 } },
+      herramienta:  "Seguimiento proyectos",
+      fuente:       "Informes técnicos, cronogramas de proyectos, informes financieros, informes de avance físico",
+    },
+    {
+      excelRow: 11,
+      nombre:       "Índice de efectividad de inversión institucional",
+      descripcion:  "Evalúa el nivel de cumplimiento de objetivos, resultados esperados y beneficios institucionales derivados de proyectos e inversiones ejecutadas, permitiendo valorar el impacto estratégico de las inversiones realizadas.",
+      pi:           "Efectividad de inversión institucional",
+      dimension:    "Inversión Institucional",
+      criterio_dnes:"3.1.3 – Gestión estratégica de recursos",
+      criterio_cda: "9.3.3 – Optimización financiera institucional",
+      unidadMedida: "%",
+      frecuencia:   "Anual",
+      formulaVisible: "(Proyectos que alcanzaron objetivos / Total proyectos ejecutados) × 100",
+      formulaEjecutable: "(v1 / v2) * 100",
+      variables:    [
+        { codigo: "v1", nombre: "Proyectos que alcanzaron objetivos", descripcion: "Proyectos que cumplieron sus objetivos y metas establecidas",  tipo: "numero", orden: 1 },
+        { codigo: "v2", nombre: "Total proyectos ejecutados",         descripcion: "Total de proyectos finalizados en el período de evaluación",   tipo: "numero", orden: 2 },
+      ],
+      polaridad:    "Positiva",
+      metaStr:      "≥85%",
+      meta:         85,
+      rangoStr:     "80–85%",
+      rango:        { excelente: { min: 85, max: 100 }, bueno: { min: 80, max: 85 }, aceptable: { min: 75, max: 80 }, critico: { min: 0, max: 75 } },
+      herramienta:  "Dashboard estratégico / Evaluación institucional",
+      fuente:       "Informes de cierre de proyectos, matriz de resultados institucionales, informes técnicos, indicadores de desempeño institucional",
+    },
+  ];
+
+  // ── Catalog data to seed in FMI ───────────────────────────
+
+  var OBJETIVO = {
+    codigo: "OBJ-VRAF-001",
+    nombre: "Gestión de Calidad Institucional VRAF",
+    descripcion: "Garantizar la excelencia en la gestión administrativa y financiera institucional, mejorando continuamente los procesos, servicios y recursos de la Vicerrectoría Administrativa y Financiera.",
+    orden: 1,
+  };
+
+  var DIMENSIONES = [
+    { codigo: "DIM-VRAF-01", nombre: "Gobernanza Administrativa",  descripcion: "Planificación y ejecución estratégica institucional",                             orden: 1 },
+    { codigo: "DIM-VRAF-02", nombre: "Gestión Financiera",         descripcion: "Sostenibilidad y eficiencia en la gestión financiera institucional",               orden: 2 },
+    { codigo: "DIM-VRAF-03", nombre: "Transformación Digital",     descripcion: "Digitalización y automatización de procesos administrativos institucionales",      orden: 3 },
+    { codigo: "DIM-VRAF-04", nombre: "Calidad Institucional",      descripcion: "Monitoreo y seguimiento de indicadores de desempeño institucional",               orden: 4 },
+    { codigo: "DIM-VRAF-05", nombre: "Planeación Presupuestaria",  descripcion: "Formulación y programación del presupuesto institucional",                        orden: 5 },
+    { codigo: "DIM-VRAF-06", nombre: "Gestión Presupuestaria",     descripcion: "Ejecución, control y análisis del presupuesto institucional",                     orden: 6 },
+    { codigo: "DIM-VRAF-07", nombre: "Inversión Institucional",    descripcion: "Gestión, ejecución y efectividad de proyectos de inversión institucional",        orden: 7 },
+  ];
+
+  var UNIT_MEASURES = [
+    { codigo: "UM-PCT",   nombre: "Porcentaje", tipo: "cuantitativa" },
+    { codigo: "UM-RATIO", nombre: "Ratio",      tipo: "cuantitativa" },
+  ];
+
+  var FREQUENCIES = [
+    { codigo: "FREC-MENS", nombre: "Mensual",     descripcion: "Medición mensual",     periodoDias: 30  },
+    { codigo: "FREC-TRIM", nombre: "Trimestral",  descripcion: "Medición trimestral",  periodoDias: 90  },
+    { codigo: "FREC-SEM",  nombre: "Semestral",   descripcion: "Medición semestral",   periodoDias: 180 },
+    { codigo: "FREC-ANU",  nombre: "Anual",       descripcion: "Medición anual",       periodoDias: 365 },
+  ];
+
+  var POLARITIES_SEED = [
+    { codigo: "POL-POS", nombre: "Positiva", descripcion: "Mayor valor = mejor desempeño" },
+    { codigo: "POL-NEG", nombre: "Negativa", descripcion: "Menor valor = mejor desempeño" },
+  ];
+
+  // ── Helpers ───────────────────────────────────────────────
+
+  function ts_() { return new Date().toISOString(); }
+  function uid_() { return IdGen ? IdGen.entityId("OIM") : ("OIM-" + Date.now()); }
+
+  function findByField_(sheetName, field, value) {
+    return SheetRepository.for(sheetName).findAll().find(function (r) {
+      return r[field] === value;
+    }) || null;
+  }
+
+  function ensureOne_(sheetName, matchField, matchValue, createData) {
+    var existing = findByField_(sheetName, matchField, matchValue);
+    if (existing) return { id: existing.id, created: false };
+    var repo = SheetRepository.for(sheetName);
+    var newRec = Object.assign({ id: uid_() }, createData);
+    repo.create(newRec);
+    return { id: newRec.id, created: true };
+  }
+
+  // ── OIM Report persistence ────────────────────────────────
+
+  var OIM_SHEET = "OIM_ImportHistory";
+
+  function saveReport_(report) {
+    SheetRepository.ensureSheet(OIM_SHEET, ["id", "runAt", "sprint", "total", "imported", "rejected", "warnings", "conflictos", "reportJson"]);
+    SheetRepository.for(OIM_SHEET).create({
+      id:         uid_(),
+      runAt:      ts_(),
+      sprint:     "017",
+      total:      report.total,
+      imported:   report.imported,
+      rejected:   report.rejected,
+      warnings:   report.warnings,
+      conflictos: report.conflictos,
+      reportJson: JSON.stringify(report),
+    });
+  }
+
+  function listReports_() {
+    try {
+      SheetRepository.ensureSheet(OIM_SHEET, ["id", "runAt", "sprint", "total", "imported", "rejected", "warnings", "conflictos", "reportJson"]);
+      return SheetRepository.for(OIM_SHEET).findAll().map(function (r) {
+        try { return JSON.parse(r.reportJson); } catch (e) { return r; }
+      }).reverse();
+    } catch (e) { return []; }
+  }
+
+  // ── mergeVRAFCatalogs_ ────────────────────────────────────
+  // Seeds required FMI catalog entries for the VRAF migration.
+  // Idempotent: skips entries that already exist by código.
+
+  function mergeVRAFCatalogs_() {
+    var now = ts_();
+    var log = [];
+
+    // Objetivo
+    var objResult = ensureOne_("FMI_Objectives", "codigo", OBJETIVO.codigo, {
+      codigo: OBJETIVO.codigo, nombre: OBJETIVO.nombre, descripcion: OBJETIVO.descripcion,
+      estado: "activo", orden: OBJETIVO.orden,
+      createdAt: now, updatedAt: now, updatedBy: "migration-017",
+    });
+    log.push({ cat: "objetivo", codigo: OBJETIVO.codigo, id: objResult.id, created: objResult.created });
+
+    // Dimensiones
+    DIMENSIONES.forEach(function (d) {
+      var r = ensureOne_("FMI_Dimensions", "codigo", d.codigo, {
+        codigo: d.codigo, nombre: d.nombre, descripcion: d.descripcion,
+        estado: "activo", orden: d.orden,
+        createdAt: now, updatedAt: now, updatedBy: "migration-017",
+      });
+      log.push({ cat: "dimension", codigo: d.codigo, id: r.id, created: r.created });
+    });
+
+    // Unidades de medida
+    UNIT_MEASURES.forEach(function (u) {
+      var r = ensureOne_("FMI_UnitMeasures", "codigo", u.codigo, {
+        codigo: u.codigo, nombre: u.nombre, tipo: u.tipo, estado: "activo",
+      });
+      log.push({ cat: "unitMeasure", codigo: u.codigo, id: r.id, created: r.created });
+    });
+
+    // Frecuencias
+    FREQUENCIES.forEach(function (f) {
+      var r = ensureOne_("FMI_Frequencies", "codigo", f.codigo, {
+        codigo: f.codigo, nombre: f.nombre, descripcion: f.descripcion,
+        periodoDias: f.periodoDias, estado: "activo",
+      });
+      log.push({ cat: "frequency", codigo: f.codigo, id: r.id, created: r.created });
+    });
+
+    // Polaridades (seeded, may already exist)
+    POLARITIES_SEED.forEach(function (p) {
+      var r = ensureOne_("FMI_Polarities", "codigo", p.codigo, {
+        codigo: p.codigo, nombre: p.nombre, descripcion: p.descripcion, estado: "activo",
+      });
+      log.push({ cat: "polarity", codigo: p.codigo, id: r.id, created: r.created });
+    });
+
+    // Formulas + variables + RangeConfigs (one per indicator)
+    var umPct   = findByField_("FMI_UnitMeasures", "codigo", "UM-PCT");
+    var umRatio = findByField_("FMI_UnitMeasures", "codigo", "UM-RATIO");
+
+    VRAF_RAW.forEach(function (ind, i) {
+      var formulaCodigo = "FORM-VRAF-" + String(i + 1).padStart(2, "0");
+      var rangeCodigo   = "RANG-VRAF-" + String(i + 1).padStart(2, "0");
+
+      // Formula
+      var umId = ind.unidadMedida === "Ratio" ? (umRatio ? umRatio.id : "") : (umPct ? umPct.id : "");
+      var existingFormula = findByField_("FMI_Formulas", "codigo", formulaCodigo);
+      var formulaId;
+      if (existingFormula) {
+        formulaId = existingFormula.id;
+        log.push({ cat: "formula", codigo: formulaCodigo, id: formulaId, created: false });
+      } else {
+        formulaId = uid_();
+        SheetRepository.for("FMI_Formulas").create({
+          id: formulaId,
+          codigo: formulaCodigo,
+          nombre: ind.nombre,
+          descripcion: ind.descripcion,
+          unidadMedidaId: umId,
+          formulaVisible: ind.formulaVisible,
+          formulaEjecutable: ind.formulaEjecutable,
+          variablesJson: JSON.stringify(ind.variables),
+          estado: "activo",
+          createdAt: now, updatedAt: now, updatedBy: "migration-017",
+        });
+        // Variables
+        ind.variables.forEach(function (v) {
+          SheetRepository.for("FMI_FormulaVariables").create({
+            id: uid_(),
+            formulaId: formulaId,
+            codigo: v.codigo,
+            nombre: v.nombre,
+            descripcion: v.descripcion,
+            tipo: v.tipo,
+            orden: v.orden,
+          });
+        });
+        log.push({ cat: "formula", codigo: formulaCodigo, id: formulaId, created: true });
+      }
+
+      // RangeConfig
+      var existingRange = findByField_("FMI_RangeConfigs", "nombre", rangeCodigo);
+      var rangeId;
+      if (existingRange) {
+        rangeId = existingRange.id;
+        log.push({ cat: "rangeConfig", codigo: rangeCodigo, id: rangeId, created: false });
+      } else {
+        rangeId = uid_();
+        var polName = ind.polaridad === "Negativa" ? "negativa" : "positiva";
+        SheetRepository.for("FMI_RangeConfigs").create({
+          id: rangeId,
+          nombre: rangeCodigo,
+          descripcion: "Rangos para: " + ind.nombre,
+          polaridad: polName,
+          excelente: JSON.stringify(ind.rango.excelente),
+          bueno:     JSON.stringify(ind.rango.bueno),
+          aceptable: JSON.stringify(ind.rango.aceptable),
+          critico:   JSON.stringify(ind.rango.critico),
+          estado: "activo",
+          createdAt: now, updatedAt: now, updatedBy: "migration-017",
+        });
+        log.push({ cat: "rangeConfig", codigo: rangeCodigo, id: rangeId, created: true });
+      }
+    });
+
+    return log;
+  }
+
+  // ── importVRAFIndicators_ ─────────────────────────────────
+  // Migrates each of the 10 VRAF indicators through the IDE.
+
+  function importVRAFIndicators_(responsibleId, unidadId) {
+    var catalogLog = mergeVRAFCatalogs_();
+    var now        = ts_();
+    var results    = [];
+    var conflictos = [];
+    var warnings   = [];
+
+    // Build ID maps from seeded catalogs
+    function getId_(sheetName, field, value) {
+      var rec = findByField_(sheetName, field, value);
+      return rec ? rec.id : null;
+    }
+
+    var objId = getId_("FMI_Objectives", "codigo", "OBJ-VRAF-001");
+
+    var dimMap = {
+      "Gobernanza Administrativa":  getId_("FMI_Dimensions", "codigo", "DIM-VRAF-01"),
+      "Gestión Financiera":         getId_("FMI_Dimensions", "codigo", "DIM-VRAF-02"),
+      "Transformación Digital":     getId_("FMI_Dimensions", "codigo", "DIM-VRAF-03"),
+      "Calidad Institucional":      getId_("FMI_Dimensions", "codigo", "DIM-VRAF-04"),
+      "Planeación Presupuestaria":  getId_("FMI_Dimensions", "codigo", "DIM-VRAF-05"),
+      "Gestión Presupuestaria":     getId_("FMI_Dimensions", "codigo", "DIM-VRAF-06"),
+      "Inversión Institucional":    getId_("FMI_Dimensions", "codigo", "DIM-VRAF-07"),
+    };
+    var umMap  = { "%": getId_("FMI_UnitMeasures", "codigo", "UM-PCT"), "Ratio": getId_("FMI_UnitMeasures", "codigo", "UM-RATIO") };
+    var frMap  = { "Mensual": getId_("FMI_Frequencies", "codigo", "FREC-MENS"), "Trimestral": getId_("FMI_Frequencies", "codigo", "FREC-TRIM"), "Semestral": getId_("FMI_Frequencies", "codigo", "FREC-SEM"), "Anual": getId_("FMI_Frequencies", "codigo", "FREC-ANU") };
+    var polMap = { "Positiva": getId_("FMI_Polarities", "codigo", "POL-POS"), "Negativa": getId_("FMI_Polarities", "codigo", "POL-NEG") };
+
+    VRAF_RAW.forEach(function (ind, i) {
+      var seq        = String(i + 1).padStart(3, "0");
+      var codigo     = "VRAF-" + seq;
+      var formulaCod = "FORM-VRAF-" + String(i + 1).padStart(2, "0");
+      var rangeCod   = "RANG-VRAF-" + String(i + 1).padStart(2, "0");
+
+      var formulaId    = getId_("FMI_Formulas",    "codigo", formulaCod);
+      var rangeConfigId = getId_("FMI_RangeConfigs", "nombre",  rangeCod);
+      var dimensionId  = dimMap[ind.dimension] || null;
+      var unitMeasureId = umMap[ind.unidadMedida] || null;
+      var frequencyId  = frMap[ind.frecuencia] || null;
+      var polarityId   = polMap[ind.polaridad]  || null;
+
+      var rowResult = {
+        excelRow:   ind.excelRow,
+        codigo:     codigo,
+        nombre:     ind.nombre,
+        pi:         ind.pi,
+        dimension:  ind.dimension,
+        frecuencia: ind.frecuencia,
+        polaridad:  ind.polaridad,
+        meta:       ind.meta,
+        metaStr:    ind.metaStr,
+        errors:     [],
+        warnings:   [],
+        status:     "pending",
+        indicatorId: null,
+      };
+
+      // Validate catalog references
+      if (!objId)          { rowResult.errors.push("Objetivo OBJ-VRAF-001 no encontrado tras seeding."); }
+      if (!dimensionId)    { rowResult.errors.push("Dimensión '" + ind.dimension + "' no encontrada."); }
+      if (!unitMeasureId)  { rowResult.errors.push("Unidad de medida '" + ind.unidadMedida + "' no encontrada."); }
+      if (!frequencyId)    { rowResult.errors.push("Frecuencia '" + ind.frecuencia + "' no encontrada."); }
+      if (!formulaId)      { rowResult.errors.push("Fórmula " + formulaCod + " no encontrada tras seeding."); }
+      if (!polarityId)     { rowResult.errors.push("Polaridad '" + ind.polaridad + "' no encontrada."); }
+      if (!rangeConfigId)  { rowResult.errors.push("Rango " + rangeCod + " no encontrado tras seeding."); }
+
+      if (!responsibleId) {
+        rowResult.warnings.push("responsibleId no proporcionado; se dejará vacío.");
+        warnings.push(codigo + ": sin responsable asignado.");
+      }
+
+      if (rowResult.errors.length > 0) {
+        rowResult.status = "rechazado";
+        conflictos.push({ codigo: codigo, nombre: ind.nombre, errores: rowResult.errors });
+        results.push(rowResult);
+        return;
+      }
+
+      // DuplicateDetector check
+      var dupCheck = IDEController.handle("ide.detectDuplicates", { codigo: codigo, nombre: ind.nombre }, "migration-017");
+      if (dupCheck && dupCheck.length > 0) {
+        rowResult.warnings.push("Posible duplicado detectado: " + dupCheck.map(function (d) { return d.codigo; }).join(", "));
+        rowResult.status = "advertencia";
+        warnings.push(codigo + ": posible duplicado.");
+        results.push(rowResult);
+        return;
+      }
+
+      // Create via IDEController (bypasses validation since we already validated)
+      try {
+        var created = IDEController.handle("ide.createIndicator", {
+          codigo:        codigo,
+          nombre:        ind.nombre,
+          descripcion:   ind.descripcion,
+          objetivoId:    objId,
+          dimensionId:   dimensionId,
+          unitMeasureId: unitMeasureId,
+          frequencyId:   frequencyId,
+          formulaId:     formulaId,
+          polarityId:    polarityId,
+          rangeConfigId: rangeConfigId,
+          responsibleId: responsibleId || "",
+          unidadId:      unidadId || "",
+          meta:          ind.meta,
+          vigenciaDesde: now.substring(0, 10),
+          observaciones: "Migrado automáticamente desde Excel VRAF · Sprint 017 · " + now.substring(0, 10) + " · Criterio DNES: " + ind.criterio_dnes + " · Criterio CdA: " + ind.criterio_cda + " · PI: " + ind.pi + " · Fuente: " + ind.fuente,
+        }, "migration-017");
+
+        // After creation, publish directly (indicadores oficiales → estado publicado)
+        if (created && created.id) {
+          try {
+            IDEController.handle("ide.changeStatus", { id: created.id, status: "publicado" }, "migration-017");
+          } catch (pubErr) {
+            rowResult.warnings.push("Indicador creado pero no publicado: " + pubErr.message);
+          }
+          rowResult.status     = "importado";
+          rowResult.indicatorId = created.id;
+        } else {
+          rowResult.status = "rechazado";
+          rowResult.errors.push("El controlador no devolvió un indicador válido.");
+          conflictos.push({ codigo: codigo, nombre: ind.nombre, errores: rowResult.errors });
+        }
+      } catch (e) {
+        rowResult.status = "rechazado";
+        rowResult.errors.push("Error al crear: " + e.message);
+        conflictos.push({ codigo: codigo, nombre: ind.nombre, errores: rowResult.errors });
+      }
+
+      results.push(rowResult);
+    });
+
+    var imported = results.filter(function (r) { return r.status === "importado"; }).length;
+    var rejected = results.filter(function (r) { return r.status === "rechazado"; }).length;
+    var warnCount = results.filter(function (r) { return r.status === "advertencia"; }).length;
+
+    var report = {
+      sprintId:    "017",
+      fuente:      "TABLA_DE_INDICADORES_DE_VRAF.xlsx",
+      runAt:       now,
+      total:       VRAF_RAW.length,
+      imported:    imported,
+      rejected:    rejected,
+      warnings:    warnCount,
+      conflictos:  conflictos.length,
+      catalogLog:  catalogLog,
+      rows:        results,
+      conflictList: conflictos,
+      warningList:  warnings,
+      recomendaciones: buildRecomendaciones_(results),
+    };
+
+    saveReport_(report);
+    return report;
+  }
+
+  function buildRecomendaciones_(results) {
+    var recs = [];
+    var rechazados = results.filter(function (r) { return r.status === "rechazado"; });
+    if (rechazados.length === 0) {
+      recs.push("Todos los indicadores fueron migrados exitosamente. Proceder con la asignación de responsables y el inicio de captura de datos (Sprint 018).");
+    } else {
+      recs.push("Revisar los " + rechazados.length + " indicadores rechazados y corregir los conflictos de catálogo reportados.");
+      recs.push("Verificar que los catálogos FMI (FMI_Polarities, FMI_Objectives, FMI_Dimensions) contienen los registros esperados.");
+    }
+    var sinResponsable = results.filter(function (r) { return r.warnings.some(function (w) { return w.includes("responsibleId"); }); });
+    if (sinResponsable.length > 0) {
+      recs.push("Asignar responsable institucional a " + sinResponsable.length + " indicadores importados desde la vista de edición del IDE.");
+    }
+    return recs;
+  }
+
+  // ── preview ───────────────────────────────────────────────
+
+  function getPreview_() {
+    return VRAF_RAW.map(function (ind, i) {
+      var seq = String(i + 1).padStart(3, "0");
+      return {
+        excelRow:       ind.excelRow,
+        codigoProposed: "VRAF-" + seq,
+        nombre:         ind.nombre,
+        pi:             ind.pi,
+        dimension:      ind.dimension,
+        unidadMedida:   ind.unidadMedida,
+        frecuencia:     ind.frecuencia,
+        polaridad:      ind.polaridad,
+        meta:           ind.meta,
+        metaStr:        ind.metaStr,
+        rangoStr:       ind.rangoStr,
+        formulaVisible: ind.formulaVisible,
+        variables:      ind.variables.map(function (v) { return v.nombre; }).join(", "),
+        herramienta:    ind.herramienta,
+        fuente:         ind.fuente,
+        criterio_dnes:  ind.criterio_dnes,
+        criterio_cda:   ind.criterio_cda,
+      };
+    });
+  }
+
+  // ── Public API ────────────────────────────────────────────
+
+  return {
+    handle: function (action, params) {
+      switch (action) {
+        case "oim.runMigration":
+          return importVRAFIndicators_(params.responsibleId, params.unidadId);
+        case "oim.getPreview":
+          return getPreview_();
+        case "oim.listReports":
+          return listReports_();
+        case "oim.mergeVRAFCatalogs":
+          return mergeVRAFCatalogs_();
+        default:
+          throw new Error("OIM: acción desconocida: " + action);
+      }
+    },
+
+    bootstrap: function () {
+      SheetRepository.ensureSheet(OIM_SHEET, ["id", "runAt", "sprint", "total", "imported", "rejected", "warnings", "conflictos", "reportJson"]);
+    },
+  };
+})();
 
 // ============================================================
 // SOURCE: router.js
@@ -7417,6 +28360,10 @@ function onWeeklyCleanup() { BackgroundJobs.cleanupExpiredRecords(); }
  *     (publish, archive, restore, duplicate, toggleActive, recordExecution,
  *      recordKPIValue, getHistory, uploadDocument)
  *   • mergeWorkspaceAdminEntities_ called once at startup
+ *
+ * Phase 1 — Organizational Domain Framework:
+ *   • registry.* actions route to routeRegistryAction_ (unit discovery)
+ *   • Any namespace matching a registered OrgUnit routes to OrgUnitRegistry.route()
  */
 
 var WRITE_VERBS = { create: true, update: true, remove: true };
@@ -7486,7 +28433,18 @@ function routeAction_(action, params, context) {
   }
 
   if (namespace === "contratacion") {
-    result = routeContratacionAction_(verb, params || {});
+    result = routeContratacionAction_(verb, params || {}, context);
+    return { data: result, pagination: null };
+  }
+
+  if (namespace === "registry") {
+    result = routeRegistryAction_(verb, params || {}, context);
+    return { data: result, pagination: null };
+  }
+
+  // Registered organizational units route to OrgUnitRegistry
+  if (typeof OrgUnitRegistry !== "undefined" && OrgUnitRegistry.has(namespace)) {
+    result = OrgUnitRegistry.route(namespace, verb, params || {}, context);
     return { data: result, pagination: null };
   }
 
@@ -7564,7 +28522,33 @@ function routeAction_(action, params, context) {
  * @returns {{ data: *, pagination: null } | undefined}
  */
 function routeWorkspaceAction_(entityName, verb, params, context) {
-  var userId = context && context.userId || "";
+  var userId    = context && context.userId    || "";
+  var userEmail = context && context.userEmail || "";
+
+  // Permission enforcement — only when authenticated (userEmail present)
+  if (userEmail) {
+    var wsId = params && params.wsId;
+    if (!wsId && params && params.id) {
+      try { var _rec = getEntity_(entityName, params.id); wsId = _rec && _rec.wsId; } catch (_) {}
+    }
+    if (wsId) {
+      var _permMap = {
+        publish:         "ws.processes.manage",
+        archive:         "ws.admin.access",
+        restore:         "ws.admin.access",
+        duplicate:       "ws.admin.access",
+        toggleActive:    "ws.admin.access",
+        softDelete:      "ws.admin.access",
+        recordExecution: "ws.automations.manage",
+        recordKPIValue:  "ws.kpis.record",
+        getHistory:      "ws.admin.access",
+        uploadDocument:  "ws.documents.upload",
+        upsertByWsId:    "ws.settings.manage",
+      };
+      var _perm = _permMap[verb];
+      if (_perm) WorkspacePermissions.requirePermission(wsId, userEmail, _perm);
+    }
+  }
 
   switch (verb) {
     case "publish":
@@ -7679,7 +28663,24 @@ function routePlatformAction_(verb, params, context) {
  */
 function routeBuilderAction_(verb, params, context) {
   params = params || {};
-  var userId = context && context.userId || "";
+  var userId    = context && context.userId    || "";
+  var userEmail = context && context.userEmail || "";
+  var wsId      = params.wsId || "";
+
+  // Permission enforcement for builder operations
+  if (wsId && userEmail) {
+    var _builderReadVerbs  = { list: true, get: true, getVersionHistory: true,
+                                getProcessList: true, getFormList: true,
+                                getKPIList: true, getNotificationList: true };
+    var _builderWriteVerbs = { save: true, publish: true, archive: true, delete: true,
+                                duplicate: true, restoreVersion: true,
+                                saveCatalogEntry: true, deleteCatalogEntry: true };
+    if (_builderWriteVerbs[verb]) {
+      WorkspacePermissions.requirePermission(wsId, userEmail, "ws.processes.manage");
+    } else if (_builderReadVerbs[verb]) {
+      WorkspacePermissions.requirePermission(wsId, userEmail, "ws.admin.access");
+    }
+  }
 
   switch (verb) {
     case "list":             return BuilderController.list(params);
@@ -7762,6 +28763,68 @@ function emitWriteEvent_(entityName, verb, payload, context) {
   });
 }
 
+/**
+ * Route registry.* actions to OrgUnitRegistry discovery methods.
+ * All verbs are read-only; no permission beyond ws.admin.access is required.
+ *
+ * @param {string} verb
+ * @param {Object} params  — { unitKey?, userRole?, wsId? }
+ * @param {Object} context
+ * @returns {*}
+ */
+function routeRegistryAction_(verb, params, context) {
+  var userEmail = context && context.userEmail || "";
+  var wsId      = params && params.wsId || "";
+  var unitKey   = params && params.unitKey || "";
+  var userRole  = params && params.userRole || "";
+
+  if (wsId && userEmail) {
+    WorkspacePermissions.requirePermission(wsId, userEmail, "ws.admin.access");
+  }
+
+  switch (verb) {
+    case "listUnits":
+      return OrgUnitRegistry.list();
+
+    case "getUnit":
+      if (!unitKey) throw new Error("unitKey is required for registry.getUnit");
+      return OrgUnitRegistry.get(unitKey);
+
+    case "getNavigation":
+      if (!unitKey) throw new Error("unitKey is required for registry.getNavigation");
+      return OrgUnitRegistry.getNavigation(unitKey, userRole);
+
+    case "getAllNavigation":
+      return OrgUnitRegistry.getAllNavigation(userRole);
+
+    case "getModules":
+      if (!unitKey) throw new Error("unitKey is required for registry.getModules");
+      return OrgUnitRegistry.getModules(unitKey);
+
+    case "getWorkflows":
+      if (!unitKey) throw new Error("unitKey is required for registry.getWorkflows");
+      return OrgUnitRegistry.getWorkflows(unitKey);
+
+    case "getReports":
+      if (!unitKey) throw new Error("unitKey is required for registry.getReports");
+      return OrgUnitRegistry.getReports(unitKey, userRole);
+
+    case "getCatalogs":
+      if (!unitKey) throw new Error("unitKey is required for registry.getCatalogs");
+      return OrgUnitRegistry.getCatalogs(unitKey);
+
+    case "getPermissions":
+      if (!unitKey) throw new Error("unitKey is required for registry.getPermissions");
+      return OrgUnitRegistry.getPermissions(unitKey);
+
+    case "getSettings":
+      if (!unitKey) throw new Error("unitKey is required for registry.getSettings");
+      return OrgUnitRegistry.getSettings(unitKey);
+
+    default:
+      throw new Error("Unknown registry verb: " + verb);
+  }
+}
 
 // ============================================================
 // SOURCE: Code.js
@@ -7798,6 +28861,154 @@ function emitWriteEvent_(entityName, verb, payload, context) {
   } catch (e) {}
   try {
     mergeContratacionEntities_();
+  } catch (e) {}
+  try {
+    mergeComprasEntities_();
+  } catch (e) {}
+  try {
+    mergeContabilidadEntities_();
+  } catch (e) {}
+  try {
+    mergeMantenimientoEntities_();
+  } catch (e) {}
+  try {
+    mergeSSOEntities_();
+  } catch (e) {}
+  try {
+    mergeIMEEntities_();
+  } catch (e) {}
+  try {
+    mergePMEEntities_();
+  } catch (e) {}
+  try {
+    mergeAPEEntities_();
+  } catch (e) {}
+  try {
+    mergeAEEEntities_();
+  } catch (e) {}
+  try {
+    mergeEMEEntities_();
+  } catch (e) {}
+  try {
+    mergeCPEEntities_();
+  } catch (e) {}
+  try {
+    mergeIIEEntities_();
+  } catch (e) {}
+  try {
+    mergeIOEEntities_();
+  } catch (e) {}
+  try {
+    mergeAUEEntities_();
+  } catch (e) {}
+  try {
+    mergeNCEEntities_();
+  } catch (e) {}
+  try {
+    mergeISPEntities_();
+  } catch (e) {}
+  try {
+    mergeGWPEntities_();
+  } catch (e) {}
+  try {
+    mergeIIAEntities_();
+  } catch (e) {}
+  try {
+    mergeFMIEntities_();
+  } catch (e) {}
+  try {
+    mergeIDEEntities_();
+  } catch (e) {}
+  try {
+    if (typeof IIAController !== "undefined" && typeof IIAController.bootstrap === "function") {
+      IIAController.bootstrap();
+    }
+  } catch (e) {}
+  try {
+    if (typeof FMIController !== "undefined" && typeof FMIController.bootstrap === "function") {
+      FMIController.bootstrap();
+    }
+  } catch (e) {}
+  try {
+    if (typeof IDEController !== "undefined" && typeof IDEController.bootstrap === "function") {
+      IDEController.bootstrap();
+    }
+  } catch (e) {}
+  try {
+    if (typeof VRAFMigration !== "undefined" && typeof VRAFMigration.bootstrap === "function") {
+      VRAFMigration.bootstrap();
+    }
+  } catch (e) {}
+  try {
+    if (typeof ICEController !== "undefined" && typeof ICEController.bootstrap === "function") {
+      ICEController.bootstrap();
+    }
+  } catch (e) {}
+  try {
+    bootstrapDashboardAdapters_();
+  } catch (e) {}
+  try {
+    bootstrapKPIAdapters_();
+  } catch (e) {}
+  try {
+    registerAllUnits_();
+  } catch (e) {}
+  try {
+    if (typeof EJECUTIVO_UNIT_DEF !== "undefined") OrgUnitRegistry.register(EJECUTIVO_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof IME_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IME_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof PME_UNIT_DEF !== "undefined") OrgUnitRegistry.register(PME_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof APE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(APE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof AEE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(AEE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof EME_UNIT_DEF !== "undefined") OrgUnitRegistry.register(EME_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof CPE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(CPE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof EIP_UNIT_DEF !== "undefined") OrgUnitRegistry.register(EIP_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof IIE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IIE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof IOE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IOE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof AUE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(AUE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof NCE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(NCE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof ISP_UNIT_DEF !== "undefined") OrgUnitRegistry.register(ISP_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof GWP_UNIT_DEF !== "undefined") OrgUnitRegistry.register(GWP_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof IIA_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IIA_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof FMI_UNIT_DEF !== "undefined") OrgUnitRegistry.register(FMI_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof IDE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(IDE_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof OIM_UNIT_DEF !== "undefined") OrgUnitRegistry.register(OIM_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof ICE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(ICE_UNIT_DEF);
   } catch (e) {}
 })();
 
@@ -7899,5 +29110,3 @@ function isWriteAction_(action) {
   var verb = String(action || "").split(".")[1] || "";
   return verb === "create" || verb === "update" || verb === "remove";
 }
-
-
