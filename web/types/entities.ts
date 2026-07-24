@@ -10,6 +10,14 @@ import type { WorkspaceId } from "@/config/nav";
 
 export type SemaforoColor = "verde" | "amarillo" | "rojo";
 
+/** Common audit trail fields — extended by most persisted entities. */
+export interface AuditFields {
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
 export interface HistorialEntry {
   fecha: string;
   usuarioId: string;
@@ -290,7 +298,7 @@ export type ComprasEstadoOrden =
 export type ComprasEstadoProveedor = "activo" | "inactivo" | "suspendido";
 export type ComprasCalificacion = "A" | "B" | "C" | "D";
 
-export interface ComprasSolicitud {
+export interface ComprasSolicitud extends AuditFields {
   id: string;
   wsId: string;
   titulo: string;
@@ -307,13 +315,9 @@ export interface ComprasSolicitud {
   fechaSolicitud: string;
   fechaRequerida?: string;
   notas?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface ComprasRequisicion {
+export interface ComprasRequisicion extends AuditFields {
   id: string;
   wsId: string;
   solicitudId: string;
@@ -328,13 +332,9 @@ export interface ComprasRequisicion {
   aprobadoPorId?: string;
   fechaAprobacion?: string;
   cotizacionId?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface ComprasCotizacion {
+export interface ComprasCotizacion extends AuditFields {
   id: string;
   wsId: string;
   requisicionId: string;
@@ -350,13 +350,9 @@ export interface ComprasCotizacion {
   seleccionada: boolean;
   notasTecnicas?: string;
   notasEvaluacion?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface ComprasProveedor {
+export interface ComprasProveedor extends AuditFields {
   id: string;
   wsId: string;
   razonSocial: string;
@@ -376,13 +372,9 @@ export interface ComprasProveedor {
   ultimaCompraFecha?: string;
   totalCompras?: number;
   cantidadOrdenes?: number;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface ComprasOrden {
+export interface ComprasOrden extends AuditFields {
   id: string;
   wsId: string;
   codigo?: string;
@@ -403,13 +395,9 @@ export interface ComprasOrden {
   facturaNro?: string;
   montoFactura?: number;
   fechaFactura?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface ComprasRecepcion {
+export interface ComprasRecepcion extends AuditFields {
   id: string;
   wsId: string;
   ordenId: string;
@@ -423,10 +411,6 @@ export interface ComprasRecepcion {
   fechaRecepcion: string;
   actaRecepcionId?: string;
   estado: "registrada" | "validada" | "con_observaciones";
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 export interface ComprasEvaluacion {
@@ -475,7 +459,7 @@ export type ContaEstadoCuentaCobrar = "pendiente" | "parcial" | "cobrada" | "ven
 export type ContaPrioridad          = "normal" | "urgente" | "critica";
 
 /** Compromiso Presupuestario — vincula Compras con ejecución contable */
-export interface ContaCompromiso {
+export interface ContaCompromiso extends AuditFields {
   id: string;
   wsId: string;
   numero?: string;
@@ -500,14 +484,10 @@ export interface ContaCompromiso {
   aprobadoPorId?: string;
   fechaAprobacion?: string;
   observaciones?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 /** Registro Contable — asiento en el libro diario */
-export interface ContaRegistro {
+export interface ContaRegistro extends AuditFields {
   id: string;
   wsId: string;
   numero?: string;
@@ -526,14 +506,10 @@ export interface ContaRegistro {
   compromisoId?: string;
   facturaId?: string;
   pagoId?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 /** Factura — recibida de proveedor; referencia Compras sin duplicar datos */
-export interface ContaFactura {
+export interface ContaFactura extends AuditFields {
   id: string;
   wsId: string;
   numero: string;
@@ -556,14 +532,10 @@ export interface ContaFactura {
   cuentaPagarId?: string;
   compromisoId?: string;
   observaciones?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 /** Pago — ejecución de desembolso */
-export interface ContaPago {
+export interface ContaPago extends AuditFields {
   id: string;
   wsId: string;
   numeroPago?: string;
@@ -583,14 +555,10 @@ export interface ContaPago {
   cuentaBancaria?: string;
   concepto?: string;
   registroId?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 /** Conciliación Bancaria */
-export interface ContaConciliacion {
+export interface ContaConciliacion extends AuditFields {
   id: string;
   wsId: string;
   periodo: string;
@@ -603,14 +571,10 @@ export interface ContaConciliacion {
   fechaInicio: string;
   fechaCierre?: string;
   observaciones?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 /** Cuenta por Pagar — obligación con proveedor */
-export interface ContaCuentaPagar {
+export interface ContaCuentaPagar extends AuditFields {
   id: string;
   wsId: string;
   codigo?: string;
@@ -629,14 +593,10 @@ export interface ContaCuentaPagar {
   diasPlazo: number;
   prioridad: ContaPrioridad;
   observaciones?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 /** Cuenta por Cobrar — estructura preparada para futuro uso */
-export interface ContaCuentaCobrar {
+export interface ContaCuentaCobrar extends AuditFields {
   id: string;
   wsId: string;
   codigo?: string;
@@ -652,10 +612,6 @@ export interface ContaCuentaCobrar {
   fechaCobro?: string;
   diasPlazo: number;
   observaciones?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 /** KPIs del Dashboard Ejecutivo de Contabilidad */
@@ -691,7 +647,7 @@ export type MantoEstadoPlan = "borrador" | "activo" | "pausado" | "completado";
 export type MantoFrecuencia = "diaria" | "semanal" | "mensual" | "trimestral" | "semestral" | "anual";
 export type MantoEstadoInventario = "disponible" | "agotado" | "reservado" | "descontinuado";
 
-export interface MantoActivo {
+export interface MantoActivo extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -718,13 +674,9 @@ export interface MantoActivo {
   ultimoMantenimientoFecha?: string;
   proximoMantenimientoFecha?: string;
   observaciones?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface MantoUbicacion {
+export interface MantoUbicacion extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -734,13 +686,9 @@ export interface MantoUbicacion {
   area?: string;
   responsableId?: string;
   estado: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface MantoPlan {
+export interface MantoPlan extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -758,13 +706,9 @@ export interface MantoPlan {
   fechaFin?: string;
   estado: MantoEstadoPlan;
   cumplimientoPct: number;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface MantoSolicitud {
+export interface MantoSolicitud extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -785,13 +729,9 @@ export interface MantoSolicitud {
   fechaAprobacion?: string;
   ordenTrabajoId?: string;
   notas?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface MantoOrdenTrabajo {
+export interface MantoOrdenTrabajo extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -820,13 +760,9 @@ export interface MantoOrdenTrabajo {
   costoManoObra?: number;
   costoMateriales?: number;
   costoTotal?: number;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface MantoInspeccion {
+export interface MantoInspeccion extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -845,13 +781,9 @@ export interface MantoInspeccion {
   condicion?: MantoCondicionActivo;
   requiereOrden?: boolean;
   ordenGeneradaId?: string;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface MantoHistorial {
+export interface MantoHistorial extends AuditFields {
   id: string;
   wsId: string;
   activoId: string;
@@ -862,12 +794,9 @@ export interface MantoHistorial {
   tecnicoId?: string;
   fecha: string;
   costo?: number;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface MantoCosto {
+export interface MantoCosto extends AuditFields {
   id: string;
   wsId: string;
   ordenId?: string;
@@ -882,13 +811,9 @@ export interface MantoCosto {
   proveedor?: string;
   fecha: string;
   aprobado?: boolean;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface MantoInventarioTecnico {
+export interface MantoInventarioTecnico extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -904,10 +829,6 @@ export interface MantoInventarioTecnico {
   proveedorId?: string;
   estado: MantoEstadoInventario;
   valorUnitario?: number;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 export interface MantoDashboardResumen {
@@ -954,7 +875,7 @@ export type SSOEstadoComite    = "programada" | "realizada" | "cancelada";
 export type SSOEstadoAuditoria = "programada" | "en_proceso" | "completada" | "cancelada";
 export type SSOEstadoCumpl     = "cumple" | "parcial" | "no_cumple" | "no_aplica";
 
-export interface SSOIncidente {
+export interface SSOIncidente extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -980,13 +901,9 @@ export interface SSOIncidente {
   costoEstimado?: number;
   compromisoId?: string;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOAccidente {
+export interface SSOAccidente extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1009,13 +926,9 @@ export interface SSOAccidente {
   compromisoId?: string;
   estado: SSOEstado;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOInspeccion {
+export interface SSOInspeccion extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1035,13 +948,9 @@ export interface SSOInspeccion {
   estado: string;
   accionesGeneradas?: string;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOPeligro {
+export interface SSOPeligro extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1056,13 +965,9 @@ export interface SSOPeligro {
   estado: string;
   activoId?: string;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSORiesgo {
+export interface SSORiesgo extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1081,13 +986,9 @@ export interface SSORiesgo {
   fechaRevision?: string;
   estado: string;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOAccion {
+export interface SSOAccion extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1108,13 +1009,9 @@ export interface SSOAccion {
   fechaVerificacion?: string;
   estado: SSOEstadoAccion;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOEPP {
+export interface SSOEPP extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1137,13 +1034,9 @@ export interface SSOEPP {
   costo?: number;
   compromisoId?: string;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOCapacitacion {
+export interface SSOCapacitacion extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1164,13 +1057,9 @@ export interface SSOCapacitacion {
   costo?: number;
   compromisoId?: string;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOComite {
+export interface SSOComite extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1188,13 +1077,9 @@ export interface SSOComite {
   estado: SSOEstadoComite;
   proximaFecha?: string;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOAuditoria {
+export interface SSOAuditoria extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1214,13 +1099,9 @@ export interface SSOAuditoria {
   planAccion?: string;
   estado: SSOEstadoAuditoria;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
-export interface SSOCumplimiento {
+export interface SSOCumplimiento extends AuditFields {
   id: string;
   wsId: string;
   codigo: string;
@@ -1235,10 +1116,6 @@ export interface SSOCumplimiento {
   estado: SSOEstadoCumpl;
   observaciones?: string;
   dataJson?: Record<string, unknown>;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt?: string | null;
 }
 
 export interface SSODashboardResumen {
