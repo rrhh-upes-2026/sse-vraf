@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { EntitySelector } from "@/components/ui/entity-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -113,12 +115,22 @@ function SolicitudRow({
 
 // ── main component ────────────────────────────────────────────────────────────
 
+const PRIORIDAD_OPTIONS = [
+  { value: "baja",    label: "Baja" },
+  { value: "media",   label: "Media" },
+  { value: "alta",    label: "Alta" },
+  { value: "urgente", label: "Urgente" },
+];
+
 const EMPTY_FORM = {
   asunto: "",
+  descripcion: "",
   responsableId: "",
   solicitanteId: "",
   procesoId: "",
   estado: "abierta" as Solicitud["estado"],
+  prioridad: "media" as NonNullable<Solicitud["prioridad"]>,
+  fechaCompromiso: "",
 };
 
 export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
@@ -147,11 +159,14 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
   function openEdit(s: Solicitud) {
     setEditing(s);
     setForm({
-      asunto: s.asunto,
-      responsableId: s.responsableId,
-      solicitanteId: s.solicitanteId,
-      procesoId: s.procesoId,
-      estado: s.estado,
+      asunto:          s.asunto,
+      descripcion:     s.descripcion ?? "",
+      responsableId:   s.responsableId,
+      solicitanteId:   s.solicitanteId,
+      procesoId:       s.procesoId,
+      estado:          s.estado,
+      prioridad:       s.prioridad ?? "media",
+      fechaCompromiso: s.fechaCompromiso ?? "",
     });
     setDrawerOpen(true);
   }
@@ -255,35 +270,67 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
             />
           </DrawerField>
 
-          <DrawerField label="Estado">
-            <Select
-              value={form.estado}
-              onValueChange={(v) => setForm({ ...form, estado: v as Solicitud["estado"] })}
-              options={ESTADO_OPTIONS}
+          <DrawerField label="Descripción">
+            <Textarea
+              value={form.descripcion}
+              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              rows={3}
+              placeholder="Detalle adicional de la solicitud…"
             />
           </DrawerField>
 
-          <DrawerField label="Responsable (ID)">
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Estado">
+              <Select
+                value={form.estado}
+                onValueChange={(v) => setForm({ ...form, estado: v as Solicitud["estado"] })}
+                options={ESTADO_OPTIONS}
+              />
+            </DrawerField>
+            <DrawerField label="Prioridad">
+              <Select
+                value={form.prioridad}
+                onValueChange={(v) => setForm({ ...form, prioridad: v as NonNullable<Solicitud["prioridad"]> })}
+                options={PRIORIDAD_OPTIONS}
+              />
+            </DrawerField>
+          </div>
+
+          <DrawerField label="Fecha compromiso">
             <Input
+              type="date"
+              value={form.fechaCompromiso}
+              onChange={(e) => setForm({ ...form, fechaCompromiso: e.target.value })}
+            />
+          </DrawerField>
+
+          <DrawerField label="Responsable">
+            <EntitySelector
+              entityType="usuarios"
               value={form.responsableId}
-              onChange={(e) => setForm({ ...form, responsableId: e.target.value })}
-              placeholder="ID del responsable…"
+              onValueChange={(v) => setForm({ ...form, responsableId: v })}
+              placeholder="Seleccionar responsable…"
+              allowEmpty
             />
           </DrawerField>
 
-          <DrawerField label="Solicitante (ID)">
-            <Input
+          <DrawerField label="Solicitante">
+            <EntitySelector
+              entityType="usuarios"
               value={form.solicitanteId}
-              onChange={(e) => setForm({ ...form, solicitanteId: e.target.value })}
-              placeholder="ID del solicitante…"
+              onValueChange={(v) => setForm({ ...form, solicitanteId: v })}
+              placeholder="Seleccionar solicitante…"
+              allowEmpty
             />
           </DrawerField>
 
-          <DrawerField label="Proceso vinculado (ID)">
-            <Input
+          <DrawerField label="Proceso vinculado">
+            <EntitySelector
+              entityType="procesos"
               value={form.procesoId}
-              onChange={(e) => setForm({ ...form, procesoId: e.target.value })}
-              placeholder="ID del proceso…"
+              onValueChange={(v) => setForm({ ...form, procesoId: v })}
+              placeholder="Seleccionar proceso…"
+              allowEmpty
             />
           </DrawerField>
         </DrawerSection>

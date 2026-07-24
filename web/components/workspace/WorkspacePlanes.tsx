@@ -10,6 +10,8 @@ import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { EntitySelector } from "@/components/ui/entity-selector";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -175,6 +177,7 @@ const EMPTY_FORM = {
   periodoInicio: "",
   periodoFin: "",
   descripcion: "",
+  responsableId: "",
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -217,12 +220,13 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
   function openEdit(plan: PlanEstrategico) {
     setEditing(plan);
     setForm({
-      nombre:       plan.nombre,
-      tipo:         plan.tipo,
-      estado:       plan.estado,
+      nombre:        plan.nombre,
+      tipo:          plan.tipo,
+      estado:        plan.estado,
       periodoInicio: plan.periodoInicio ?? "",
-      periodoFin:   plan.periodoFin ?? "",
-      descripcion:  plan.descripcion ?? "",
+      periodoFin:    plan.periodoFin ?? "",
+      descripcion:   plan.descripcion ?? "",
+      responsableId: plan.responsableId ?? "",
     });
     setDrawerOpen(true);
   }
@@ -401,12 +405,21 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
           </div>
 
           <DrawerField label="Descripción">
-            <textarea
+            <Textarea
               value={form.descripcion}
               onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
               rows={3}
               placeholder="Descripción o alcance del plan…"
-              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
+            />
+          </DrawerField>
+
+          <DrawerField label="Responsable">
+            <EntitySelector
+              entityType="usuarios"
+              value={form.responsableId}
+              onValueChange={(v) => setForm({ ...form, responsableId: v })}
+              placeholder="Seleccionar responsable…"
+              allowEmpty
             />
           </DrawerField>
         </DrawerSection>

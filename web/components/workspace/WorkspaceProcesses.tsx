@@ -6,8 +6,10 @@ import type { ProcesoInstitucional, SemaforoColor, EstadoProceso } from "@/types
 import type { ProcessInstance } from "@/types/workflow";
 import { useProcesos, useProcesosActions } from "@/hooks/useProcesos";
 import { useProcessInstances } from "@/hooks/useWorkflow";
+import { useProyectos } from "@/hooks/useProyectos";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
+import { EntitySelector } from "@/components/ui/entity-selector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -271,6 +273,7 @@ const EMPTY_FORM = {
   objetivo: "",
   alcance: "",
   responsableId: "",
+  proyectoId: "",
   estado: "borrador" as EstadoProceso,
   prioridad: "media" as ProcesoInstitucional["prioridad"],
   fechaInicio: "",
@@ -287,7 +290,9 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
   const { hasPermission } = usePermissions();
   const canEdit = hasPermission("process.create");
   const { data: procesos, isLoading, isError } = useProcesos({ unidadId: wsId });
+  const { data: proyectos } = useProyectos({ unidadId: wsId });
   const actions = useProcesosActions();
+  const proyectoOptions = (proyectos ?? []).map((p) => ({ value: p.id, label: p.nombre }));
 
   const tabsWithCounts = TABS.map((t) => ({
     ...t,
@@ -306,16 +311,17 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
   function openEdit(p: ProcesoInstitucional) {
     setEditing(p);
     setForm({
-      nombre:       p.nombre,
-      tipo:         p.tipo,
-      objetivo:     p.objetivo,
-      alcance:      p.alcance,
+      nombre:        p.nombre,
+      tipo:          p.tipo,
+      objetivo:      p.objetivo,
+      alcance:       p.alcance,
       responsableId: p.responsableId,
-      estado:       p.estado,
-      prioridad:    p.prioridad,
-      fechaInicio:  p.fechaInicio ?? "",
-      fechaLimite:  p.fechaLimite ?? "",
-      slaDias:      String(p.slaDias ?? 30),
+      proyectoId:    p.proyectoId ?? "",
+      estado:        p.estado,
+      prioridad:     p.prioridad,
+      fechaInicio:   p.fechaInicio ?? "",
+      fechaLimite:   p.fechaLimite ?? "",
+      slaDias:       String(p.slaDias ?? 30),
     });
     setDrawerOpen(true);
   }
@@ -472,11 +478,27 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
             />
           </DrawerField>
 
-          <DrawerField label="Responsable (ID)">
-            <Input
+          <DrawerField label="Proyecto vinculado" required>
+            {proyectoOptions.length > 0 ? (
+              <EntitySelector
+                entityType="proyectos"
+                value={form.proyectoId}
+                onValueChange={(v) => setForm({ ...form, proyectoId: v })}
+                query={{ unidadId: wsId }}
+                placeholder="Seleccionar proyecto…"
+              />
+            ) : (
+              <p className="text-[12px] text-sse-muted">Sin proyectos en esta unidad.</p>
+            )}
+          </DrawerField>
+
+          <DrawerField label="Responsable">
+            <EntitySelector
+              entityType="usuarios"
               value={form.responsableId}
-              onChange={(e) => setForm({ ...form, responsableId: e.target.value })}
-              placeholder="ID del responsable…"
+              onValueChange={(v) => setForm({ ...form, responsableId: v })}
+              placeholder="Seleccionar responsable…"
+              allowEmpty
             />
           </DrawerField>
 

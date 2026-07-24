@@ -4,11 +4,14 @@ import { useState } from "react";
 import type { WorkspaceId } from "@/config/nav";
 import type { ObjetivoEstrategico } from "@/types/entities";
 import { useObjetivos, useObjetivosActions } from "@/hooks/useObjetivos";
+import { usePlanes } from "@/hooks/usePlanes";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
@@ -99,9 +102,13 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [planId, setPlanId] = useState("");
+  const [resultadoEsperado, setResultadoEsperado] = useState("");
 
   const { data: objetivos, isLoading } = useObjetivos();
+  const { data: planes } = usePlanes({ wsId });
   const actions = useObjetivosActions();
+  const planOptions = (planes ?? []).map((p) => ({ value: p.id, label: p.nombre }));
   const { hasPermission } = usePermissions();
   const canEdit = hasPermission("process.edit");
 
@@ -109,6 +116,8 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
     setEditing(null);
     setNombre("");
     setDescripcion("");
+    setPlanId(planOptions[0]?.value ?? "");
+    setResultadoEsperado("");
     setDrawerOpen(true);
   }
 
@@ -116,15 +125,17 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
     setEditing(obj);
     setNombre(obj.nombre);
     setDescripcion(obj.descripcion ?? "");
+    setPlanId(obj.planId);
+    setResultadoEsperado(obj.resultadoEsperado ?? "");
     setDrawerOpen(true);
   }
 
   async function handleSave() {
-    const payload = { nombre, descripcion };
+    const payload = { nombre, descripcion, planId, resultadoEsperado };
     if (editing) {
       await actions.update.mutateAsync({ id: editing.id, patch: payload });
     } else {
-      await actions.create.mutateAsync({ ...payload, planId: `plan-${wsId}` } as Partial<ObjetivoEstrategico>);
+      await actions.create.mutateAsync(payload as Partial<ObjetivoEstrategico>);
     }
     setDrawerOpen(false);
   }
@@ -218,6 +229,19 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
         }
       >
         <DrawerSection>
+          <DrawerField label="Plan estratégico" required>
+            {planOptions.length > 0 ? (
+              <Select
+                value={planId}
+                onValueChange={setPlanId}
+                options={planOptions}
+                placeholder="Seleccionar plan…"
+              />
+            ) : (
+              <p className="text-[12px] text-sse-muted">Sin planes registrados en esta unidad.</p>
+            )}
+          </DrawerField>
+
           <DrawerField label="Nombre del objetivo" required>
             <Input
               value={nombre}
@@ -227,12 +251,20 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
           </DrawerField>
 
           <DrawerField label="Descripción">
-            <textarea
+            <Textarea
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
-              rows={4}
+              rows={3}
               placeholder="Descripción del objetivo estratégico…"
-              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
+            />
+          </DrawerField>
+
+          <DrawerField label="Resultado esperado">
+            <Textarea
+              value={resultadoEsperado}
+              onChange={(e) => setResultadoEsperado(e.target.value)}
+              rows={2}
+              placeholder="Resultado concreto al lograr este objetivo…"
             />
           </DrawerField>
         </DrawerSection>

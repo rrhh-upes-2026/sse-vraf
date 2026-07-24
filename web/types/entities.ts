@@ -51,6 +51,8 @@ export interface ObjetivoEstrategico {
   planId: string; // -> PlanEstrategico
   nombre: string;
   descripcion?: string;
+  resultadoEsperado?: string;
+  unidadResponsableId?: string; // -> Unidad
 }
 
 export interface ProyectoEstrategico {
@@ -59,6 +61,11 @@ export interface ProyectoEstrategico {
   nombre: string;
   descripcion?: string;
   unidadId: WorkspaceId;
+  responsableId?: string; // -> Usuario
+  estado?: "activo" | "pausado" | "completado" | "cancelado";
+  fechaInicio?: string;
+  fechaFin?: string;
+  presupuesto?: number;
 }
 
 /** NÚCLEO del sistema — objeto inteligente central. No sustituir por "tarea". */
@@ -172,10 +179,13 @@ export interface Solicitud {
   procesoId: string;
   unidadId: WorkspaceId;
   asunto: string;
+  descripcion?: string;
   solicitanteId: string;
   responsableId: string;
   estado: "abierta" | "en_atencion" | "cerrada";
+  prioridad?: "baja" | "media" | "alta" | "urgente";
   fechaCreacion: string;
+  fechaCompromiso?: string;
   fechaCierre?: string;
   tiempoRespuestaHoras?: number;
   satisfaccion?: number; // 1-5

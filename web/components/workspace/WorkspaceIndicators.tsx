@@ -8,9 +8,11 @@ import { useIndicadores, useIndicadoresActions } from "@/hooks/useIndicadores";
 import { useICEMyIndicators, useICEPeriods, useICECapturas } from "@/hooks/useICE";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
+import { EntitySelector } from "@/components/ui/entity-selector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
@@ -423,12 +425,11 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
           </DrawerField>
 
           <DrawerField label="Descripción">
-            <textarea
+            <Textarea
               value={form.descripcion}
               onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
               rows={2}
               placeholder="Descripción del indicador…"
-              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
             />
           </DrawerField>
 
@@ -491,19 +492,23 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
             />
           </DrawerField>
 
-          <DrawerField label="Responsable (ID)">
-            <Input
+          <DrawerField label="Responsable">
+            <EntitySelector
+              entityType="usuarios"
               value={form.responsableId}
-              onChange={(e) => setForm({ ...form, responsableId: e.target.value })}
-              placeholder="ID del responsable…"
+              onValueChange={(v) => setForm({ ...form, responsableId: v })}
+              placeholder="Seleccionar responsable…"
+              allowEmpty
             />
           </DrawerField>
 
-          <DrawerField label="Proceso vinculado (ID)">
-            <Input
+          <DrawerField label="Proceso vinculado">
+            <EntitySelector
+              entityType="procesos"
               value={form.procesoId}
-              onChange={(e) => setForm({ ...form, procesoId: e.target.value })}
-              placeholder="ID del proceso…"
+              onValueChange={(v) => setForm({ ...form, procesoId: v })}
+              placeholder="Seleccionar proceso…"
+              allowEmpty
             />
           </DrawerField>
         </DrawerSection>

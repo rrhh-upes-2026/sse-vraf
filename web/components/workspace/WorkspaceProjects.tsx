@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { EntitySelector } from "@/components/ui/entity-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
@@ -101,7 +103,23 @@ function ProjectCard({
   );
 }
 
-const EMPTY_FORM = { nombre: "", descripcion: "", objetivoId: "" };
+const ESTADO_OPTIONS = [
+  { value: "activo",     label: "Activo" },
+  { value: "pausado",    label: "Pausado" },
+  { value: "completado", label: "Completado" },
+  { value: "cancelado",  label: "Cancelado" },
+];
+
+const EMPTY_FORM = {
+  nombre: "",
+  descripcion: "",
+  objetivoId: "",
+  responsableId: "",
+  estado: "activo" as NonNullable<ProyectoEstrategico["estado"]>,
+  fechaInicio: "",
+  fechaFin: "",
+  presupuesto: "",
+};
 
 export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -128,12 +146,25 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
 
   function openEdit(p: ProyectoEstrategico) {
     setEditing(p);
-    setForm({ nombre: p.nombre, descripcion: p.descripcion ?? "", objetivoId: p.objetivoId });
+    setForm({
+      nombre:        p.nombre,
+      descripcion:   p.descripcion ?? "",
+      objetivoId:    p.objetivoId,
+      responsableId: p.responsableId ?? "",
+      estado:        p.estado ?? "activo",
+      fechaInicio:   p.fechaInicio ?? "",
+      fechaFin:      p.fechaFin ?? "",
+      presupuesto:   p.presupuesto ? String(p.presupuesto) : "",
+    });
     setDrawerOpen(true);
   }
 
   async function handleSave() {
-    const payload = { ...form, unidadId: wsId };
+    const payload = {
+      ...form,
+      unidadId: wsId,
+      presupuesto: form.presupuesto ? Number(form.presupuesto) : undefined,
+    };
     if (editing) {
       await actions.update.mutateAsync({ id: editing.id, patch: payload });
     } else {
@@ -227,12 +258,11 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           </DrawerField>
 
           <DrawerField label="Descripción">
-            <textarea
+            <Textarea
               value={form.descripcion}
               onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
               rows={3}
               placeholder="Descripción del proyecto…"
-              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
             />
           </DrawerField>
 
@@ -249,6 +279,50 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
                 No hay objetivos registrados. Crea un objetivo primero.
               </p>
             )}
+          </DrawerField>
+
+          <DrawerField label="Estado">
+            <Select
+              value={form.estado}
+              onValueChange={(v) => setForm({ ...form, estado: v as NonNullable<ProyectoEstrategico["estado"]> })}
+              options={ESTADO_OPTIONS}
+            />
+          </DrawerField>
+
+          <DrawerField label="Responsable">
+            <EntitySelector
+              entityType="usuarios"
+              value={form.responsableId}
+              onValueChange={(v) => setForm({ ...form, responsableId: v })}
+              placeholder="Seleccionar responsable…"
+              allowEmpty
+            />
+          </DrawerField>
+
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Fecha inicio">
+              <Input
+                type="date"
+                value={form.fechaInicio}
+                onChange={(e) => setForm({ ...form, fechaInicio: e.target.value })}
+              />
+            </DrawerField>
+            <DrawerField label="Fecha fin">
+              <Input
+                type="date"
+                value={form.fechaFin}
+                onChange={(e) => setForm({ ...form, fechaFin: e.target.value })}
+              />
+            </DrawerField>
+          </div>
+
+          <DrawerField label="Presupuesto (USD)">
+            <Input
+              type="number"
+              value={form.presupuesto}
+              onChange={(e) => setForm({ ...form, presupuesto: e.target.value })}
+              placeholder="0.00"
+            />
           </DrawerField>
         </DrawerSection>
       </Drawer>

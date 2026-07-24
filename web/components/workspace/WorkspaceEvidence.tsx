@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { EntitySelector } from "@/components/ui/entity-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -294,41 +297,40 @@ export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
             />
           </DrawerField>
 
-          <DrawerField label="Actividad vinculada (ID)">
-            <Input
+          <DrawerField label="Actividad vinculada">
+            <EntitySelector
+              entityType="actividades"
               value={form.actividadId}
-              onChange={(e) => setForm({ ...form, actividadId: e.target.value })}
-              placeholder="ID de la actividad…"
+              onValueChange={(v) => setForm({ ...form, actividadId: v })}
+              placeholder="Seleccionar actividad…"
+              allowEmpty
             />
           </DrawerField>
 
-          <DrawerField label="Responsable (ID)">
-            <Input
+          <DrawerField label="Responsable">
+            <EntitySelector
+              entityType="usuarios"
               value={form.responsableId}
-              onChange={(e) => setForm({ ...form, responsableId: e.target.value })}
-              placeholder="ID del responsable…"
+              onValueChange={(v) => setForm({ ...form, responsableId: v })}
+              placeholder="Seleccionar responsable…"
+              allowEmpty
             />
           </DrawerField>
 
           <DrawerField label="Observaciones">
-            <textarea
+            <Textarea
               value={form.observaciones}
               onChange={(e) => setForm({ ...form, observaciones: e.target.value })}
               rows={3}
               placeholder="Notas adicionales…"
-              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
             />
           </DrawerField>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.obligatoria}
-              onChange={(e) => setForm({ ...form, obligatoria: e.target.checked })}
-              className="rounded border-sse-border"
-            />
-            <span className="text-[13px] text-sse-ink">Evidencia obligatoria</span>
-          </label>
+          <Switch
+            checked={form.obligatoria}
+            onCheckedChange={(v) => setForm({ ...form, obligatoria: v })}
+            label="Evidencia obligatoria"
+          />
         </DrawerSection>
       </Drawer>
     </div>
