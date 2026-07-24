@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   DEFAULT_WORKSPACE,
   MY_WORK_ICON,
-  SISTEMA_ICON,
+  ADMIN_NAV_ITEMS,
   WORKSPACE_SECTIONS,
   ORG_WORKSPACE_IDS,
   isWorkspaceId,
@@ -40,7 +40,6 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
   const toggleRole = useRoleStore((s) => s.toggleRole);
 
   const isMyWork = pathname.startsWith("/mi-trabajo");
-  const isSistema = pathname.startsWith("/system");
   const { wsId, section } = parseWorkspaceSegment(pathname);
 
   return (
@@ -65,6 +64,7 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
 
       {/* Nav body */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-[18px]">
+        {/* Mi Trabajo */}
         <Link
           href="/mi-trabajo"
           className={`flex w-full items-center gap-[11px] rounded-[10px] p-2.5 text-[13px] font-bold font-sans ${
@@ -82,20 +82,7 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
           )}
         </Link>
 
-        {user.isAdmin && (
-          <Link
-            href="/system/platform/wizard"
-            className={`mt-1 flex w-full items-center gap-[11px] rounded-[10px] p-2.5 text-[13px] font-bold font-sans ${
-              isSistema
-                ? "bg-[rgba(46,107,230,.20)] text-white shadow-[inset_3px_0_0_#5B8DEF]"
-                : "bg-white/4 text-sse-sidebar-text-bright"
-            }`}
-          >
-            <GlyphIcon d={SISTEMA_ICON} size={18} />
-            <span className="flex-1 text-left">Sistema</span>
-          </Link>
-        )}
-
+        {/* Workspace switcher + sections */}
         <WorkspaceSwitcher currentId={wsId} />
 
         <div className="mt-3.5 flex flex-col gap-0.5">
@@ -123,9 +110,7 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
           })}
         </div>
 
-        {/* Workspace-specific quick links — only for org unit workspaces.
-            Engine module workspaces (fmi, ide, ice, etc.) are intentionally hidden;
-            their tools are surfaced through Indicadores, Evidencias, and Administración. */}
+        {/* Module navigation extensions — only for org unit workspaces */}
         {ORG_WORKSPACE_IDS.has(wsId) && moduleRegistry.getNavigationExtensions(wsId).length > 0 && (
           <div className="my-2 h-px bg-white/8" />
         )}
@@ -146,6 +131,39 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
             </Link>
           );
         })}
+
+        {/* ── Administración — solo ADMIN / SUPER_ADMIN ─────────────────── */}
+        {user.isAdmin && (
+          <>
+            <div className="mt-4 mb-1.5 flex items-center gap-2 px-1">
+              <div className="h-px flex-1 bg-white/10" />
+              <span className="text-[9.5px] font-semibold uppercase tracking-[0.08em] text-sse-sidebar-text-dim">
+                Administración
+              </span>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
+
+            <div className="flex flex-col gap-0.5">
+              {ADMIN_NAV_ITEMS.map((item) => {
+                const active = pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={`flex w-full items-center gap-[11px] rounded-[9px] px-2.5 py-[7px] text-left text-[12px] font-sans ${
+                      active
+                        ? "bg-[rgba(46,107,230,.20)] font-semibold text-white shadow-[inset_3px_0_0_#5B8DEF]"
+                        : "font-medium text-sse-sidebar-text"
+                    }`}
+                  >
+                    <GlyphIcon d={item.icon} size={15} />
+                    <span className="flex-1">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Footer / profile */}
