@@ -38,6 +38,7 @@ export class HttpAppsScriptAdapter implements IAppsScriptClient {
   ) {}
 
   async call<T>(action: string, params?: Record<string, unknown>): Promise<T> {
+    const isExternal = this.baseUrl.startsWith("https://");
     const res = await fetch(this.baseUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -47,6 +48,7 @@ export class HttpAppsScriptAdapter implements IAppsScriptClient {
         ...(this.secret ? { secret: this.secret } : {}),
       }),
       cache: "no-store",
+      ...(isExternal ? { credentials: "include" } : {}),
     });
 
     if (!res.ok) {

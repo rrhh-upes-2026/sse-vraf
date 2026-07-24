@@ -14,9 +14,10 @@ let instance: IAppsScriptClient | null = null;
  *   is not configured (local dev without a deployed backend).
  *
  * Client-side (browser, React hooks):
- *   Proxies through /api/apps-script, which adds the secret server-side so it
- *   is never exposed in the browser bundle. NEXT_PUBLIC_APPS_SCRIPT_ENABLED
- *   must be "true" for live mode; otherwise MockAppsScriptAdapter is used.
+ *   Calls Apps Script directly using NEXT_PUBLIC_APPS_SCRIPT_URL. The browser
+ *   sends Google Workspace session cookies automatically (credentials: "include"),
+ *   so domain-restricted Web Apps authenticate via those cookies. Falls back to
+ *   MockAppsScriptAdapter when the URL is not configured (local dev).
  */
 export function getAppsScriptClient(): IAppsScriptClient {
   if (instance) return instance;
@@ -27,9 +28,9 @@ export function getAppsScriptClient(): IAppsScriptClient {
     const secret = process.env.WEBHOOK_SHARED_SECRET;
     instance = url ? new HttpAppsScriptAdapter(url, secret) : new MockAppsScriptAdapter();
   } else {
-    // Client-side path — proxy route adds the secret
-    const enabled = process.env.NEXT_PUBLIC_APPS_SCRIPT_ENABLED === "true";
-    instance = enabled ? new HttpAppsScriptAdapter("/api/apps-script") : new MockAppsScriptAdapter();
+    // Client-side path — calls Apps Script directly using the browser's Google session cookies
+    const url = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
+    instance = url ? new HttpAppsScriptAdapter(url) : new MockAppsScriptAdapter();
   }
 
   return instance;
