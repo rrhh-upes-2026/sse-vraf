@@ -15,7 +15,8 @@ import { EntitySelector } from "@/components/ui/entity-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Drawer, DrawerSection, DrawerField, DrawerTabs } from "@/components/ui/drawer";
+import { Drawer, DrawerSection, DrawerField, DrawerTabs, DrawerFooter } from "@/components/ui/drawer";
+import { useFormState } from "@/hooks/useFormState";
 import { TimelineSection } from "@/components/ui/timeline-section";
 import type { TimelineEntry } from "@/components/ui/timeline-section";
 import { FormError } from "@/components/ui/form-error";
@@ -239,12 +240,18 @@ const EMPTY_FORM = {
   fechaCompromiso: "",
 };
 
+function validateRequest(form: typeof EMPTY_FORM): Partial<Record<keyof typeof EMPTY_FORM, string>> {
+  const errs: Partial<Record<keyof typeof EMPTY_FORM, string>> = {};
+  if (!form.asunto.trim()) errs.asunto = "El asunto es obligatorio.";
+  return errs;
+}
+
 export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editing, setEditing] = useState<Solicitud | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [activeTab, setActiveTab] = useState<DrawerTab>("datos");
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [editing, setEditing]       = useState<Solicitud | null>(null);
+  const [activeTab, setActiveTab]   = useState<DrawerTab>("datos");
+
+  const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateRequest);
 
   const { data: solicitudes, isLoading, isError } = useSolicitudes({ unidadId: wsId });
   const actions = useSolicitudesActions();
@@ -260,15 +267,14 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
 
   function openCreate() {
     setEditing(null);
-    setForm(EMPTY_FORM);
-    setErrors({});
+    reset(EMPTY_FORM);
     setActiveTab("datos");
     setDrawerOpen(true);
   }
 
   function openEdit(s: Solicitud) {
     setEditing(s);
-    setForm({
+    reset({
       asunto:          s.asunto,
       descripcion:     s.descripcion ?? "",
       responsableId:   s.responsableId,
@@ -278,19 +284,12 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
       prioridad:       s.prioridad ?? "media",
       fechaCompromiso: s.fechaCompromiso ?? "",
     });
-    setErrors({});
     setActiveTab("datos");
     setDrawerOpen(true);
   }
 
   async function handleSave() {
-    // Validate
-    const nextErrors: Record<string, string> = {};
-    if (!form.asunto.trim()) {
-      nextErrors.asunto = "El asunto es obligatorio.";
-    }
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
+    if (!validate()) {
       setActiveTab("datos");
       return;
     }
@@ -320,10 +319,7 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
         <DrawerField label="Asunto" required>
           <Input
             value={form.asunto}
-            onChange={(e) => {
-              setForm({ ...form, asunto: e.target.value });
-              if (errors.asunto) setErrors({ ...errors, asunto: "" });
-            }}
+            onChange={(e) => setField("asunto", e.target.value)}
             placeholder="Describe brevemente la solicitud…"
           />
           <FormError message={errors.asunto} />
@@ -332,7 +328,7 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
         <DrawerField label="Descripción">
           <Textarea
             value={form.descripcion}
-            onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+            onChange={(e) => setField("descripcion", e.target.value)}
             rows={3}
             placeholder="Detalle adicional de la solicitud…"
           />
@@ -345,16 +341,14 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
           <DrawerField label="Estado">
             <Select
               value={form.estado}
-              onValueChange={(v) => setForm({ ...form, estado: v as Solicitud["estado"] })}
+              onValueChange={(v) => setField("estado", v as Solicitud["estado"])}
               options={ESTADO_OPTIONS}
             />
           </DrawerField>
           <DrawerField label="Prioridad">
             <Select
               value={form.prioridad}
-              onValueChange={(v) =>
-                setForm({ ...form, prioridad: v as NonNullable<Solicitud["prioridad"]> })
-              }
+              onValueChange={(v) => setField("prioridad", v as NonNullable<Solicitud["prioridad"]>)}
               options={PRIORIDAD_OPTIONS}
             />
           </DrawerField>
@@ -364,7 +358,7 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
           <Input
             type="date"
             value={form.fechaCompromiso}
-            onChange={(e) => setForm({ ...form, fechaCompromiso: e.target.value })}
+            onChange={(e) => setField("fechaCompromiso", e.target.value)}
           />
         </DrawerField>
       </DrawerSection>
@@ -375,7 +369,7 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
           <EntitySelector
             entityType="usuarios"
             value={form.responsableId}
-            onValueChange={(v) => setForm({ ...form, responsableId: v })}
+            onValueChange={(v) => setField("responsableId", v)}
             placeholder="Seleccionar responsable…"
             allowEmpty
           />
@@ -385,7 +379,7 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
           <EntitySelector
             entityType="usuarios"
             value={form.solicitanteId}
-            onValueChange={(v) => setForm({ ...form, solicitanteId: v })}
+            onValueChange={(v) => setField("solicitanteId", v)}
             placeholder="Seleccionar solicitante…"
             allowEmpty
           />
@@ -395,7 +389,7 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
           <EntitySelector
             entityType="procesos"
             value={form.procesoId}
-            onValueChange={(v) => setForm({ ...form, procesoId: v })}
+            onValueChange={(v) => setField("procesoId", v)}
             placeholder="Seleccionar proceso…"
             allowEmpty
           />
@@ -469,12 +463,13 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
         title={editing ? "Editar solicitud" : "Nueva solicitud"}
         width="md"
         footer={
-          <>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={!form.asunto || isPending}>
-              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear solicitud"}
-            </Button>
-          </>
+          <DrawerFooter
+            onCancel={() => setDrawerOpen(false)}
+            onSave={handleSave}
+            isPending={isPending}
+            isEditing={!!editing}
+            disabled={!form.asunto}
+          />
         }
       >
         {editing ? (

@@ -13,6 +13,8 @@ import { usePlanes, usePlanesActions } from "@/hooks/usePlanes";
 import { useObjetivos } from "@/hooks/useObjetivos";
 import { useProyectos } from "@/hooks/useProyectos";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useFormState } from "@/hooks/useFormState";
+import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +27,7 @@ import { HistorialSection } from "@/components/ui/historial-section";
 import { Progress } from "@/components/ui/progress";
 import { SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/ui/drawer";
 import { cn, fmtShortDate } from "@/lib/utils";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -264,9 +266,10 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
   const [estadoFilter, setEstadoFilter] = useState<EstadoPlan | "todos">("todos");
   const [drawerOpen, setDrawerOpen]     = useState(false);
   const [editing, setEditing]           = useState<PlanEstrategico | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [form, setForm]     = useState<FormState>(EMPTY_FORM);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateForm);
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { data: planes,    isLoading: planesLoading }    = usePlanes({ wsId });
   const { data: objetivos, isLoading: objetivosLoading } = useObjetivos();
@@ -291,30 +294,15 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
     {} as Partial<Record<EstadoPlan, number>>,
   );
 
-  // ── form helpers ────────────────────────────────────────────────────────────
-
-  function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) {
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[key];
-        return next;
-      });
-    }
-  }
-
   function openCreate() {
     setEditing(null);
-    setErrors({});
-    setForm(EMPTY_FORM);
+    reset(EMPTY_FORM);
     setDrawerOpen(true);
   }
 
   function openEdit(plan: PlanEstrategico) {
     setEditing(plan);
-    setErrors({});
-    setForm({
+    reset({
       codigo:          plan.codigo          ?? "",
       nombre:          plan.nombre,
       version:         plan.version         ?? "",
@@ -333,12 +321,7 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
   }
 
   async function handleSave() {
-    const errs = validateForm(form);
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
-    }
-    setErrors({});
+    if (!validate()) return;
     const payload: Partial<PlanEstrategico> = {
       ...form,
       wsId,
@@ -350,11 +333,6 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
       await actions.create.mutateAsync(payload);
     }
     setDrawerOpen(false);
-  }
-
-  async function handleConfirmDelete(id: string) {
-    await actions.remove.mutateAsync(id);
-    setConfirmDeleteId(null);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;
@@ -455,10 +433,10 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
               objetivos={objetivos ?? []}
               proyectos={proyectos ?? []}
               onEdit={openEdit}
-              onDelete={(id) => setConfirmDeleteId(id)}
+              onDelete={requestDelete}
               confirmDeleteId={confirmDeleteId}
-              onCancelDelete={() => setConfirmDeleteId(null)}
-              onConfirmDelete={handleConfirmDelete}
+              onCancelDelete={cancelDelete}
+              onConfirmDelete={confirmDelete}
               canEdit={canEdit}
             />
           ))}
@@ -473,14 +451,13 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
         subtitle={editing ? editing.nombre : "Registra un nuevo plan institucional"}
         width="lg"
         footer={
-          <>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={isPending}>
-              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear plan"}
-            </Button>
-          </>
+          <DrawerFooter
+            onCancel={() => setDrawerOpen(false)}
+            onSave={handleSave}
+            isPending={isPending}
+            isEditing={!!editing}
+            saveLabel={isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear plan"}
+          />
         }
       >
         {/* ── Identificación ─────────────────────────────────────────────── */}

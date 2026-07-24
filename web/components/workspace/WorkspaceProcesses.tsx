@@ -24,7 +24,9 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/ui/drawer";
+import { useFormState } from "@/hooks/useFormState";
+import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 import { cn, fmtShortDate } from "@/lib/utils";
 import { WORKFLOW_STATE_LABEL, WORKFLOW_STATE_VARIANT } from "@/lib/workflowStateConfig";
 
@@ -383,11 +385,12 @@ function validateForm(form: FormState): FormErrors {
 }
 
 export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
-  const [drawerOpen, setDrawerOpen]       = useState(false);
-  const [editing, setEditing]             = useState<ProcesoInstitucional | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [form, setForm]                   = useState<FormState>(EMPTY_FORM);
-  const [errors, setErrors]               = useState<FormErrors>({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing]       = useState<ProcesoInstitucional | null>(null);
+
+  const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateForm);
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { hasPermission } = usePermissions();
   const canEdit = hasPermission("process.edit");
@@ -421,14 +424,13 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
 
   function openCreate() {
     setEditing(null);
-    setForm(EMPTY_FORM);
-    setErrors({});
+    reset(EMPTY_FORM);
     setDrawerOpen(true);
   }
 
   function openEdit(p: ProcesoInstitucional) {
     setEditing(p);
-    setForm({
+    reset({
       nombre:        p.nombre,
       tipo:          p.tipo,
       objetivo:      p.objetivo,
@@ -446,16 +448,11 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
       dependencias:  p.dependencias ?? "",
       observaciones: p.observaciones ?? "",
     });
-    setErrors({});
     setDrawerOpen(true);
   }
 
   async function handleSave() {
-    const validationErrors = validateForm(form);
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
+    if (!validate()) return;
 
     const payload: Partial<ProcesoInstitucional> = {
       nombre:        form.nombre.trim(),
@@ -488,19 +485,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
     setDrawerOpen(false);
   }
 
-  async function handleConfirmDelete(id: string) {
-    await actions.remove.mutateAsync(id);
-    setConfirmDeleteId(null);
-  }
-
   const isPending = actions.create.isPending || actions.update.isPending;
-
-  function field<K extends keyof FormState>(key: K) {
-    return (value: FormState[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
-      if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-    };
-  }
 
   return (
     <div className="space-y-4">
@@ -552,10 +537,10 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
                     proceso={p}
                     counts={getCounts(p.id)}
                     onEdit={openEdit}
-                    onDelete={(id) => setConfirmDeleteId(id)}
+                    onDelete={requestDelete}
                     confirmDeleteId={confirmDeleteId}
-                    onCancelDelete={() => setConfirmDeleteId(null)}
-                    onConfirmDelete={handleConfirmDelete}
+                    onCancelDelete={cancelDelete}
+                    onConfirmDelete={confirmDelete}
                     canEdit={canEdit}
                   />
                 ))}
@@ -573,12 +558,12 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
         subtitle={editing ? editing.nombre : "Complete los campos del nuevo proceso institucional"}
         width="xl"
         footer={
-          <>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={isPending}>
-              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear proceso"}
-            </Button>
-          </>
+          <DrawerFooter
+            onCancel={() => setDrawerOpen(false)}
+            onSave={handleSave}
+            isPending={isPending}
+            isEditing={!!editing}
+          />
         }
       >
         {/* ── Sección 1: Identificación ─────────────────────────────────── */}
@@ -587,7 +572,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
             <EntitySelector
               entityType="proyectos"
               value={form.proyectoId}
-              onValueChange={field("proyectoId")}
+              onValueChange={(v) => setField("proyectoId", v)}
               query={{ unidadId: wsId }}
               placeholder="Seleccionar proyecto…"
             />
@@ -597,7 +582,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
           <DrawerField label="Nombre del proceso" required>
             <Input
               value={form.nombre}
-              onChange={(e) => field("nombre")(e.target.value)}
+              onChange={(e) => setField("nombre", e.target.value)}
               placeholder="Ej. Gestión de matrículas"
             />
             <FormError message={errors.nombre} />
@@ -607,7 +592,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
             <DrawerField label="Tipo" required>
               <Select
                 value={form.tipo}
-                onValueChange={(v) => field("tipo")(v as ProcesoInstitucional["tipo"])}
+                onValueChange={(v) => setField("tipo", v as ProcesoInstitucional["tipo"])}
                 options={TIPO_OPTIONS}
               />
               <FormError message={errors.tipo} />
@@ -615,7 +600,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
             <DrawerField label="Área responsable">
               <Input
                 value={form.area}
-                onChange={(e) => field("area")(e.target.value)}
+                onChange={(e) => setField("area", e.target.value)}
                 placeholder="Ej. Dirección académica"
               />
             </DrawerField>
@@ -628,14 +613,14 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
             <DrawerField label="Estado">
               <Select
                 value={form.estado}
-                onValueChange={(v) => field("estado")(v as EstadoProceso)}
+                onValueChange={(v) => setField("estado", v as EstadoProceso)}
                 options={ESTADO_OPTIONS}
               />
             </DrawerField>
             <DrawerField label="Prioridad">
               <Select
                 value={form.prioridad}
-                onValueChange={(v) => field("prioridad")(v as ProcesoInstitucional["prioridad"])}
+                onValueChange={(v) => setField("prioridad", v as ProcesoInstitucional["prioridad"])}
                 options={PRIORIDAD_OPTIONS}
               />
             </DrawerField>
@@ -643,7 +628,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
               <Select
                 value={form.criticidad}
                 onValueChange={(v) =>
-                  field("criticidad")(v as NonNullable<ProcesoInstitucional["criticidad"]>)
+                  setField("criticidad", v as NonNullable<ProcesoInstitucional["criticidad"]>)
                 }
                 options={CRITICIDAD_OPTIONS}
               />
@@ -655,14 +640,14 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
               <Input
                 type="date"
                 value={form.fechaInicio}
-                onChange={(e) => field("fechaInicio")(e.target.value)}
+                onChange={(e) => setField("fechaInicio", e.target.value)}
               />
             </DrawerField>
             <DrawerField label="Fecha límite" required>
               <Input
                 type="date"
                 value={form.fechaLimite}
-                onChange={(e) => field("fechaLimite")(e.target.value)}
+                onChange={(e) => setField("fechaLimite", e.target.value)}
               />
               <FormError message={errors.fechaLimite} />
             </DrawerField>
@@ -673,7 +658,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
               <Input
                 type="number"
                 value={form.slaDias}
-                onChange={(e) => field("slaDias")(e.target.value)}
+                onChange={(e) => setField("slaDias", e.target.value)}
                 placeholder="30"
                 min={1}
               />
@@ -682,7 +667,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
               <EntitySelector
                 entityType="usuarios"
                 value={form.responsableId}
-                onValueChange={field("responsableId")}
+                onValueChange={(v) => setField("responsableId", v)}
                 placeholder="Seleccionar responsable…"
                 allowEmpty
               />
@@ -696,7 +681,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
           <DrawerField label="Objetivo del proceso">
             <Input
               value={form.objetivo}
-              onChange={(e) => field("objetivo")(e.target.value)}
+              onChange={(e) => setField("objetivo", e.target.value)}
               placeholder="Objetivo principal del proceso…"
             />
           </DrawerField>
@@ -704,7 +689,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
           <DrawerField label="Alcance">
             <Input
               value={form.alcance}
-              onChange={(e) => field("alcance")(e.target.value)}
+              onChange={(e) => setField("alcance", e.target.value)}
               placeholder="Límites y alcance del proceso…"
             />
           </DrawerField>
@@ -712,7 +697,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
           <DrawerField label="Riesgos identificados">
             <Textarea
               value={form.riesgos}
-              onChange={(e) => field("riesgos")(e.target.value)}
+              onChange={(e) => setField("riesgos", e.target.value)}
               placeholder="Describa los riesgos asociados al proceso…"
               rows={3}
             />
@@ -721,7 +706,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
           <DrawerField label="Dependencias">
             <Textarea
               value={form.dependencias}
-              onChange={(e) => field("dependencias")(e.target.value)}
+              onChange={(e) => setField("dependencias", e.target.value)}
               placeholder="Procesos, sistemas o recursos de los que depende…"
               rows={3}
             />
@@ -730,7 +715,7 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
           <DrawerField label="Observaciones">
             <Textarea
               value={form.observaciones}
-              onChange={(e) => field("observaciones")(e.target.value)}
+              onChange={(e) => setField("observaciones", e.target.value)}
               placeholder="Observaciones adicionales…"
               rows={3}
             />

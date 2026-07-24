@@ -15,7 +15,9 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/ui/drawer";
+import { useFormState } from "@/hooks/useFormState";
+import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 import { FormError } from "@/components/ui/form-error";
 import { HistorialSection } from "@/components/ui/historial-section";
 import { SparklineChart } from "@/components/ui/sparkline-chart";
@@ -294,12 +296,24 @@ const EMPTY_FORM = {
   observaciones: "",
 };
 
+function validateIndicator(form: typeof EMPTY_FORM): Partial<Record<keyof typeof EMPTY_FORM, string>> {
+  const errs: Partial<Record<keyof typeof EMPTY_FORM, string>> = {};
+  if (!form.nombre.trim()) errs.nombre = "El nombre es requerido";
+  if (!form.unidadMedida.trim()) errs.unidadMedida = "La unidad de medida es requerida";
+  const metaNum = Number(form.meta);
+  if (form.meta === "" || isNaN(metaNum) || metaNum < 0) {
+    errs.meta = "La meta debe ser un número mayor o igual a 0";
+  }
+  return errs;
+}
+
 export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editing, setEditing] = useState<Indicador | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [editing, setEditing]       = useState<Indicador | null>(null);
+
+  const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateIndicator);
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { data: indicadores, isLoading } = useIndicadores();
   const actions = useIndicadoresActions();
@@ -314,51 +328,31 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
     {} as Record<SemaforoColor, number>,
   );
 
-  function clearError(field: string) {
-    if (errors[field]) {
-      setErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
-    }
-  }
-
   function openCreate() {
     setEditing(null);
-    setErrors({});
-    setForm(EMPTY_FORM);
+    reset(EMPTY_FORM);
     setDrawerOpen(true);
   }
 
   function openEdit(ind: Indicador) {
     setEditing(ind);
-    setErrors({});
-    setForm({
-      nombre: ind.nombre,
-      descripcion: ind.descripcion,
-      categoria: ind.categoria,
-      formula: ind.formula,
-      unidadMedida: ind.unidadMedida,
-      meta: String(ind.meta),
-      valorActual: String(ind.valorActual),
-      frecuencia: ind.frecuencia,
-      responsableId: ind.responsableId,
+    reset({
+      nombre:            ind.nombre,
+      descripcion:       ind.descripcion,
+      categoria:         ind.categoria,
+      formula:           ind.formula,
+      unidadMedida:      ind.unidadMedida,
+      meta:              String(ind.meta),
+      valorActual:       String(ind.valorActual),
+      frecuencia:        ind.frecuencia,
+      responsableId:     ind.responsableId,
       fuenteInformacion: ind.fuenteInformacion,
-      procesoId: ind.procesoId,
-      sentido: ind.sentido ?? "mayor_mejor",
-      lineaBase: String(ind.lineaBase ?? ""),
-      observaciones: ind.observaciones ?? "",
+      procesoId:         ind.procesoId,
+      sentido:           ind.sentido ?? "mayor_mejor",
+      lineaBase:         String(ind.lineaBase ?? ""),
+      observaciones:     ind.observaciones ?? "",
     });
     setDrawerOpen(true);
-  }
-
-  function validate(): boolean {
-    const next: Record<string, string> = {};
-    if (!form.nombre.trim()) next.nombre = "El nombre es requerido";
-    if (!form.unidadMedida.trim()) next.unidadMedida = "La unidad de medida es requerida";
-    const metaNum = Number(form.meta);
-    if (form.meta === "" || isNaN(metaNum) || metaNum < 0) {
-      next.meta = "La meta debe ser un número mayor o igual a 0";
-    }
-    setErrors(next);
-    return Object.keys(next).length === 0;
   }
 
   async function handleSave() {
@@ -366,17 +360,17 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
     const now = new Date().toISOString();
     const payload = {
       ...form,
-      meta: Number(form.meta),
-      valorActual: Number(form.valorActual),
-      sentido: form.sentido,
-      lineaBase: Number(form.lineaBase) || undefined,
-      observaciones: form.observaciones,
-      semaforo: editing?.semaforo ?? "verde" as SemaforoColor,
-      tendencia: editing?.tendencia ?? "estable" as Indicador["tendencia"],
+      meta:                Number(form.meta),
+      valorActual:         Number(form.valorActual),
+      sentido:             form.sentido,
+      lineaBase:           Number(form.lineaBase) || undefined,
+      observaciones:       form.observaciones,
+      semaforo:            editing?.semaforo ?? "verde" as SemaforoColor,
+      tendencia:           editing?.tendencia ?? "estable" as Indicador["tendencia"],
       ultimaActualizacion: now,
-      objetivo: editing?.objetivo ?? "",
-      dashboardDestino: editing?.dashboardDestino ?? "",
-      reporteDestino: editing?.reporteDestino ?? "",
+      objetivo:            editing?.objetivo ?? "",
+      dashboardDestino:    editing?.dashboardDestino ?? "",
+      reporteDestino:      editing?.reporteDestino ?? "",
     };
     if (editing) {
       await actions.update.mutateAsync({ id: editing.id, patch: payload });
@@ -384,11 +378,6 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
       await actions.create.mutateAsync(payload as Partial<Indicador>);
     }
     setDrawerOpen(false);
-  }
-
-  async function handleConfirmDelete(id: string) {
-    await actions.remove.mutateAsync(id);
-    setConfirmDeleteId(null);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;
@@ -446,10 +435,10 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
               key={ind.id}
               indicador={ind}
               onEdit={openEdit}
-              onDelete={(id) => setConfirmDeleteId(id)}
+              onDelete={requestDelete}
               confirmDeleteId={confirmDeleteId}
-              onCancelDelete={() => setConfirmDeleteId(null)}
-              onConfirmDelete={handleConfirmDelete}
+              onCancelDelete={cancelDelete}
+              onConfirmDelete={confirmDelete}
               canEdit={canEdit}
             />
           ))}
@@ -463,12 +452,12 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
         title={editing ? "Editar indicador" : "Nuevo indicador"}
         width="lg"
         footer={
-          <>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={isPending}>
-              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear indicador"}
-            </Button>
-          </>
+          <DrawerFooter
+            onCancel={() => setDrawerOpen(false)}
+            onSave={handleSave}
+            isPending={isPending}
+            isEditing={!!editing}
+          />
         }
       >
         {/* Section 1: Definición */}
@@ -476,7 +465,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
           <DrawerField label="Nombre del indicador" required>
             <Input
               value={form.nombre}
-              onChange={(e) => { setForm({ ...form, nombre: e.target.value }); clearError("nombre"); }}
+              onChange={(e) => setField("nombre", e.target.value)}
               placeholder="Ej. Tasa de aprobación estudiantil"
             />
             <FormError message={errors.nombre} />
@@ -485,7 +474,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
           <DrawerField label="Descripción">
             <Textarea
               value={form.descripcion}
-              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              onChange={(e) => setField("descripcion", e.target.value)}
               rows={2}
               placeholder="Descripción del indicador…"
             />
@@ -495,14 +484,14 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
             <DrawerField label="Categoría" required>
               <Select
                 value={form.categoria}
-                onValueChange={(v) => setForm({ ...form, categoria: v as Indicador["categoria"] })}
+                onValueChange={(v) => setField("categoria", v as Indicador["categoria"])}
                 options={CATEGORIA_OPTIONS}
               />
             </DrawerField>
             <DrawerField label="Frecuencia" required>
               <Select
                 value={form.frecuencia}
-                onValueChange={(v) => setForm({ ...form, frecuencia: v as Indicador["frecuencia"] })}
+                onValueChange={(v) => setField("frecuencia", v as Indicador["frecuencia"])}
                 options={FRECUENCIA_OPTIONS}
               />
             </DrawerField>
@@ -514,7 +503,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
           <DrawerField label="Fórmula de cálculo">
             <Input
               value={form.formula}
-              onChange={(e) => setForm({ ...form, formula: e.target.value })}
+              onChange={(e) => setField("formula", e.target.value)}
               placeholder="Ej. (Aprobados / Total) * 100"
             />
           </DrawerField>
@@ -523,7 +512,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
             <DrawerField label="Unidad de medida" required>
               <Input
                 value={form.unidadMedida}
-                onChange={(e) => { setForm({ ...form, unidadMedida: e.target.value }); clearError("unidadMedida"); }}
+                onChange={(e) => setField("unidadMedida", e.target.value)}
                 placeholder="Ej. %"
               />
               <FormError message={errors.unidadMedida} />
@@ -532,7 +521,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
               <Input
                 type="number"
                 value={form.meta}
-                onChange={(e) => { setForm({ ...form, meta: e.target.value }); clearError("meta"); }}
+                onChange={(e) => setField("meta", e.target.value)}
                 placeholder="0"
               />
               <FormError message={errors.meta} />
@@ -541,7 +530,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
               <Input
                 type="number"
                 value={form.valorActual}
-                onChange={(e) => setForm({ ...form, valorActual: e.target.value })}
+                onChange={(e) => setField("valorActual", e.target.value)}
                 placeholder="0"
               />
             </DrawerField>
@@ -552,14 +541,14 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
               <Input
                 type="number"
                 value={form.lineaBase}
-                onChange={(e) => setForm({ ...form, lineaBase: e.target.value })}
+                onChange={(e) => setField("lineaBase", e.target.value)}
                 placeholder="0"
               />
             </DrawerField>
             <DrawerField label="Sentido del indicador">
               <Select
                 value={form.sentido}
-                onValueChange={(v) => setForm({ ...form, sentido: v as typeof form.sentido })}
+                onValueChange={(v) => setField("sentido", v as typeof form.sentido)}
                 options={SENTIDO_OPTIONS}
               />
             </DrawerField>
@@ -571,7 +560,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
           <DrawerField label="Fuente de información">
             <Input
               value={form.fuenteInformacion}
-              onChange={(e) => setForm({ ...form, fuenteInformacion: e.target.value })}
+              onChange={(e) => setField("fuenteInformacion", e.target.value)}
               placeholder="Ej. Sistema académico, reportes mensuales"
             />
           </DrawerField>
@@ -580,7 +569,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
             <EntitySelector
               entityType="usuarios"
               value={form.responsableId}
-              onValueChange={(v) => setForm({ ...form, responsableId: v })}
+              onValueChange={(v) => setField("responsableId", v)}
               placeholder="Seleccionar responsable…"
               allowEmpty
             />
@@ -590,7 +579,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
             <EntitySelector
               entityType="procesos"
               value={form.procesoId}
-              onValueChange={(v) => setForm({ ...form, procesoId: v })}
+              onValueChange={(v) => setField("procesoId", v)}
               placeholder="Seleccionar proceso…"
               allowEmpty
             />
@@ -602,7 +591,7 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
           <DrawerField label="Observaciones">
             <Textarea
               value={form.observaciones}
-              onChange={(e) => setForm({ ...form, observaciones: e.target.value })}
+              onChange={(e) => setField("observaciones", e.target.value)}
               rows={2}
               placeholder="Observaciones adicionales…"
             />

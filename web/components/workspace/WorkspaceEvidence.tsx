@@ -15,7 +15,8 @@ import { EntitySelector } from "@/components/ui/entity-selector";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/ui/drawer";
+import { useFormState } from "@/hooks/useFormState";
 import { FormError } from "@/components/ui/form-error";
 import { HistorialSection } from "@/components/ui/historial-section";
 import { Dropzone } from "@/components/ui/dropzone";
@@ -204,11 +205,17 @@ const EMPTY_FORM = {
   archivoNombre: "",
 };
 
+function validateEvidence(form: typeof EMPTY_FORM): Partial<Record<keyof typeof EMPTY_FORM, string>> {
+  const errs: Partial<Record<keyof typeof EMPTY_FORM, string>> = {};
+  if (!form.nombre.trim()) errs.nombre = "El nombre es obligatorio";
+  return errs;
+}
+
 export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editing, setEditing] = useState<Evidencia | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [editing, setEditing]       = useState<Evidencia | null>(null);
+
+  const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateEvidence);
 
   const { hasPermission } = usePermissions();
   const canUpload = hasPermission("evidence.upload");
@@ -223,46 +230,34 @@ export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
       : undefined,
   }));
 
-  function setField<K extends keyof typeof EMPTY_FORM>(key: K, value: typeof EMPTY_FORM[K]) {
-    setForm(prev => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
-  }
-
   function openCreate() {
     setEditing(null);
-    setErrors({});
-    setForm(EMPTY_FORM);
+    reset(EMPTY_FORM);
     setDrawerOpen(true);
   }
 
   function openUpload(e: Evidencia) {
     setEditing(e);
-    setErrors({});
-    setForm({
-      nombre: e.nombre,
-      tipo: e.tipo,
-      obligatoria: e.obligatoria,
-      actividadId: e.actividadId,
-      responsableId: e.responsableId,
-      observaciones: e.observaciones ?? "",
+    reset({
+      nombre:                 e.nombre,
+      tipo:                   e.tipo,
+      obligatoria:            e.obligatoria,
+      actividadId:            e.actividadId,
+      responsableId:          e.responsableId,
+      observaciones:          e.observaciones ?? "",
       documentoRelacionadoId: e.documentoRelacionadoId ?? "",
-      fechaEmision: e.fechaEmision ?? "",
-      fechaVencimiento: e.fechaVencimiento ?? "",
-      estadoRevision: e.estadoRevision ?? "pendiente",
-      revisorId: e.revisorId ?? "",
-      comentariosTexto: e.comentarios ?? "",
-      archivoNombre: "",
+      fechaEmision:           e.fechaEmision ?? "",
+      fechaVencimiento:       e.fechaVencimiento ?? "",
+      estadoRevision:         e.estadoRevision ?? "pendiente",
+      revisorId:              e.revisorId ?? "",
+      comentariosTexto:       e.comentarios ?? "",
+      archivoNombre:          "",
     });
     setDrawerOpen(true);
   }
 
   async function handleSave() {
-    const newErrors: Record<string, string> = {};
-    if (!form.nombre.trim()) newErrors.nombre = "El nombre es obligatorio";
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (!validate()) return;
 
     if (editing) {
       await actions.update.mutateAsync({
@@ -369,12 +364,12 @@ export function WorkspaceEvidence({ wsId }: WorkspaceEvidenceProps) {
         subtitle={editing ? `Actualizando: ${editing.nombre}` : undefined}
         width="lg"
         footer={
-          <>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={isPending}>
-              {isPending ? "Guardando…" : editing ? "Actualizar" : "Registrar"}
-            </Button>
-          </>
+          <DrawerFooter
+            onCancel={() => setDrawerOpen(false)}
+            onSave={handleSave}
+            isPending={isPending}
+            saveLabel={isPending ? "Guardando…" : editing ? "Actualizar" : "Registrar"}
+          />
         }
       >
         {/* Section 1 — Identificación */}

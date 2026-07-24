@@ -7,6 +7,8 @@ import { useObjetivos, useObjetivosActions } from "@/hooks/useObjetivos";
 import { usePlanes } from "@/hooks/usePlanes";
 import { useProyectos } from "@/hooks/useProyectos";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useFormState } from "@/hooks/useFormState";
+import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
@@ -16,7 +18,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/ui/drawer";
 import { FormError } from "@/components/ui/form-error";
 import { HistorialSection } from "@/components/ui/historial-section";
 import { EntitySelector } from "@/components/ui/entity-selector";
@@ -173,14 +175,24 @@ function ObjetivoRow({
   );
 }
 
+// ── Validator ─────────────────────────────────────────────────────────────────
+
+function validateObjectives(form: typeof EMPTY_FORM) {
+  const errs: Partial<Record<keyof typeof EMPTY_FORM, string>> = {};
+  if (!form.nombre.trim()) errs.nombre = "El nombre es obligatorio.";
+  if (!form.planId)        errs.planId  = "Debe seleccionar un plan estratégico.";
+  return errs;
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
-  const [drawerOpen, setDrawerOpen]       = useState(false);
-  const [editing, setEditing]             = useState<ObjetivoEstrategico | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [form, setForm]                   = useState(EMPTY_FORM);
-  const [errors, setErrors]               = useState<Partial<Record<keyof typeof EMPTY_FORM, string>>>({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing]       = useState<ObjetivoEstrategico | null>(null);
+
+  const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateObjectives);
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { data: objetivos, isLoading } = useObjetivos();
   const { data: planes }               = usePlanes({ wsId });
@@ -197,31 +209,17 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
     return (proyectos ?? []).filter((p) => p.objetivoId === objetivoId).length;
   }
 
-  function patch<K extends keyof typeof EMPTY_FORM>(key: K, value: (typeof EMPTY_FORM)[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-  }
-
-  function validate(): boolean {
-    const next: typeof errors = {};
-    if (!form.nombre.trim()) next.nombre = "El nombre es obligatorio.";
-    if (!form.planId)        next.planId  = "Debe seleccionar un plan estratégico.";
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  }
-
   // ── Open / close ───────────────────────────────────────────────────────────
 
   function openCreate() {
     setEditing(null);
-    setForm({ ...EMPTY_FORM, planId: planOptions[0]?.value ?? "" });
-    setErrors({});
+    reset({ ...EMPTY_FORM, planId: planOptions[0]?.value ?? "" });
     setDrawerOpen(true);
   }
 
   function openEdit(obj: ObjetivoEstrategico) {
     setEditing(obj);
-    setForm({
+    reset({
       planId:            obj.planId,
       nombre:            obj.nombre,
       estado:            obj.estado     ?? "borrador",
@@ -234,7 +232,6 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
       responsableId:     obj.responsableId     ?? "",
       observaciones:     obj.observaciones     ?? "",
     });
-    setErrors({});
     setDrawerOpen(true);
   }
 
@@ -263,11 +260,6 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
       await actions.create.mutateAsync(payload);
     }
     setDrawerOpen(false);
-  }
-
-  async function handleConfirmDelete(id: string) {
-    await actions.remove.mutateAsync(id);
-    setConfirmDeleteId(null);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;
@@ -330,10 +322,10 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
                   objetivo={obj}
                   proyectoCount={countProyectos(obj.id)}
                   onEdit={openEdit}
-                  onDelete={(id) => setConfirmDeleteId(id)}
+                  onDelete={requestDelete}
                   confirmDeleteId={confirmDeleteId}
-                  onCancelDelete={() => setConfirmDeleteId(null)}
-                  onConfirmDelete={handleConfirmDelete}
+                  onCancelDelete={cancelDelete}
+                  onConfirmDelete={confirmDelete}
                   canEdit={canEdit}
                 />
               ))}
@@ -353,12 +345,13 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
         title={editing ? "Editar objetivo" : "Nuevo objetivo estratégico"}
         width="md"
         footer={
-          <>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={!canSave}>
-              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear objetivo"}
-            </Button>
-          </>
+          <DrawerFooter
+            onCancel={() => setDrawerOpen(false)}
+            onSave={handleSave}
+            isPending={isPending}
+            isEditing={!!editing}
+            disabled={!canSave}
+          />
         }
       >
         <DrawerSection>
@@ -367,7 +360,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
             {planOptions.length > 0 ? (
               <Select
                 value={form.planId}
-                onValueChange={(v) => patch("planId", v)}
+                onValueChange={(v) => setField("planId", v)}
                 options={planOptions}
                 placeholder="Seleccionar plan…"
               />
@@ -381,7 +374,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
           <DrawerField label="Nombre del objetivo" required>
             <Input
               value={form.nombre}
-              onChange={(e) => patch("nombre", e.target.value)}
+              onChange={(e) => setField("nombre", e.target.value)}
               placeholder="Ej. Fortalecer la gestión académica"
             />
             <FormError message={errors.nombre} />
@@ -392,14 +385,14 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
             <DrawerField label="Estado">
               <Select
                 value={form.estado}
-                onValueChange={(v) => patch("estado", v as NonNullable<ObjetivoEstrategico["estado"]>)}
+                onValueChange={(v) => setField("estado", v as NonNullable<ObjetivoEstrategico["estado"]>)}
                 options={ESTADO_OPTIONS}
               />
             </DrawerField>
             <DrawerField label="Prioridad">
               <Select
                 value={form.prioridad}
-                onValueChange={(v) => patch("prioridad", v as NonNullable<ObjetivoEstrategico["prioridad"]>)}
+                onValueChange={(v) => setField("prioridad", v as NonNullable<ObjetivoEstrategico["prioridad"]>)}
                 options={PRIORIDAD_OPTIONS}
               />
             </DrawerField>
@@ -409,7 +402,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
           <DrawerField label="Descripción">
             <Textarea
               value={form.descripcion}
-              onChange={(e) => patch("descripcion", e.target.value)}
+              onChange={(e) => setField("descripcion", e.target.value)}
               rows={3}
               placeholder="Descripción del objetivo estratégico…"
             />
@@ -419,7 +412,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
           <DrawerField label="Resultado esperado">
             <Textarea
               value={form.resultadoEsperado}
-              onChange={(e) => patch("resultadoEsperado", e.target.value)}
+              onChange={(e) => setField("resultadoEsperado", e.target.value)}
               rows={2}
               placeholder="Resultado concreto al lograr este objetivo…"
             />
@@ -429,7 +422,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
           <DrawerField label="Justificación">
             <Textarea
               value={form.justificacion}
-              onChange={(e) => patch("justificacion", e.target.value)}
+              onChange={(e) => setField("justificacion", e.target.value)}
               rows={2}
               placeholder="Por qué este objetivo es prioritario…"
             />
@@ -439,7 +432,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
           <DrawerField label="Meta general">
             <Input
               value={form.metaGeneral}
-              onChange={(e) => patch("metaGeneral", e.target.value)}
+              onChange={(e) => setField("metaGeneral", e.target.value)}
               placeholder="Ej. Lograr 85% de eficiencia"
             />
           </DrawerField>
@@ -449,7 +442,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
             <Input
               type="date"
               value={form.fechaObjetivo}
-              onChange={(e) => patch("fechaObjetivo", e.target.value)}
+              onChange={(e) => setField("fechaObjetivo", e.target.value)}
             />
           </DrawerField>
 
@@ -458,7 +451,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
             <EntitySelector
               entityType="usuarios"
               value={form.responsableId}
-              onValueChange={(v) => patch("responsableId", v)}
+              onValueChange={(v) => setField("responsableId", v)}
               placeholder="Seleccionar responsable…"
               allowEmpty
             />
@@ -468,7 +461,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
           <DrawerField label="Observaciones">
             <Textarea
               value={form.observaciones}
-              onChange={(e) => patch("observaciones", e.target.value)}
+              onChange={(e) => setField("observaciones", e.target.value)}
               rows={2}
               placeholder="Notas u observaciones adicionales…"
             />

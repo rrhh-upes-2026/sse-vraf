@@ -18,7 +18,9 @@ import { FormError } from "@/components/ui/form-error";
 import { HistorialSection } from "@/components/ui/historial-section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
+import { Drawer, DrawerSection, DrawerField, DrawerFooter } from "@/components/ui/drawer";
+import { useFormState } from "@/hooks/useFormState";
+import { useDeleteConfirm } from "@/hooks/useDeleteConfirm";
 
 interface WorkspaceProjectsProps {
   wsId: WorkspaceId;
@@ -221,12 +223,12 @@ function ProjectCard({
 // ── main component ─────────────────────────────────────────────────────────────
 
 export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
-  const [drawerOpen,       setDrawerOpen]       = useState(false);
-  const [editing,          setEditing]          = useState<ProyectoEstrategico | null>(null);
-  const [confirmDeleteId,  setConfirmDeleteId]  = useState<string | null>(null);
-  const [form,             setForm]             = useState(EMPTY_FORM);
-  const [errors,           setErrors]           = useState<FormErrors>({});
-  const [submitAttempted,  setSubmitAttempted]  = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing]       = useState<ProyectoEstrategico | null>(null);
+
+  const { form, errors, setField, reset, validate: validateForm } = useFormState(EMPTY_FORM, validate);
+  const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
 
   const { data: proyectos, isLoading: loadingProy } = useProyectos({ unidadId: wsId });
   const { data: objetivos }                          = useObjetivos();
@@ -247,15 +249,13 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
 
   function openCreate() {
     setEditing(null);
-    setForm(EMPTY_FORM);
-    setErrors({});
-    setSubmitAttempted(false);
+    reset(EMPTY_FORM);
     setDrawerOpen(true);
   }
 
   function openEdit(p: ProyectoEstrategico) {
     setEditing(p);
-    setForm({
+    reset({
       nombre:               p.nombre,
       descripcion:          p.descripcion          ?? "",
       objetivoId:           p.objetivoId,
@@ -270,24 +270,11 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
       beneficiosEsperados:  p.beneficiosEsperados  ?? "",
       observaciones:        p.observaciones        ?? "",
     });
-    setErrors({});
-    setSubmitAttempted(false);
     setDrawerOpen(true);
   }
 
-  function handleChange<K extends keyof typeof EMPTY_FORM>(key: K, value: (typeof EMPTY_FORM)[K]) {
-    const next = { ...form, [key]: value };
-    setForm(next);
-    if (submitAttempted) {
-      setErrors(validate(next));
-    }
-  }
-
   async function handleSave() {
-    setSubmitAttempted(true);
-    const errs = validate(form);
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (!validateForm()) return;
 
     const payload = {
       ...form,
@@ -300,11 +287,6 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
       await actions.create.mutateAsync(payload as Partial<ProyectoEstrategico>);
     }
     setDrawerOpen(false);
-  }
-
-  async function handleConfirmDelete(id: string) {
-    await actions.remove.mutateAsync(id);
-    setConfirmDeleteId(null);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;
@@ -364,10 +346,10 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
               objetivo={objetivoMap[proy.objetivoId]}
               procesoCount={getProcesoCount(proy.id)}
               onEdit={openEdit}
-              onDelete={(id) => setConfirmDeleteId(id)}
+              onDelete={requestDelete}
               confirmDeleteId={confirmDeleteId}
-              onCancelDelete={() => setConfirmDeleteId(null)}
-              onConfirmDelete={handleConfirmDelete}
+              onCancelDelete={cancelDelete}
+              onConfirmDelete={confirmDelete}
               canEdit={canEdit}
             />
           ))}
@@ -381,12 +363,12 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
         title={editing ? "Editar proyecto" : "Nuevo proyecto estratégico"}
         width="lg"
         footer={
-          <>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave} disabled={isPending}>
-              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear proyecto"}
-            </Button>
-          </>
+          <DrawerFooter
+            onCancel={() => setDrawerOpen(false)}
+            onSave={handleSave}
+            isPending={isPending}
+            isEditing={!!editing}
+          />
         }
       >
         {/* Sección 1 — Identificación */}
@@ -395,7 +377,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
             {objetivoOptions.length > 0 ? (
               <Select
                 value={form.objetivoId}
-                onValueChange={(v) => handleChange("objetivoId", v)}
+                onValueChange={(v) => setField("objetivoId", v)}
                 options={objetivoOptions}
                 placeholder="Seleccionar objetivo…"
               />
@@ -410,7 +392,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           <DrawerField label="Nombre del proyecto" required>
             <Input
               value={form.nombre}
-              onChange={(e) => handleChange("nombre", e.target.value)}
+              onChange={(e) => setField("nombre", e.target.value)}
               placeholder="Ej. Modernización del sistema académico"
             />
             <FormError message={errors.nombre} />
@@ -420,7 +402,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
             <Select
               value={form.estado}
               onValueChange={(v) =>
-                handleChange("estado", v as NonNullable<ProyectoEstrategico["estado"]>)
+                setField("estado", v as NonNullable<ProyectoEstrategico["estado"]>)
               }
               options={ESTADO_OPTIONS}
             />
@@ -430,7 +412,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
             <EntitySelector
               entityType="usuarios"
               value={form.responsableId}
-              onValueChange={(v) => handleChange("responsableId", v)}
+              onValueChange={(v) => setField("responsableId", v)}
               placeholder="Seleccionar responsable…"
               allowEmpty
             />
@@ -442,7 +424,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           <DrawerField label="Descripción">
             <Textarea
               value={form.descripcion}
-              onChange={(e) => handleChange("descripcion", e.target.value)}
+              onChange={(e) => setField("descripcion", e.target.value)}
               rows={3}
               placeholder="Descripción del proyecto…"
             />
@@ -453,14 +435,14 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
               <Input
                 type="date"
                 value={form.fechaInicio}
-                onChange={(e) => handleChange("fechaInicio", e.target.value)}
+                onChange={(e) => setField("fechaInicio", e.target.value)}
               />
             </DrawerField>
             <DrawerField label="Fecha fin">
               <Input
                 type="date"
                 value={form.fechaFin}
-                onChange={(e) => handleChange("fechaFin", e.target.value)}
+                onChange={(e) => setField("fechaFin", e.target.value)}
               />
               <FormError message={errors.fechaFin} />
             </DrawerField>
@@ -470,7 +452,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
             <Input
               type="number"
               value={form.presupuesto}
-              onChange={(e) => handleChange("presupuesto", e.target.value)}
+              onChange={(e) => setField("presupuesto", e.target.value)}
               placeholder="0.00"
             />
           </DrawerField>
@@ -478,7 +460,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           <DrawerField label="Fuente de financiamiento">
             <Input
               value={form.fuenteFinanciamiento}
-              onChange={(e) => handleChange("fuenteFinanciamiento", e.target.value)}
+              onChange={(e) => setField("fuenteFinanciamiento", e.target.value)}
               placeholder="Ej. Fondos propios, donación internacional…"
             />
           </DrawerField>
@@ -486,7 +468,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           <DrawerField label="Beneficios esperados">
             <Textarea
               value={form.beneficiosEsperados}
-              onChange={(e) => handleChange("beneficiosEsperados", e.target.value)}
+              onChange={(e) => setField("beneficiosEsperados", e.target.value)}
               rows={3}
               placeholder="Describe los beneficios esperados del proyecto…"
             />
@@ -498,7 +480,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           <DrawerField label="Riesgos identificados">
             <Textarea
               value={form.riesgos}
-              onChange={(e) => handleChange("riesgos", e.target.value)}
+              onChange={(e) => setField("riesgos", e.target.value)}
               rows={3}
               placeholder="Describe los riesgos identificados…"
             />
@@ -507,7 +489,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           <DrawerField label="Dependencias">
             <Textarea
               value={form.dependencias}
-              onChange={(e) => handleChange("dependencias", e.target.value)}
+              onChange={(e) => setField("dependencias", e.target.value)}
               rows={3}
               placeholder="Describe las dependencias del proyecto…"
             />
@@ -516,7 +498,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           <DrawerField label="Observaciones">
             <Textarea
               value={form.observaciones}
-              onChange={(e) => handleChange("observaciones", e.target.value)}
+              onChange={(e) => setField("observaciones", e.target.value)}
               rows={3}
               placeholder="Observaciones adicionales…"
             />
