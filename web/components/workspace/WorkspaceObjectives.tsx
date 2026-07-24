@@ -1,13 +1,17 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import type { WorkspaceId } from "@/config/nav";
-import type { ObjetivoEstrategico, ProyectoEstrategico } from "@/types/entities";
-import { ObjetivosService, ProyectosService } from "@/services";
+import type { ObjetivoEstrategico } from "@/types/entities";
+import { useObjetivos, useObjetivosActions } from "@/hooks/useObjetivos";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
 
 interface WorkspaceObjectivesProps {
   wsId: WorkspaceId;
@@ -16,18 +20,30 @@ interface WorkspaceObjectivesProps {
 function ObjetivoRow({
   objetivo,
   proyectoCount,
+  onEdit,
+  onDelete,
+  confirmDeleteId,
+  onCancelDelete,
+  onConfirmDelete,
+  canEdit,
 }: {
   objetivo: ObjetivoEstrategico;
   proyectoCount: number;
+  onEdit: (obj: ObjetivoEstrategico) => void;
+  onDelete: (id: string) => void;
+  confirmDeleteId: string | null;
+  onCancelDelete: () => void;
+  onConfirmDelete: (id: string) => void;
+  canEdit: boolean;
 }) {
+  const isConfirming = confirmDeleteId === objetivo.id;
+
   return (
     <div className="flex items-start gap-3 py-3 border-b border-sse-border last:border-b-0">
-      {/* ID badge */}
       <span className="shrink-0 mt-0.5 inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-semibold bg-sse-pill-blue-bg text-sse-pill-blue-fg">
         {objetivo.id}
       </span>
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
         <p className="text-[13px] font-medium text-sse-ink leading-snug">{objetivo.nombre}</p>
         {objetivo.descripcion && (
@@ -35,44 +51,111 @@ function ObjetivoRow({
         )}
       </div>
 
-      {/* Projects linked */}
-      <div className="shrink-0 text-right">
+      <div className="shrink-0 flex items-center gap-2">
         <Badge variant={proyectoCount > 0 ? "info" : "gray"}>
           {proyectoCount} {proyectoCount === 1 ? "proyecto" : "proyectos"}
         </Badge>
+        {canEdit && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onEdit(objetivo)}
+              className="px-2 py-0.5 rounded text-[11px] text-sse-primary hover:bg-sse-pill-blue-bg"
+            >
+              Editar
+            </button>
+            {isConfirming ? (
+              <>
+                <button
+                  onClick={() => onConfirmDelete(objetivo.id)}
+                  className="px-2 py-0.5 rounded text-[11px] text-sse-sem-red-fg hover:bg-sse-sem-red-bg"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={onCancelDelete}
+                  className="px-2 py-0.5 rounded text-[11px] text-sse-muted hover:bg-sse-shell-canvas"
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => onDelete(objetivo.id)}
+                className="px-2 py-0.5 rounded text-[11px] text-sse-muted hover:text-sse-sem-red-fg hover:bg-sse-sem-red-bg"
+              >
+                Eliminar
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
-  const { data: objetivos, isLoading: loadingObj } = useQuery<ObjetivoEstrategico[]>({
-    queryKey: ["objetivos"],
-    queryFn: () => ObjetivosService.list(),
-  });
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<ObjetivoEstrategico | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
 
-  const { data: proyectos, isLoading: loadingProy } = useQuery<ProyectoEstrategico[]>({
-    queryKey: ["proyectos", wsId],
-    queryFn: () => ProyectosService.list({ unidadId: wsId }),
-  });
+  const { data: objetivos, isLoading } = useObjetivos();
+  const actions = useObjetivosActions();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission("process.edit");
 
-  const isLoading = loadingObj || loadingProy;
+  function openCreate() {
+    setEditing(null);
+    setNombre("");
+    setDescripcion("");
+    setDrawerOpen(true);
+  }
 
-  // Build a count map: objetivoId -> number of proyectos
-  const proyectosByObjetivo: Record<string, number> = {};
-  (proyectos ?? []).forEach((p) => {
-    proyectosByObjetivo[p.objetivoId] = (proyectosByObjetivo[p.objetivoId] ?? 0) + 1;
-  });
+  function openEdit(obj: ObjetivoEstrategico) {
+    setEditing(obj);
+    setNombre(obj.nombre);
+    setDescripcion(obj.descripcion ?? "");
+    setDrawerOpen(true);
+  }
+
+  async function handleSave() {
+    const payload = { nombre, descripcion };
+    if (editing) {
+      await actions.update.mutateAsync({ id: editing.id, patch: payload });
+    } else {
+      await actions.create.mutateAsync({ ...payload, planId: `plan-${wsId}` } as Partial<ObjetivoEstrategico>);
+    }
+    setDrawerOpen(false);
+  }
+
+  async function handleConfirmDelete(id: string) {
+    await actions.remove.mutateAsync(id);
+    setConfirmDeleteId(null);
+  }
+
+  const isPending = actions.create.isPending || actions.update.isPending;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-[17px] font-semibold text-sse-ink">Objetivos estratégicos</h1>
-        {objetivos && (
-          <span className="text-[12px] text-sse-muted">
-            {objetivos.length} objetivo{objetivos.length !== 1 ? "s" : ""}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {objetivos && (
+            <span className="text-[12px] text-sse-muted">
+              {objetivos.length} objetivo{objetivos.length !== 1 ? "s" : ""}
+            </span>
+          )}
+          {canEdit && (
+            <Button size="sm" variant="primary" onClick={openCreate}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+                className="w-3.5 h-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Nuevo objetivo
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -91,6 +174,7 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
               icon="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
               title="Sin objetivos estratégicos"
               description="No se encontraron objetivos en el plan institucional."
+              action={canEdit ? <Button size="sm" onClick={openCreate}>Crear primer objetivo</Button> : undefined}
             />
           )}
 
@@ -100,7 +184,13 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
                 <ObjetivoRow
                   key={obj.id}
                   objetivo={obj}
-                  proyectoCount={proyectosByObjetivo[obj.id] ?? 0}
+                  proyectoCount={0}
+                  onEdit={openEdit}
+                  onDelete={(id) => setConfirmDeleteId(id)}
+                  confirmDeleteId={confirmDeleteId}
+                  onCancelDelete={() => setConfirmDeleteId(null)}
+                  onConfirmDelete={handleConfirmDelete}
+                  canEdit={canEdit}
                 />
               ))}
             </div>
@@ -108,11 +198,45 @@ export function WorkspaceObjectives({ wsId }: WorkspaceObjectivesProps) {
         </CardContent>
       </Card>
 
-      {/* Context note */}
       <p className="text-[12px] text-sse-muted">
-        Los objetivos estratégicos son compartidos entre todas las unidades. Los proyectos
-        mostrados corresponden únicamente a esta unidad.
+        Los objetivos estratégicos son compartidos entre todas las unidades.
       </p>
+
+      {/* Drawer */}
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={editing ? "Editar objetivo" : "Nuevo objetivo estratégico"}
+        width="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={!nombre || isPending}>
+              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear objetivo"}
+            </Button>
+          </>
+        }
+      >
+        <DrawerSection>
+          <DrawerField label="Nombre del objetivo" required>
+            <Input
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Ej. Fortalecer la gestión académica"
+            />
+          </DrawerField>
+
+          <DrawerField label="Descripción">
+            <textarea
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              rows={4}
+              placeholder="Descripción del objetivo estratégico…"
+              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
+            />
+          </DrawerField>
+        </DrawerSection>
+      </Drawer>
     </div>
   );
 }

@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import type { WorkspaceId } from "@/config/nav";
-import type { PlanEstrategico, EstadoPlan } from "@/types/entities";
+import type { PlanEstrategico, EstadoPlan, TipoPlan } from "@/types/entities";
 import { usePlanes, usePlanesActions } from "@/hooks/usePlanes";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
 import type { BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
 import { cn, fmtShortDate } from "@/lib/utils";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -47,8 +49,26 @@ function avanceColor(pct: number): "success" | "warning" | "danger" {
 
 // ── Plan card ─────────────────────────────────────────────────────────────────
 
-function PlanCard({ plan }: { plan: PlanEstrategico }) {
+function PlanCard({
+  plan,
+  onEdit,
+  onDelete,
+  confirmDeleteId,
+  onCancelDelete,
+  onConfirmDelete,
+  canEdit,
+}: {
+  plan: PlanEstrategico;
+  onEdit: (plan: PlanEstrategico) => void;
+  onDelete: (id: string) => void;
+  confirmDeleteId: string | null;
+  onCancelDelete: () => void;
+  onConfirmDelete: (id: string) => void;
+  canEdit: boolean;
+}) {
   const estado = plan.estado as EstadoPlan;
+  const isConfirming = confirmDeleteId === plan.id;
+
   return (
     <div className="bg-sse-surface rounded-md border border-sse-border p-4 flex flex-col gap-3 hover:border-sse-primary/40 transition-colors">
       <div className="flex items-start justify-between gap-2">
@@ -83,6 +103,39 @@ function PlanCard({ plan }: { plan: PlanEstrategico }) {
           {" — "}
           {plan.periodoFin ? fmtShortDate(plan.periodoFin) : "—"}
         </span>
+        {canEdit && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onEdit(plan)}
+              className="px-2 py-0.5 rounded text-[11px] text-sse-primary hover:bg-sse-pill-blue-bg"
+            >
+              Editar
+            </button>
+            {isConfirming ? (
+              <span className="flex items-center gap-1">
+                <button
+                  onClick={() => onConfirmDelete(plan.id)}
+                  className="px-2 py-0.5 rounded text-[11px] text-sse-sem-red-fg hover:bg-sse-sem-red-bg"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={onCancelDelete}
+                  className="px-2 py-0.5 rounded text-[11px] text-sse-muted hover:bg-sse-shell-canvas"
+                >
+                  Cancelar
+                </button>
+              </span>
+            ) : (
+              <button
+                onClick={() => onDelete(plan.id)}
+                className="px-2 py-0.5 rounded text-[11px] text-sse-muted hover:text-sse-sem-red-fg hover:bg-sse-sem-red-bg"
+              >
+                Eliminar
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -98,6 +151,32 @@ const ESTADOS: Array<{ value: EstadoPlan | "todos"; label: string }> = [
   { value: "cerrado",  label: "Cerrados" },
 ];
 
+const TIPO_OPTIONS = [
+  { value: "estrategico", label: "Estratégico" },
+  { value: "operativo",   label: "Operativo" },
+  { value: "mejora",      label: "Mejora" },
+  { value: "accion",      label: "Acción" },
+];
+
+const ESTADO_OPTIONS = [
+  { value: "borrador",  label: "Borrador" },
+  { value: "revision",  label: "En revisión" },
+  { value: "aprobado",  label: "Aprobado" },
+  { value: "vigente",   label: "Vigente" },
+  { value: "cerrado",   label: "Cerrado" },
+];
+
+// ── empty form state ──────────────────────────────────────────────────────────
+
+const EMPTY_FORM = {
+  nombre: "",
+  tipo: "estrategico" as TipoPlan,
+  estado: "borrador" as EstadoPlan,
+  periodoInicio: "",
+  periodoFin: "",
+  descripcion: "",
+};
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 interface WorkspacePlanesProps {
@@ -106,8 +185,15 @@ interface WorkspacePlanesProps {
 
 export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
   const [estadoFilter, setEstadoFilter] = useState<EstadoPlan | "todos">("todos");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<PlanEstrategico | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const { data: planes, isLoading } = usePlanes({ wsId });
+  const actions = usePlanesActions();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission("process.edit");
 
   const filtered = (planes ?? []).filter((p) =>
     estadoFilter === "todos" ? true : p.estado === estadoFilter,
@@ -122,6 +208,46 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
     {} as Partial<Record<EstadoPlan, number>>,
   );
 
+  function openCreate() {
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setDrawerOpen(true);
+  }
+
+  function openEdit(plan: PlanEstrategico) {
+    setEditing(plan);
+    setForm({
+      nombre:       plan.nombre,
+      tipo:         plan.tipo,
+      estado:       plan.estado,
+      periodoInicio: plan.periodoInicio ?? "",
+      periodoFin:   plan.periodoFin ?? "",
+      descripcion:  plan.descripcion ?? "",
+    });
+    setDrawerOpen(true);
+  }
+
+  async function handleSave() {
+    const payload = {
+      ...form,
+      wsId,
+      avancePct: editing?.avancePct ?? 0,
+    };
+    if (editing) {
+      await actions.update.mutateAsync({ id: editing.id, patch: payload });
+    } else {
+      await actions.create.mutateAsync(payload as Partial<PlanEstrategico>);
+    }
+    setDrawerOpen(false);
+  }
+
+  async function handleConfirmDelete(id: string) {
+    await actions.remove.mutateAsync(id);
+    setConfirmDeleteId(null);
+  }
+
+  const isPending = actions.create.isPending || actions.update.isPending;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -132,6 +258,15 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
             Planes estratégicos, operativos y de mejora de la unidad
           </p>
         </div>
+        {canEdit && (
+          <Button size="sm" variant="primary" onClick={openCreate}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+              className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo plan
+          </Button>
+        )}
       </div>
 
       {/* Summary chips */}
@@ -182,16 +317,100 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
               ? "Esta unidad no tiene planes registrados."
               : `No hay planes en estado "${ESTADO_LABEL[estadoFilter as EstadoPlan]}".`
           }
+          action={
+            canEdit && estadoFilter === "todos" ? (
+              <Button size="sm" onClick={openCreate}>Crear primer plan</Button>
+            ) : undefined
+          }
         />
       )}
 
       {!isLoading && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} />
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              onEdit={openEdit}
+              onDelete={(id) => setConfirmDeleteId(id)}
+              confirmDeleteId={confirmDeleteId}
+              onCancelDelete={() => setConfirmDeleteId(null)}
+              onConfirmDelete={handleConfirmDelete}
+              canEdit={canEdit}
+            />
           ))}
         </div>
       )}
+
+      {/* Create / Edit Drawer */}
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={editing ? "Editar plan" : "Nuevo plan"}
+        subtitle={editing ? editing.nombre : "Registra un nuevo plan institucional"}
+        width="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={!form.nombre || isPending}>
+              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear plan"}
+            </Button>
+          </>
+        }
+      >
+        <DrawerSection>
+          <DrawerField label="Nombre del plan" required>
+            <Input
+              value={form.nombre}
+              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              placeholder="Ej. Plan Estratégico Institucional 2024-2028"
+            />
+          </DrawerField>
+
+          <DrawerField label="Tipo" required>
+            <Select
+              value={form.tipo}
+              onValueChange={(v) => setForm({ ...form, tipo: v as TipoPlan })}
+              options={TIPO_OPTIONS}
+            />
+          </DrawerField>
+
+          <DrawerField label="Estado" required>
+            <Select
+              value={form.estado}
+              onValueChange={(v) => setForm({ ...form, estado: v as EstadoPlan })}
+              options={ESTADO_OPTIONS}
+            />
+          </DrawerField>
+
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Inicio del período">
+              <Input
+                type="date"
+                value={form.periodoInicio}
+                onChange={(e) => setForm({ ...form, periodoInicio: e.target.value })}
+              />
+            </DrawerField>
+            <DrawerField label="Fin del período">
+              <Input
+                type="date"
+                value={form.periodoFin}
+                onChange={(e) => setForm({ ...form, periodoFin: e.target.value })}
+              />
+            </DrawerField>
+          </div>
+
+          <DrawerField label="Descripción">
+            <textarea
+              value={form.descripcion}
+              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              rows={3}
+              placeholder="Descripción o alcance del plan…"
+              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
+            />
+          </DrawerField>
+        </DrawerSection>
+      </Drawer>
     </div>
   );
 }

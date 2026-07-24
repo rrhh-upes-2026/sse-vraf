@@ -17,22 +17,22 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const sessionUser = token ? await verifySessionToken(token) : null;
 
   if (!sessionUser) {
-    if (process.env.NEXT_PUBLIC_SKIP_AUTH !== "true") {
-      redirect("/login");
-    }
+    redirect("/login");
   }
 
   // Force password change before accessing any (app) page.
   // /change-password lives in (auth) group so AppShell is not called there — no redirect loop.
-  if (sessionUser?.mustChangePassword) {
+  if (sessionUser.mustChangePassword) {
     redirect("/change-password");
   }
 
-  const isAdmin = sessionUser ? sessionUser.rol === "ADMIN" : true; // dev mode: treat as admin
+  const isAdmin = sessionUser.rol === "ADMIN";
 
-  const user: SidebarUser = sessionUser?.name
-    ? { name: sessionUser.name, initials: initialsFromName(sessionUser.name), isAdmin }
-    : { name: "Dev User", initials: "DU", isAdmin: true };
+  const user: SidebarUser = {
+    name: sessionUser.name,
+    initials: initialsFromName(sessionUser.name),
+    isAdmin,
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-sse-shell-canvas">

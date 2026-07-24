@@ -1,14 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import type { WorkspaceId } from "@/config/nav";
 import type { Indicador, SemaforoColor } from "@/types/entities";
-import { IndicadoresService } from "@/services";
+import { useIndicadores, useIndicadoresActions } from "@/hooks/useIndicadores";
 import { useICEMyIndicators, useICEPeriods, useICECapturas } from "@/hooks/useICE";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
 import { cn, fmtDate } from "@/lib/utils";
 
 interface WorkspaceIndicatorsProps {
@@ -48,6 +53,18 @@ const FRECUENCIA_LABEL: Record<Indicador["frecuencia"], string> = {
   anual:       "Anual",
 };
 
+const FRECUENCIA_OPTIONS = [
+  { value: "mensual",    label: "Mensual" },
+  { value: "trimestral", label: "Trimestral" },
+  { value: "semestral",  label: "Semestral" },
+  { value: "anual",      label: "Anual" },
+];
+
+const CATEGORIA_OPTIONS = [
+  { value: "gestion",    label: "Gestión" },
+  { value: "desempeno",  label: "Desempeño" },
+];
+
 // ── trend icon ────────────────────────────────────────────────────────────────
 
 function TrendIcon({ tendencia }: { tendencia: Indicador["tendencia"] }) {
@@ -78,13 +95,29 @@ function TrendIcon({ tendencia }: { tendencia: Indicador["tendencia"] }) {
 
 // ── card ──────────────────────────────────────────────────────────────────────
 
-function IndicadorCard({ indicador }: { indicador: Indicador }) {
+function IndicadorCard({
+  indicador,
+  onEdit,
+  onDelete,
+  confirmDeleteId,
+  onCancelDelete,
+  onConfirmDelete,
+  canEdit,
+}: {
+  indicador: Indicador;
+  onEdit: (ind: Indicador) => void;
+  onDelete: (id: string) => void;
+  confirmDeleteId: string | null;
+  onCancelDelete: () => void;
+  onConfirmDelete: (id: string) => void;
+  canEdit: boolean;
+}) {
   const pct =
     indicador.meta > 0 ? Math.round((indicador.valorActual / indicador.meta) * 100) : 0;
+  const isConfirming = confirmDeleteId === indicador.id;
 
   return (
     <div className="bg-sse-surface rounded-md border border-sse-border p-4 flex flex-col gap-3">
-      {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-semibold text-sse-ink leading-snug">{indicador.nombre}</p>
@@ -99,7 +132,6 @@ function IndicadorCard({ indicador }: { indicador: Indicador }) {
         </div>
       </div>
 
-      {/* Value */}
       <div className="flex items-end gap-2">
         <span className={cn("text-[26px] font-bold leading-none", SEMAPHORE_TEXT[indicador.semaforo])}>
           {indicador.valorActual}
@@ -107,7 +139,6 @@ function IndicadorCard({ indicador }: { indicador: Indicador }) {
         <span className="text-[12px] text-sse-muted mb-0.5">{indicador.unidadMedida}</span>
       </div>
 
-      {/* Progress bar */}
       <div className="space-y-1">
         <div className="h-2 w-full rounded-full bg-sse-border overflow-hidden">
           <div
@@ -123,13 +154,46 @@ function IndicadorCard({ indicador }: { indicador: Indicador }) {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between pt-1 border-t border-sse-border">
         <Badge variant="gray">{FRECUENCIA_LABEL[indicador.frecuencia]}</Badge>
-        <span className="text-[10px] text-sse-muted">
-          Actualizado{" "}
-          {fmtDate(indicador.ultimaActualizacion)}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-sse-muted">
+            {fmtDate(indicador.ultimaActualizacion)}
+          </span>
+          {canEdit && (
+            <>
+              <button
+                onClick={() => onEdit(indicador)}
+                className="ml-2 px-2 py-0.5 rounded text-[11px] text-sse-primary hover:bg-sse-pill-blue-bg"
+              >
+                Editar
+              </button>
+              {isConfirming ? (
+                <>
+                  <button
+                    onClick={() => onConfirmDelete(indicador.id)}
+                    className="px-2 py-0.5 rounded text-[11px] text-sse-sem-red-fg hover:bg-sse-sem-red-bg"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    onClick={onCancelDelete}
+                    className="px-2 py-0.5 rounded text-[11px] text-sse-muted hover:bg-sse-shell-canvas"
+                  >
+                    Cancelar
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => onDelete(indicador.id)}
+                  className="px-2 py-0.5 rounded text-[11px] text-sse-muted hover:text-sse-sem-red-fg hover:bg-sse-sem-red-bg"
+                >
+                  Eliminar
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -186,11 +250,30 @@ function CaptureBar({ wsId }: { wsId: string }) {
 
 // ── main component ────────────────────────────────────────────────────────────
 
+const EMPTY_FORM = {
+  nombre: "",
+  descripcion: "",
+  categoria: "gestion" as Indicador["categoria"],
+  formula: "",
+  unidadMedida: "",
+  meta: "0",
+  valorActual: "0",
+  frecuencia: "mensual" as Indicador["frecuencia"],
+  responsableId: "",
+  fuenteInformacion: "",
+  procesoId: "",
+};
+
 export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
-  const { data: indicadores, isLoading } = useQuery<Indicador[]>({
-    queryKey: ["indicadores", "all"],
-    queryFn: () => IndicadoresService.list(),
-  });
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<Indicador | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  const { data: indicadores, isLoading } = useIndicadores();
+  const actions = useIndicadoresActions();
+  const { hasPermission } = usePermissions();
+  const canEdit = hasPermission("indicator.view");
 
   const semStats = (indicadores ?? []).reduce(
     (acc, ind) => {
@@ -200,51 +283,231 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
     {} as Record<SemaforoColor, number>,
   );
 
+  function openCreate() {
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setDrawerOpen(true);
+  }
+
+  function openEdit(ind: Indicador) {
+    setEditing(ind);
+    setForm({
+      nombre: ind.nombre,
+      descripcion: ind.descripcion,
+      categoria: ind.categoria,
+      formula: ind.formula,
+      unidadMedida: ind.unidadMedida,
+      meta: String(ind.meta),
+      valorActual: String(ind.valorActual),
+      frecuencia: ind.frecuencia,
+      responsableId: ind.responsableId,
+      fuenteInformacion: ind.fuenteInformacion,
+      procesoId: ind.procesoId,
+    });
+    setDrawerOpen(true);
+  }
+
+  async function handleSave() {
+    const now = new Date().toISOString();
+    const payload = {
+      ...form,
+      meta: Number(form.meta),
+      valorActual: Number(form.valorActual),
+      semaforo: editing?.semaforo ?? "verde" as SemaforoColor,
+      tendencia: editing?.tendencia ?? "estable" as Indicador["tendencia"],
+      ultimaActualizacion: now,
+      objetivo: editing?.objetivo ?? "",
+      dashboardDestino: editing?.dashboardDestino ?? "",
+      reporteDestino: editing?.reporteDestino ?? "",
+    };
+    if (editing) {
+      await actions.update.mutateAsync({ id: editing.id, patch: payload });
+    } else {
+      await actions.create.mutateAsync(payload as Partial<Indicador>);
+    }
+    setDrawerOpen(false);
+  }
+
+  async function handleConfirmDelete(id: string) {
+    await actions.remove.mutateAsync(id);
+    setConfirmDeleteId(null);
+  }
+
+  const isPending = actions.create.isPending || actions.update.isPending;
+
   return (
     <div className="space-y-4">
       <CaptureBar wsId={wsId} />
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-[17px] font-semibold text-sse-ink">Estado de indicadores</h1>
-        {indicadores && indicadores.length > 0 && (
-          <div className="flex items-center gap-3">
-            {(["verde", "amarillo", "rojo"] as SemaforoColor[]).map((c) =>
-              semStats[c] ? (
-                <div key={c} className="flex items-center gap-1">
-                  <span className={cn("w-2 h-2 rounded-full", SEMAPHORE_DOT[c])} />
-                  <span className="text-[12px] text-sse-muted">{semStats[c]}</span>
-                </div>
-              ) : null,
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {indicadores && indicadores.length > 0 && (
+            <>
+              {(["verde", "amarillo", "rojo"] as SemaforoColor[]).map((c) =>
+                semStats[c] ? (
+                  <div key={c} className="flex items-center gap-1">
+                    <span className={cn("w-2 h-2 rounded-full", SEMAPHORE_DOT[c])} />
+                    <span className="text-[12px] text-sse-muted">{semStats[c]}</span>
+                  </div>
+                ) : null,
+              )}
+            </>
+          )}
+          {canEdit && (
+            <Button size="sm" variant="primary" onClick={openCreate}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+                className="w-3.5 h-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Nuevo indicador
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Loading */}
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[190px] rounded-md" />)}
         </div>
       )}
 
-      {/* Empty */}
       {!isLoading && (!indicadores || indicadores.length === 0) && (
         <EmptyState
           icon="M4 20a8 8 0 1 1 16 0M12 14l4-4"
           title="Sin indicadores"
           description="No hay indicadores de gestión configurados."
+          action={canEdit ? <Button size="sm" onClick={openCreate}>Crear primer indicador</Button> : undefined}
         />
       )}
 
-      {/* Grid */}
       {!isLoading && indicadores && indicadores.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {indicadores.map((ind) => (
-            <IndicadorCard key={ind.id} indicador={ind} />
+            <IndicadorCard
+              key={ind.id}
+              indicador={ind}
+              onEdit={openEdit}
+              onDelete={(id) => setConfirmDeleteId(id)}
+              confirmDeleteId={confirmDeleteId}
+              onCancelDelete={() => setConfirmDeleteId(null)}
+              onConfirmDelete={handleConfirmDelete}
+              canEdit={canEdit}
+            />
           ))}
         </div>
       )}
+
+      {/* Drawer */}
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={editing ? "Editar indicador" : "Nuevo indicador"}
+        width="lg"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={!form.nombre || isPending}>
+              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear indicador"}
+            </Button>
+          </>
+        }
+      >
+        <DrawerSection>
+          <DrawerField label="Nombre del indicador" required>
+            <Input
+              value={form.nombre}
+              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              placeholder="Ej. Tasa de aprobación estudiantil"
+            />
+          </DrawerField>
+
+          <DrawerField label="Descripción">
+            <textarea
+              value={form.descripcion}
+              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              rows={2}
+              placeholder="Descripción del indicador…"
+              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
+            />
+          </DrawerField>
+
+          <div className="grid grid-cols-2 gap-3">
+            <DrawerField label="Categoría" required>
+              <Select
+                value={form.categoria}
+                onValueChange={(v) => setForm({ ...form, categoria: v as Indicador["categoria"] })}
+                options={CATEGORIA_OPTIONS}
+              />
+            </DrawerField>
+            <DrawerField label="Frecuencia" required>
+              <Select
+                value={form.frecuencia}
+                onValueChange={(v) => setForm({ ...form, frecuencia: v as Indicador["frecuencia"] })}
+                options={FRECUENCIA_OPTIONS}
+              />
+            </DrawerField>
+          </div>
+
+          <DrawerField label="Fórmula de cálculo">
+            <Input
+              value={form.formula}
+              onChange={(e) => setForm({ ...form, formula: e.target.value })}
+              placeholder="Ej. (Aprobados / Total) * 100"
+            />
+          </DrawerField>
+
+          <div className="grid grid-cols-3 gap-3">
+            <DrawerField label="Unidad de medida" required>
+              <Input
+                value={form.unidadMedida}
+                onChange={(e) => setForm({ ...form, unidadMedida: e.target.value })}
+                placeholder="Ej. %"
+              />
+            </DrawerField>
+            <DrawerField label="Meta">
+              <Input
+                type="number"
+                value={form.meta}
+                onChange={(e) => setForm({ ...form, meta: e.target.value })}
+                placeholder="0"
+              />
+            </DrawerField>
+            <DrawerField label="Valor actual">
+              <Input
+                type="number"
+                value={form.valorActual}
+                onChange={(e) => setForm({ ...form, valorActual: e.target.value })}
+                placeholder="0"
+              />
+            </DrawerField>
+          </div>
+
+          <DrawerField label="Fuente de información">
+            <Input
+              value={form.fuenteInformacion}
+              onChange={(e) => setForm({ ...form, fuenteInformacion: e.target.value })}
+              placeholder="Ej. Sistema académico, reportes mensuales"
+            />
+          </DrawerField>
+
+          <DrawerField label="Responsable (ID)">
+            <Input
+              value={form.responsableId}
+              onChange={(e) => setForm({ ...form, responsableId: e.target.value })}
+              placeholder="ID del responsable…"
+            />
+          </DrawerField>
+
+          <DrawerField label="Proceso vinculado (ID)">
+            <Input
+              value={form.procesoId}
+              onChange={(e) => setForm({ ...form, procesoId: e.target.value })}
+              placeholder="ID del proceso…"
+            />
+          </DrawerField>
+        </DrawerSection>
+      </Drawer>
     </div>
   );
 }

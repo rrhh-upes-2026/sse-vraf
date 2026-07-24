@@ -1,16 +1,18 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import { useState } from "react";
 import type { WorkspaceId } from "@/config/nav";
-import type { ProyectoEstrategico, ObjetivoEstrategico, ProcesoInstitucional } from "@/types/entities";
-import { ProyectosService, ObjetivosService, ProcesosService } from "@/services";
+import type { ProyectoEstrategico, ObjetivoEstrategico } from "@/types/entities";
+import { useProyectos, useProyectosActions } from "@/hooks/useProyectos";
+import { useObjetivos } from "@/hooks/useObjetivos";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
 
 interface WorkspaceProjectsProps {
   wsId: WorkspaceId;
@@ -19,12 +21,24 @@ interface WorkspaceProjectsProps {
 function ProjectCard({
   proyecto,
   objetivo,
-  procesoCount,
+  onEdit,
+  onDelete,
+  confirmDeleteId,
+  onCancelDelete,
+  onConfirmDelete,
+  canEdit,
 }: {
   proyecto: ProyectoEstrategico;
   objetivo: ObjetivoEstrategico | undefined;
-  procesoCount: number;
+  onEdit: (p: ProyectoEstrategico) => void;
+  onDelete: (id: string) => void;
+  confirmDeleteId: string | null;
+  onCancelDelete: () => void;
+  onConfirmDelete: (id: string) => void;
+  canEdit: boolean;
 }) {
+  const isConfirming = confirmDeleteId === proyecto.id;
+
   return (
     <div className="bg-sse-surface rounded-md border border-sse-border p-4">
       <div className="flex items-start justify-between gap-3 mb-2">
@@ -34,7 +48,6 @@ function ProjectCard({
             <p className="text-[12px] text-sse-muted mt-0.5 line-clamp-2">{proyecto.descripcion}</p>
           )}
         </div>
-        <Badge variant="info">{procesoCount} proceso{procesoCount !== 1 ? "s" : ""}</Badge>
       </div>
 
       {objetivo && (
@@ -48,55 +61,106 @@ function ProjectCard({
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 mt-1.5">
+      <div className="flex items-center justify-between mt-3">
         <span className="text-[10px] font-mono text-sse-muted">{proyecto.id}</span>
+        {canEdit && (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onEdit(proyecto)}
+              className="px-2 py-0.5 rounded text-[11px] text-sse-primary hover:bg-sse-pill-blue-bg"
+            >
+              Editar
+            </button>
+            {isConfirming ? (
+              <>
+                <button
+                  onClick={() => onConfirmDelete(proyecto.id)}
+                  className="px-2 py-0.5 rounded text-[11px] text-sse-sem-red-fg hover:bg-sse-sem-red-bg"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={onCancelDelete}
+                  className="px-2 py-0.5 rounded text-[11px] text-sse-muted hover:bg-sse-shell-canvas"
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => onDelete(proyecto.id)}
+                className="px-2 py-0.5 rounded text-[11px] text-sse-muted hover:text-sse-sem-red-fg hover:bg-sse-sem-red-bg"
+              >
+                Eliminar
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+const EMPTY_FORM = { nombre: "", descripcion: "", objetivoId: "" };
+
 export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<ProyectoEstrategico | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  const { data: proyectos, isLoading: loadingProy } = useProyectos({ unidadId: wsId });
+  const { data: objetivos } = useObjetivos();
+  const actions = useProyectosActions();
   const { hasPermission } = usePermissions();
+  const canEdit = hasPermission("process.create");
 
-  const { data: proyectos, isLoading: loadingProy } = useQuery<ProyectoEstrategico[]>({
-    queryKey: ["proyectos", wsId],
-    queryFn: () => ProyectosService.list({ unidadId: wsId }),
-  });
-
-  const { data: objetivos } = useQuery<ObjetivoEstrategico[]>({
-    queryKey: ["objetivos"],
-    queryFn: () => ObjetivosService.list(),
-  });
-
-  const { data: procesos } = useQuery<ProcesoInstitucional[]>({
-    queryKey: ["procesos", wsId],
-    queryFn: () => ProcesosService.list({ unidadId: wsId }),
-  });
-
-  // Build a map objetivoId -> ObjetivoEstrategico
   const objetivoMap: Record<string, ObjetivoEstrategico> = {};
   (objetivos ?? []).forEach((o) => { objetivoMap[o.id] = o; });
 
-  // Build a count map: proyectoId -> count of procesos
-  const procesosByProy: Record<string, number> = {};
-  (procesos ?? []).forEach((p) => {
-    procesosByProy[p.proyectoId] = (procesosByProy[p.proyectoId] ?? 0) + 1;
-  });
+  const objetivoOptions = (objetivos ?? []).map((o) => ({ value: o.id, label: o.nombre }));
+
+  function openCreate() {
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setDrawerOpen(true);
+  }
+
+  function openEdit(p: ProyectoEstrategico) {
+    setEditing(p);
+    setForm({ nombre: p.nombre, descripcion: p.descripcion ?? "", objetivoId: p.objetivoId });
+    setDrawerOpen(true);
+  }
+
+  async function handleSave() {
+    const payload = { ...form, unidadId: wsId };
+    if (editing) {
+      await actions.update.mutateAsync({ id: editing.id, patch: payload });
+    } else {
+      await actions.create.mutateAsync(payload as Partial<ProyectoEstrategico>);
+    }
+    setDrawerOpen(false);
+  }
+
+  async function handleConfirmDelete(id: string) {
+    await actions.remove.mutateAsync(id);
+    setConfirmDeleteId(null);
+  }
+
+  const isPending = actions.create.isPending || actions.update.isPending;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-[17px] font-semibold text-sse-ink">Proyectos estratégicos</h1>
-        {hasPermission("process.create") && (
-          <Link href="/studio/process-builder">
-            <Button size="sm" variant="primary">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-                className="w-3.5 h-3.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              Nuevo proyecto
-            </Button>
-          </Link>
+        {canEdit && (
+          <Button size="sm" variant="primary" onClick={openCreate}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+              className="w-3.5 h-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Nuevo proyecto
+          </Button>
         )}
       </div>
 
@@ -111,13 +175,7 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           icon="M6 3v6M6 15v6M18 3v18M6 9a3 3 0 0 0 3 3h6"
           title="Sin proyectos"
           description="Esta unidad no tiene proyectos estratégicos registrados."
-          action={
-            hasPermission("process.create") ? (
-              <Link href="/studio/process-builder">
-                <Button size="sm">Crear primer proyecto</Button>
-              </Link>
-            ) : undefined
-          }
+          action={canEdit ? <Button size="sm" onClick={openCreate}>Crear primer proyecto</Button> : undefined}
         />
       )}
 
@@ -129,7 +187,12 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
                 key={proy.id}
                 proyecto={proy}
                 objetivo={objetivoMap[proy.objetivoId]}
-                procesoCount={procesosByProy[proy.id] ?? 0}
+                onEdit={openEdit}
+                onDelete={(id) => setConfirmDeleteId(id)}
+                confirmDeleteId={confirmDeleteId}
+                onCancelDelete={() => setConfirmDeleteId(null)}
+                onConfirmDelete={handleConfirmDelete}
+                canEdit={canEdit}
               />
             ))}
           </div>
@@ -138,6 +201,57 @@ export function WorkspaceProjects({ wsId }: WorkspaceProjectsProps) {
           </p>
         </>
       )}
+
+      {/* Drawer */}
+      <Drawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={editing ? "Editar proyecto" : "Nuevo proyecto estratégico"}
+        width="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={!form.nombre || isPending}>
+              {isPending ? "Guardando…" : editing ? "Guardar cambios" : "Crear proyecto"}
+            </Button>
+          </>
+        }
+      >
+        <DrawerSection>
+          <DrawerField label="Nombre del proyecto" required>
+            <Input
+              value={form.nombre}
+              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              placeholder="Ej. Modernización del sistema académico"
+            />
+          </DrawerField>
+
+          <DrawerField label="Descripción">
+            <textarea
+              value={form.descripcion}
+              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              rows={3}
+              placeholder="Descripción del proyecto…"
+              className="w-full rounded-md border border-sse-border bg-sse-surface px-3 py-2 text-[13px] text-sse-ink outline-none placeholder:text-sse-muted focus:border-sse-primary focus:ring-1 focus:ring-sse-primary/30 resize-none"
+            />
+          </DrawerField>
+
+          <DrawerField label="Objetivo estratégico vinculado" required>
+            {objetivoOptions.length > 0 ? (
+              <Select
+                value={form.objetivoId}
+                onValueChange={(v) => setForm({ ...form, objetivoId: v })}
+                options={objetivoOptions}
+                placeholder="Seleccionar objetivo…"
+              />
+            ) : (
+              <p className="text-[12px] text-sse-muted">
+                No hay objetivos registrados. Crea un objetivo primero.
+              </p>
+            )}
+          </DrawerField>
+        </DrawerSection>
+      </Drawer>
     </div>
   );
 }
