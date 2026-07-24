@@ -35,7 +35,8 @@ export type WorkspaceId =
   | "iia"
   | "fmi"
   | "ide"
-  | "oim";
+  | "oim"
+  | "ice";
 
 /** VRAF is the Core's built-in workspace — always available, no module required. */
 export const VRAF_WORKSPACE = {

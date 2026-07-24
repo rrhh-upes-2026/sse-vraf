@@ -108,6 +108,11 @@
     }
   } catch (e) {}
   try {
+    if (typeof ICEController !== "undefined" && typeof ICEController.bootstrap === "function") {
+      ICEController.bootstrap();
+    }
+  } catch (e) {}
+  try {
     bootstrapDashboardAdapters_();
   } catch (e) {}
   try {
@@ -169,6 +174,9 @@
   } catch (e) {}
   try {
     if (typeof OIM_UNIT_DEF !== "undefined") OrgUnitRegistry.register(OIM_UNIT_DEF);
+  } catch (e) {}
+  try {
+    if (typeof ICE_UNIT_DEF !== "undefined") OrgUnitRegistry.register(ICE_UNIT_DEF);
   } catch (e) {}
 })();
 
