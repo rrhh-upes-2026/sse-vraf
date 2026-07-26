@@ -834,5 +834,60 @@ var GWPController = (function () {
     getAuditLog: function (p) {
       try { return _auditLog_().list(p || {}); } catch (e) { return []; }
     },
+
+    // Docs
+    createDoc:          function (p) { return DocsService.createDoc(p.title, p.bodyText, p.destFolderId); },
+    createFromTemplate: function (p) { return DocsService.createFromTemplate(p.templateDocId, p.variables || {}, p.destFolderId, p.fileName); },
+    exportAsPdf:        function (p) { return DocsService.exportAsPdf(p.docId, p.destFolderId, p.fileName); },
+
+    // Templates
+    listTemplates: function (p) {
+      try {
+        var folder;
+        if (p && p.folderId) {
+          folder = DriveApp.getFolderById(p.folderId);
+        } else {
+          // Search by name in root
+          var folders = DriveApp.getFoldersByName("Plantillas");
+          if (!folders.hasNext()) return [];
+          folder = folders.next();
+        }
+        var files = folder.getFiles();
+        var result = [];
+        while (files.hasNext()) {
+          var f = files.next();
+          result.push({
+            id:          f.getId(),
+            name:        f.getName(),
+            mimeType:    f.getMimeType(),
+            size:        f.getSize(),
+            webViewLink: f.getUrl(),
+            modifiedAt:  f.getLastUpdated().toISOString(),
+          });
+        }
+        return result;
+      } catch (e) {
+        AppLogger.warn("GWPController.listTemplates failed", { error: String(e.message || e) });
+        return [];
+      }
+    },
+
+    // Download (returns a temporary webContentLink via Drive API)
+    getDownloadLink: function (p) {
+      try {
+        var file = DriveApp.getFileById(p.fileId);
+        return {
+          id:              file.getId(),
+          name:            file.getName(),
+          mimeType:        file.getMimeType(),
+          size:            file.getSize(),
+          downloadUrl:     file.getDownloadUrl(),
+          webContentLink:  "https://drive.google.com/uc?export=download&id=" + file.getId(),
+        };
+      } catch (e) {
+        AppLogger.warn("GWPController.getDownloadLink failed", { error: String(e.message || e) });
+        throw e;
+      }
+    },
   };
 })();

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import type { Evidencia } from "@/types/entities";
 import { useEvidencias } from "@/hooks/useEvidencias";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fmtShortDate } from "@/lib/utils";
 import { ESTADO_EVIDENCIA_BADGE, ESTADO_EVIDENCIA_LABEL } from "@/lib/catalogs";
+import { DocumentPreview } from "@/components/ui/DocumentPreview";
 
 const TIPO_ICON: Record<string, string> = {
   documento:    "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
@@ -22,6 +24,7 @@ const TIPO_ICON: Record<string, string> = {
 const defaultIcon = "M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13";
 
 function EvidenceRow({ evidencia }: { evidencia: Evidencia }) {
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { hasPermission } = usePermissions();
   const canUpload = hasPermission("evidence.upload");
   const canReplace = hasPermission("evidence.replace") && evidencia.estado === "cargada";
@@ -77,12 +80,21 @@ function EvidenceRow({ evidencia }: { evidencia: Evidencia }) {
           </Button>
         )}
         {evidencia.driveFileId && (
-          <Button variant="ghost" size="sm" title="Vista previa">
-            <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-            </svg>
-          </Button>
+          <>
+            <Button variant="ghost" size="sm" title="Vista previa" onClick={() => setPreviewOpen(true)}>
+              <svg viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+              </svg>
+            </Button>
+            {previewOpen && (
+              <DocumentPreview
+                driveFileId={evidencia.driveFileId}
+                fileName={evidencia.nombre}
+                onClose={() => setPreviewOpen(false)}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

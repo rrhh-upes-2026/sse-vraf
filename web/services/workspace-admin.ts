@@ -13,6 +13,7 @@ import type {
   FormBlueprint,
   WorkspaceAutomation,
   WorkspaceDocument,
+  DocumentComment,
   NotificationRule,
   WorkspaceSettings,
   WorkspaceTemplate,
@@ -1367,6 +1368,31 @@ export const WorkspaceAdminService = {
     _isLive
       ? _client().call("wsDocuments.archive", { id }).then(() => ({ success: true, id }))
       : delay({ success: true, id }),
+
+  publishDocument: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsDocuments.publish", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
+
+  updateDocument: (id: string, data: Partial<WorkspaceDocument>): Promise<WorkspaceDocument | null> =>
+    _isLive
+      ? _client().update<WorkspaceDocument>("wsDocuments", id, data)
+      : delay(MOCK_DOCUMENTS.find((d) => d.id === id) ?? null),
+
+  deprecateDocument: (id: string): Promise<{ success: boolean; id: string }> =>
+    _isLive
+      ? _client().call("wsDocuments.deprecate", { id }).then(() => ({ success: true, id }))
+      : delay({ success: true, id }),
+
+  listDocumentComments: (documentId: string): Promise<DocumentComment[]> =>
+    _isLive
+      ? _client().list<DocumentComment>("wsDocumentComments", { documentId })
+      : delay([]),
+
+  addDocumentComment: (data: Omit<DocumentComment, "id" | "createdAt">): Promise<DocumentComment> =>
+    _isLive
+      ? _client().create<DocumentComment>("wsDocumentComments", data)
+      : delay({ ...data, id: `CMT-${Date.now()}`, createdAt: new Date().toISOString() }),
 
   // Notification Rules
   listNotificationRules: (wsId: WorkspaceId): Promise<NotificationRule[]> =>

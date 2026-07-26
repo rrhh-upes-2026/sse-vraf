@@ -105,7 +105,9 @@ export type EntityName =
   | "cpeSnapshots"
   | "cpePlanesMejora"
   | "cpeHistorial"
-  | "cpeCatalogos";
+  | "cpeCatalogos"
+  // Document comments
+  | "wsDocumentComments";
 
 /**
  * Query parameters for list operations.

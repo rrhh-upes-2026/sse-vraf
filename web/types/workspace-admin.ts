@@ -313,7 +313,8 @@ export type TriggerType =
   | "process.created" | "process.status_changed" | "process.completed"
   | "indicator.threshold_crossed" | "request.created" | "request.approved"
   | "evidence.uploaded" | "evidence.approved" | "sla.warning" | "sla.breach"
-  | "date.reached" | "form.submitted" | "user.created";
+  | "date.reached" | "form.submitted" | "user.created"
+  | "document.created" | "document.published" | "document.archived" | "document.deprecated";
 
 export type ActionType =
   | "send_notification" | "create_task" | "update_field"
@@ -386,6 +387,18 @@ export interface WorkspaceDocument {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DocumentComment {
+  id: string;
+  documentId: string;
+  wsId: WorkspaceId;
+  autor: string;
+  autorId: string;
+  texto: string;
+  parentId?: string;
+  createdAt: string;
+  editadoAt?: string;
 }
 
 // ── Notification Rule ─────────────────────────────────────────────────────────

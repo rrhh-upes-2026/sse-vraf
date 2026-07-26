@@ -175,6 +175,7 @@ function validateEvidence(form: typeof EMPTY_FORM): Partial<Record<keyof typeof 
 export function WorkspaceEvidence({ wsId: _wsId }: WorkspaceEvidenceProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editing, setEditing]       = useState<Evidencia | null>(null);
+  const [_selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateEvidence);
 
@@ -194,6 +195,7 @@ export function WorkspaceEvidence({ wsId: _wsId }: WorkspaceEvidenceProps) {
   function openCreate() {
     setEditing(null);
     reset(EMPTY_FORM);
+    setSelectedFile(null);
     setDrawerOpen(true);
   }
 
@@ -214,6 +216,7 @@ export function WorkspaceEvidence({ wsId: _wsId }: WorkspaceEvidenceProps) {
       comentariosTexto:       e.comentarios ?? "",
       archivoNombre:          "",
     });
+    setSelectedFile(null);
     setDrawerOpen(true);
   }
 
@@ -358,7 +361,10 @@ export function WorkspaceEvidence({ wsId: _wsId }: WorkspaceEvidenceProps) {
           <DrawerField label="Archivo adjunto">
             <Dropzone
               fileName={form.archivoNombre}
-              onFileSelect={(n) => setField("archivoNombre", n)}
+              onFileSelect={(file) => {
+                setField("archivoNombre", file.name);
+                setSelectedFile(file);
+              }}
               accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg"
             />
           </DrawerField>

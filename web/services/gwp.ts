@@ -33,6 +33,13 @@ import type {
   GWPListEventsParams,
   GWPGetMailLogsParams,
   GWPGetChatLogsParams,
+  GWPDocResult,
+  GWPPdfResult,
+  GWPTemplateFile,
+  GWPDownloadLinkResult,
+  GWPCreateDocParams,
+  GWPCreateFromTemplateParams,
+  GWPExportAsPdfParams,
 } from "@/types/gwp";
 
 const WS = "gwp";
@@ -186,4 +193,26 @@ export async function gwpGetChatLogs(params?: GWPGetChatLogsParams): Promise<GWP
 
 export async function gwpGetAuditLog(params?: GWPAuditParams): Promise<GWPAuditEntry[]> {
   return c().call<GWPAuditEntry[]>(`${WS}.getAuditLog`, p(params));
+}
+
+// ─── Docs ─────────────────────────────────────────────────────────────────────
+
+export async function gwpCreateDoc(params: GWPCreateDocParams): Promise<GWPDocResult> {
+  return c().call<GWPDocResult>(`${WS}.createDoc`, p(params));
+}
+
+export async function gwpCreateFromTemplate(params: GWPCreateFromTemplateParams): Promise<GWPDocResult> {
+  return c().call<GWPDocResult>(`${WS}.createFromTemplate`, p(params));
+}
+
+export async function gwpExportAsPdf(params: GWPExportAsPdfParams): Promise<GWPPdfResult> {
+  return c().call<GWPPdfResult>(`${WS}.exportAsPdf`, p(params));
+}
+
+export async function gwpListTemplates(folderId?: string): Promise<GWPTemplateFile[]> {
+  return c().call<GWPTemplateFile[]>(`${WS}.listTemplates`, folderId ? { folderId } : {});
+}
+
+export async function gwpGetDownloadLink(fileId: string): Promise<GWPDownloadLinkResult> {
+  return c().call<GWPDownloadLinkResult>(`${WS}.getDownloadLink`, { fileId });
 }

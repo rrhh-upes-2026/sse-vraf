@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 interface DropzoneProps {
   label?: string;
   accept?: string;
-  onFileSelect?: (name: string) => void;
+  onFileSelect?: (file: File) => void;
   fileName?: string;
   className?: string;
   disabled?: boolean;
@@ -21,12 +21,12 @@ export function Dropzone({ label = "Arrastra o haz clic para adjuntar", accept, 
     setDragging(false);
     if (disabled) return;
     const file = e.dataTransfer.files[0];
-    if (file) onFileSelect?.(file.name);
+    if (file) onFileSelect?.(file);
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) onFileSelect?.(file.name);
+    if (file) onFileSelect?.(file);
   }
 
   return (

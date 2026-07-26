@@ -313,3 +313,56 @@ export interface GWPGetChatLogsParams {
   spaceId?: string;
   limit?:   number;
 }
+
+// ─── Docs ──────────────────────────────────────────────────────────────────────
+
+export interface GWPDocResult {
+  id:          string;
+  name:        string;
+  webViewLink: string;
+}
+
+export interface GWPPdfResult {
+  id:          string;
+  name:        string;
+  mimeType:    string;
+  size:        number;
+  webViewLink: string;
+}
+
+export interface GWPTemplateFile {
+  id:          string;
+  name:        string;
+  mimeType:    string;
+  size:        number;
+  webViewLink: string;
+  modifiedAt:  string;
+}
+
+export interface GWPDownloadLinkResult {
+  id:             string;
+  name:           string;
+  mimeType:       string;
+  size:           number;
+  downloadUrl:    string;
+  webContentLink: string;
+}
+
+export interface GWPCreateDocParams {
+  title:         string;
+  bodyText?:     string;
+  destFolderId?: string;
+}
+
+export interface GWPCreateFromTemplateParams {
+  templateDocId: string;
+  variables?:    Record<string, string>;
+  destFolderId?: string;
+  fileName:      string;
+}
+
+export interface GWPExportAsPdfParams {
+  docId:         string;
+  destFolderId?: string;
+  fileName:      string;
+}
