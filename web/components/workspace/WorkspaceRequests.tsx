@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/toast-system";
 import type { WorkspaceId } from "@/config/nav";
 import type { Solicitud } from "@/types/entities";
 import { useSolicitudes, useSolicitudesActions } from "@/hooks/useSolicitudes";
@@ -300,12 +301,18 @@ export function WorkspaceRequests({ wsId }: WorkspaceRequestsProps) {
       unidadId: wsId,
       fechaCreacion: editing?.fechaCreacion ?? now,
     };
-    if (editing) {
-      await actions.update.mutateAsync({ id: editing.id, patch: payload });
-    } else {
-      await actions.create.mutateAsync(payload as Partial<Solicitud>);
+    try {
+      if (editing) {
+        await actions.update.mutateAsync({ id: editing.id, patch: payload });
+        toast.success("Solicitud actualizada correctamente.");
+      } else {
+        await actions.create.mutateAsync(payload as Partial<Solicitud>);
+        toast.success("Solicitud creada correctamente.");
+      }
+      setDrawerOpen(false);
+    } catch {
+      toast.error("No se pudo guardar la solicitud. Verifique su conexión e intente nuevamente.");
     }
-    setDrawerOpen(false);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;

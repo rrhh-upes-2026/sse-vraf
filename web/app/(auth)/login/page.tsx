@@ -30,8 +30,9 @@ function LoginFlow() {
       if (data.mustChangePassword) {
         router.push("/change-password");
       } else {
-        const callbackUrl = searchParams.get("callbackUrl") ?? "/mi-trabajo";
-        router.push(callbackUrl);
+        const raw = searchParams.get("callbackUrl") ?? "/mi-trabajo";
+        const safeCallback = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/mi-trabajo";
+        router.push(safeCallback);
       }
     } catch {
       setError("Error de conexión. Intente nuevamente.");

@@ -63,6 +63,12 @@ function routeAction_(action, params, context) {
   var entityId = params && params.id;
 
   if (namespace === "auth") {
+    // Sensitive verbs require an authenticated domain user (non-empty userEmail).
+    // With access:"DOMAIN", userEmail is always set for legitimate callers.
+    var SENSITIVE_AUTH_VERBS = { setGlobalPassword: true, deleteUser: true, createUser: true, setAdminRole: true };
+    if (SENSITIVE_AUTH_VERBS[verb] && !(context && context.userEmail)) {
+      throw new Error("Acceso no autorizado: se requiere autenticación de dominio para esta operación.");
+    }
     result = AuthBridge.route(verb, params || {});
     return { data: result, pagination: null };
   }
@@ -73,6 +79,10 @@ function routeAction_(action, params, context) {
   }
 
   if (namespace === "platform") {
+    // Platform bootstrap actions require an authenticated domain user.
+    if (!(context && context.userEmail)) {
+      throw new Error("Acceso no autorizado: se requiere autenticación de dominio para operaciones de plataforma.");
+    }
     result = routePlatformAction_(verb, params || {}, context);
     return { data: result, pagination: null };
   }
@@ -273,6 +283,10 @@ function routeWorkspaceAction_(entityName, verb, params, context) {
         }),
         pagination: null,
       };
+
+    case "deprecate":
+      Validator.requireId(params);
+      return { data: WorkspaceController.archive(entityName, params.id, userId), pagination: null };
 
     case "upsertByWsId":
       if (entityName !== "wsSettings") return undefined;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/toast-system";
 import type { WorkspaceId } from "@/config/nav";
 import type {
   PlanEstrategico,
@@ -238,7 +239,14 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
   const { form, errors, setField, reset, validate } = useFormState(EMPTY_FORM, validateForm);
   const actions = usePlanesActions();
   const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
-    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
+    useDeleteConfirm(async (id) => {
+      try {
+        await actions.remove.mutateAsync(id);
+        toast.success("Plan eliminado.");
+      } catch {
+        toast.error("No se pudo eliminar el plan. Intente nuevamente.");
+      }
+    });
 
   const { data: planes,    isLoading: planesLoading }    = usePlanes({ wsId });
   const { data: objetivos, isLoading: objetivosLoading } = useObjetivos();
@@ -294,12 +302,18 @@ export function WorkspacePlanes({ wsId }: WorkspacePlanesProps) {
       wsId,
       avancePct: editing?.avancePct ?? 0,
     };
-    if (editing) {
-      await actions.update.mutateAsync({ id: editing.id, patch: payload });
-    } else {
-      await actions.create.mutateAsync(payload);
+    try {
+      if (editing) {
+        await actions.update.mutateAsync({ id: editing.id, patch: payload });
+        toast.success("Plan actualizado correctamente.");
+      } else {
+        await actions.create.mutateAsync(payload);
+        toast.success("Plan creado correctamente.");
+      }
+      setDrawerOpen(false);
+    } catch {
+      toast.error("No se pudo guardar el plan. Verifique su conexión e intente nuevamente.");
     }
-    setDrawerOpen(false);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;

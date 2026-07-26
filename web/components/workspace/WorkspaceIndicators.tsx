@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/toast-system";
 import Link from "next/link";
 import type { WorkspaceId } from "@/config/nav";
 import type { Indicador, SemaforoColor } from "@/types/entities";
@@ -286,7 +287,14 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
   const actions = useIndicadoresActions();
 
   const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
-    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
+    useDeleteConfirm(async (id) => {
+      try {
+        await actions.remove.mutateAsync(id);
+        toast.success("Indicador eliminado.");
+      } catch {
+        toast.error("No se pudo eliminar el indicador. Intente nuevamente.");
+      }
+    });
   const { hasPermission } = usePermissions();
   const canEdit = hasPermission("indicator.edit");
 
@@ -342,12 +350,18 @@ export function WorkspaceIndicators({ wsId }: WorkspaceIndicatorsProps) {
       dashboardDestino:    editing?.dashboardDestino ?? "",
       reporteDestino:      editing?.reporteDestino ?? "",
     };
-    if (editing) {
-      await actions.update.mutateAsync({ id: editing.id, patch: payload });
-    } else {
-      await actions.create.mutateAsync(payload as Partial<Indicador>);
+    try {
+      if (editing) {
+        await actions.update.mutateAsync({ id: editing.id, patch: payload });
+        toast.success("Indicador actualizado correctamente.");
+      } else {
+        await actions.create.mutateAsync(payload as Partial<Indicador>);
+        toast.success("Indicador creado correctamente.");
+      }
+      setDrawerOpen(false);
+    } catch {
+      toast.error("No se pudo guardar el indicador. Verifique su conexión e intente nuevamente.");
     }
-    setDrawerOpen(false);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;

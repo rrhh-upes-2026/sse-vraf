@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/toast-system";
 import type { WorkspaceId } from "@/config/nav";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useForms, lifecycleBadge } from "@/hooks/useWorkspaceAdmin";
@@ -83,7 +84,7 @@ function FormCard({
 
   const handlePreview = (e: React.MouseEvent) => {
     e.stopPropagation();
-    alert(`Vista previa de "${form.nombre}" — disponible próximamente.`);
+    toast.info(`La vista previa del formulario "${form.nombre}" estará disponible en la próxima versión.`);
   };
 
   const fields = fieldCount(form);

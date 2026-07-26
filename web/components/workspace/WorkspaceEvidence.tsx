@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/toast-system";
 import type { WorkspaceId } from "@/config/nav";
 import type { Evidencia, TipoEvidencia } from "@/types/entities";
 import { useEvidencias, useEvidenciasActions } from "@/hooks/useEvidencias";
@@ -223,46 +224,52 @@ export function WorkspaceEvidence({ wsId: _wsId }: WorkspaceEvidenceProps) {
   async function handleSave() {
     if (!validate()) return;
 
-    if (editing) {
-      await actions.update.mutateAsync({
-        id: editing.id,
-        patch: {
+    try {
+      if (editing) {
+        await actions.update.mutateAsync({
+          id: editing.id,
+          patch: {
+            nombre: form.nombre,
+            tipo: form.tipo,
+            obligatoria: form.obligatoria,
+            actividadId: form.actividadId,
+            responsableId: form.responsableId,
+            observaciones: form.observaciones,
+            estado: "cargada",
+            version: editing.version + 1,
+            fechaCarga: new Date().toISOString(),
+            documentoRelacionadoId: form.documentoRelacionadoId,
+            fechaEmision: form.fechaEmision,
+            fechaVencimiento: form.fechaVencimiento,
+            estadoRevision: form.estadoRevision,
+            revisorId: form.revisorId,
+            comentarios: form.comentariosTexto,
+          },
+        });
+        toast.success("Evidencia actualizada correctamente.");
+      } else {
+        await actions.create.mutateAsync({
           nombre: form.nombre,
           tipo: form.tipo,
           obligatoria: form.obligatoria,
           actividadId: form.actividadId,
           responsableId: form.responsableId,
           observaciones: form.observaciones,
-          estado: "cargada",
-          version: editing.version + 1,
-          fechaCarga: new Date().toISOString(),
           documentoRelacionadoId: form.documentoRelacionadoId,
           fechaEmision: form.fechaEmision,
           fechaVencimiento: form.fechaVencimiento,
           estadoRevision: form.estadoRevision,
           revisorId: form.revisorId,
           comentarios: form.comentariosTexto,
-        },
-      });
-    } else {
-      await actions.create.mutateAsync({
-        nombre: form.nombre,
-        tipo: form.tipo,
-        obligatoria: form.obligatoria,
-        actividadId: form.actividadId,
-        responsableId: form.responsableId,
-        observaciones: form.observaciones,
-        documentoRelacionadoId: form.documentoRelacionadoId,
-        fechaEmision: form.fechaEmision,
-        fechaVencimiento: form.fechaVencimiento,
-        estadoRevision: form.estadoRevision,
-        revisorId: form.revisorId,
-        comentarios: form.comentariosTexto,
-        estado: "pendiente",
-        version: 1,
-      } as Partial<Evidencia>);
+          estado: "pendiente",
+          version: 1,
+        } as Partial<Evidencia>);
+        toast.success("Evidencia registrada correctamente.");
+      }
+      setDrawerOpen(false);
+    } catch {
+      toast.error("No se pudo guardar la evidencia. Verifique su conexión e intente nuevamente.");
     }
-    setDrawerOpen(false);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;

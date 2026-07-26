@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "@/components/ui/toast-system";
 import type { WorkspaceId } from "@/config/nav";
 import type { ProcesoInstitucional, SemaforoColor, EstadoProceso } from "@/types/entities";
 import type { ProcessInstance } from "@/types/workflow";
@@ -401,7 +402,14 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
   const actions = useProcesosActions();
 
   const { confirmId: confirmDeleteId, requestDelete, cancelDelete, confirmDelete } =
-    useDeleteConfirm((id) => actions.remove.mutateAsync(id));
+    useDeleteConfirm(async (id) => {
+      try {
+        await actions.remove.mutateAsync(id);
+        toast.success("Proceso eliminado.");
+      } catch {
+        toast.error("No se pudo eliminar el proceso. Intente nuevamente.");
+      }
+    });
 
   const tabsWithCounts = TABS.map((t) => ({
     ...t,
@@ -477,12 +485,18 @@ export function WorkspaceProcesses({ wsId }: WorkspaceProcessesProps) {
       deletedAt:     null,
     };
 
-    if (editing) {
-      await actions.update.mutateAsync({ id: editing.id, patch: payload });
-    } else {
-      await actions.create.mutateAsync(payload);
+    try {
+      if (editing) {
+        await actions.update.mutateAsync({ id: editing.id, patch: payload });
+        toast.success("Proceso actualizado correctamente.");
+      } else {
+        await actions.create.mutateAsync(payload);
+        toast.success("Proceso creado correctamente.");
+      }
+      setDrawerOpen(false);
+    } catch {
+      toast.error("No se pudo guardar el proceso. Verifique su conexión e intente nuevamente.");
     }
-    setDrawerOpen(false);
   }
 
   const isPending = actions.create.isPending || actions.update.isPending;

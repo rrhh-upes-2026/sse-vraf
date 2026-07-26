@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "@/components/ui/toast-system";
 import type { WorkspaceAutomation, TriggerType, ActionType } from "@/types/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
@@ -103,7 +104,7 @@ export function AutomationDrawer({ wsId, automation, open, onClose, onSaved }: A
     setTesting(true);
     await new Promise((r) => setTimeout(r, 1200));
     setTesting(false);
-    alert("Test run completado — sin errores (mock)");
+    toast.info("Test run completado (modo simulación — sin errores detectados).");
   }
 
   const lc = automation ? lifecycleBadge(automation.lifecycle) : null;
