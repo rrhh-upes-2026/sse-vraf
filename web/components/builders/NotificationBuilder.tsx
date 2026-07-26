@@ -61,7 +61,7 @@ const divider: React.CSSProperties = {
   margin: "16px 0",
 };
 
-function panelCard(extra?: React.CSSProperties): React.CSSProperties {
+function _panelCard(extra?: React.CSSProperties): React.CSSProperties {
   return {
     background: "rgba(255,255,255,0.025)",
     border: "1px solid rgba(255,255,255,0.08)",
@@ -493,6 +493,7 @@ export function NotificationBuilder({ wsId }: { wsId: string }) {
       setExtraEmailInput("");
       setDeleteConfirm(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, selectedItem?.updatedAt]);
 
   // ── Draft helpers ─────────────────────────────────────────────────────────

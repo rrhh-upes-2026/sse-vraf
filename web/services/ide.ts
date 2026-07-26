@@ -5,7 +5,7 @@ import type {
   IDESimulationResult, IDEValidationResult,
   IDEDuplicate, IDEImportResult, IDEMappingTemplate,
   IDEListParams, IDECreateParams, IDEUpdateParams,
-  IDESimulateParams, IDEPrepareImportParams, IDEFieldMapping,
+  IDESimulateParams, IDEPrepareImportParams,
 } from "@/types/ide";
 
 const WS = "ide";

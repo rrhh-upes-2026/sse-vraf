@@ -82,7 +82,6 @@ function evaluateFormula(formula: string, variables: VariableFormula[]): string 
     expr = expr.split(`{${v.nombre}}`).join("1");
   }
   try {
-    // eslint-disable-next-line no-new-func
     const result = Function(`"use strict"; return (${expr})`)();
     if (typeof result === "number" && isFinite(result)) {
       return parseFloat(result.toFixed(4)).toString();
@@ -314,12 +313,12 @@ export function KpiBuilder({ wsId }: { wsId: string }) {
     setDraft(published as KPIConfig);
   }, [draft, saveMut, publishMut]);
 
-  const handleDuplicate = useCallback(
+  const _handleDuplicate = useCallback(
     async (id: string) => { await dupMut.mutateAsync(id); refetch(); },
     [dupMut, refetch]
   );
 
-  const handleDelete = useCallback(
+  const _handleDelete = useCallback(
     async (id: string) => {
       await delMut.mutateAsync(id);
       if (selectedId === id) { setSelectedId(null); setDraft(null); }

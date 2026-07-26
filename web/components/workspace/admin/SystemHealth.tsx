@@ -119,7 +119,7 @@ export function SystemHealth({ wsId, isLive = false }: { wsId: string; isLive?: 
     }
   };
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { fetchHealth(); }, []);
 
   const cardStyle: React.CSSProperties = {

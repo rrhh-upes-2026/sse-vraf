@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   useISPRoles, useISPPermissions, useISPRolePermissions,
-  useCreateISPRole, useUpdateISPRole, useDeleteISPRole, useDuplicateISPRole,
+  useCreateISPRole, useDeleteISPRole, useDuplicateISPRole,
   useAssignISPPermissions,
 } from "@/hooks/useISP";
 import type { ISPRole } from "@/types/isp";
@@ -67,7 +67,7 @@ function PermissionPanel({ role, onClose }: { role: ISPRole; onClose: () => void
   function toggle(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }

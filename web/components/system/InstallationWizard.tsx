@@ -259,7 +259,7 @@ export function InstallationWizard() {
     }
     setRunning(false);
     setCurrentStep(-1);
-  }, [appendLogs, setStepStatus, router]);
+  }, [appendLogs, setStepStatus]);
 
   const retryFromStep = useCallback(async (fromIndex: number) => {
     abortRef.current = false;

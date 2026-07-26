@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { BuilderShell } from "./BuilderShell";
 import { BUILDER_REGISTRY } from "@/types/builders";
-import type { FormConfig, CampoFormulario, TipoCampo, ReglaCampo } from "@/types/builders";
+import type { FormConfig, CampoFormulario, TipoCampo } from "@/types/builders";
 import { useBuilderList, useBuilderSave, useBuilderPublish } from "@/hooks/useBuilder";
 
 const META = BUILDER_REGISTRY.find((b) => b.tipo === "form")!;

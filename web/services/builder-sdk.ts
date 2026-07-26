@@ -17,12 +17,7 @@ import type {
   FormConfig,
   KPIConfig,
   CatalogConfig,
-  AutomationConfig,
   NotificationConfig,
-  ReportConfig,
-  DashboardConfig,
-  PermissionConfig,
-  ProcedureConfig,
   EntradaCatalogo,
 } from "@/types/builders";
 import { getAppsScriptClient } from "./adapters/getAppsScriptClient";

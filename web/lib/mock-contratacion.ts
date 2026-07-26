@@ -13,7 +13,6 @@ import type {
   InformeSeleccionFinal,
   CartaOferta,
   ExpedientePersonal,
-  FichaEmpleado,
   FichaDocente,
   ContratoTrabajo,
   MatrizCompetencias,

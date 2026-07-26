@@ -11,7 +11,7 @@
  *   V.   Firmas
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRequisicion, useGuardarRequisicion } from "@/hooks/useContratacion";
 import type { RequisicionPersonal, MatrizCompetencias } from "@/types/contratacion";
 

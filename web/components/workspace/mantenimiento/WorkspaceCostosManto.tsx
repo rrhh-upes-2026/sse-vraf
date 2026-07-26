@@ -10,7 +10,7 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cn, fmtShortDate } from "@/lib/utils";
 
-type MantoTipoCosto = "mano_obra" | "materiales" | "servicios" | "otro";
+type _MantoTipoCosto = "mano_obra" | "materiales" | "servicios" | "otro";
 
 const TIPO_VARIANT: Record<string, BadgeVariant> = {
   mano_obra:  "info",

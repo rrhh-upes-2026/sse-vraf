@@ -28,7 +28,7 @@ function DataRow({ label, value }: { label: string; value?: string | number | nu
   );
 }
 
-export function ActividadDetail({ wsId, actividadId }: Props) {
+export function ActividadDetail({ wsId: _wsId, actividadId }: Props) {
   const router = useRouter();
   const { data: actividad, isLoading }   = usePMEActividad(actividadId);
   const { data: historial }              = usePMEHistorial(actividadId, "actividad");

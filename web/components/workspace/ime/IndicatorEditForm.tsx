@@ -34,8 +34,8 @@ export function IndicatorEditForm({ wsId, indicadorId }: Props) {
   const { data: unidades }     = useIMECatalogosPorTipo("unidadMedida");
   const { data: frecuencias }  = useIMECatalogosPorTipo("frecuencia");
   const { data: procesos }     = useIMECatalogosPorTipo("proceso");
-  const { data: pilares }      = useIMECatalogosPorTipo("pilarEstrategico");
-  const { data: objetivos }    = useIMECatalogosPorTipo("objetivoEstrategico");
+  const { data: _pilares }      = useIMECatalogosPorTipo("pilarEstrategico");
+  const { data: _objetivos }    = useIMECatalogosPorTipo("objetivoEstrategico");
 
   const [form, setForm] = useState<Partial<IMEIndicador> | null>(null);
   const [error, setError] = useState<string | null>(null);

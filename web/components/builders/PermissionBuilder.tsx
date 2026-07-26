@@ -816,7 +816,7 @@ function TabCampos({
 
   function addRegla() {
     if (!form.formId.trim() || !form.campoId.trim() || !form.rolId) return;
-    const key = `${form.formId}:${form.campoId}`;
+    const _key = `${form.formId}:${form.campoId}`;
     const existing = config.permisosCampo.find((p) => p.formId === form.formId && p.campoId === form.campoId);
     if (existing) {
       onChange({

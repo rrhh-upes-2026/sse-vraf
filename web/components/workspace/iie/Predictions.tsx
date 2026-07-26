@@ -59,13 +59,13 @@ function PredictionChart({ points }: { points: IIEPredictionPoint[] }) {
   const allPts        = points;
 
   const toPolyline = (pts: typeof points, key: keyof IIEPredictionPoint) =>
-    pts.map((p, i) => {
+    pts.map((p, _i) => {
       const gi = allPts.indexOf(p);
       return `${xScale(gi)},${yScale(p[key] as number)}`;
     }).join(" ");
 
   const bandPath = (() => {
-    const fwd = forecastPts.map((p, i) => {
+    const fwd = forecastPts.map((p, _i) => {
       const gi = allPts.indexOf(p);
       return `${xScale(gi)},${yScale(p.upperBound)}`;
     });

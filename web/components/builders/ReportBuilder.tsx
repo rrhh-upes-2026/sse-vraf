@@ -196,7 +196,7 @@ function BarChartPreview({
   entidad: EntidadReporte;
 }) {
   const sample = SAMPLE_DATA[entidad];
-  const numCols = columnas.filter((c) => c.visible && c.tipo === "numero");
+  const _numCols = columnas.filter((c) => c.visible && c.tipo === "numero");
   const xCol = columnas.find((c) => c.visible && c.tipo === "texto");
 
   const w = 480;
@@ -219,7 +219,7 @@ function BarChartPreview({
     const r = Math.min(cx, cy) - 20;
     const total = fakeValues.reduce((a, b) => a + b, 0);
     let startAngle = -Math.PI / 2;
-    const COLORS = ["#2E6BE6", "#12A150", "#E5A100"];
+    const _COLORS = ["#2E6BE6", "#12A150", "#E5A100"];
 
     const slices = fakeValues.map((v, i) => {
       const angle = (v / total) * 2 * Math.PI;
@@ -231,7 +231,7 @@ function BarChartPreview({
       const large = angle > Math.PI ? 1 : 0;
       const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
       startAngle = endAngle;
-      return { d, color: COLORS[i], label: labels[i] ?? `Ítem ${i + 1}` };
+      return { d, color: _COLORS[i], label: labels[i] ?? `Ítem ${i + 1}` };
     });
 
     return (
@@ -249,7 +249,7 @@ function BarChartPreview({
       const y = pad.top + chartH - (v / maxVal) * chartH;
       return `${x},${y}`;
     });
-    const COLORS = ["#2E6BE6", "#12A150", "#E5A100"];
+    const _COLORS = ["#2E6BE6", "#12A150", "#E5A100"];
 
     return (
       <svg width={w} height={h} style={{ maxWidth: "100%" }}>

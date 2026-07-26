@@ -12,7 +12,6 @@ import {
 } from "@/services";
 import { Select } from "@/components/ui/select";
 import type { ListQuery } from "@/services/adapters/types";
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import type { EntityService } from "@/services/entityService";
 
 export type EntitySelectorType =

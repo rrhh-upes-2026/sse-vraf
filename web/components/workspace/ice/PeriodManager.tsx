@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  useICEPeriods, useCreateICEPeriod, useUpdateICEPeriod,
+  useICEPeriods, useCreateICEPeriod,
   useOpenICEPeriod, useReviewICEPeriod, useCloseICEPeriod, useLockICEPeriod,
 } from "@/hooks/useICE";
 import type { ICEPeriod } from "@/types/ice";
@@ -145,7 +145,7 @@ function CreatePeriodForm({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-export function PeriodManager({ wsId }: { wsId: string }) {
+export function PeriodManager({ wsId: _wsId }: { wsId: string }) {
   const [showCreate, setShowCreate] = useState(false);
   const { data: allPeriods, isLoading } = useICEPeriods();
 

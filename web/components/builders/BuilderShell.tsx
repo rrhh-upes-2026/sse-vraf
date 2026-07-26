@@ -5,10 +5,9 @@
  * Left panel: list of saved configs. Right: canvas / editor.
  */
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BUILDER_REGISTRY, type BuilderMeta, type BuilderBase, type BuilderStatus } from "@/types/builders";
+import type { BuilderMeta, BuilderBase, BuilderStatus } from "@/types/builders";
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
@@ -104,7 +103,7 @@ export function BuilderShell({
   isLoading,
   children,
 }: BuilderShellProps) {
-  const pathname = usePathname();
+  const _pathname = usePathname();
 
   return (
     <div style={{ display: "flex", height: "100%", minHeight: 0, overflow: "hidden" }}>

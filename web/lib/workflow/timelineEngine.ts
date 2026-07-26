@@ -73,7 +73,7 @@ const EVENT_CONFIG: Record<WorkflowEventType, EventConfig> = {
     iconPath: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944",
   },
   ApprovalRejected: {
-    title: (p) => `Aprobación rechazada`,
+    title: (_p) => `Aprobación rechazada`,
     color: "#E5484D",
     iconPath: "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
   },

@@ -95,7 +95,7 @@ export function ProcedimientoWizard({ wsId, defaultProcesoId }: Props) {
       if (err) { setError(err); setStep(s); return; }
     }
     create.mutate(draft, {
-      onSuccess: (entity) =>
+      onSuccess: (_entity) =>
         router.push(`/ws/${wsId}/procedimientos`),
       onError: (e) =>
         setError(e instanceof Error ? e.message : String(e)),

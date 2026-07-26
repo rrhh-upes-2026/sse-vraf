@@ -799,6 +799,7 @@ export function AutomationBuilder({ wsId }: { wsId: string }) {
       setTestResult(null);
       setDeleteConfirm(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, selectedItem?.updatedAt]);
 
   // ── Draft mutation helpers ────────────────────────────────────────────────

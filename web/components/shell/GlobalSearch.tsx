@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import Link from "next/link";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
 import type { WorkspaceId } from "@/config/nav";
 

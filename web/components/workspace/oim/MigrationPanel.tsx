@@ -39,7 +39,7 @@ function ResultRow({ row }: { row: OIMMigrationReport["rows"][number] }) {
   );
 }
 
-export function MigrationPanel({ wsId }: Props) {
+export function MigrationPanel({ wsId: _wsId }: Props) {
   const [responsibleId, setResponsibleId] = useState("");
   const [unidadId, setUnidadId] = useState("VRAF");
   const [report, setReport] = useState<OIMMigrationReport | null>(null);

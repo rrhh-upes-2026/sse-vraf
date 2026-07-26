@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { BUILDER_REGISTRY, type ProcessConfig, type EtapaProceso, type ValidacionEtapaConfig, type EvidenciaEtapaConfig, type DocumentoEtapaConfig, type AccionEtapaConfig, type TipoAccionEtapa } from "@/types/builders";
 import { BuilderShell, StatusBadge } from "@/components/builders/BuilderShell";
-import { useBuilderList, useBuilderSave, useBuilderPublish, useBuilderDuplicate, useBuilderDelete } from "@/hooks/useBuilder";
+import { useBuilderList, useBuilderSave, useBuilderPublish, useBuilderDuplicate } from "@/hooks/useBuilder";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

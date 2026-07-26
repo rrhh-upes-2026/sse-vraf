@@ -193,7 +193,7 @@ const MOCK_STEPS: Record<string, () => Promise<StepResult>> = {
     }),
 };
 
-const STEP_VERBS = [
+const _STEP_VERBS = [
   "validate",
   "initDatabase",
   "initDrive",
@@ -205,7 +205,7 @@ const STEP_VERBS = [
   "report",
 ] as const;
 
-type StepVerb = (typeof STEP_VERBS)[number];
+type StepVerb = (typeof _STEP_VERBS)[number];
 
 // ── Public API ─────────────────────────────────────────────────────────────
 

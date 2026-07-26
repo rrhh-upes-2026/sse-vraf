@@ -8,13 +8,9 @@
 import type { WorkspaceId } from "@/config/nav";
 import type {
   ProcessBlueprint,
-  ProcedureBlueprint,
   WorkspaceKPI,
-  WorkspaceObjective,
-  WorkspaceProject,
   RequestType,
   FormBlueprint,
-  DashboardConfig,
   WorkspaceAutomation,
   WorkspaceDocument,
   NotificationRule,
