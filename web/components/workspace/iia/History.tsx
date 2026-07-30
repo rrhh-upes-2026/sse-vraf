@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useIIAHistory, useClearIIAHistory } from "@/hooks/useIIA";
+import { toast } from "@/components/ui/toast-system";
 import type { IIAGetHistoryParams } from "@/types/iia";
 
 function fmtDate(iso: string) {
@@ -27,10 +28,15 @@ export function IIAHistory({ wsId }: { wsId: string }) {
   const clearHistory = useClearIIAHistory();
 
   async function handleClear() {
-    if (!window.confirm("¿Limpiar todo el historial de auditoría? Esta acción es irreversible.")) return;
     setClearing(true);
-    await clearHistory.mutateAsync();
-    setClearing(false);
+    try {
+      await clearHistory.mutateAsync();
+      toast.success("Historial de auditoría limpiado correctamente.");
+    } catch {
+      toast.error("No se pudo limpiar el historial. Intente nuevamente.");
+    } finally {
+      setClearing(false);
+    }
   }
 
   return (

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { lifecycleBadge } from "@/hooks/useWorkspaceAdmin";
+import { toast } from "@/components/ui/toast-system";
 
 interface KPIDrawerProps {
   wsId: WorkspaceId;
@@ -121,6 +122,8 @@ export function KPIDrawer({ wsId, kpi, open, onClose, onSaved }: KPIDrawerProps)
       else await WorkspaceAdminService.updateKPI(kpi!.id, data);
       setSaved(true);
       setTimeout(() => { onSaved(); onClose(); }, 800);
+    } catch {
+      toast.error("No se pudo guardar el KPI. Intente nuevamente.");
     } finally {
       setSaving(false);
     }

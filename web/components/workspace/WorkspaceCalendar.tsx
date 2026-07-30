@@ -112,7 +112,7 @@ export function WorkspaceCalendar({ wsId }: WorkspaceCalendarProps) {
 
   // Only fetch capacitaciones for RRHH workspace
   const isRrhh = wsId === "rrhh";
-  const { data: capacitaciones, isLoading: loadingCap } = useQuery<CapacitacionEmpleado[]>({
+  const { data: capacitaciones, isLoading: loadingCap, isError: errorCap } = useQuery<CapacitacionEmpleado[]>({
     queryKey: ["capacitaciones"],
     queryFn: () => CapacitacionesService.list(),
     enabled: isRrhh,
@@ -170,7 +170,11 @@ export function WorkspaceCalendar({ wsId }: WorkspaceCalendarProps) {
         </div>
       )}
 
-      {!isLoading && events.length === 0 && (
+      {!isLoading && isRrhh && errorCap && (
+        <p className="text-[13px] text-sse-sem-red-fg">Error al cargar capacitaciones. Recarga la página.</p>
+      )}
+
+      {!isLoading && !errorCap && events.length === 0 && (
         <EmptyState
           icon="M4 8h16M7 3v3M17 3v3M5 5h14v14H5z"
           title="Sin eventos próximos"

@@ -7,6 +7,7 @@ import {
   useGWPGetFileMetadata, useGWPMoveFile,
 } from "@/hooks/useGWP";
 import type { GWPDriveFile, GWPFileRole } from "@/types/gwp";
+import { toast } from "@/components/ui/toast-system";
 
 function fmtBytes(n?: number) {
   if (!n) return "—";
@@ -86,7 +87,7 @@ function FileRow({ file, userId, onRefresh }: { file: GWPDriveFile; userId: stri
               Versiones
             </button>
             <button
-              onClick={() => { if (confirm("¿Eliminar archivo?")) deleteFile.mutateAsync({ userId, fileId: file.id }).then(onRefresh); }}
+              onClick={async () => { try { await deleteFile.mutateAsync({ userId, fileId: file.id }); toast.success(`"${file.name}" eliminado.`); onRefresh(); } catch { toast.error("No se pudo eliminar. Intente nuevamente."); } }}
               disabled={deleteFile.isPending}
               className="text-[10px] px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
             >

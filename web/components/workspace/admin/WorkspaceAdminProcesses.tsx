@@ -8,6 +8,7 @@ import { WorkspaceAdminService } from "@/services/workspace-admin";
 import type { ProcessBlueprint, ObjectLifecycle } from "@/types/workspace-admin";
 import { ProcessDrawer } from "./drawers/ProcessDrawer";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast-system";
 
 const TIPO_LABELS: Record<string, string> = {
   estrategico: "Estratégico",
@@ -78,26 +79,42 @@ export function WorkspaceAdminProcesses({ wsId }: WorkspaceAdminProcessesProps) 
   function openEdit(bp: ProcessBlueprint) { setSelected(bp); setDrawerOpen(true); }
 
   async function handlePublish(bp: ProcessBlueprint) {
-    if (!confirm(`¿Publicar "${bp.nombre}"? Esto creará un Blueprint de Runtime activo.`)) return;
-    await WorkspaceAdminService.publishBlueprint(bp.id);
-    refetch();
+    try {
+      await WorkspaceAdminService.publishBlueprint(bp.id);
+      toast.success(`"${bp.nombre}" publicado correctamente.`);
+      refetch();
+    } catch {
+      toast.error("No se pudo publicar. Intente nuevamente.");
+    }
   }
 
   async function handleArchive(bp: ProcessBlueprint) {
-    if (!confirm(`¿Archivar "${bp.nombre}"?`)) return;
-    await WorkspaceAdminService.archiveBlueprint(bp.id);
-    refetch();
+    try {
+      await WorkspaceAdminService.archiveBlueprint(bp.id);
+      toast.success(`"${bp.nombre}" archivado.`);
+      refetch();
+    } catch {
+      toast.error("No se pudo archivar. Intente nuevamente.");
+    }
   }
 
   async function handleDuplicate(bp: ProcessBlueprint) {
-    await WorkspaceAdminService.duplicateBlueprint(bp.id);
-    refetch();
+    try {
+      await WorkspaceAdminService.duplicateBlueprint(bp.id);
+      refetch();
+    } catch {
+      toast.error("No se pudo duplicar. Intente nuevamente.");
+    }
   }
 
   async function handleDelete(bp: ProcessBlueprint) {
-    if (!confirm(`¿Eliminar "${bp.nombre}"? Esta acción es un soft delete.`)) return;
-    await WorkspaceAdminService.deleteBlueprint(bp.id);
-    refetch();
+    try {
+      await WorkspaceAdminService.deleteBlueprint(bp.id);
+      toast.success(`"${bp.nombre}" eliminado.`);
+      refetch();
+    } catch {
+      toast.error("No se pudo eliminar. Intente nuevamente.");
+    }
   }
 
   return (

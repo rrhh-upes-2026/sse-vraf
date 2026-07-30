@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { lifecycleBadge } from "@/hooks/useWorkspaceAdmin";
+import { toast } from "@/components/ui/toast-system";
 
 interface RequestDrawerProps {
   wsId: WorkspaceId;
@@ -107,6 +108,8 @@ export function RequestDrawer({ wsId, request, open, onClose, onSaved }: Request
       }
       setSaved(true);
       setTimeout(() => { onSaved(); onClose(); }, 800);
+    } catch {
+      toast.error("No se pudo guardar. Intente nuevamente.");
     } finally {
       setSaving(false);
     }
@@ -114,17 +117,25 @@ export function RequestDrawer({ wsId, request, open, onClose, onSaved }: Request
 
   async function handlePublish() {
     if (!request) return;
-    if (!confirm(`¿Publicar "${request.nombre}"?`)) return;
-    await WorkspaceAdminService.publishRequestType(request.id);
-    onSaved();
-    onClose();
+    try {
+      await WorkspaceAdminService.publishRequestType(request.id);
+      toast.success(`"${request.nombre}" publicado correctamente.`);
+      onSaved();
+      onClose();
+    } catch {
+      toast.error("No se pudo publicar. Intente nuevamente.");
+    }
   }
 
   async function handleDuplicate() {
     if (!request) return;
-    await WorkspaceAdminService.duplicateRequestType(request.id);
-    onSaved();
-    onClose();
+    try {
+      await WorkspaceAdminService.duplicateRequestType(request.id);
+      onSaved();
+      onClose();
+    } catch {
+      toast.error("No se pudo duplicar. Intente nuevamente.");
+    }
   }
 
   const lc = request ? lifecycleBadge(request.lifecycle) : null;

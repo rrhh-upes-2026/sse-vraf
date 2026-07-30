@@ -6,6 +6,7 @@ import {
   useGWPDeleteEvent, useGWPCheckAvailability,
 } from "@/hooks/useGWP";
 import type { GWPCalendarEvent } from "@/types/gwp";
+import { toast } from "@/components/ui/toast-system";
 
 function fmtDate(iso?: string) {
   if (!iso) return "—";
@@ -69,7 +70,7 @@ function EventCard({ event, userId, onRefresh }: { event: GWPCalendarEvent; user
                 Editar
               </button>
               <button
-                onClick={() => { if (confirm("¿Eliminar evento?")) deleteEvent.mutateAsync({ userId, eventId: event.id! }).then(onRefresh); }}
+                onClick={async () => { try { await deleteEvent.mutateAsync({ userId, eventId: event.id! }); toast.success("Evento eliminado."); onRefresh(); } catch { toast.error("No se pudo eliminar el evento. Intente nuevamente."); } }}
                 disabled={deleteEvent.isPending}
                 className="text-[10px] px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50">
                 Eliminar

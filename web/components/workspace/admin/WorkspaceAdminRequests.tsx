@@ -5,6 +5,7 @@ import type { WorkspaceId } from "@/config/nav";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRequestTypes, lifecycleBadge } from "@/hooks/useWorkspaceAdmin";
 import { WorkspaceAdminService } from "@/services/workspace-admin";
+import { toast } from "@/components/ui/toast-system";
 import type { RequestType } from "@/types/workspace-admin";
 
 function RequestTypeCard({ req, onAction }: { req: RequestType; onAction: () => void }) {
@@ -13,11 +14,16 @@ function RequestTypeCard({ req, onAction }: { req: RequestType; onAction: () => 
   const [busy, setBusy] = useState(false);
 
   const handlePublish = async () => {
-    if (!confirm(`¿Publicar el tipo de solicitud "${req.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.publishRequestType(req.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.publishRequestType(req.id);
+      toast.success(`"${req.nombre}" publicado correctamente.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo publicar. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const { label, color } = lifecycleBadge(req.lifecycle);

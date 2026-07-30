@@ -54,7 +54,7 @@ export function IOECalendar({ wsId: _wsId }: Props) {
   const { from, to } = view === "mes" ? monthRange(year, month) : weekRange(weekBase);
   const wr = weekRange(weekBase);
 
-  const { data: events = [], isLoading } = useIOECalendarEvents({
+  const { data: events = [], isLoading, isError } = useIOECalendarEvents({
     from, to,
     view,
     types: Array.from(types),
@@ -150,8 +150,18 @@ export function IOECalendar({ wsId: _wsId }: Props) {
 
       {isLoading && <p className="py-10 text-center text-[13px] text-sse-muted">Cargando calendario…</p>}
 
+      {!isLoading && isError && (
+        <div className="rounded-md border border-sse-sem-red-fg/20 bg-sse-sem-red-bg px-4 py-3">
+          <p className="text-[13px] text-sse-sem-red-fg">Error al cargar eventos. Recarga la página.</p>
+        </div>
+      )}
+
+      {!isLoading && !isError && events.length === 0 && (
+        <p className="py-10 text-center text-[13px] text-sse-muted">No hay eventos en el período seleccionado.</p>
+      )}
+
       {/* Month grid */}
-      {!isLoading && view === "mes" && (
+      {!isLoading && !isError && view === "mes" && (
         <div className="rounded-lg border border-sse-border bg-white overflow-hidden">
           <div className="grid grid-cols-7 border-b border-sse-border">
             {WEEKDAYS.map((d) => (
@@ -187,7 +197,7 @@ export function IOECalendar({ wsId: _wsId }: Props) {
       )}
 
       {/* Week view */}
-      {!isLoading && view === "semana" && (
+      {!isLoading && !isError && view === "semana" && (
         <div className="rounded-lg border border-sse-border bg-white overflow-hidden">
           <div className="grid grid-cols-7 border-b border-sse-border">
             {Array.from({ length: 7 }, (_, i) => {

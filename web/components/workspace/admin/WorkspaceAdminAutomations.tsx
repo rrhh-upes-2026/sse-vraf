@@ -9,6 +9,7 @@ import type { WorkspaceAutomation } from "@/types/workspace-admin";
 import { AutomationDrawer } from "./drawers/AutomationDrawer";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast-system";
 
 const TRIGGER_LABELS: Record<string, string> = {
   "process.created": "Proceso creado",
@@ -61,27 +62,42 @@ function AutomationCard({
 
   const handleToggle = async (checked: boolean) => {
     setBusy(true);
-    await WorkspaceAdminService.toggleAutomation(auto.id, checked);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.toggleAutomation(auto.id, checked);
+      onAction();
+    } catch {
+      toast.error("No se pudo actualizar la automatización. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handlePublish = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`¿Publicar la automatización "${auto.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.publishAutomation(auto.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.publishAutomation(auto.id);
+      toast.success(`"${auto.nombre}" publicada.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo publicar. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleArchive = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`¿Archivar la automatización "${auto.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.archiveAutomation(auto.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.archiveAutomation(auto.id);
+      toast.success(`"${auto.nombre}" archivada.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo archivar. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const { label: lcLabel, color: lcColor } = lifecycleBadge(auto.lifecycle);

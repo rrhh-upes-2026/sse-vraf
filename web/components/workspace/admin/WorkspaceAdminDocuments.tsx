@@ -12,6 +12,7 @@ import { Dropzone } from "@/components/ui/dropzone";
 import { DocumentPreview } from "@/components/ui/DocumentPreview";
 import { useGWPUploadFile } from "@/hooks/useGWP";
 import { fmtShortDate } from "@/lib/utils";
+import { toast } from "@/components/ui/toast-system";
 
 // ── Catalog constants ──────────────────────────────────────────────────────────
 
@@ -276,20 +277,30 @@ function DocumentRow({ doc, userEmail, onAction, onPreview }: DocumentRowProps) 
 
   async function handleArchive(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!confirm(`¿Archivar el documento "${doc.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.archiveDocument(doc.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.archiveDocument(doc.id);
+      toast.success(`"${doc.nombre}" archivado.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo archivar. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleDeprecate(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!confirm(`¿Marcar como deprecado "${doc.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.deprecateDocument(doc.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.deprecateDocument(doc.id);
+      toast.success(`"${doc.nombre}" marcado como deprecado.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo deprecar. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleAddComment(e: React.MouseEvent) {

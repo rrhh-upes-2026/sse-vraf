@@ -161,7 +161,7 @@ export function WorkspaceDashboard({ wsId, unitColor: _unitColor, unitName }: Wo
 
   const { data: procesos, isLoading: loadingProcesos } = useProcesos({ unidadId: wsId });
 
-  const { data: indicadores, isLoading: loadingIndicadores } = useQuery<Indicador[]>({
+  const { data: indicadores, isLoading: loadingIndicadores, isError: errorIndicadores } = useQuery<Indicador[]>({
     queryKey: ["indicadores", wsId],
     queryFn: () => IndicadoresService.list(),
   });
@@ -265,11 +265,15 @@ export function WorkspaceDashboard({ wsId, unitColor: _unitColor, unitName }: Wo
           </div>
         )}
 
-        {!loadingIndicadores && visibleIndicadores.length === 0 && (
+        {!loadingIndicadores && errorIndicadores && (
+          <p className="text-[13px] text-sse-sem-red-fg">Error al cargar indicadores. Recarga la página.</p>
+        )}
+
+        {!loadingIndicadores && !errorIndicadores && visibleIndicadores.length === 0 && (
           <p className="text-[13px] text-sse-muted">No hay indicadores configurados.</p>
         )}
 
-        {!loadingIndicadores && visibleIndicadores.length > 0 && (
+        {!loadingIndicadores && !errorIndicadores && visibleIndicadores.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {visibleIndicadores.map((ind) => (
               <KpiTile key={ind.id} indicador={ind} />

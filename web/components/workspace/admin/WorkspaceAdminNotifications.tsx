@@ -8,6 +8,7 @@ import { WorkspaceAdminService } from "@/services/workspace-admin";
 import type { NotificationRule } from "@/types/workspace-admin";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast-system";
 
 const TRIGGER_LABELS: Record<string, string> = {
   "process.created": "Proceso creado",
@@ -72,9 +73,14 @@ function NotificationCard({
 
   const handleToggle = async (checked: boolean) => {
     setBusy(true);
-    await WorkspaceAdminService.toggleNotificationRule(rule.id, checked);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.toggleNotificationRule(rule.id, checked);
+      onAction();
+    } catch {
+      toast.error("No se pudo actualizar la regla. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const { label: lcLabel, color: lcColor } = lifecycleBadge(rule.lifecycle);
@@ -187,7 +193,7 @@ export function WorkspaceAdminNotifications({ wsId }: { wsId: WorkspaceId }) {
           </p>
         </div>
         {canManage && (
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" onClick={() => toast.info("La creación de reglas de notificación estará disponible en la próxima versión.")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -208,7 +214,7 @@ export function WorkspaceAdminNotifications({ wsId }: { wsId: WorkspaceId }) {
           </svg>
           <p className="text-[13px] font-medium text-sse-muted">No hay reglas de notificación configuradas.</p>
           {canManage && (
-            <Button variant="primary" size="sm" className="mt-2">Crear primera regla</Button>
+            <Button variant="primary" size="sm" className="mt-2" onClick={() => toast.info("La creación de reglas de notificación estará disponible en la próxima versión.")}>Crear primera regla</Button>
           )}
         </div>
       ) : (

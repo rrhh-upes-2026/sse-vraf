@@ -8,6 +8,7 @@ import { WorkspaceAdminService } from "@/services/workspace-admin";
 import type { WorkspaceKPI, ObjectLifecycle } from "@/types/workspace-admin";
 import { KPIDrawer } from "./drawers/KPIDrawer";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast-system";
 
 const CATEGORIA_LABELS: Record<string, string> = {
   gestion: "Gestión",
@@ -90,28 +91,43 @@ function KPIRow({
 
   const handlePublish = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`¿Publicar el KPI "${kpi.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.publishKPI(kpi.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.publishKPI(kpi.id);
+      toast.success(`"${kpi.nombre}" publicado.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo publicar. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleArchive = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`¿Archivar el KPI "${kpi.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.archiveKPI(kpi.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.archiveKPI(kpi.id);
+      toast.success(`"${kpi.nombre}" archivado.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo archivar. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleDuplicate = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setBusy(true);
-    await WorkspaceAdminService.duplicateKPI(kpi.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.duplicateKPI(kpi.id);
+      onAction();
+    } catch {
+      toast.error("No se pudo duplicar. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const { label, color } = lifecycleBadge(kpi.lifecycle);

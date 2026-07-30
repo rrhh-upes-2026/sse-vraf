@@ -8,6 +8,7 @@ import { Drawer, DrawerSection, DrawerField } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { toast } from "@/components/ui/toast-system";
 
 interface UserDrawerProps {
   wsId: WorkspaceId;
@@ -64,6 +65,8 @@ export function UserDrawer({ wsId, user, open, onClose, onSaved }: UserDrawerPro
       }
       setSaved(true);
       setTimeout(() => { onSaved(); onClose(); }, 800);
+    } catch {
+      toast.error("No se pudo guardar el usuario. Intente nuevamente.");
     } finally {
       setSaving(false);
     }

@@ -6,6 +6,7 @@ import { useAEEEjecucion, useAEEEjecucionActions, useAEEHistorial } from "@/hook
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AEEStatus } from "@/types/aee";
 import { AEE_VALID_TRANSITIONS } from "@/types/aee";
+import { toast } from "@/components/ui/toast-system";
 
 interface Props {
   wsId: string;
@@ -78,10 +79,12 @@ export function EjecucionDetail({ wsId, id }: Props) {
   };
 
   const handleArchivar = async () => {
-    if (!confirm("¿Archivar esta ejecución? Esta acción no se puede deshacer.")) return;
     setChanging(true);
     try {
       await archivar.mutateAsync({ id });
+      toast.success("Ejecución archivada correctamente.");
+    } catch {
+      toast.error("No se pudo archivar la ejecución. Intente nuevamente.");
     } finally {
       setChanging(false);
     }

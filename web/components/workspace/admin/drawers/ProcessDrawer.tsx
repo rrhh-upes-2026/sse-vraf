@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { lifecycleBadge } from "@/hooks/useWorkspaceAdmin";
+import { toast } from "@/components/ui/toast-system";
 
 interface ProcessDrawerProps {
   wsId: WorkspaceId;
@@ -110,6 +111,8 @@ export function ProcessDrawer({ wsId, blueprint, open, onClose, onSaved }: Proce
       }
       setSaved(true);
       setTimeout(() => { onSaved(); onClose(); }, 800);
+    } catch {
+      toast.error("No se pudo guardar el proceso. Intente nuevamente.");
     } finally {
       setSaving(false);
     }

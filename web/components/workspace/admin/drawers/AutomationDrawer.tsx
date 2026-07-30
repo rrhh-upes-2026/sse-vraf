@@ -95,6 +95,8 @@ export function AutomationDrawer({ wsId, automation, open, onClose, onSaved }: A
       else await WorkspaceAdminService.updateAutomation(automation!.id, form);
       setSaved(true);
       setTimeout(() => { onSaved(); onClose(); }, 800);
+    } catch {
+      toast.error("No se pudo guardar la automatización. Intente nuevamente.");
     } finally {
       setSaving(false);
     }

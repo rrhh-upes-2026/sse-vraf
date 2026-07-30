@@ -6,6 +6,7 @@ import { useEMEEvidencia, useEMEEvidenciaActions, useEMEHistorial } from "@/hook
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EMEStatus, EMEValidationStatus } from "@/types/eme";
 import { EME_VALID_TRANSITIONS } from "@/types/eme";
+import { toast } from "@/components/ui/toast-system";
 
 interface Props {
   wsId: string;
@@ -83,10 +84,12 @@ export function EvidenciaDetail({ wsId, id }: Props) {
   };
 
   const handleArchivar = async () => {
-    if (!confirm("¿Archivar esta evidencia? Esta acción no se puede deshacer.")) return;
     setChanging(true);
     try {
       await archivar.mutateAsync({ id });
+      toast.success("Evidencia archivada correctamente.");
+    } catch {
+      toast.error("No se pudo archivar la evidencia. Intente nuevamente.");
     } finally {
       setChanging(false);
     }

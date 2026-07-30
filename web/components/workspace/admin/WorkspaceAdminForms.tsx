@@ -58,28 +58,43 @@ function FormCard({
 
   const handlePublish = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`¿Publicar el formulario "${form.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.publishForm(form.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.publishForm(form.id);
+      toast.success(`"${form.nombre}" publicado correctamente.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo publicar el formulario. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleArchive = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`¿Archivar el formulario "${form.nombre}"?`)) return;
     setBusy(true);
-    await WorkspaceAdminService.archiveForm(form.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.archiveForm(form.id);
+      toast.success(`"${form.nombre}" archivado.`);
+      onAction();
+    } catch {
+      toast.error("No se pudo archivar el formulario. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleDuplicate = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setBusy(true);
-    await WorkspaceAdminService.duplicateForm(form.id);
-    setBusy(false);
-    onAction();
+    try {
+      await WorkspaceAdminService.duplicateForm(form.id);
+      onAction();
+    } catch {
+      toast.error("No se pudo duplicar el formulario. Intente nuevamente.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handlePreview = (e: React.MouseEvent) => {
@@ -186,7 +201,7 @@ export function WorkspaceAdminForms({ wsId }: { wsId: WorkspaceId }) {
           </p>
         </div>
         {canManage && (
-          <Button variant="primary" size="sm">
+          <Button variant="primary" size="sm" onClick={() => toast.info("La creación de formularios estará disponible en la próxima versión.")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-3.5 h-3.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -230,7 +245,7 @@ export function WorkspaceAdminForms({ wsId }: { wsId: WorkspaceId }) {
             No hay formularios{filter !== "all" ? ` en estado "${filter}"` : ""}
           </p>
           {canManage && filter === "all" && (
-            <Button variant="primary" size="sm" className="mt-2">Crear primer formulario</Button>
+            <Button variant="primary" size="sm" className="mt-2" onClick={() => toast.info("La creación de formularios estará disponible en la próxima versión.")}>Crear primer formulario</Button>
           )}
         </div>
       ) : (
