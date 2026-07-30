@@ -460,7 +460,7 @@ var BootstrapController = (function () {
           'GLOBAL_PASSWORD_HASH': globalHash,
           'GLOBAL_PASSWORD_SALT': globalSalt,
         }, false);
-        log_(logs, 'success', 'Contraseña general configurada: Upes2024* — cámbiela desde el wizard después de instalar');
+        log_(logs, 'success', 'Contraseña general configurada — cámbiela desde el wizard después de instalar');
       } else {
         log_(logs, 'info', 'Contraseña general ya configurada — sin cambios');
       }

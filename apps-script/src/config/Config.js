@@ -53,5 +53,12 @@ var Config = (function () {
       var val = props_().getProperty("GMAIL_ENABLED");
       return val === "true" || val === "1";
     },
+    validate: function () {
+      var missing = [];
+      if (!this.spreadsheetId())    missing.push("SPREADSHEET_ID");
+      if (!this.webhookSecret())    missing.push("WEBHOOK_SHARED_SECRET");
+      if (!this.driveFolderRootId()) missing.push("DRIVE_FOLDER_ROOT_ID");
+      return { valid: missing.length === 0, missing: missing };
+    },
   };
 })();

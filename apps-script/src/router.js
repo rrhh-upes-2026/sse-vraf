@@ -25,15 +25,16 @@ var WRITE_VERBS = { create: true, update: true, remove: true };
 
 // Workspace-admin entity namespaces that support lifecycle operations.
 var WS_ENTITY_NAMESPACES = {
-  wsBlueprints:   true,
-  wsKPIs:         true,
-  wsRequestTypes: true,
-  wsAutomations:  true,
-  wsUsers:        true,
-  wsForms:        true,
-  wsDocuments:    true,
-  wsNotifRules:   true,
-  wsSettings:     true,
+  wsBlueprints:        true,
+  wsKPIs:              true,
+  wsRequestTypes:      true,
+  wsAutomations:       true,
+  wsUsers:             true,
+  wsForms:             true,
+  wsDocuments:         true,
+  wsDocumentComments:  true,
+  wsNotifRules:        true,
+  wsSettings:          true,
 };
 
 /**

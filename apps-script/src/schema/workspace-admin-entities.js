@@ -193,6 +193,24 @@ var WORKSPACE_ADMIN_ENTITY_SHEETS = {
     ],
   },
 
+  // ── Document Comments ──────────────────────────────────────────────────────
+  wsDocumentComments: {
+    sheetName: "WSDocumentComments",
+    columns: [
+      "id",
+      "wsId",
+      "documentId",
+      "autorId",
+      "autor",
+      "texto",
+      "parentId",
+      "editadoAt",
+      "createdAt",
+      "updatedAt",
+      "deletedAt",
+    ],
+  },
+
   // ── Notification Rules ─────────────────────────────────────────────────────
   wsNotifRules: {
     sheetName: "WSNotifRules",
