@@ -313,3 +313,9 @@ var SeedInstaller = (function () {
   };
 
 })();
+
+/** Top-level wrapper — callable from the GAS editor's function dropdown. */
+function runInstallAll() {
+  var result = SeedInstaller.installAll();
+  Logger.log(JSON.stringify(result, null, 2));
+}
