@@ -26,7 +26,9 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     redirect("/change-password");
   }
 
-  const isAdmin = sessionUser.rol === "ADMIN";
+  const isAdmin =
+    sessionUser.rol === "ADMINISTRADOR_GENERAL" ||
+    sessionUser.rol === "ADMINISTRADOR_UNIDAD";
 
   const user: SidebarUser = {
     name: sessionUser.name,

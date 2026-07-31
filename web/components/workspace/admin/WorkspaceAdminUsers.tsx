@@ -11,19 +11,23 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
 const ROLE_LABELS: Record<RoleCode, string> = {
-  ADMIN: "Administrador",
-  HEAD: "Jefatura",
-  ANALYST: "Analista",
-  OPS: "Operativo",
-  AUDIT: "Auditor",
+  ADMINISTRADOR_GENERAL: "Admin General",
+  ADMINISTRADOR_UNIDAD:  "Admin Unidad",
+  JEFE_UNIDAD:           "Jefatura",
+  COORDINADOR:           "Coordinador",
+  ANALISTA:              "Analista",
+  USUARIO:               "Usuario",
+  CONSULTA:              "Consulta",
 };
 
 const ROLE_COLORS: Record<RoleCode, string> = {
-  ADMIN: "#E54D4D",
-  HEAD: "#2E6BE6",
-  ANALYST: "#5B4FD0",
-  OPS: "#12A150",
-  AUDIT: "#637083",
+  ADMINISTRADOR_GENERAL: "#E54D4D",
+  ADMINISTRADOR_UNIDAD:  "#C0392B",
+  JEFE_UNIDAD:           "#2E6BE6",
+  COORDINADOR:           "#5B4FD0",
+  ANALISTA:              "#0F8A8A",
+  USUARIO:               "#12A150",
+  CONSULTA:              "#637083",
 };
 
 function initials(name: string) {

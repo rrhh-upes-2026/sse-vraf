@@ -6,6 +6,7 @@
 import type { WorkspaceId } from "@/config/nav";
 
 const UNIT_CODE: Record<WorkspaceId, string> = {
+  GLOBAL: "GLOB",
   vraf: "VRAF",
   rrhh: "RH",
   conta: "CONT",

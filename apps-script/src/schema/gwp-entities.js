@@ -84,6 +84,6 @@ var GWP_ENTITIES = {
 
 function mergeGWPEntities_() {
   Object.keys(GWP_ENTITIES).forEach(function (key) {
-    ENTITY_SCHEMAS[key] = GWP_ENTITIES[key];
+    ENTITY_SHEETS[key] = GWP_ENTITIES[key];
   });
 }

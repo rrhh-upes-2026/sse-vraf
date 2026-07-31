@@ -1,5 +1,12 @@
-/** Roles oficiales — MASTER HANDOFF §10. */
-export type RoleCode = "ADMIN" | "HEAD" | "ANALYST" | "OPS" | "AUDIT";
+/** Roles oficiales — jerarquía institucional UPES. */
+export type RoleCode =
+  | "ADMINISTRADOR_GENERAL"
+  | "ADMINISTRADOR_UNIDAD"
+  | "JEFE_UNIDAD"
+  | "COORDINADOR"
+  | "ANALISTA"
+  | "USUARIO"
+  | "CONSULTA";
 
 export interface RoleDef {
   code: RoleCode;
@@ -8,44 +15,58 @@ export interface RoleDef {
 }
 
 export const ROLES: Record<RoleCode, RoleDef> = {
-  ADMIN: {
-    code: "ADMIN",
+  ADMINISTRADOR_GENERAL: {
+    code: "ADMINISTRADOR_GENERAL",
     label: "Administrador General",
-    description: "Acceso transversal total al sistema",
+    description: "Acceso transversal total — todas las unidades y configuraciones",
   },
-  HEAD: {
-    code: "HEAD",
+  ADMINISTRADOR_UNIDAD: {
+    code: "ADMINISTRADOR_UNIDAD",
+    label: "Administrador de Unidad",
+    description: "Administración completa de su unidad asignada",
+  },
+  JEFE_UNIDAD: {
+    code: "JEFE_UNIDAD",
     label: "Jefe de Unidad",
-    description: "Gestiona su propio workspace",
+    description: "Gestión operativa y estratégica de su workspace",
   },
-  ANALYST: {
-    code: "ANALYST",
+  COORDINADOR: {
+    code: "COORDINADOR",
+    label: "Coordinador",
+    description: "Coordinación de procesos, solicitudes y seguimiento",
+  },
+  ANALISTA: {
+    code: "ANALISTA",
     label: "Analista",
-    description: "Trabajo operativo avanzado",
+    description: "Trabajo analítico, registro de indicadores y KPIs",
   },
-  OPS: {
-    code: "OPS",
-    label: "Operativo",
-    description: "Ejecución de tareas asignadas",
+  USUARIO: {
+    code: "USUARIO",
+    label: "Usuario",
+    description: "Operaciones básicas dentro de un workspace",
   },
-  AUDIT: {
-    code: "AUDIT",
-    label: "Auditor",
-    description: "Solo lectura transversal",
+  CONSULTA: {
+    code: "CONSULTA",
+    label: "Consulta",
+    description: "Solo lectura — no puede crear ni modificar datos",
   },
 };
 
 /**
- * The prototype only ever exposes a 2-way demo toggle in the sidebar footer
- * (Administrador General vs Usuario Operativo) — mirrored here rather than
- * inventing a 5-way switcher the original navigation never had.
+ * Demo toggle: Administrador General vs Usuario operativo.
  */
 export type DemoRole = "admin" | "operativo";
 
 export function demoRoleToCode(role: DemoRole): RoleCode {
-  return role === "admin" ? "ADMIN" : "OPS";
+  return role === "admin" ? "ADMINISTRADOR_GENERAL" : "USUARIO";
 }
 
 export function demoRoleLabel(role: DemoRole): string {
   return role === "admin" ? "Administrador General" : "Usuario Operativo";
 }
+
+/** Roles that cannot be self-assigned via registration or user creation forms. */
+export const PROTECTED_ROLES: ReadonlySet<RoleCode> = new Set([
+  "ADMINISTRADOR_GENERAL",
+  "ADMINISTRADOR_UNIDAD",
+]);

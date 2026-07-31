@@ -45,7 +45,7 @@ export function useWorkflowEngine(instanceId: string, blueprintIdOverride?: stri
   const [localInstance, setLocalInstance] = useState<ProcessInstance | null>(null);
 
   const actor = useMemo((): Actor => {
-    const role = (user?.rol ?? "OPS") as RoleCode;
+    const role = (user?.rol ?? "USUARIO") as RoleCode;
     return {
       id: user?.usuarioId ?? "",
       name: user?.name ?? "",

@@ -1,5 +1,5 @@
 /**
- * Permission Engine — MASTER HANDOFF §10.
+ * Permission Engine — RBAC.
  *
  * Permissions are unique string keys. Components check permissions, never roles.
  * Roles map to permission sets here — this is the only place in the codebase
@@ -114,9 +114,43 @@ const ALL_PERMISSIONS = new Set<Permission>([
 ]);
 
 export const ROLE_PERMISSIONS: Record<RoleCode, ReadonlySet<Permission>> = {
-  ADMIN: ALL_PERMISSIONS,
+  ADMINISTRADOR_GENERAL: ALL_PERMISSIONS,
 
-  HEAD: new Set<Permission>([
+  ADMINISTRADOR_UNIDAD: new Set<Permission>([
+    "process.create", "process.edit", "process.view",
+    "activity.create", "activity.edit", "activity.complete", "activity.view",
+    "evidence.upload", "evidence.replace", "evidence.view", "evidence.approve",
+    "indicator.view", "indicator.edit",
+    "dashboard.view",
+    "report.export",
+    "processBuilder.access",
+    "workspace.manage",
+    "users.manage",
+    "hr.employee.view", "hr.employee.create", "hr.employee.edit",
+    "hr.hiring.view", "hr.hiring.manage", "hr.hiring.approve",
+    "hr.training.view", "hr.training.manage",
+    "hr.evaluation.view", "hr.evaluation.manage",
+    "hr.personnel-action.approve",
+    "requests.create", "requests.view", "requests.approve",
+    "ws.admin.access",
+    "ws.processes.manage", "ws.processes.publish",
+    "ws.procedures.manage",
+    "ws.indicators.manage",
+    "ws.objectives.manage",
+    "ws.projects.manage",
+    "ws.requests.manage",
+    "ws.forms.manage",
+    "ws.reports.manage",
+    "ws.dashboards.manage",
+    "ws.automations.manage",
+    "ws.documents.manage",
+    "ws.users.manage",
+    "ws.settings.manage",
+    "ws.template.export",
+    "ws.audit.view",
+  ]),
+
+  JEFE_UNIDAD: new Set<Permission>([
     "process.create", "process.edit", "process.view",
     "activity.create", "activity.edit", "activity.complete", "activity.view",
     "evidence.upload", "evidence.replace", "evidence.view", "evidence.approve",
@@ -148,7 +182,31 @@ export const ROLE_PERMISSIONS: Record<RoleCode, ReadonlySet<Permission>> = {
     "ws.audit.view",
   ]),
 
-  ANALYST: new Set<Permission>([
+  COORDINADOR: new Set<Permission>([
+    "process.edit", "process.view",
+    "activity.create", "activity.edit", "activity.complete", "activity.view",
+    "evidence.upload", "evidence.replace", "evidence.view",
+    "indicator.view",
+    "dashboard.view",
+    "report.export",
+    "processBuilder.access",
+    "hr.employee.view",
+    "hr.hiring.view", "hr.hiring.manage",
+    "hr.training.view", "hr.training.manage",
+    "hr.evaluation.view",
+    "requests.create", "requests.view", "requests.approve",
+    "ws.admin.access",
+    "ws.processes.manage",
+    "ws.indicators.manage",
+    "ws.objectives.manage",
+    "ws.requests.manage",
+    "ws.forms.manage",
+    "ws.reports.manage",
+    "ws.dashboards.manage",
+    "ws.documents.manage",
+  ]),
+
+  ANALISTA: new Set<Permission>([
     "process.edit", "process.view",
     "activity.create", "activity.edit", "activity.complete", "activity.view",
     "evidence.upload", "evidence.replace", "evidence.view",
@@ -163,7 +221,7 @@ export const ROLE_PERMISSIONS: Record<RoleCode, ReadonlySet<Permission>> = {
     "requests.create", "requests.view",
   ]),
 
-  OPS: new Set<Permission>([
+  USUARIO: new Set<Permission>([
     "process.view",
     "activity.complete", "activity.view",
     "evidence.upload", "evidence.view",
@@ -176,7 +234,7 @@ export const ROLE_PERMISSIONS: Record<RoleCode, ReadonlySet<Permission>> = {
     "requests.create", "requests.view",
   ]),
 
-  AUDIT: new Set<Permission>([
+  CONSULTA: new Set<Permission>([
     "process.view",
     "activity.view",
     "evidence.view",

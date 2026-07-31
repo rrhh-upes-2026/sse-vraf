@@ -11,7 +11,7 @@ export default async function PlatformWizardPage() {
     const cookieStore = await cookies();
     const token = cookieStore.get(SESSION_COOKIE)?.value;
     const session = token ? await verifySessionToken(token) : null;
-    if (session && session.rol !== "ADMIN") {
+    if (session && session.rol !== "ADMINISTRADOR_GENERAL" && session.rol !== "ADMINISTRADOR_UNIDAD") {
       redirect("/ws/vraf/dashboard");
     }
   }

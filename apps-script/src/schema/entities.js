@@ -192,7 +192,11 @@ var ENTITY_SHEETS = {
   },
   usuarios: {
     sheetName: "Usuarios",
-    columns: ["id", "nombre", "email", "unidadId", "rol", "activo", "avatarInitials"],
+    columns: [
+      "id", "nombre", "email", "unidadId", "rol", "activo", "avatarInitials",
+      "passwordHash", "passwordSalt", "mustChangePassword",
+      "createdAt", "updatedAt",
+    ],
   },
   unidades: {
     sheetName: "Unidades",

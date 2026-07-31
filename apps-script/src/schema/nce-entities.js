@@ -61,6 +61,6 @@ var NCE_ENTITY_DEFS = [
 
 function mergeNCEEntities_() {
   NCE_ENTITY_DEFS.forEach(function (def) {
-    SchemaRegistry.register(def);
+    ENTITY_SHEETS[def.key] = { sheetName: def.sheetName, columns: def.columns };
   });
 }

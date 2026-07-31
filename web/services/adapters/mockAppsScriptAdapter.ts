@@ -210,8 +210,8 @@ export class MockAppsScriptAdapter implements IAppsScriptClient {
           usuarioId:          "USR-DEV-001",
           nombre:             "Administrador Demo",
           email:              params?.email ?? "admin@upes.edu.sv",
-          rol:                "ADMIN",
-          unidadId:           "vraf",
+          rol:                "ADMINISTRADOR_GENERAL",
+          unidadId:           "GLOBAL",
           mustChangePassword: false,
         } as unknown as T;
       }
@@ -224,7 +224,7 @@ export class MockAppsScriptAdapter implements IAppsScriptClient {
           usuarioId: "USR-DEV-001",
           nombre:    "Administrador Demo",
           email:     params?.email ?? "admin@upes.edu.sv",
-          rol:       "ADMIN",
+          rol:       "ADMINISTRADOR_GENERAL",
           unidadId:  "vraf",
         } as unknown as T;
       default:

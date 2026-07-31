@@ -1,51 +1,80 @@
 /**
  * SeedInstaller — Institutional seed data for SSE-VRAF.
  *
- * Installs the 6 organizational workspaces, 6 institutional users,
- * and their workspace-user assignments during BootstrapController.installTemplates().
+ * Installs the 6 organizational workspaces and 3 platform admin users
+ * during BootstrapController.installTemplates().
  *
  * Design rules:
- *   • No user data hardcoded outside this file.
- *   • Idempotent: checks for existing records before inserting.
- *   • All writes use createEntity_/getEntity_ from SheetRepository.
- *   • wsSettings.id = wsId by convention (same as upsertByWsId pattern).
+ *   • No hardcoded email/ID checks in permission logic — pure RBAC.
+ *   • Idempotent: upserts on every run (update if exists, create if not).
+ *   • Admin users always get their role, status, and password refreshed.
+ *   • Temp password UPES2026! is stored as SHA-256(salt:password) — never plaintext.
  */
 var SeedInstaller = (function () {
 
-  // ── Institutional users ──────────────────────────────────────────────────────
+  // ── Password helpers (mirrors AuthBridge — kept local to avoid circular dep) ─
 
-  var SEED_USERS = [
+  function hashPwd_(password, salt) {
+    var raw = Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,
+      salt + ":" + password,
+      Utilities.Charset.UTF_8
+    );
+    return raw.map(function (b) {
+      var hex = (b < 0 ? b + 256 : b).toString(16);
+      return hex.length === 1 ? "0" + hex : hex;
+    }).join("");
+  }
+
+  function makeSalt_() {
+    return Utilities.getUuid().replace(/-/g, "");
+  }
+
+  // ── Platform admin users (bootstrapped on every run — idempotent upsert) ─────
+  //
+  // Role hierarchy: ADMINISTRADOR_GENERAL > ADMINISTRADOR_UNIDAD > JEFE_UNIDAD
+  //                 > COORDINADOR > ANALISTA > USUARIO > CONSULTA
+  //
+  // ADMINISTRADOR_GENERAL has platform-wide access across all workspaces.
+  // ADMINISTRADOR_UNIDAD has full access to their assigned workspace only.
+
+  var ADMIN_SEED_USERS = [
+    {
+      id:        "usr-vraf-admin",
+      email:     "vicerrectoria.financiera@upes.edu.sv",
+      nombre:    "Vicerrectoría Administrativa y Financiera",
+      cargo:     "Administrador General de la Plataforma",
+      unidadKey: "GLOBAL",
+      rol:       "ADMINISTRADOR_GENERAL",
+    },
+    {
+      id:        "usr-rrhh-admin",
+      email:     "rrhh@upes.edu.sv",
+      nombre:    "Administrador RRHH",
+      cargo:     "Administrador de Unidad VRAF",
+      unidadKey: "vraf",
+      rol:       "ADMINISTRADOR_UNIDAD",
+    },
     {
       id:        "usr-linda-alas",
       email:     "linda.alas@upes.edu.sv",
       nombre:    "Linda Bellaneth Alas García",
       cargo:     "Vicerrectora Administrativa Financiera",
       unidadKey: "vraf",
-      rol:       "GENERAL_ADMIN",
+      rol:       "ADMINISTRADOR_UNIDAD",
     },
-    {
-      id:        "usr-roberto-reales",
-      email:     "roberto.reales@upes.edu.sv",
-      nombre:    "Roberto Efraín Reales Ramírez",
-      cargo:     "Jefe de Recursos Humanos",
-      unidadKey: "rrhh",
-      rol:       "GENERAL_ADMIN",
-    },
-    {
-      id:        "usr-rrhh-admin",
-      email:     "rrhh@upes.edu.sv",
-      nombre:    "Administrador RRHH",
-      cargo:     "Administrador General",
-      unidadKey: "rrhh",
-      rol:       "GENERAL_ADMIN",
-    },
+  ];
+
+  // ── Other institutional users (unit heads — created on first run only) ────────
+
+  var SEED_USERS = [
     {
       id:        "usr-oscar-flores",
       email:     "oscar.flores@upes.edu.sv",
       nombre:    "Oscar Gilberto Flores",
       cargo:     "Jefe de Contabilidad",
       unidadKey: "contabilidad",
-      rol:       "UNIT_OWNER",
+      rol:       "JEFE_UNIDAD",
     },
     {
       id:        "usr-ady-hernandez",
@@ -53,7 +82,7 @@ var SeedInstaller = (function () {
       nombre:    "Ady Yared Hernández Medrano",
       cargo:     "Jefe de Compras",
       unidadKey: "compras",
-      rol:       "UNIT_OWNER",
+      rol:       "JEFE_UNIDAD",
     },
     {
       id:        "usr-belly-salguero",
@@ -61,7 +90,7 @@ var SeedInstaller = (function () {
       nombre:    "Belly Donald Salguero Corado",
       cargo:     "Jefe de Mantenimiento e Infraestructura",
       unidadKey: "mantenimiento",
-      rol:       "UNIT_OWNER",
+      rol:       "JEFE_UNIDAD",
     },
     {
       id:        "usr-ruth-escobar",
@@ -69,7 +98,7 @@ var SeedInstaller = (function () {
       nombre:    "Ruth Nohemy Escobar González",
       cargo:     "Responsable de Salud y Seguridad Ocupacional",
       unidadKey: "salud",
-      rol:       "UNIT_OWNER",
+      rol:       "JEFE_UNIDAD",
     },
   ];
 
@@ -99,20 +128,63 @@ var SeedInstaller = (function () {
     return result || "??";
   }
 
-  function isInstalled_() {
-    try {
-      var result = listEntities_("usuarios", { email: "linda.alas@upes.edu.sv" });
-      return !!(result.items && result.items.length > 0);
-    } catch (e) {
-      return false;
-    }
-  }
-
   // ── Install steps ─────────────────────────────────────────────────────────────
 
-  function installUsers_(userId, logs) {
-    var now = new Date().toISOString();
+  // Upserts admin users on every bootstrap run: always refreshes role + password.
+  function installAdminUsers_(userId, logs) {
+    var now   = new Date().toISOString();
     var count = 0;
+    var TEMP_PASSWORD = "UPES2026!";
+
+    for (var i = 0; i < ADMIN_SEED_USERS.length; i++) {
+      var u = ADMIN_SEED_USERS[i];
+      try {
+        var salt = makeSalt_();
+        var hash = hashPwd_(TEMP_PASSWORD, salt);
+
+        var existing = listEntities_("usuarios", { email: u.email });
+        if (existing.items && existing.items.length > 0) {
+          // Upsert: refresh role, status, and password hash
+          updateEntity_("usuarios", existing.items[0].id, {
+            rol:               u.rol,
+            unidadId:          u.unidadKey,
+            activo:            true,
+            passwordHash:      hash,
+            passwordSalt:      salt,
+            mustChangePassword: false,
+            updatedAt:         now,
+          });
+          log_(logs, "info", "Admin actualizado: " + u.email + " → " + u.rol);
+        } else {
+          createEntity_("usuarios", {
+            id:                u.id,
+            nombre:            u.nombre,
+            email:             u.email,
+            unidadId:          u.unidadKey,
+            rol:               u.rol,
+            activo:            true,
+            passwordHash:      hash,
+            passwordSalt:      salt,
+            mustChangePassword: false,
+            avatarInitials:    initials_(u.nombre),
+            createdAt:         now,
+            updatedAt:         now,
+          });
+          count++;
+          log_(logs, "success", "Admin creado: " + u.nombre + " [" + u.rol + "]");
+        }
+      } catch (e) {
+        log_(logs, "error", "Error procesando admin " + u.email + ": " + String(e.message || e));
+      }
+    }
+    return count;
+  }
+
+  // Creates unit heads only if they don't already exist (skip on subsequent runs).
+  function installUsers_(userId, logs) {
+    var now   = new Date().toISOString();
+    var count = 0;
+
     for (var i = 0; i < SEED_USERS.length; i++) {
       var u = SEED_USERS[i];
       try {
@@ -122,15 +194,16 @@ var SeedInstaller = (function () {
           continue;
         }
         createEntity_("usuarios", {
-          id:             u.id,
-          nombre:         u.nombre,
-          email:          u.email,
-          unidadId:       u.unidadKey,
-          rol:            u.rol,
-          activo:         true,
-          avatarInitials: initials_(u.nombre),
-          createdAt:      now,
-          updatedAt:      now,
+          id:                u.id,
+          nombre:            u.nombre,
+          email:             u.email,
+          unidadId:          u.unidadKey,
+          rol:               u.rol,
+          activo:            true,
+          mustChangePassword: true,
+          avatarInitials:    initials_(u.nombre),
+          createdAt:         now,
+          updatedAt:         now,
         });
         count++;
         log_(logs, "success", "Usuario creado: " + u.nombre);
@@ -142,7 +215,7 @@ var SeedInstaller = (function () {
   }
 
   function installWorkspaces_(userId, logs) {
-    var now = new Date().toISOString();
+    var now   = new Date().toISOString();
     var count = 0;
     for (var i = 0; i < SEED_WORKSPACES.length; i++) {
       var ws = SEED_WORKSPACES[i];
@@ -173,23 +246,34 @@ var SeedInstaller = (function () {
   }
 
   function installWorkspaceUsers_(userId, logs) {
-    var now = new Date().toISOString();
+    var now   = new Date().toISOString();
     var count = 0;
-    for (var i = 0; i < SEED_USERS.length; i++) {
-      var u = SEED_USERS[i];
+    var allUsers = ADMIN_SEED_USERS.concat(SEED_USERS);
+
+    for (var i = 0; i < allUsers.length; i++) {
+      var u = allUsers[i];
+      // GLOBAL unidad means cross-workspace — no wsUsers row needed
+      if (u.unidadKey === "GLOBAL") continue;
+
       try {
         var existing = listEntities_("wsUsers", { wsId: u.unidadKey, email: u.email });
         if (existing.items && existing.items.length > 0) {
           log_(logs, "info", "wsUser ya existe: " + u.email + " → " + u.unidadKey);
           continue;
         }
+        // Map platform roles to workspace-level roles
+        var wsRol = "JEFE_UNIDAD";
+        if (u.rol === "ADMINISTRADOR_GENERAL") wsRol = "ADMINISTRADOR_GENERAL";
+        else if (u.rol === "ADMINISTRADOR_UNIDAD") wsRol = "ADMINISTRADOR_UNIDAD";
+        else if (u.rol === "JEFE_UNIDAD") wsRol = "JEFE_UNIDAD";
+
         createEntity_("wsUsers", {
           id:        IdGen.uuid(),
           wsId:      u.unidadKey,
           userId:    u.id,
           email:     u.email,
           nombre:    u.nombre,
-          rol:       u.rol === "GENERAL_ADMIN" ? "ADMIN" : "HEAD",
+          rol:       wsRol,
           activo:    "true",
           createdAt: now,
           updatedAt: now,
@@ -207,23 +291,24 @@ var SeedInstaller = (function () {
 
   function installAll(userId, logs) {
     logs = logs || [];
-    if (isInstalled_()) {
-      log_(logs, "info", "Seed data ya instalada — omitiendo.");
-      return { skipped: true, logs: logs };
-    }
-    log_(logs, "info", "Instalando seed data institucional UPES...");
-    var users      = installUsers_(userId, logs);
-    var workspaces = installWorkspaces_(userId, logs);
-    var wsUsers    = installWorkspaceUsers_(userId, logs);
+    log_(logs, "info", "Ejecutando bootstrap institucional UPES...");
+
+    // Admin users are always upserted (idempotent)
+    var adminCount  = installAdminUsers_(userId, logs);
+    // Workspaces and regular users skip if already present
+    var users       = installUsers_(userId, logs);
+    var workspaces  = installWorkspaces_(userId, logs);
+    var wsUsers     = installWorkspaceUsers_(userId, logs);
+
     log_(logs, "success",
-      "Seed data instalada: " + users + " usuarios, " +
+      "Bootstrap completado: " + (adminCount + users) + " usuarios, " +
       workspaces + " workspaces, " + wsUsers + " asignaciones.");
-    return { skipped: false, users: users, workspaces: workspaces, wsUsers: wsUsers, logs: logs };
+    return { skipped: false, users: adminCount + users, workspaces: workspaces, wsUsers: wsUsers, logs: logs };
   }
 
   return {
     installAll:      installAll,
-    SEED_USERS:      SEED_USERS,
+    SEED_USERS:      ADMIN_SEED_USERS.concat(SEED_USERS),
     SEED_WORKSPACES: SEED_WORKSPACES,
   };
 

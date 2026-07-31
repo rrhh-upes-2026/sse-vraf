@@ -36,6 +36,7 @@ var IIA_ENTITIES = [
 
 function mergeIIAEntities_() {
   IIA_ENTITIES.forEach(function (def) {
+    ENTITY_SHEETS[def.name] = { sheetName: def.name, columns: def.columns };
     SheetRepository.ensureSheet(def.name, def.columns);
   });
 }

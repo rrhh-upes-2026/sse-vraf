@@ -8,7 +8,7 @@ export interface SessionUser {
   name: string;
   email: string;
   rol: RoleCode;
-  unidadId: WorkspaceId;
+  unidadId: WorkspaceId | "GLOBAL";
   mustChangePassword?: boolean;
 }
 

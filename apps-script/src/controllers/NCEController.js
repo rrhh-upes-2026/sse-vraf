@@ -751,7 +751,7 @@ var NCEController = (function () {
 
   // ─── Module bootstrap ─────────────────────────────────────────────────────
 
-  _seedDefaultTemplates_();
+  try { _seedDefaultTemplates_(); } catch (e) { AppLogger.warn("NCE bootstrap: " + e.message); }
 
   return {
     getDashboard:        getDashboard,

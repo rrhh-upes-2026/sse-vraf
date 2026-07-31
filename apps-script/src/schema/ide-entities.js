@@ -8,9 +8,8 @@ var IDE_SHEETS = {
 };
 
 function mergeIDEEntities_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getSpreadsheet_();
 
-  // ── IDE_Indicators ─────────────────────────────────────────
   var indHeaders = [
     "id", "codigo", "nombre", "descripcion",
     "objetivoId", "dimensionId", "unitMeasureId", "frequencyId",
@@ -21,18 +20,19 @@ function mergeIDEEntities_() {
     "dependencias",
     "activo", "createdAt", "updatedAt", "createdBy", "updatedBy",
   ];
+  ENTITY_SHEETS[IDE_SHEETS.indicators] = { sheetName: IDE_SHEETS.indicators, columns: indHeaders };
   if (!ss.getSheetByName(IDE_SHEETS.indicators)) {
     var sh = ss.insertSheet(IDE_SHEETS.indicators);
     sh.appendRow(indHeaders);
     sh.setFrozenRows(1);
   }
 
-  // ── IDE_IndicatorVersions ──────────────────────────────────
   var verHeaders = [
     "id", "indicatorId", "version", "status",
     "snapshot", "publishedAt", "archivedAt",
     "createdAt", "createdBy",
   ];
+  ENTITY_SHEETS[IDE_SHEETS.versions] = { sheetName: IDE_SHEETS.versions, columns: verHeaders };
   if (!ss.getSheetByName(IDE_SHEETS.versions)) {
     var sv = ss.insertSheet(IDE_SHEETS.versions);
     sv.appendRow(verHeaders);

@@ -460,7 +460,7 @@ const MOCK_USERS: WorkspaceUser[] = [
     wsId: "rrhh",
     nombre: "Lic. María José Hernández",
     email: "mhernandez@upes.edu.sv",
-    rol: "HEAD",
+    rol: "JEFE_UNIDAD",
     activo: true,
     lastLoginAt: "2026-07-15T08:00:00Z",
     createdAt: "2026-01-10T08:00:00Z",
@@ -471,7 +471,7 @@ const MOCK_USERS: WorkspaceUser[] = [
     wsId: "rrhh",
     nombre: "Ing. Carlos Ramírez",
     email: "cramirez@upes.edu.sv",
-    rol: "ANALYST",
+    rol: "ANALISTA",
     activo: true,
     lastLoginAt: "2026-07-14T16:30:00Z",
     createdAt: "2026-01-15T08:00:00Z",
@@ -482,7 +482,7 @@ const MOCK_USERS: WorkspaceUser[] = [
     wsId: "rrhh",
     nombre: "Licda. Ana Beatriz Flores",
     email: "aflores@upes.edu.sv",
-    rol: "OPS",
+    rol: "USUARIO",
     activo: true,
     lastLoginAt: "2026-07-15T09:15:00Z",
     createdAt: "2026-02-01T08:00:00Z",
@@ -493,7 +493,7 @@ const MOCK_USERS: WorkspaceUser[] = [
     wsId: "rrhh",
     nombre: "Lic. Roberto Castro",
     email: "rcastro@upes.edu.sv",
-    rol: "AUDIT",
+    rol: "CONSULTA",
     activo: false,
     lastLoginAt: "2026-06-20T11:00:00Z",
     createdAt: "2026-03-01T08:00:00Z",
@@ -504,24 +504,24 @@ const MOCK_USERS: WorkspaceUser[] = [
     wsId: "rrhh",
     nombre: "Admin Plataforma",
     email: "admin@upes.edu.sv",
-    rol: "ADMIN",
+    rol: "ADMINISTRADOR_UNIDAD",
     activo: true,
     lastLoginAt: "2026-07-15T08:30:00Z",
     createdAt: "2026-01-01T08:00:00Z",
     updatedAt: "2026-01-01T08:00:00Z",
   },
   // VRAF users
-  { id: "USR-VRAF-001", wsId: "vraf", nombre: "MSc. Luisa Martínez", email: "lmartinez@upes.edu.sv", rol: "HEAD", activo: true, lastLoginAt: "2026-07-15T07:45:00Z", createdAt: "2026-01-10T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
-  { id: "USR-VRAF-002", wsId: "vraf", nombre: "Lic. Jorge Domínguez", email: "jdominguez@upes.edu.sv", rol: "ANALYST", activo: true, lastLoginAt: "2026-07-14T15:00:00Z", createdAt: "2026-02-01T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
-  { id: "USR-VRAF-003", wsId: "vraf", nombre: "Admin Plataforma", email: "admin@upes.edu.sv", rol: "ADMIN", activo: true, lastLoginAt: "2026-07-15T08:30:00Z", createdAt: "2026-01-01T08:00:00Z", updatedAt: "2026-01-01T08:00:00Z" },
+  { id: "USR-VRAF-001", wsId: "vraf", nombre: "MSc. Luisa Martínez", email: "lmartinez@upes.edu.sv", rol: "JEFE_UNIDAD", activo: true, lastLoginAt: "2026-07-15T07:45:00Z", createdAt: "2026-01-10T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
+  { id: "USR-VRAF-002", wsId: "vraf", nombre: "Lic. Jorge Domínguez", email: "jdominguez@upes.edu.sv", rol: "ANALISTA", activo: true, lastLoginAt: "2026-07-14T15:00:00Z", createdAt: "2026-02-01T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
+  { id: "USR-VRAF-003", wsId: "vraf", nombre: "Admin Plataforma", email: "admin@upes.edu.sv", rol: "ADMINISTRADOR_UNIDAD", activo: true, lastLoginAt: "2026-07-15T08:30:00Z", createdAt: "2026-01-01T08:00:00Z", updatedAt: "2026-01-01T08:00:00Z" },
   // CONTA users
-  { id: "USR-CONTA-001", wsId: "conta", nombre: "CPA. Elena Vásquez", email: "evasquez@upes.edu.sv", rol: "HEAD", activo: true, lastLoginAt: "2026-07-15T09:00:00Z", createdAt: "2026-01-10T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
-  { id: "USR-CONTA-002", wsId: "conta", nombre: "Lic. Pablo Méndez", email: "pmendez@upes.edu.sv", rol: "OPS", activo: true, lastLoginAt: "2026-07-13T14:00:00Z", createdAt: "2026-03-01T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
+  { id: "USR-CONTA-001", wsId: "conta", nombre: "CPA. Elena Vásquez", email: "evasquez@upes.edu.sv", rol: "JEFE_UNIDAD", activo: true, lastLoginAt: "2026-07-15T09:00:00Z", createdAt: "2026-01-10T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
+  { id: "USR-CONTA-002", wsId: "conta", nombre: "Lic. Pablo Méndez", email: "pmendez@upes.edu.sv", rol: "USUARIO", activo: true, lastLoginAt: "2026-07-13T14:00:00Z", createdAt: "2026-03-01T08:00:00Z", updatedAt: "2026-07-01T08:00:00Z" },
 ];
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
-const MOCK_SETTINGS: Record<WorkspaceId, WorkspaceSettings> = {
+const MOCK_SETTINGS: Partial<Record<WorkspaceId, WorkspaceSettings>> = {
   rrhh: {
     wsId: "rrhh",
     nombre: "Recursos Humanos",

@@ -13,6 +13,7 @@ import { moduleRegistry } from "@/lib/sdk/registry";
 export type { WorkspaceUnit } from "@/lib/sdk/types";
 
 export type WorkspaceId =
+  | "GLOBAL"
   | "vraf"
   | "rrhh"
   | "conta"

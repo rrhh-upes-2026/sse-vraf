@@ -19,11 +19,12 @@ interface UserDrawerProps {
 }
 
 const ROL_OPTIONS: { value: RoleCode; label: string; description: string }[] = [
-  { value: "ADMIN", label: "Admin", description: "Acceso total al workspace" },
-  { value: "HEAD", label: "Head", description: "Gestión de procesos y aprobaciones" },
-  { value: "ANALYST", label: "Analista", description: "Creación y edición de objetos" },
-  { value: "OPS", label: "Operador", description: "Ejecución de procesos" },
-  { value: "AUDIT", label: "Auditor", description: "Solo lectura y auditoría" },
+  { value: "ADMINISTRADOR_UNIDAD", label: "Administrador de Unidad", description: "Administración completa del workspace" },
+  { value: "JEFE_UNIDAD", label: "Jefe de Unidad", description: "Gestión operativa y aprobaciones" },
+  { value: "COORDINADOR", label: "Coordinador", description: "Coordinación de procesos y solicitudes" },
+  { value: "ANALISTA", label: "Analista", description: "Análisis y registro de indicadores" },
+  { value: "USUARIO", label: "Usuario", description: "Operaciones básicas" },
+  { value: "CONSULTA", label: "Consulta", description: "Solo lectura" },
 ];
 
 const ROL_SELECT = ROL_OPTIONS.map((r) => ({ value: r.value, label: `${r.label} — ${r.description}` }));
@@ -36,7 +37,7 @@ export function UserDrawer({ wsId, user, open, onClose, onSaved }: UserDrawerPro
   const [form, setForm] = useState({
     nombre: "",
     email: "",
-    rol: "OPS" as RoleCode,
+    rol: "USUARIO" as RoleCode,
     activo: true,
   });
 
@@ -45,7 +46,7 @@ export function UserDrawer({ wsId, user, open, onClose, onSaved }: UserDrawerPro
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({ nombre: user.nombre, email: user.email, rol: user.rol, activo: user.activo });
     } else {
-      setForm({ nombre: "", email: "", rol: "OPS", activo: true });
+      setForm({ nombre: "", email: "", rol: "USUARIO", activo: true });
     }
     setSaved(false);
   }, [user, open]);
@@ -74,7 +75,11 @@ export function UserDrawer({ wsId, user, open, onClose, onSaved }: UserDrawerPro
 
   const initials = form.nombre.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase() || "?";
   const rolInfo = ROL_OPTIONS.find((r) => r.value === form.rol);
-  const ROL_COLORS: Record<RoleCode, string> = { ADMIN: "#E54D4D", HEAD: "#2E6BE6", ANALYST: "#5B4FD0", OPS: "#0F8A8A", AUDIT: "#E5A100" };
+  const ROL_COLORS: Record<RoleCode, string> = {
+    ADMINISTRADOR_GENERAL: "#E54D4D", ADMINISTRADOR_UNIDAD: "#C0392B",
+    JEFE_UNIDAD: "#2E6BE6", COORDINADOR: "#5B4FD0",
+    ANALISTA: "#0F8A8A", USUARIO: "#12A150", CONSULTA: "#637083",
+  };
 
   return (
     <Drawer

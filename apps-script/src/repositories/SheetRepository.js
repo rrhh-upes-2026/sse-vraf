@@ -253,3 +253,33 @@ function purgeEntity_(entityName, id) {
     }
   }
 }
+
+// Public namespace — controllers call SheetRepository.forEntity(key) or SheetRepository.for(key)
+// and use the returned object's methods.
+var SheetRepository = {
+  for: function (entityName) {
+    return {
+      findAll:  function (query)     { return listEntities_(entityName, query).items; },
+      list:     function (query)     { return listEntities_(entityName, query).items; },
+      findById: function (id)        { return getEntity_(entityName, id); },
+      create:   function (payload)   { return createEntity_(entityName, payload); },
+      update:   function (id, patch) { return updateEntity_(entityName, id, patch); },
+      remove:   function (id)        { return removeEntity_(entityName, id); },
+      restore:  function (id)        { return restoreEntity_(entityName, id); },
+      purge:    function (id)        { return purgeEntity_(entityName, id); },
+    };
+  },
+  forEntity: function (entityName) {
+    return SheetRepository.for(entityName);
+  },
+  ensureSheet: function (sheetName, columns) {
+    var ss = getSpreadsheet_();
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      sheet.getRange(1, 1, 1, columns.length).setValues([columns]);
+      sheet.setFrozenRows(1);
+    }
+    return sheet;
+  },
+};
