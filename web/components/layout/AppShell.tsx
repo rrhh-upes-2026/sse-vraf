@@ -1,6 +1,3 @@
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 import { Sidebar, type SidebarUser } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { CommandPalette } from "@/components/shell/CommandPalette";
@@ -11,20 +8,20 @@ function initialsFromName(name: string) {
   return letters.join("") || "U";
 }
 
+// BYPASS_AUTH: acceso directo sin login mientras se configura el backend.
+// Restaurar el bloque original cuando el backend esté listo.
+const BYPASS_USER = {
+  usuarioId: "usr-admin-vraf-001",
+  nombre: "Administrador VRAF",
+  name: "Administrador VRAF",
+  email: "rrhh@upes.edu.sv",
+  rol: "ADMINISTRADOR_UNIDAD" as const,
+  unidadId: "vraf" as const,
+  mustChangePassword: false,
+};
+
 export async function AppShell({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  const sessionUser = token ? await verifySessionToken(token) : null;
-
-  if (!sessionUser) {
-    redirect("/login");
-  }
-
-  // Force password change before accessing any (app) page.
-  // /change-password lives in (auth) group so AppShell is not called there — no redirect loop.
-  if (sessionUser.mustChangePassword) {
-    redirect("/change-password");
-  }
+  const sessionUser = BYPASS_USER;
 
   const isAdmin =
     sessionUser.rol === "ADMINISTRADOR_GENERAL" ||
