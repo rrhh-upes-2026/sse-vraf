@@ -15,7 +15,7 @@ const BYPASS_USER = {
   nombre: "Administrador VRAF",
   name: "Administrador VRAF",
   email: "rrhh@upes.edu.sv",
-  rol: "ADMINISTRADOR_UNIDAD" as const,
+  rol: "ADMINISTRADOR_UNIDAD" as import("@/types/roles").RoleCode,
   unidadId: "vraf" as const,
   mustChangePassword: false,
 };
