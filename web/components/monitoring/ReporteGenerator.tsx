@@ -144,7 +144,7 @@ function Toast({ toast, onDismiss }: { toast: ToastState; onDismiss: () => void 
 }
 
 export function ReporteGenerator({ wsId, unidadNombre }: ReporteGeneratorProps) {
-  const periodOptions = buildMockReports ? buildPeriodOptions() : [];
+  const periodOptions = buildPeriodOptions();
   const recentReports = buildMockReports(unidadNombre);
 
   const [selectedPeriod, setSelectedPeriod] = useState<string>(
