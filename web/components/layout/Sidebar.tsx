@@ -4,13 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   DEFAULT_WORKSPACE,
-  MY_WORK_ICON,
   ADMIN_NAV_ITEMS,
   WORKSPACE_SECTIONS,
-  ORG_WORKSPACE_IDS,
   isWorkspaceId,
 } from "@/config/nav";
-import { moduleRegistry } from "@/lib/sdk/registry";
 import { GlyphIcon } from "@/components/layout/GlyphIcon";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
 import { useRoleStore } from "@/store/useRoleStore";
@@ -24,7 +21,6 @@ export interface SidebarUser {
 
 interface SidebarProps {
   user: SidebarUser;
-  myWorkBadge?: number;
 }
 
 function parseWorkspaceSegment(pathname: string) {
@@ -34,12 +30,11 @@ function parseWorkspaceSegment(pathname: string) {
   return { wsId, section };
 }
 
-export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
+export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const role = useRoleStore((s) => s.role);
   const toggleRole = useRoleStore((s) => s.toggleRole);
 
-  const isMyWork = pathname.startsWith("/mi-trabajo");
   const { wsId, section } = parseWorkspaceSegment(pathname);
 
   return (
@@ -57,37 +52,19 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
         <div className="leading-[1.15]">
           <div className="text-[14px] font-bold text-white">SSE-VRAF</div>
           <div className="text-[11px] font-medium text-sse-sidebar-text-dim">
-            Centro de operaciones
+            Monitoreo Estratégico
           </div>
         </div>
       </div>
 
       {/* Nav body */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-[18px]">
-        {/* Mi Trabajo */}
-        <Link
-          href="/mi-trabajo"
-          className={`flex w-full items-center gap-[11px] rounded-[10px] p-2.5 text-[13px] font-bold font-sans ${
-            isMyWork
-              ? "bg-[rgba(46,107,230,.20)] text-white shadow-[inset_3px_0_0_#5B8DEF]"
-              : "bg-white/4 text-sse-sidebar-text-bright"
-          }`}
-        >
-          <GlyphIcon d={MY_WORK_ICON} size={18} />
-          <span className="flex-1 text-left">Mi Trabajo</span>
-          {myWorkBadge > 0 && (
-            <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-[9px] bg-sse-sidebar-badge-bg px-1.5 text-[10px] font-bold text-sse-sidebar-bg">
-              {myWorkBadge}
-            </span>
-          )}
-        </Link>
-
         {/* Workspace switcher + sections */}
         <WorkspaceSwitcher currentId={wsId} />
 
         <div className="mt-3.5 flex flex-col gap-0.5">
           {WORKSPACE_SECTIONS.map((s) => {
-            const active = !isMyWork && section === s.id;
+            const active = section === s.id;
             return (
               <Link
                 key={s.id}
@@ -109,28 +86,6 @@ export function Sidebar({ user, myWorkBadge = 7 }: SidebarProps) {
             );
           })}
         </div>
-
-        {/* Module navigation extensions — only for org unit workspaces */}
-        {ORG_WORKSPACE_IDS.has(wsId) && moduleRegistry.getNavigationExtensions(wsId).length > 0 && (
-          <div className="my-2 h-px bg-white/8" />
-        )}
-        {ORG_WORKSPACE_IDS.has(wsId) && moduleRegistry.getNavigationExtensions(wsId).map((ext) => {
-          const active = !isMyWork && section === ext.id;
-          return (
-            <Link
-              key={ext.id}
-              href={`/ws/${wsId}/${ext.href}`}
-              className={`flex w-full items-center gap-[11px] rounded-[9px] px-2.5 py-2 text-left text-[12.5px] font-sans ${
-                active
-                  ? "bg-[rgba(46,107,230,.20)] font-semibold text-white shadow-[inset_3px_0_0_#5B8DEF]"
-                  : "font-medium text-sse-sidebar-text"
-              }`}
-            >
-              <GlyphIcon d={ext.icon} size={17} />
-              <span className="flex-1">{ext.label}</span>
-            </Link>
-          );
-        })}
 
         {/* ── Administración — solo ADMIN / SUPER_ADMIN ─────────────────── */}
         {user.isAdmin && (
