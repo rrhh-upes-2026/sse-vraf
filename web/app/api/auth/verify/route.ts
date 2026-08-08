@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, SESSION_COOKIE, MAX_AGE } from "@/lib/session";
-import { getAppsScriptClient } from "@/services/adapters/getAppsScriptClient";
-import { HistorialService } from "@/services";
+import { getAppsScriptClient } from "@/lib/apps-script-client";
 import type { RoleCode } from "@/types/roles";
 import type { WorkspaceId } from "@/config/nav";
 
@@ -37,15 +36,6 @@ export async function POST(req: NextRequest) {
       rol:       user.rol,
       unidadId:  user.unidadId,
     });
-
-    HistorialService.create({
-      entidadTipo: "auth",
-      entidadId:   user.email,
-      usuarioId:   user.usuarioId,
-      accion:      "auth.login",
-      resultado:   "ok",
-      fecha:       new Date().toISOString(),
-    }).catch(() => {});
 
     const res = NextResponse.json({ ok: true });
     res.cookies.set(SESSION_COOKIE, token, {

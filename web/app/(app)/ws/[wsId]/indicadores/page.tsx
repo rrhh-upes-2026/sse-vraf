@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useIndicadores } from '@/hooks/useIndicadores';
+import { useMonitoreoIndicadores } from '@/hooks/useMonitoreoIndicadores';
 import { IndicadorCard } from '@/components/monitoring/IndicadorCard';
 import { SemaforoGlobal } from '@/components/monitoring/SemaforoGlobal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getUnidad } from '@/types/unidad';
-import type { SemaforoColor } from '@/types/entities';
 
+type SemaforoColor = 'verde' | 'amarillo' | 'rojo';
 type Filtro = 'todos' | SemaforoColor;
 
 const FILTROS: Filtro[] = ['todos', 'verde', 'amarillo', 'rojo'];
@@ -17,7 +17,7 @@ export default function IndicadoresPage() {
   const params = useParams();
   const wsId = params?.wsId as string;
 
-  const { data: indicadores = [], isLoading, refetch } = useIndicadores({ wsId });
+  const { data: indicadores = [], isLoading, refetch } = useMonitoreoIndicadores(wsId);
   const unidad = getUnidad(wsId);
   const [filtro, setFiltro] = useState<Filtro>('todos');
 
@@ -95,8 +95,6 @@ export default function IndicadoresPage() {
           {filtrados.map((ind) => (
             <IndicadorCard
               key={ind.id}
-              // Entity Indicador shape is mapped at the service layer;
-              // IndicadorCard's local interface is compatible at runtime.
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               indicador={ind as any}
             />

@@ -1,82 +1,23 @@
 "use client";
 
-import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { useEvidencias } from '@/hooks/useEvidencias';
+import { useMonitoreoEvidencias } from '@/hooks/useMonitoreoEvidencias';
 import { EvidenciaGrid } from '@/components/monitoring/EvidenciaGrid';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getUnidad } from '@/types/unidad';
-
-// ── Label map ────────────────────────────────────────────────────────────────
-
-const TIPO_LABEL: Record<string, string> = {
-  documento:   'Documentos',
-  formulario:  'Formularios',
-  archivo:     'Archivos',
-  registro:    'Registros',
-  fotografia:  'Fotografías',
-  acta:        'Actas',
-  contrato:    'Contratos',
-  informe:     'Informes',
-  comprobante: 'Comprobantes',
-  otro:        'Otros',
-};
-
-// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function EvidenciasPage() {
   const params = useParams();
   const wsId = params?.wsId as string;
 
-  const { data: evidencias = [], isLoading } = useEvidencias({ wsId });
+  const { data: carpetas = [], isLoading } = useMonitoreoEvidencias(wsId);
   const unidad = getUnidad(wsId);
 
-  // Transform entity Evidencia[] into the CarpetaEvidencia[] shape that
-  // EvidenciaGrid expects, grouping by tipo as the logical folder dimension.
-  const carpetas = useMemo(() => {
-    const byTipo = new Map<string, typeof evidencias>();
-
-    for (const ev of evidencias) {
-      const key = ev.tipo ?? 'otro';
-      const bucket = byTipo.get(key) ?? [];
-      bucket.push(ev);
-      byTipo.set(key, bucket);
-    }
-
-    return Array.from(byTipo.entries()).map(([tipo, items]) => ({
-      id: tipo,
-      nombre: TIPO_LABEL[tipo] ?? tipo,
-      // driveId at folder level: use unit root if configured; individual
-      // items carry their own driveFileId links below.
-      driveId: unidad?.driveId ?? '',
-      cantidad: items.length,
-      ultimaModificacion: items.reduce<string>((latest, ev) => {
-        const d = ev.fechaCarga ?? '';
-        return d > latest ? d : latest;
-      }, ''),
-      archivos: items.map((ev) => ({
-        id:               ev.id,
-        nombre:           ev.nombre,
-        tipo:             ev.tipo,
-        fechaModificacion: ev.fechaCarga ?? '',
-        carpeta:          tipo,
-        driveId:          ev.driveFileId ?? '',
-        driveUrl:         ev.driveFileId
-          ? `https://drive.google.com/file/d/${ev.driveFileId}/view`
-          : '#',
-        wsId,
-      })),
-    }));
-  }, [evidencias, unidad, wsId]);
-
-  // Derive Drive root link from unit config
   const driveRootUrl = unidad?.driveId
     ? `https://drive.google.com/drive/folders/${unidad.driveId}`
     : null;
 
-  // Count stats
-  const totalValidadas = evidencias.filter((e) => e.estado === 'validada').length;
-  const totalPendientes = evidencias.filter((e) => e.estado === 'pendiente').length;
+  const totalArchivos = carpetas.reduce((sum, c) => sum + c.cantidad, 0);
 
   return (
     <div className="space-y-6">
@@ -125,31 +66,17 @@ export default function EvidenciasPage() {
       {!isLoading && (
         <dl className="flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-sse-muted">
           <div className="flex items-baseline gap-1">
-            <dt className="sr-only">Total</dt>
-            <dd>
-              <span className="font-semibold text-sse-ink">{evidencias.length}</span>
-              {' '}evidencias totales
-            </dd>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <dt className="sr-only">Validadas</dt>
-            <dd>
-              <span className="font-semibold text-[#22C55E]">{totalValidadas}</span>
-              {' '}validadas
-            </dd>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <dt className="sr-only">Pendientes</dt>
-            <dd>
-              <span className="font-semibold text-[#F59E0B]">{totalPendientes}</span>
-              {' '}pendientes
-            </dd>
-          </div>
-          <div className="flex items-baseline gap-1">
             <dt className="sr-only">Carpetas</dt>
             <dd>
               <span className="font-semibold text-sse-ink">{carpetas.length}</span>
               {' '}carpetas
+            </dd>
+          </div>
+          <div className="flex items-baseline gap-1">
+            <dt className="sr-only">Total archivos</dt>
+            <dd>
+              <span className="font-semibold text-sse-ink">{totalArchivos}</span>
+              {' '}archivos totales
             </dd>
           </div>
         </dl>
@@ -163,10 +90,7 @@ export default function EvidenciasPage() {
           ))}
         </div>
       ) : (
-        // CarpetaEvidencia in EvidenciaGrid uses a local file-centric shape;
-        // our derived carpetas are structurally compatible at runtime.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        <EvidenciaGrid carpetas={carpetas as any} wsId={wsId} />
+        <EvidenciaGrid carpetas={carpetas} wsId={wsId} />
       )}
     </div>
   );

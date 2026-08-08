@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifySessionToken, createSessionToken, SESSION_COOKIE, MAX_AGE } from "@/lib/session";
-import { getAppsScriptClient } from "@/services/adapters/getAppsScriptClient";
+import { getAppsScriptClient } from "@/lib/apps-script-client";
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();

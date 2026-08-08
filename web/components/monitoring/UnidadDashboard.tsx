@@ -139,7 +139,7 @@ function TrendChart({ trendData }: { trendData: number[] }) {
   const all = [...actual, ...projected];
   const max = Math.max(...all, 100);
   const chartH = 150;
-  const chartW = 840;
+  const _chartW = 840;
   const barW = 42;
   const xStep = 70;
   const xStart = 50;
@@ -149,7 +149,7 @@ function TrendChart({ trendData }: { trendData: number[] }) {
     <div className="overflow-x-auto">
       <svg viewBox={`0 0 900 200`} className="w-full min-w-[520px]" style={{ display: 'block' }}>
         {/* Grid lines */}
-        {[100, 80, 60, 40].map((v, i) => {
+        {[100, 80, 60, 40].map((v, _i) => {
           const y = yScale(v);
           return (
             <g key={v}>

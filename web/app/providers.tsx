@@ -1,8 +1,5 @@
 "use client";
 
-// Populate the module registry in the client bundle.
-import "@/modules/_registry";
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toast-system";

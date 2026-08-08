@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { UNIDADES } from "@/types/unidad";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -109,25 +109,24 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function ConfiguracionPage() {
-  const [config, setConfig] = useState<GlobalConfig>(DEFAULT_CONFIG);
-  const [saved, setSaved]   = useState(false);
-
-  // Load from localStorage on mount
-  useEffect(() => {
+  const [config, setConfig] = useState<GlobalConfig>(() => {
+    if (typeof window === "undefined") return DEFAULT_CONFIG;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as GlobalConfig;
-        setConfig((prev) => ({
-          ...prev,
+        return {
+          ...DEFAULT_CONFIG,
           ...parsed,
-          units: { ...prev.units, ...(parsed.units ?? {}) },
-        }));
+          units: { ...DEFAULT_CONFIG.units, ...(parsed.units ?? {}) },
+        };
       }
     } catch {
       // Ignore parse errors — use defaults
     }
-  }, []);
+    return DEFAULT_CONFIG;
+  });
+  const [saved, setSaved]   = useState(false);
 
   const updateUnit = useCallback(
     (id: string, field: keyof UnitConfig, value: string) => {
