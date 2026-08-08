@@ -7,9 +7,9 @@ const MONTH_NAMES = [
 
 // Column synonym map — fuzzy-match Spanish header names
 const COL_MAP = {
-  codigo:       ['pi (', 'codigo', 'código', 'id', 'clave', 'n°', 'no.', 'num'],
+  codigo:       ['pi (', 'codigo', 'código', 'clave', 'n°'],
   nombre:       ['indicador integrado', 'indicador', 'nombre', 'descripcion', 'descripción', 'detalle'],
-  meta:         ['valor meta', 'meta', 'objetivo', 'target'],
+  meta:         ['valor meta', 'meta', 'target'],
   resultado:    ['resultado', 'valor actual', 'logro', 'real', 'avance', 'valor real'],
   unidad:       ['unidad de medida', 'unidad medida', 'medida', 'tipo'],
   responsable:  ['responsable', 'encargado', 'jefe'],
