@@ -77,18 +77,36 @@ function buildUnitDescriptor(folder) {
 }
 
 /**
- * Find the best Google Sheets file within a folder to use as indicator source.
- * Priority:
- *   1. Sheet whose name contains an indicator keyword
- *   2. Most recently modified sheet
- *   3. null if no sheets
+ * Find the best Google Sheets file to use as indicator source.
+ * Search order:
+ *   1. Direct children of the unit folder
+ *   2. Children of any subfolder whose name matches an indicator keyword (e.g. "indicadores")
+ * Within each location, prefer keyword-named sheets; tie-break by most recently modified.
  */
 function findIndicatorSheet(folder) {
-  const fileIter = folder.getFilesByType(MIME.SHEET);
-  const sheets   = [];
+  // 1. Look directly in the unit folder
+  var sheetId = pickBestSheet(collectSheets(folder));
+  if (sheetId) return sheetId;
 
+  // 2. Look inside indicator-named subfolders
+  var subIter = folder.getFolders();
+  while (subIter.hasNext()) {
+    var sub = subIter.next();
+    if (containsKeyword(sub.getName(), INDICADOR_KEYWORDS)) {
+      sheetId = pickBestSheet(collectSheets(sub));
+      if (sheetId) return sheetId;
+    }
+  }
+
+  return null;
+}
+
+/** Collect all Sheets files from a folder into a plain array. */
+function collectSheets(folder) {
+  var fileIter = folder.getFilesByType(MIME.SHEET);
+  var sheets   = [];
   while (fileIter.hasNext()) {
-    const f = fileIter.next();
+    var f = fileIter.next();
     sheets.push({
       id:           f.getId(),
       name:         f.getName(),
@@ -96,15 +114,15 @@ function findIndicatorSheet(folder) {
       hasKeyword:   containsKeyword(f.getName(), INDICADOR_KEYWORDS),
     });
   }
+  return sheets;
+}
 
+/** Pick the best sheet from an array: keyword match first, then newest. */
+function pickBestSheet(sheets) {
   if (sheets.length === 0) return null;
   if (sheets.length === 1) return sheets[0].id;
-
-  // Prefer keyword match
-  const keywordMatches = sheets.filter(function(s) { return s.hasKeyword; });
+  var keywordMatches = sheets.filter(function(s) { return s.hasKeyword; });
   if (keywordMatches.length === 1) return keywordMatches[0].id;
-
-  // Tie-break by most recently modified
   sheets.sort(function(a, b) { return b.lastModified - a.lastModified; });
   return sheets[0].id;
 }
