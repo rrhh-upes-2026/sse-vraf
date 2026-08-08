@@ -18,9 +18,6 @@ const COL_MAP = {
   observacion:  ['observaciones', 'observacion', 'observación', 'nota', 'comentario'],
 };
 
-// Keywords for indicator sheet / evidence folder detection (also used by Discovery.gs)
-const INDICADOR_KEYWORDS = ['indicador', 'indicadores', 'kpi', 'tablero', 'cuadro'];
-
 /**
  * Returns parsed indicator data for a given wsId (unit slug).
  * Uses cache; pass `refresh=true` to force re-read.
