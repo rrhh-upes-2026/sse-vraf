@@ -3,33 +3,37 @@
 import { useMonitoreoIndicadores } from '@/hooks/useMonitoreoIndicadores';
 import type { IndicadorMonitoreo } from '@/services/monitoreo';
 
-type Semaforo = 'verde' | 'amarillo' | 'rojo';
+type Semaforo = 'verde' | 'amarillo' | 'rojo' | 'gris';
 
 const SEMAFORO_COLORS: Record<Semaforo, { border: string; text: string; bg: string; label: string }> = {
   verde:    { border: '#16A34A', text: '#16A34A', bg: '#F0FDF4', label: 'En cumplimiento' },
   amarillo: { border: '#B45309', text: '#B45309', bg: '#FFFBEB', label: 'En riesgo' },
   rojo:     { border: '#DC2626', text: '#DC2626', bg: '#FEF2F2', label: 'Crítico' },
+  gris:     { border: '#94A3B8', text: '#64748B', bg: '#F8FAFC', label: 'Pendiente' },
 };
 
 const MONTH_LABELS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 function computeOverall(indicadores: IndicadorMonitoreo[]) {
-  if (!indicadores.length) return { pct: 0, semaforo: 'rojo' as Semaforo };
+  const withData = indicadores.filter((i) => i.porcentaje !== null);
+  if (!withData.length) return { pct: null as number | null, semaforo: 'gris' as Semaforo };
   const avg = Math.round(
-    indicadores.reduce((acc, i) => acc + Math.min(i.porcentaje, 100), 0) / indicadores.length,
+    withData.reduce((acc, i) => acc + Math.min(i.porcentaje!, 100), 0) / withData.length,
   );
   const semaforo: Semaforo = avg >= 80 ? 'verde' : avg >= 60 ? 'amarillo' : 'rojo';
   return { pct: avg, semaforo };
 }
 
 function formatMetaResult(ind: IndicadorMonitoreo) {
-  const fmt = (n: number) =>
-    ind.unidad === '%' ? `${n}%` :
-    ind.unidad === 'h' ? `${n}h` :
-    ind.unidad === '$' ? `$${n}` :
-    ind.unidad === 'días' ? `${n} días` :
-    String(n);
-  return { meta: fmt(ind.meta), resultado: fmt(ind.resultado) };
+  const fmt = (n: number | null) => {
+    if (n === null) return '—';
+    if (ind.unidad === '%')    return `${n}%`;
+    if (ind.unidad === 'h')    return `${n}h`;
+    if (ind.unidad === '$')    return `$${n}`;
+    if (ind.unidad === 'días') return `${n} días`;
+    return String(n);
+  };
+  return { meta: fmt(ind.meta || null), resultado: fmt(ind.resultado) };
 }
 
 // ── Mock monthly compliance trend (replaced by real data when Sheets is connected) ──
@@ -81,12 +85,18 @@ function IndicadorCard({ ind }: { ind: IndicadorMonitoreo }) {
         <span className="text-[13px] font-semibold text-[#1A2332] dark:text-[#E2EBF5] leading-snug flex-1">
           {ind.nombre}
         </span>
-        <span
-          className="font-mono text-[28px] font-bold leading-none tracking-tight flex-shrink-0"
-          style={{ color: c.text }}
-        >
-          {ind.porcentaje}%
-        </span>
+        {ind.porcentaje === null ? (
+          <span className="text-[11px] font-semibold px-2 py-1 rounded-[3px] flex-shrink-0" style={{ background: '#F1F5F9', color: '#64748B' }}>
+            Pendiente de captura
+          </span>
+        ) : (
+          <span
+            className="font-mono text-[28px] font-bold leading-none tracking-tight flex-shrink-0"
+            style={{ color: c.text }}
+          >
+            {ind.porcentaje}%
+          </span>
+        )}
       </div>
 
       {/* Meta / Resultado */}
@@ -97,13 +107,15 @@ function IndicadorCard({ ind }: { ind: IndicadorMonitoreo }) {
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-[10px] font-medium uppercase tracking-[.07em] text-[#718096]">Resultado</span>
-          <span className="text-[13px] font-semibold text-[#1A2332] dark:text-[#E2EBF5] tabular-nums">{resultado}</span>
+          <span className="text-[13px] font-semibold text-[#1A2332] dark:text-[#E2EBF5] tabular-nums">
+            {ind.resultado === null ? <span className="text-[#94A3B8] italic">Sin datos</span> : resultado}
+          </span>
         </div>
       </div>
 
       {/* Progress bar */}
       <div className="mb-3">
-        <ProgressBar pct={ind.porcentaje} semaforo={ind.semaforo as Semaforo} />
+        <ProgressBar pct={ind.porcentaje ?? 0} semaforo={ind.semaforo as Semaforo} />
       </div>
 
       {/* Bottom: evidencias + Editar */}
@@ -249,7 +261,7 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center px-8">
-        <p className="font-semibold text-[#1A2332] dark:text-[#E2EBF5]">Error al cargar indicadores</p>
+        <p className="font-semibold text-[#1A2332] dark:text-[#E2EBF5]">No fue posible obtener la información de Google Workspace.</p>
         <p className="text-sm text-[#718096] mt-1">{error.message}</p>
         <button onClick={() => refetch()}
           className="mt-4 text-sm font-medium text-[#1B5E8F] underline underline-offset-2">
@@ -300,7 +312,7 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
               Cumplimiento general
             </span>
             <span className="font-mono text-[52px] font-bold leading-none tracking-tight" style={{ color: semaforoC.text }}>
-              {overallPct}%
+              {overallPct === null ? '—' : `${overallPct}%`}
             </span>
             <SemaforoBadge semaforo={overallSemaforo} />
             <span className="text-[13px] text-[#4A5568] dark:text-[#A0B4C8] mt-1">{mesActual}</span>
