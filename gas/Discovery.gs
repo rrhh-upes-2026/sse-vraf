@@ -1,6 +1,6 @@
 // ─── Drive folder discovery ───────────────────────────────────────────────────
 
-const CACHE_KEY_REGISTRY = 'registry_v1';
+const CACHE_KEY_REGISTRY = 'registry_v2'; // bumped: adds reportesFolderId
 
 // Keywords used to identify indicator sheets, evidence folders, and report folders
 const INDICADOR_KEYWORDS  = ['indicador', 'indicadores', 'kpi', 'tablero', 'cuadro'];

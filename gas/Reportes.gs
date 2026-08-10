@@ -1,6 +1,33 @@
 // ─── Drive report folder listing — 2-level hierarchy ─────────────────────────
 // Structure: reportesFolder → Month folders → Files
 
+// Month name → number map (handles "3.3.1 ENERO", "3.3.2 FEBRERO", etc.)
+var MES_NOMBRES_MAP = {
+  'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+  'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+  'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12,
+};
+
+/**
+ * Extract month number from a folder name.
+ * Handles both "01. Enero 2026" and "3.3.1 ENERO" patterns.
+ * Prefers month name match; falls back to last segment of dotted prefix.
+ */
+function parseMesNumReporte(nombre) {
+  var lower = nombre.toLowerCase();
+  for (var mes in MES_NOMBRES_MAP) {
+    if (lower.indexOf(mes) !== -1) return MES_NOMBRES_MAP[mes];
+  }
+  // Fallback: last number in dotted prefix "3.3.1" → 1
+  var prefixMatch = nombre.match(/^[\d.]+/);
+  if (prefixMatch) {
+    var parts = prefixMatch[0].replace(/\.$/, '').split('.');
+    var last = parseInt(parts[parts.length - 1], 10);
+    if (!isNaN(last) && last >= 1 && last <= 12) return last;
+  }
+  return 99;
+}
+
 /**
  * Returns the reports hierarchy for a given wsId.
  * Uses cache; pass `refresh=true` to force re-read.
@@ -50,7 +77,7 @@ function readReportesHierarchy(rootFolderId, wsId, unitNombre) {
     meses.push({
       id:       mesFolder.getId(),
       nombre:   mesNombre,
-      mes:      parseMesNum(mesNombre),
+      mes:      parseMesNumReporte(mesNombre),
       anio:     parseMesAnio(mesNombre),
       driveId:  mesFolder.getId(),
       driveUrl: 'https://drive.google.com/drive/folders/' + mesFolder.getId(),
