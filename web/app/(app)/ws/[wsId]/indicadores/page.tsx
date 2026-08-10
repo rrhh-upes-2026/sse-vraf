@@ -48,6 +48,8 @@ function fmtPct(n: number | null): string {
 
 // ─── EditPanel ────────────────────────────────────────────────────────────────
 
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 function EditPanel({
   indicador,
   onClose,
@@ -62,17 +64,59 @@ function EditPanel({
     current.descripcion ?? indicador.descripcion,
   );
   const [formula, setFormula] = useState(current.formula ?? indicador.formula ?? "");
+  const [status, setStatus] = useState<SaveStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  function save() {
+  async function save() {
+    setStatus("saving");
+    setErrorMsg("");
+
+    const fields: Array<{ campo: "descripcion" | "formula"; valor: string }> = [
+      { campo: "descripcion", valor: descripcion },
+      { campo: "formula",     valor: formula },
+    ];
+
+    let gasOk = true;
+    for (const { campo, valor } of fields) {
+      try {
+        const res = await fetch("/api/google/sheets", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            wsId:        indicador.wsId,
+            indicadorId: indicador.id,
+            campo,
+            valor,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          gasOk = false;
+          console.warn("[EditPanel] GAS write failed for", campo, data);
+        }
+      } catch (err) {
+        gasOk = false;
+        console.warn("[EditPanel] Network error writing", campo, err);
+      }
+    }
+
+    // Always persist locally — GAS write is best-effort
     setMeta(indicador.wsId, indicador.id, { descripcion, formula });
-    onClose();
+
+    if (!gasOk) {
+      setStatus("error");
+      setErrorMsg("No se pudo escribir en Google Sheets. Los cambios se guardaron localmente.");
+    } else {
+      setStatus("saved");
+      setTimeout(onClose, 900);
+    }
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center p-4">
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={status === "saving" ? undefined : onClose}
       />
       <div className="relative z-10 w-full max-w-lg bg-white dark:bg-[#1A2540] rounded-xl shadow-2xl border border-[#CBD5E1] dark:border-[#2D3F5E] flex flex-col">
         {/* Header */}
@@ -88,7 +132,8 @@ function EditPanel({
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 text-[#94A3B8] hover:text-[#64748B] text-lg leading-none mt-0.5"
+            disabled={status === "saving"}
+            className="shrink-0 text-[#94A3B8] hover:text-[#64748B] text-lg leading-none mt-0.5 disabled:opacity-40"
           >
             ✕
           </button>
@@ -104,8 +149,9 @@ function EditPanel({
               rows={3}
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
+              disabled={status === "saving"}
               placeholder="¿Qué mide este indicador y por qué es importante?"
-              className="w-full rounded-lg border border-[#CBD5E1] dark:border-[#2D3F5E] bg-white dark:bg-[#0F1A2D] px-3 py-2 text-[13px] text-[#0F172A] dark:text-white placeholder:text-[#94A3B8] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg border border-[#CBD5E1] dark:border-[#2D3F5E] bg-white dark:bg-[#0F1A2D] px-3 py-2 text-[13px] text-[#0F172A] dark:text-white placeholder:text-[#94A3B8] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
             />
           </div>
 
@@ -117,14 +163,25 @@ function EditPanel({
               rows={3}
               value={formula}
               onChange={(e) => setFormula(e.target.value)}
+              disabled={status === "saving"}
               placeholder="Ej: (Procesos completados / Total procesos) × 100"
-              className="w-full rounded-lg border border-[#CBD5E1] dark:border-[#2D3F5E] bg-white dark:bg-[#0F1A2D] px-3 py-2 text-[13px] text-[#0F172A] dark:text-white placeholder:text-[#94A3B8] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+              className="w-full rounded-lg border border-[#CBD5E1] dark:border-[#2D3F5E] bg-white dark:bg-[#0F1A2D] px-3 py-2 text-[13px] text-[#0F172A] dark:text-white placeholder:text-[#94A3B8] resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono disabled:opacity-60"
             />
           </div>
 
+          {status === "error" && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
+              ⚠ {errorMsg}
+            </p>
+          )}
+          {status === "saved" && (
+            <p className="text-[11px] text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2">
+              ✓ Guardado en Google Sheets correctamente.
+            </p>
+          )}
+
           <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-            Los cambios se guardan localmente y se mantienen al navegar. Los valores de meta y resultado
-            siempre provienen de Google Sheets.
+            Los cambios se escriben en Google Sheets. Meta y resultado siempre provienen de la hoja y no son editables aquí.
           </p>
         </div>
 
@@ -133,16 +190,18 @@ function EditPanel({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-[13px] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white transition-colors"
+            disabled={status === "saving"}
+            className="px-4 py-2 text-[13px] text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-white transition-colors disabled:opacity-40"
           >
             Cancelar
           </button>
           <button
             type="button"
-            onClick={save}
-            className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold transition-colors"
+            onClick={() => void save()}
+            disabled={status === "saving" || status === "saved"}
+            className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-[13px] font-semibold transition-colors min-w-[100px] text-center"
           >
-            Guardar
+            {status === "saving" ? "Guardando…" : status === "saved" ? "✓ Guardado" : "Guardar en Sheets"}
           </button>
         </div>
       </div>

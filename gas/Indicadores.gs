@@ -16,6 +16,7 @@ const COL_MAP = {
   periodicidad: ['frecuencia de analisis', 'frecuencia de análisis', 'frecuencia', 'periodicidad', 'periodo'],
   fecha:        ['fecha de corte', 'fecha corte', 'corte', 'fecha'],
   observacion:  ['observaciones', 'observacion', 'observación', 'nota', 'comentario'],
+  formula:      ['fórmula', 'formula', 'formula de calculo', 'fórmula de cálculo', 'calculo'],
 };
 
 /**
@@ -239,6 +240,7 @@ function parseRow(row, colIndex, monthlyColumns, seq) {
     periodicidad: String(getCellValue(row, colIndex, 'periodicidad') || 'Mensual').trim(),
     fecha:        fechaResultado || formatCellDate(getCellValue(row, colIndex, 'fecha')),
     observacion:  String(getCellValue(row, colIndex, 'observacion') || '').trim(),
+    formula:      String(getCellValue(row, colIndex, 'formula') || '').trim(),
     porcentaje:   porcentaje,
     semaforo:     calcSemaforo(porcentaje),
     tendencia:    calcTendencia(historial, resultado),
@@ -302,4 +304,89 @@ function calcTendencia(historial, resultadoActual) {
   if (resultadoActual > prev) return 'subiendo';
   if (resultadoActual < prev) return 'bajando';
   return 'estable';
+}
+
+// ─── Write-back ───────────────────────────────────────────────────────────────
+
+/**
+ * Write a single metadata field (descripcion or formula) back to the Sheet.
+ * - descripcion → observacion column (must already exist)
+ * - formula     → formula column (created at the end of the header row if absent)
+ *
+ * Matches the target row by código first, then by nombre.
+ * Invalidates the indicator cache for the unit after writing.
+ */
+function updateIndicadorField(wsId, indicadorId, campo, valor) {
+  // Resolve the unit from registry
+  var registry = getRegistry(false);
+  var unit = null;
+  for (var i = 0; i < registry.units.length; i++) {
+    if (registry.units[i].id === wsId) { unit = registry.units[i]; break; }
+  }
+  if (!unit) return { error: true, code: 404, message: 'Unidad no encontrada: ' + wsId };
+  if (!unit.sheetId) return { error: true, code: 404, message: 'Sin hoja de indicadores: ' + wsId };
+
+  var ss        = SpreadsheetApp.openById(unit.sheetId);
+  var mainSheet = findMainSheet(ss);
+  if (!mainSheet) return { error: true, code: 422, message: 'No se encontró hoja principal de indicadores.' };
+
+  var allValues    = mainSheet.getDataRange().getValues();
+  var headerRowIdx = findHeaderRowIndex(allValues);
+  var headerRow    = allValues[headerRowIdx];
+  var colIndex     = buildColumnIndex(headerRow);
+
+  // Resolve target column — create formula column if absent
+  var targetColIdx;
+  if (campo === 'descripcion') {
+    targetColIdx = colIndex.observacion;
+    if (targetColIdx === undefined) {
+      return { error: true, code: 422, message: 'No se encontró columna de observaciones en la hoja.' };
+    }
+  } else if (campo === 'formula') {
+    if (colIndex.formula !== undefined) {
+      targetColIdx = colIndex.formula;
+    } else {
+      // Append a new "Fórmula" column at the end of the header row (1-indexed)
+      var newColNum = mainSheet.getLastColumn() + 1;
+      mainSheet.getRange(headerRowIdx + 1, newColNum).setValue('Fórmula');
+      targetColIdx = newColNum - 1; // convert back to 0-indexed for data rows
+    }
+  } else {
+    return { error: true, code: 400, message: 'Campo no soportado: ' + campo };
+  }
+
+  // Find the matching data row by código or nombre
+  var targetRowNum = -1;
+  for (var r = headerRowIdx + 1; r < allValues.length; r++) {
+    var row    = allValues[r];
+    var codigo = String(getCellValue(row, colIndex, 'codigo') || '').trim();
+    var nombre = String(getCellValue(row, colIndex, 'nombre') || '').trim();
+    if (!nombre) continue;
+    // Match by código first; fall back to nombre; also accept auto-generated IND-N ids
+    var rowId = codigo || nombre;
+    if (rowId === indicadorId || nombre === indicadorId) {
+      targetRowNum = r + 1; // 1-indexed for getRange
+      break;
+    }
+  }
+
+  if (targetRowNum === -1) {
+    return { error: true, code: 404, message: 'Indicador no encontrado en la hoja: ' + indicadorId };
+  }
+
+  // Write the value (targetColIdx is 0-indexed → add 1 for getRange)
+  mainSheet.getRange(targetRowNum, targetColIdx + 1).setValue(valor);
+
+  // Flush writes and invalidate cache
+  SpreadsheetApp.flush();
+  cacheDelete('indicadores_' + wsId);
+
+  return {
+    success:     true,
+    wsId:        wsId,
+    indicadorId: indicadorId,
+    campo:       campo,
+    updatedRow:  targetRowNum,
+    updatedAt:   toISO(new Date()),
+  };
 }

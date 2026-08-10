@@ -96,6 +96,7 @@ interface GasIndicador {
   periodicidad: string;
   fecha: string;
   observacion: string;
+  formula: string;
   porcentaje: number | null;
   semaforo: string;
   tendencia: string;
@@ -176,7 +177,7 @@ function transformIndicador(gas: GasIndicador, wsId: string): IndicadorMonitoreo
     id:                 gas.codigo || gas.nombre,
     nombre:             gas.nombre,
     descripcion:        gas.observacion || "",
-    formula:            "",
+    formula:            gas.formula || "",
     meta:               gas.meta ?? 0,
     resultado:          gas.resultado,
     unidad:             normalizeUnidad(gas.unidad),

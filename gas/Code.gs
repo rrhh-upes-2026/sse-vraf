@@ -3,15 +3,20 @@
 //   Type:       Web App
 //   Execute as: Me (roberto.reales@upes.edu.sv)
 //   Access:     Anyone (even anonymous)
+//
+// Script Properties required:
+//   ROOT_FOLDER_ID  — ID of the root Drive folder containing unit subfolders
+//   WRITE_KEY       — Secret key for write operations (doPost). Set any value.
+//                     Add the same value as GAS_WRITE_KEY in Vercel env vars.
+//   BEARER_TOKEN    — (optional) Token for read auth. Leave empty to allow open reads.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Entry point for all HTTP GET requests.
+ * Entry point for all HTTP GET requests (reads).
  * Route: ?action=<action>&<params>
  */
 function doGet(e) {
   try {
-    // Optional Bearer Token auth
     if (!isAuthorized(e)) {
       return errorResponse('Acceso no autorizado. Proporciona un token válido.', 401);
     }
@@ -35,7 +40,38 @@ function doGet(e) {
   }
 }
 
-// ─── Route handlers ───────────────────────────────────────────────────────────
+/**
+ * Entry point for all HTTP POST requests (writes).
+ * Body (JSON): { action, writeKey, ...params }
+ */
+function doPost(e) {
+  try {
+    var body = {};
+    try {
+      body = JSON.parse(e.postData.contents);
+    } catch (parseErr) {
+      return errorResponse('Body JSON inválido.', 400);
+    }
+
+    if (!isAuthorizedWrite(body)) {
+      return errorResponse('No autorizado para escritura. Verifica el WRITE_KEY.', 401);
+    }
+
+    var action = body.action;
+
+    switch (action) {
+      case 'updateIndicador': return handleUpdateIndicador(body);
+      default:
+        return errorResponse('Acción desconocida: "' + action + '". Usa: updateIndicador.', 400);
+    }
+
+  } catch (err) {
+    console.error('doPost unhandled error:', err.message, err.stack);
+    return errorResponse('Error interno del servidor: ' + err.message, 500);
+  }
+}
+
+// ─── Route handlers (reads) ───────────────────────────────────────────────────
 
 function handleHealth() {
   return jsonResponse({
@@ -66,18 +102,46 @@ function handleEvidencias(wsId, refresh) {
   return jsonResponse(data);
 }
 
+// ─── Route handlers (writes) ──────────────────────────────────────────────────
+
+function handleUpdateIndicador(body) {
+  var wsId        = body.wsId;
+  var indicadorId = body.indicadorId;
+  var campo       = body.campo;
+  var valor       = String(body.valor || '');
+
+  if (!wsId || !indicadorId || !campo) {
+    return errorResponse('Parámetros requeridos: wsId, indicadorId, campo', 400);
+  }
+  if (campo !== 'descripcion' && campo !== 'formula') {
+    return errorResponse('Campo no soportado. Valores válidos: descripcion, formula', 400);
+  }
+
+  var result = updateIndicadorField(wsId, indicadorId, campo, valor);
+  if (result && result.error) return errorResponse(result.message, result.code);
+  return jsonResponse(result);
+}
+
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 /**
- * Returns true if the request is authorized.
- * If BEARER_TOKEN script property is empty, auth is disabled (open access).
+ * Read auth: open if BEARER_TOKEN is empty, else validates token.
  */
 function isAuthorized(e) {
   const expected = getProp('BEARER_TOKEN', '');
-  if (!expected) return true; // auth disabled
+  if (!expected) return true;
 
   const token = (e.parameter && e.parameter.token) ||
                 ((e.headers && e.headers['Authorization']) || '').replace(/^Bearer\s+/i, '');
-
   return token === expected;
+}
+
+/**
+ * Write auth: requires WRITE_KEY to be set and to match body.writeKey.
+ * If WRITE_KEY script property is empty, all writes are rejected.
+ */
+function isAuthorizedWrite(body) {
+  var expected = getProp('WRITE_KEY', '');
+  if (!expected) return false; // writes disabled when no key configured
+  return body.writeKey === expected;
 }
