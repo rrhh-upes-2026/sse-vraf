@@ -139,7 +139,6 @@ export type WorkspaceSectionId =
   | "evidencias"
   | "reportes"
   | "calendario"
-  | "inteligencia"
   | "config"
   | "admin"
   | "configuracion";
@@ -178,11 +177,6 @@ export const WORKSPACE_SECTIONS: WorkspaceSection[] = [
     id: "calendario",
     label: "Calendario",
     icon: "M4 8h16M7 3v3M17 3v3M5 5h14v14H5z",
-  },
-  {
-    id: "inteligencia",
-    label: "Inteligencia IA",
-    icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z",
   },
   {
     id: "configuracion",
