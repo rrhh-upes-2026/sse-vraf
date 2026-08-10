@@ -9,7 +9,9 @@ const TTL = {
   REGISTRY:    30 * 60,   // 30 min — folder discovery
   INDICADORES:  5 * 60,   //  5 min — sheet data
   EVIDENCIAS:  10 * 60,   // 10 min — drive file list
+  REPORTES:    10 * 60,   // 10 min — drive report file list
 };
+
 
 const MIME = {
   SHEET:  'application/vnd.google-apps.spreadsheet',

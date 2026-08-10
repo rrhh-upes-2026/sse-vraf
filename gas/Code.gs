@@ -24,14 +24,17 @@ function doGet(e) {
     const action  = (e.parameter && e.parameter.action) || 'health';
     const wsId    = e.parameter && e.parameter.wsId;
     const refresh = e.parameter && e.parameter.refresh === 'true';
+    const fileId  = e.parameter && e.parameter.fileId;
 
     switch (action) {
-      case 'health':      return handleHealth();
-      case 'registry':    return handleRegistry(refresh);
-      case 'indicadores': return handleIndicadores(wsId, refresh);
-      case 'evidencias':  return handleEvidencias(wsId, refresh);
+      case 'health':         return handleHealth();
+      case 'registry':       return handleRegistry(refresh);
+      case 'indicadores':    return handleIndicadores(wsId, refresh);
+      case 'evidencias':     return handleEvidencias(wsId, refresh);
+      case 'reportes':       return handleReportes(wsId, refresh);
+      case 'reporteBase64':  return handleReporteBase64(fileId);
       default:
-        return errorResponse('Acción desconocida: "' + action + '". Usa: health, registry, indicadores, evidencias.', 400);
+        return errorResponse('Acción desconocida: "' + action + '". Usa: health, registry, indicadores, evidencias, reportes, reporteBase64.', 400);
     }
 
   } catch (err) {
@@ -98,6 +101,20 @@ function handleIndicadores(wsId, refresh) {
 function handleEvidencias(wsId, refresh) {
   if (!wsId) return errorResponse('Parámetro requerido: wsId', 400);
   const data = getEvidencias(wsId, refresh);
+  if (data && data.error) return errorResponse(data.message, data.code);
+  return jsonResponse(data);
+}
+
+function handleReportes(wsId, refresh) {
+  if (!wsId) return errorResponse('Parámetro requerido: wsId', 400);
+  const data = getReportes(wsId, refresh);
+  if (data && data.error) return errorResponse(data.message, data.code);
+  return jsonResponse(data);
+}
+
+function handleReporteBase64(fileId) {
+  if (!fileId) return errorResponse('Parámetro requerido: fileId', 400);
+  const data = getReporteBase64(fileId);
   if (data && data.error) return errorResponse(data.message, data.code);
   return jsonResponse(data);
 }

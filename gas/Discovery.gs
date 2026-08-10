@@ -2,9 +2,10 @@
 
 const CACHE_KEY_REGISTRY = 'registry_v1';
 
-// Keywords used to identify indicator sheets and evidence folders
+// Keywords used to identify indicator sheets, evidence folders, and report folders
 const INDICADOR_KEYWORDS  = ['indicador', 'indicadores', 'kpi', 'tablero', 'cuadro'];
 const EVIDENCIA_KEYWORDS  = ['evidencia', 'evidencias', 'soporte', 'anexo', 'respaldo'];
+const REPORTE_KEYWORDS    = ['reporte', 'reportes', 'informe', 'informes', 'reporte mensual', 'reportes mensuales'];
 
 /**
  * Returns the full unit registry, using cache when available.
@@ -59,20 +60,25 @@ function buildUnitDescriptor(folder) {
   // Find the evidence folder
   const evidenciaFolderId = findEvidenciaFolder(folder);
 
+  // Find the reports folder
+  const reportesFolderId = findReportesFolder(folder);
+
   // Skip empty top-level folders that have neither sheet nor subfolder
-  if (!sheetId && !evidenciaFolderId) {
+  if (!sheetId && !evidenciaFolderId && !reportesFolderId) {
     const subFolders = folder.getFolders();
     if (!subFolders.hasNext()) return null;
   }
 
   return {
-    id:               slug,
-    nombre:           nombre,
-    folderId:         folderId,
-    sheetId:          sheetId,          // null if not found
-    evidenciaFolderId: evidenciaFolderId, // null if not found
-    hasIndicadores:   !!sheetId,
-    hasEvidencias:    !!evidenciaFolderId,
+    id:                slug,
+    nombre:            nombre,
+    folderId:          folderId,
+    sheetId:           sheetId,            // null if not found
+    evidenciaFolderId: evidenciaFolderId,  // null if not found
+    reportesFolderId:  reportesFolderId,   // null if not found
+    hasIndicadores:    !!sheetId,
+    hasEvidencias:     !!evidenciaFolderId,
+    hasReportes:       !!reportesFolderId,
   };
 }
 
@@ -135,7 +141,23 @@ function pickBestSheet(sheets) {
  *   3. null if no subfolders
  */
 function findEvidenciaFolder(folder) {
-  const subIter  = folder.getFolders();
+  return findSubfolderByKeywords(folder, EVIDENCIA_KEYWORDS, false);
+}
+
+/**
+ * Find the reports folder inside a unit folder.
+ * Returns null if not found (unlike evidencias, does not fall back to first subfolder).
+ */
+function findReportesFolder(folder) {
+  return findSubfolderByKeywords(folder, REPORTE_KEYWORDS, true);
+}
+
+/**
+ * Generic: search immediate subfolders for one matching `keywords`.
+ * If `requireKeyword` is true, returns null if no keyword match; otherwise falls back to first subfolder.
+ */
+function findSubfolderByKeywords(folder, keywords, requireKeyword) {
+  const subIter    = folder.getFolders();
   const subFolders = [];
 
   while (subIter.hasNext()) {
@@ -143,7 +165,7 @@ function findEvidenciaFolder(folder) {
     subFolders.push({
       id:         f.getId(),
       name:       f.getName(),
-      hasKeyword: containsKeyword(f.getName(), EVIDENCIA_KEYWORDS),
+      hasKeyword: containsKeyword(f.getName(), keywords),
     });
   }
 
@@ -151,6 +173,7 @@ function findEvidenciaFolder(folder) {
 
   const keywordMatches = subFolders.filter(function(f) { return f.hasKeyword; });
   if (keywordMatches.length > 0) return keywordMatches[0].id;
+  if (requireKeyword) return null;
 
   return subFolders[0].id;
 }
