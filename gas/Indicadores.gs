@@ -15,7 +15,7 @@ const COL_MAP = {
   responsable:  ['responsable', 'encargado', 'jefe'],
   periodicidad: ['frecuencia de analisis', 'frecuencia de análisis', 'frecuencia', 'periodicidad', 'periodo'],
   fecha:        ['fecha de corte', 'fecha corte', 'corte', 'fecha'],
-  observacion:  ['observaciones', 'observacion', 'observación', 'nota', 'comentario'],
+  observacion:  ['descripción del indicador', 'descripcion del indicador', 'descripcion indicador', 'descripción indicador', 'observaciones', 'observacion', 'observación', 'nota', 'comentario'],
   formula:      ['fórmula', 'formula', 'formula de calculo', 'fórmula de cálculo', 'calculo'],
 };
 
