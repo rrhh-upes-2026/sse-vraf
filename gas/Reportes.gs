@@ -72,25 +72,3 @@ function readReportesHierarchy(rootFolderId, wsId, unitNombre) {
   };
 }
 
-/**
- * Returns a file's content as base64 for the given Drive file ID.
- * Used by the Next.js API to forward the file to Claude for analysis.
- */
-function getReporteBase64(fileId) {
-  if (!fileId) return { error: true, code: 400, message: 'Parámetro requerido: fileId' };
-
-  try {
-    var file = DriveApp.getFileById(fileId);
-    var blob = file.getBlob();
-    var b64  = Utilities.base64Encode(blob.getBytes());
-    return {
-      fileId:   fileId,
-      nombre:   file.getName(),
-      mime:     blob.getContentType(),
-      tamano:   file.getSize(),
-      content:  b64,
-    };
-  } catch (err) {
-    return { error: true, code: 500, message: 'Error al leer archivo: ' + err.message };
-  }
-}

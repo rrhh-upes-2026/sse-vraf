@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useMonitoreoReportes } from "@/hooks/useMonitoreoReportes";
-import { useReportesStore } from "@/store/useReportesStore";
 import { getUnidad } from "@/types/unidad";
-import type { ArchivoReporte, MesReporte, InformeAnalizado } from "@/services/reportes";
+import type { ArchivoReporte, MesReporte } from "@/services/reportes";
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -17,34 +16,10 @@ function IconDoc({ className }: { className?: string }) {
   );
 }
 
-function IconSpark({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
-    </svg>
-  );
-}
-
 function IconFolder({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25m0 0A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V12m0 0v-.75A2.25 2.25 0 0 0 19.5 9h-3.379a1.5 1.5 0 0 1-1.06-.44L13.44 6.44a1.5 1.5 0 0 0-1.06-.44H9" />
-    </svg>
-  );
-}
-
-function IconCheck({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-    </svg>
-  );
-}
-
-function IconWarn({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25m0 0A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V12" />
     </svg>
   );
 }
@@ -65,343 +40,184 @@ function IconLoader({ className }: { className?: string }) {
   );
 }
 
-// ─── Month names ──────────────────────────────────────────────────────────────
+function IconChevron({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
+    </svg>
+  );
+}
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const MESES_ES = [
   "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-// ─── Sentiment badge ──────────────────────────────────────────────────────────
-
-function SentimentBadge({ value }: { value: InformeAnalizado["sentimientoGeneral"] }) {
-  const cfg = {
-    positivo: { label: "Positivo", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
-    neutral:  { label: "Neutral",  cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" },
-    negativo: { label: "Negativo", cls: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
-  }[value] ?? { label: "—", cls: "bg-sse-border text-sse-muted" };
-
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${cfg.cls}`}>
-      {cfg.label}
-    </span>
-  );
+function fmtTamano(bytes: number): string {
+  if (!bytes) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-// ─── Analysis panel ───────────────────────────────────────────────────────────
+function fmtFecha(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat("es-SV", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(iso));
+  } catch {
+    return iso;
+  }
+}
 
-function AnalysisPanel({ analysis }: { analysis: InformeAnalizado }) {
+// ─── Coverage grid (12-month visual) ─────────────────────────────────────────
+
+function CoverageGrid({
+  meses,
+  selected,
+  onSelect,
+}: {
+  meses: MesReporte[];
+  selected: number | null;
+  onSelect: (mes: number) => void;
+}) {
+  // Build a map from month number → reporte
+  const byMes = new Map(meses.map((m) => [m.mes, m]));
+
   return (
-    <div className="mt-4 space-y-4 rounded-xl border border-sse-border bg-sse-bg px-5 py-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <IconSpark className="h-4 w-4 text-sse-primary" />
-          <span className="text-[12px] font-semibold text-sse-primary uppercase tracking-wide">
-            Análisis IA
-          </span>
-        </div>
-        <SentimentBadge value={analysis.sentimientoGeneral} />
-      </div>
+    <div className="grid grid-cols-6 gap-2 sm:grid-cols-12">
+      {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
+        const mes = byMes.get(n);
+        const hasFiles = (mes?.total ?? 0) > 0;
+        const isSelected = selected === n;
 
-      {/* Executive summary */}
-      <p className="text-[13px] text-sse-ink leading-relaxed">{analysis.resumenEjecutivo}</p>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {/* Logros */}
-        {analysis.logros.length > 0 && (
-          <div>
-            <p className="mb-1.5 text-[11px] font-semibold text-sse-muted uppercase tracking-wide">Logros</p>
-            <ul className="space-y-1">
-              {analysis.logros.map((l, i) => (
-                <li key={i} className="flex items-start gap-1.5 text-[12px] text-sse-ink">
-                  <IconCheck className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
-                  {l}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Desafíos */}
-        {analysis.desafios.length > 0 && (
-          <div>
-            <p className="mb-1.5 text-[11px] font-semibold text-sse-muted uppercase tracking-wide">Desafíos</p>
-            <ul className="space-y-1">
-              {analysis.desafios.map((d, i) => (
-                <li key={i} className="flex items-start gap-1.5 text-[12px] text-sse-ink">
-                  <IconWarn className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
-                  {d}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      {/* Actividades */}
-      {analysis.actividadesPrincipales.length > 0 && (
-        <div>
-          <p className="mb-1.5 text-[11px] font-semibold text-sse-muted uppercase tracking-wide">
-            Actividades principales
-          </p>
-          <ul className="space-y-1">
-            {analysis.actividadesPrincipales.map((a, i) => (
-              <li key={i} className="flex items-start gap-1.5 text-[12px] text-sse-ink">
-                <span className="mt-[3px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sse-primary" />
-                {a}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Indicadores mencionados */}
-      {analysis.indicadoresMencionados.length > 0 && (
-        <div>
-          <p className="mb-1.5 text-[11px] font-semibold text-sse-muted uppercase tracking-wide">
-            Indicadores mencionados
-          </p>
-          <div className="overflow-x-auto rounded-lg border border-sse-border">
-            <table className="w-full text-[12px]">
-              <thead>
-                <tr className="border-b border-sse-border bg-sse-surface">
-                  <th className="px-3 py-2 text-left font-medium text-sse-muted">Indicador</th>
-                  <th className="px-3 py-2 text-left font-medium text-sse-muted">Valor</th>
-                  <th className="px-3 py-2 text-left font-medium text-sse-muted">Observación</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analysis.indicadoresMencionados.map((ind, i) => (
-                  <tr key={i} className="border-b border-sse-border last:border-0">
-                    <td className="px-3 py-2 font-medium text-sse-ink">{ind.nombre}</td>
-                    <td className="px-3 py-2 text-sse-ink">{ind.valor ?? "—"}</td>
-                    <td className="px-3 py-2 text-sse-muted">{ind.observacion ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Recomendaciones IA */}
-      {analysis.recomendacionesIA.length > 0 && (
-        <div className="rounded-lg border border-sse-primary/20 bg-sse-primary/5 px-4 py-3">
-          <div className="mb-2 flex items-center gap-1.5">
-            <IconSpark className="h-3.5 w-3.5 text-sse-primary" />
-            <p className="text-[11px] font-semibold text-sse-primary uppercase tracking-wide">
-              Recomendaciones para el siguiente mes
-            </p>
-          </div>
-          <ol className="space-y-1">
-            {analysis.recomendacionesIA.map((r, i) => (
-              <li key={i} className="flex items-start gap-2 text-[12px] text-sse-ink">
-                <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-sse-primary text-[10px] font-bold text-white">
-                  {i + 1}
-                </span>
-                {r}
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-
-      <p className="text-[10px] text-sse-muted">
-        Analizado el {new Date(analysis.analizadoEn).toLocaleString("es-SV")}
-      </p>
+        return (
+          <button
+            key={n}
+            onClick={() => onSelect(n)}
+            title={MESES_ES[n]}
+            className={[
+              "flex flex-col items-center gap-1 rounded-xl border px-1 py-2 transition",
+              isSelected
+                ? "border-sse-primary bg-sse-primary text-white"
+                : hasFiles
+                ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                : mes
+                ? "border-sse-border bg-sse-surface text-sse-muted hover:border-sse-primary/40"
+                : "border-dashed border-sse-border text-sse-muted/40 cursor-default",
+            ].join(" ")}
+          >
+            <span className="text-[10px] font-semibold uppercase tracking-wide leading-none">
+              {MESES_ES[n]?.slice(0, 3)}
+            </span>
+            <span className={[
+              "h-1.5 w-1.5 rounded-full",
+              isSelected ? "bg-white" : hasFiles ? "bg-emerald-500" : "bg-sse-border",
+            ].join(" ")} />
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 // ─── File row ─────────────────────────────────────────────────────────────────
 
-function ArchivoRow({
-  archivo,
-  wsId,
-  mesNombre,
-  mesNum,
-  anio,
-}: {
-  archivo: ArchivoReporte;
-  wsId: string;
-  mesNombre: string;
-  mesNum: number;
-  anio: number;
-}) {
-  const [analyzing, setAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { getAnalysis, setAnalysis } = useReportesStore();
-  const existing = getAnalysis(archivo.id);
-
-  const isPdf =
-    archivo.mime === "application/pdf" ||
-    archivo.mime === "application/vnd.google-apps.document" ||
-    archivo.nombre.toLowerCase().endsWith(".pdf") ||
-    archivo.nombre.toLowerCase().endsWith(".docx");
-
-  async function analyze() {
-    setAnalyzing(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/reportes/analizar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileId: archivo.id,
-          wsId,
-          mesNombre,
-          mesNum,
-          anio,
-          fileName: archivo.nombre,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-        throw new Error(err.error ?? `HTTP ${res.status}`);
-      }
-      const data: InformeAnalizado = await res.json();
-      setAnalysis(archivo.id, data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al analizar");
-    } finally {
-      setAnalyzing(false);
-    }
-  }
-
-  const fmt = new Intl.DateTimeFormat("es-SV", { day: "2-digit", month: "short", year: "numeric" });
-  const date = fmt.format(new Date(archivo.modificadoEn));
-  const kb = archivo.tamano ? Math.round(archivo.tamano / 1024) : null;
-
+function ArchivoRow({ archivo }: { archivo: ArchivoReporte }) {
   return (
-    <div className="rounded-xl border border-sse-border bg-sse-surface">
-      <div className="flex items-center gap-3 px-4 py-3">
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-sse-primary/10">
-          <IconDoc className="h-5 w-5 text-sse-primary" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <a
-            href={archivo.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-[13px] font-medium text-sse-ink hover:text-sse-primary transition-colors"
-          >
-            <span className="truncate">{archivo.nombre}</span>
-            <IconExtLink className="h-3 w-3 flex-shrink-0 opacity-60" />
-          </a>
-          <p className="mt-0.5 text-[11px] text-sse-muted">
-            {archivo.tipoLabel} · {date}{kb !== null ? ` · ${kb} KB` : ""}
-          </p>
-        </div>
-
-        {isPdf && (
-          <button
-            onClick={analyze}
-            disabled={analyzing}
-            className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-sse-primary/30 bg-sse-primary/5 px-3 py-1.5 text-[12px] font-medium text-sse-primary transition hover:bg-sse-primary/10 disabled:opacity-50"
-          >
-            {analyzing ? (
-              <IconLoader className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <IconSpark className="h-3.5 w-3.5" />
-            )}
-            {analyzing ? "Analizando…" : existing ? "Re-analizar" : "Analizar IA"}
-          </button>
-        )}
+    <a
+      href={archivo.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex items-center gap-3 rounded-xl border border-sse-border bg-sse-surface px-4 py-3 transition hover:border-sse-primary/40 hover:bg-sse-primary/[0.02]"
+    >
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-sse-primary/10">
+        <IconDoc className="h-5 w-5 text-sse-primary" />
       </div>
 
-      {error && (
-        <p className="border-t border-sse-border px-4 py-2 text-[12px] text-red-500">{error}</p>
-      )}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] font-medium text-sse-ink group-hover:text-sse-primary transition-colors">
+          {archivo.nombre}
+        </p>
+        <p className="mt-0.5 text-[11px] text-sse-muted">
+          {archivo.tipoLabel}
+          {archivo.tamano ? ` · ${fmtTamano(archivo.tamano)}` : ""}
+          {" · "}{fmtFecha(archivo.modificadoEn)}
+        </p>
+      </div>
 
-      {existing && <AnalysisPanel analysis={existing} />}
+      <IconExtLink className="h-4 w-4 flex-shrink-0 text-sse-muted opacity-0 transition group-hover:opacity-100" />
+    </a>
+  );
+}
+
+// ─── Month detail panel ───────────────────────────────────────────────────────
+
+function MesDetail({ mes }: { mes: MesReporte }) {
+  const mesLabel = MESES_ES[mes.mes] ?? mes.nombre;
+  const hasFiles = mes.total > 0;
+
+  return (
+    <div className="rounded-xl border border-sse-border bg-sse-bg">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-sse-border px-4 py-3">
+        <div>
+          <h3 className="text-[14px] font-semibold text-sse-ink">
+            {mesLabel} {mes.anio > 0 ? mes.anio : ""}
+          </h3>
+          <p className="text-[12px] text-sse-muted">
+            {hasFiles
+              ? `${mes.total} ${mes.total === 1 ? "informe subido" : "informes subidos"}`
+              : "Sin informes subidos aún"}
+          </p>
+        </div>
+        <a
+          href={mes.driveUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 rounded-lg border border-sse-border px-3 py-1.5 text-[12px] text-sse-muted transition hover:border-sse-primary hover:text-sse-primary"
+        >
+          <IconFolder className="h-3.5 w-3.5" />
+          Ver carpeta
+        </a>
+      </div>
+
+      {/* Files */}
+      <div className="px-4 py-3">
+        {hasFiles ? (
+          <div className="space-y-2">
+            {mes.archivos.map((a) => (
+              <ArchivoRow key={a.id} archivo={a} />
+            ))}
+          </div>
+        ) : (
+          <p className="py-4 text-center text-[13px] text-sse-muted">
+            El jefe de unidad aún no ha subido el informe de este mes.
+            <br />
+            <a
+              href={mes.driveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-flex items-center gap-1 text-sse-primary hover:underline"
+            >
+              <IconFolder className="h-3.5 w-3.5" />
+              Abrir carpeta en Drive
+            </a>
+          </p>
+        )}
+      </div>
     </div>
   );
 }
 
-// ─── Month card ───────────────────────────────────────────────────────────────
+// ─── Stats cards ──────────────────────────────────────────────────────────────
 
-function MesCard({ mes, wsId }: { mes: MesReporte; wsId: string }) {
-  const [open, setOpen] = useState(false);
-  const hasFiles = mes.total > 0;
-  const mesLabel = MESES_ES[mes.mes] ?? mes.nombre;
-
+function StatCard({ value, label, sub }: { value: string | number; label: string; sub?: string }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-sse-border bg-sse-surface">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-sse-bg"
-      >
-        {/* Month number badge */}
-        <div
-          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-[13px] font-bold ${
-            hasFiles
-              ? "bg-sse-primary text-white"
-              : "bg-sse-border text-sse-muted"
-          }`}
-        >
-          {String(mes.mes).padStart(2, "0")}
-        </div>
-
-        <div className="flex-1">
-          <p className="text-[14px] font-semibold text-sse-ink">
-            {mesLabel} {mes.anio > 0 ? mes.anio : ""}
-          </p>
-          <p className="text-[12px] text-sse-muted">
-            {hasFiles
-              ? `${mes.total} ${mes.total === 1 ? "informe cargado" : "informes cargados"}`
-              : "Sin informes cargados"}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <a
-            href={mes.driveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-sse-muted transition hover:text-sse-primary"
-          >
-            <IconFolder className="h-3.5 w-3.5" />
-            Drive
-          </a>
-          <svg
-            className={`h-4 w-4 text-sse-muted transition-transform ${open ? "rotate-180" : ""}`}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            aria-hidden
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="m19 9-7 7-7-7" />
-          </svg>
-        </div>
-      </button>
-
-      {open && (
-        <div className="border-t border-sse-border px-4 py-3">
-          {hasFiles ? (
-            <div className="space-y-3">
-              {mes.archivos.map((a) => (
-                <ArchivoRow
-                  key={a.id}
-                  archivo={a}
-                  wsId={wsId}
-                  mesNombre={mes.nombre}
-                  mesNum={mes.mes}
-                  anio={mes.anio}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-[12px] text-sse-muted">
-              Aún no hay informes en esta carpeta. El jefe de unidad debe subir el informe
-              mensual directamente en Drive.
-            </p>
-          )}
-        </div>
-      )}
+    <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-3">
+      <p className="text-[26px] font-bold text-sse-ink leading-none">{value}</p>
+      <p className="mt-1 text-[12px] font-medium text-sse-ink">{label}</p>
+      {sub && <p className="text-[11px] text-sse-muted">{sub}</p>}
     </div>
   );
 }
@@ -416,8 +232,33 @@ export default function ReportesPage() {
 
   const { data, isLoading, isError, error, refetch } = useMonitoreoReportes(wsId);
 
+  // Default: select the most recent month that has files, or first month
+  const defaultSelected = (() => {
+    if (!data?.meses.length) return null;
+    const withFiles = [...data.meses].filter((m) => m.total > 0).sort((a, b) => b.mes - a.mes);
+    return withFiles.length ? withFiles[0].mes : data.meses[0].mes;
+  })();
+
+  const [selectedMes, setSelectedMes] = useState<number | null>(null);
+  const activeMes = selectedMes ?? defaultSelected;
+
+  const mesByNum = new Map((data?.meses ?? []).map((m) => [m.mes, m]));
+  const detail = activeMes !== null ? mesByNum.get(activeMes) : undefined;
+
+  // Stats
   const totalArchivos = data?.meses.reduce((s, m) => s + m.total, 0) ?? 0;
   const mesesConArchivos = data?.meses.filter((m) => m.total > 0).length ?? 0;
+  const cobertura = data?.meses.length
+    ? Math.round((mesesConArchivos / data.meses.length) * 100)
+    : 0;
+
+  // Most recent upload
+  const ultimoArchivo = (() => {
+    if (!data) return null;
+    const all = data.meses.flatMap((m) => m.archivos);
+    if (!all.length) return null;
+    return all.sort((a, b) => b.modificadoEn.localeCompare(a.modificadoEn))[0];
+  })();
 
   return (
     <div className="space-y-6">
@@ -431,8 +272,7 @@ export default function ReportesPage() {
             Reportes Mensuales &mdash; {unidadNombre}
           </h1>
           <p className="mt-1 text-[13px] text-sse-muted">
-            Informes de actividades cargados por el jefe de unidad. Usa &ldquo;Analizar IA&rdquo; para
-            extraer datos automáticamente y obtener recomendaciones para el mes siguiente.
+            Informes de actividades cargados por el jefe de unidad. Selecciona un mes para ver los documentos.
           </p>
         </div>
         {data?.carpetaUrl && (
@@ -443,28 +283,10 @@ export default function ReportesPage() {
             className="flex flex-shrink-0 items-center gap-1.5 rounded-lg border border-sse-border px-3 py-1.5 text-[12px] text-sse-muted transition hover:border-sse-primary hover:text-sse-primary"
           >
             <IconFolder className="h-4 w-4" />
-            Abrir en Drive
+            Drive
           </a>
         )}
       </div>
-
-      {/* Stats */}
-      {data && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-3">
-            <p className="text-[24px] font-bold text-sse-ink">{totalArchivos}</p>
-            <p className="text-[12px] text-sse-muted">Informes cargados</p>
-          </div>
-          <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-3">
-            <p className="text-[24px] font-bold text-sse-ink">{mesesConArchivos}</p>
-            <p className="text-[12px] text-sse-muted">Meses con informe</p>
-          </div>
-          <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-3">
-            <p className="text-[24px] font-bold text-sse-ink">{data.meses.length}</p>
-            <p className="text-[12px] text-sse-muted">Meses configurados</p>
-          </div>
-        </div>
-      )}
 
       {/* Loading */}
       {isLoading && (
@@ -478,7 +300,7 @@ export default function ReportesPage() {
       {isError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 dark:border-red-900 dark:bg-red-950/20">
           <p className="text-[13px] font-medium text-red-700 dark:text-red-400">
-            Error al cargar los reportes
+            No se pudieron cargar los reportes
           </p>
           <p className="mt-1 text-[12px] text-red-600 dark:text-red-500">
             {error?.message ?? "Intenta de nuevo más tarde."}
@@ -492,29 +314,64 @@ export default function ReportesPage() {
         </div>
       )}
 
-      {/* No reportes folder */}
-      {data?.mensaje && (
-        <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-6 text-center">
-          <IconFolder className="mx-auto mb-2 h-8 w-8 text-sse-muted opacity-40" />
+      {/* No folder configured */}
+      {data?.mensaje && !isLoading && (
+        <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-8 text-center">
+          <IconFolder className="mx-auto mb-3 h-10 w-10 text-sse-muted opacity-30" />
           <p className="text-[13px] text-sse-muted">{data.mensaje}</p>
         </div>
       )}
 
-      {/* Month cards */}
+      {/* Dashboard */}
       {data && !data.mensaje && (
-        <div className="space-y-3">
-          {data.meses.map((mes) => (
-            <MesCard key={mes.id} mes={mes} wsId={wsId} />
-          ))}
-          {data.meses.length === 0 && (
-            <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-6 text-center">
-              <IconFolder className="mx-auto mb-2 h-8 w-8 text-sse-muted opacity-40" />
-              <p className="text-[13px] text-sse-muted">
-                No se encontraron carpetas de meses en la carpeta de reportes.
-              </p>
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard value={totalArchivos} label="Informes subidos" />
+            <StatCard value={`${mesesConArchivos} / ${data.meses.length}`} label="Meses cubiertos" />
+            <StatCard value={`${cobertura}%`} label="Cobertura anual" />
+            <StatCard
+              value={ultimoArchivo ? fmtFecha(ultimoArchivo.modificadoEn) : "—"}
+              label="Última carga"
+              sub={ultimoArchivo ? (ultimoArchivo.nombre.slice(0, 28) + (ultimoArchivo.nombre.length > 28 ? "…" : "")) : undefined}
+            />
+          </div>
+
+          {/* Coverage grid */}
+          <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-4">
+            <p className="mb-3 text-[12px] font-semibold text-sse-muted uppercase tracking-wide">
+              Cobertura por mes — selecciona para ver detalle
+            </p>
+            <CoverageGrid
+              meses={data.meses}
+              selected={activeMes}
+              onSelect={(n) => setSelectedMes(n)}
+            />
+            <div className="mt-3 flex items-center gap-4 text-[11px] text-sse-muted">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-emerald-400" />
+                Con informe
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm border border-sse-border bg-sse-surface" />
+                Sin informe
+              </span>
             </div>
+          </div>
+
+          {/* Month detail */}
+          {detail ? (
+            <MesDetail mes={detail} />
+          ) : (
+            activeMes !== null && (
+              <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-6 text-center">
+                <p className="text-[13px] text-sse-muted">
+                  {MESES_ES[activeMes]} no está configurado en Drive.
+                </p>
+              </div>
+            )
           )}
-        </div>
+        </>
       )}
     </div>
   );

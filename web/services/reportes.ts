@@ -39,30 +39,7 @@ export interface ReportesHierarchy {
   mensaje?: string;
 }
 
-export interface IndicadorMencionado {
-  nombre: string;
-  valor?: string;
-  observacion?: string;
-}
-
-export interface InformeAnalizado {
-  fileId: string;
-  fileName: string;
-  wsId: string;
-  mesNombre: string;
-  mesNum: number;
-  anio: number;
-  analizadoEn: string;
-  resumenEjecutivo: string;
-  actividadesPrincipales: string[];
-  logros: string[];
-  desafios: string[];
-  indicadoresMencionados: IndicadorMencionado[];
-  recomendacionesIA: string[];
-  sentimientoGeneral: "positivo" | "neutral" | "negativo";
-}
-
-// ─── Fetchers ─────────────────────────────────────────────────────────────────
+// ─── Fetcher ──────────────────────────────────────────────────────────────────
 
 export async function getReportes(wsId: string): Promise<ReportesHierarchy> {
   if (!GAS_URL) throw new Error("APPS_SCRIPT_WEB_APP_URL is not configured.");
