@@ -24,26 +24,53 @@ export interface IndicadorMonitoreo {
   wsId: string;
 }
 
-export interface EvidenciaMonitoreo {
+export interface ArchivoEvidencia {
   id: string;
   nombre: string;
   tipo: string;
   tamaño?: number;
   fechaModificacion: string;
-  carpeta: string;
   driveId: string;
   driveUrl: string;
-  responsable?: string;
-  wsId: string;
 }
 
-export interface CarpetaEvidencia {
+export interface MesEvidencia {
+  id: string;
+  nombre: string;
+  mes: number;
+  anio: number;
+  driveId: string;
+  driveUrl: string;
+  archivos: ArchivoEvidencia[];
+  total: number;
+}
+
+export interface IndicadorEvidencia {
   id: string;
   nombre: string;
   driveId: string;
-  cantidad: number;
-  ultimaModificacion?: string;
-  archivos?: EvidenciaMonitoreo[];
+  driveUrl: string;
+  meses: MesEvidencia[];
+  totalArchivos: number;
+}
+
+export interface AreaEvidencia {
+  id: string;
+  nombre: string;
+  driveId: string;
+  driveUrl: string;
+  indicadores: IndicadorEvidencia[];
+}
+
+export interface EvidenciaHierarchy {
+  wsId: string;
+  nombre: string;
+  carpetaId: string | null;
+  carpetaUrl: string | null;
+  areas: AreaEvidencia[];
+  total: number;
+  fetchedAt: string;
+  mensaje?: string;
 }
 
 export interface UnidadConfig {
@@ -114,7 +141,7 @@ interface GasIndicadoresResponse {
   message?: string;
 }
 
-interface GasArchivo {
+interface GasArchivoEv {
   id: string;
   nombre: string;
   mime: string;
@@ -125,12 +152,40 @@ interface GasArchivo {
   modificadoEn: string;
 }
 
+interface GasMesEv {
+  id: string;
+  nombre: string;
+  mes: number;
+  anio: number;
+  driveId: string;
+  driveUrl: string;
+  archivos: GasArchivoEv[];
+  total: number;
+}
+
+interface GasIndicadorEv {
+  id: string;
+  nombre: string;
+  driveId: string;
+  driveUrl: string;
+  meses: GasMesEv[];
+  totalArchivos: number;
+}
+
+interface GasAreaEv {
+  id: string;
+  nombre: string;
+  driveId: string;
+  driveUrl: string;
+  indicadores: GasIndicadorEv[];
+}
+
 interface GasEvidenciasResponse {
   wsId: string;
   nombre: string;
   carpetaId: string | null;
-  carpetaUrl: string;
-  archivos: GasArchivo[];
+  carpetaUrl: string | null;
+  areas: GasAreaEv[];
   total: number;
   fetchedAt: string;
   error?: boolean;
@@ -196,29 +251,51 @@ function transformIndicador(gas: GasIndicador, wsId: string): IndicadorMonitoreo
   };
 }
 
-function transformEvidencias(gas: GasEvidenciasResponse, wsId: string): CarpetaEvidencia[] {
-  if (!gas.carpetaId) return [];
-
-  const archivos: EvidenciaMonitoreo[] = (gas.archivos ?? []).map((a) => ({
+function transformArchivoEv(a: GasArchivoEv): ArchivoEvidencia {
+  return {
     id:               a.id,
     nombre:           a.nombre,
     tipo:             a.tipoLabel,
     tamaño:           a.tamano,
     fechaModificacion: a.modificadoEn,
-    carpeta:          gas.nombre,
     driveId:          a.id,
     driveUrl:         a.url,
-    wsId,
-  }));
+  };
+}
 
-  return [{
-    id:                gas.carpetaId,
-    nombre:            gas.nombre,
-    driveId:           gas.carpetaId,
-    cantidad:          gas.total,
-    ultimaModificacion: archivos[0]?.fechaModificacion,
-    archivos,
-  }];
+function transformEvidenciasHierarchy(gas: GasEvidenciasResponse): EvidenciaHierarchy {
+  return {
+    wsId:       gas.wsId,
+    nombre:     gas.nombre,
+    carpetaId:  gas.carpetaId,
+    carpetaUrl: gas.carpetaUrl,
+    areas:      (gas.areas ?? []).map((area) => ({
+      id:       area.id,
+      nombre:   area.nombre,
+      driveId:  area.driveId,
+      driveUrl: area.driveUrl,
+      indicadores: (area.indicadores ?? []).map((ind) => ({
+        id:            ind.id,
+        nombre:        ind.nombre,
+        driveId:       ind.driveId,
+        driveUrl:      ind.driveUrl,
+        totalArchivos: ind.totalArchivos ?? 0,
+        meses: (ind.meses ?? []).map((mes) => ({
+          id:       mes.id,
+          nombre:   mes.nombre,
+          mes:      mes.mes,
+          anio:     mes.anio,
+          driveId:  mes.driveId,
+          driveUrl: mes.driveUrl,
+          total:    mes.total,
+          archivos: (mes.archivos ?? []).map(transformArchivoEv),
+        })),
+      })),
+    })),
+    total:      gas.total ?? 0,
+    fetchedAt:  gas.fetchedAt,
+    mensaje:    gas.mensaje,
+  };
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -251,10 +328,11 @@ export async function getIndicadores(wsId: string): Promise<IndicadorMonitoreo[]
 }
 
 /**
- * Returns evidence folders for a workspace unit, fetched from Google Apps Script.
+ * Returns the 3-level evidence hierarchy for a workspace unit.
+ * Structure: Unit → Areas → Indicator folders → Monthly folders → Files
  * Throws on network or GAS errors — never returns stale mock data.
  */
-export async function getEvidencias(wsId: string): Promise<CarpetaEvidencia[]> {
+export async function getEvidencias(wsId: string): Promise<EvidenciaHierarchy> {
   const unit = getUnidad(wsId);
   if (!unit) throw new Error(`Unidad desconocida: ${wsId}`);
 
@@ -274,5 +352,5 @@ export async function getEvidencias(wsId: string): Promise<CarpetaEvidencia[]> {
     throw new Error(data.message ?? "Error en Google Apps Script.");
   }
 
-  return transformEvidencias(data, wsId);
+  return transformEvidenciasHierarchy(data);
 }
