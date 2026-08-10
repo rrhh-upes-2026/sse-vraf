@@ -64,6 +64,7 @@ function EditPanel({
     current.descripcion ?? indicador.descripcion,
   );
   const [formula, setFormula] = useState(current.formula ?? indicador.formula ?? "");
+  const [fechaEntrega, setFechaEntrega] = useState(current.fechaEntrega ?? "");
   const [status, setStatus] = useState<SaveStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -100,8 +101,8 @@ function EditPanel({
       }
     }
 
-    // Always persist locally — GAS write is best-effort
-    setMeta(indicador.wsId, indicador.id, { descripcion, formula });
+    // Always persist locally — GAS write is best-effort; fechaEntrega is local-only
+    setMeta(indicador.wsId, indicador.id, { descripcion, formula, fechaEntrega: fechaEntrega || undefined });
 
     if (!gasOk) {
       setStatus("error");
@@ -169,6 +170,22 @@ function EditPanel({
             />
           </div>
 
+          <div>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] mb-1.5">
+              Fecha de entrega propuesta
+            </label>
+            <input
+              type="date"
+              value={fechaEntrega}
+              onChange={(e) => setFechaEntrega(e.target.value)}
+              disabled={status === "saving"}
+              className="w-full rounded-lg border border-[#CBD5E1] dark:border-[#2D3F5E] bg-white dark:bg-[#0F1A2D] px-3 py-2 text-[13px] text-[#0F172A] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-60"
+            />
+            <p className="mt-1 text-[10px] text-[#94A3B8]">
+              Aparecerá en el Calendario estratégico de esta unidad. Se guarda localmente.
+            </p>
+          </div>
+
           {status === "error" && (
             <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
               ⚠ {errorMsg}
@@ -216,7 +233,7 @@ function IndicadorRow({
   isAdmin,
   onEdit,
 }: {
-  ind: IndicadorMonitoreo & { _descripcion: string; _formula: string };
+  ind: IndicadorMonitoreo & { _descripcion: string; _formula: string; _fechaEntrega: string };
   isAdmin: boolean;
   onEdit: () => void;
 }) {
@@ -354,6 +371,15 @@ function IndicadorRow({
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] mb-0.5">Unidad de medida</p>
                   <p className="text-[12px] text-[#334155] dark:text-[#CBD5E1]">{ind.unidad}</p>
                 </div>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] mb-0.5">Fecha de entrega</p>
+                  <p className="text-[12px] text-[#334155] dark:text-[#CBD5E1]">
+                    {ind._fechaEntrega
+                      ? new Intl.DateTimeFormat("es-SV", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(ind._fechaEntrega + "T00:00:00"))
+                      : <span className="italic text-[#CBD5E1]">{isAdmin ? "Sin fecha. Haz clic en Editar para agregar." : "No definida."}</span>
+                    }
+                  </p>
+                </div>
               </div>
             </div>
           </td>
@@ -385,6 +411,7 @@ export default function IndicadoresPage() {
       ...ind,
       _descripcion: meta.descripcion ?? ind.descripcion,
       _formula: meta.formula ?? ind.formula ?? "",
+      _fechaEntrega: meta.fechaEntrega ?? "",
     };
   });
 

@@ -3,6 +3,8 @@
 import { useParams } from "next/navigation";
 import { useState, useMemo } from "react";
 import { getUnidad } from "@/types/unidad";
+import { useMonitoreoIndicadores } from "@/hooks/useMonitoreoIndicadores";
+import { useIndicadorMetaStore } from "@/store/useIndicadorMetaStore";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -10,48 +12,33 @@ type EventCategory = "indicadores" | "evidencias" | "reportes";
 
 interface CalEvent {
   day: number;
+  month: number; // 0-indexed
+  year: number;
   category: EventCategory;
   label: string;
+  sub?: string; // secondary detail (indicator name)
 }
 
-// ── Mock data: strategic deadlines for the platform ───────────────────────────
-
-const MOCK_EVENTS: CalEvent[] = [
-  // Indicadores (blue) — update deadlines each month
-  { day: 5,  category: "indicadores", label: "Cierre indicadores semana 1" },
-  { day: 12, category: "indicadores", label: "Cierre indicadores semana 2" },
-  { day: 19, category: "indicadores", label: "Cierre indicadores semana 3" },
-  { day: 26, category: "indicadores", label: "Cierre indicadores semana 4" },
-  // Evidencias (green) — submission windows
-  { day: 8,  category: "evidencias",  label: "Envío evidencias período anterior" },
-  { day: 22, category: "evidencias",  label: "Envío evidencias período actual" },
-  { day: 29, category: "evidencias",  label: "Cierre evidencias agosto 2026" },
-  // Reportes (orange) — generation dates
-  { day: 15, category: "reportes",    label: "Reporte quincenal VRAF" },
-  { day: 31, category: "reportes",    label: "Reporte mensual agosto 2026 — DEADLINE" },
-];
+// ── Category styles ───────────────────────────────────────────────────────────
 
 const CATEGORY_CONFIG: Record<
   EventCategory,
-  { label: string; dot: string; badge: string; text: string }
+  { label: string; dot: string; badge: string }
 > = {
   indicadores: {
     label: "Indicadores",
     dot:   "bg-[#2563EB]",
     badge: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
-    text:  "text-[#1D4ED8]",
   },
   evidencias: {
     label: "Evidencias",
     dot:   "bg-[#059669]",
     badge: "bg-[#ECFDF5] text-[#065F46] border-[#A7F3D0]",
-    text:  "text-[#065F46]",
   },
   reportes: {
     label: "Reportes",
     dot:   "bg-[#D97706]",
     badge: "bg-[#FFFBEB] text-[#92400E] border-[#FDE68A]",
-    text:  "text-[#92400E]",
   },
 };
 
@@ -68,15 +55,19 @@ function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
 }
 
-/** 0=Mon … 6=Sun (ISO week) */
 function getFirstDayISO(year: number, month: number): number {
-  const d = new Date(year, month, 1).getDay(); // 0=Sun
+  const d = new Date(year, month, 1).getDay();
   return (d + 6) % 7;
 }
 
 function isToday(year: number, month: number, day: number): boolean {
   const t = new Date();
   return t.getFullYear() === year && t.getMonth() === month && t.getDate() === day;
+}
+
+function fmtFullDate(year: number, month: number, day: number): string {
+  return new Intl.DateTimeFormat("es-SV", { day: "numeric", month: "long", year: "numeric" })
+    .format(new Date(year, month, day));
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
@@ -123,7 +114,6 @@ function DayCell({ day, events, selected, today, onClick }: DayCellProps) {
           : "border-sse-border bg-sse-surface hover:border-sse-primary/40",
       ].join(" ")}
     >
-      {/* Day number */}
       <span
         className={[
           "inline-flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-medium",
@@ -137,7 +127,6 @@ function DayCell({ day, events, selected, today, onClick }: DayCellProps) {
         {day}
       </span>
 
-      {/* Event dots */}
       {cats.length > 0 && (
         <div className="mt-1 flex flex-wrap gap-0.5">
           {cats.map((cat) => (
@@ -150,7 +139,6 @@ function DayCell({ day, events, selected, today, onClick }: DayCellProps) {
         </div>
       )}
 
-      {/* First event label (tiny) */}
       {events[0] && (
         <p className="mt-1 truncate text-[9px] leading-tight text-sse-muted">
           {events[0].label}
@@ -167,10 +155,34 @@ export default function CalendarioPage() {
   const wsId = params?.wsId as string;
   const unidad = getUnidad(wsId);
 
-  // Default to August 2026 (where the next reporting deadline lives)
-  const [year, setYear]   = useState(2026);
-  const [month, setMonth] = useState(7); // 0-indexed: 7 = August
-  const [selectedDay, setSelectedDay] = useState<number | null>(31);
+  const today = new Date();
+  const [year, setYear]     = useState(today.getFullYear());
+  const [month, setMonth]   = useState(today.getMonth());
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
+
+  // Real indicator data
+  const { data: indicadores = [] } = useMonitoreoIndicadores(wsId);
+  const { getMeta } = useIndicadorMetaStore();
+
+  // Build events from indicator delivery dates
+  const events = useMemo<CalEvent[]>(() => {
+    const result: CalEvent[] = [];
+    for (const ind of indicadores) {
+      const meta = getMeta(wsId, ind.id);
+      if (!meta.fechaEntrega) continue;
+      const d = new Date(meta.fechaEntrega + "T00:00:00");
+      if (isNaN(d.getTime())) continue;
+      result.push({
+        day:      d.getDate(),
+        month:    d.getMonth(),
+        year:     d.getFullYear(),
+        category: "indicadores",
+        label:    ind.nombre,
+        sub:      ind.responsable || undefined,
+      });
+    }
+    return result;
+  }, [indicadores, getMeta, wsId]);
 
   function prevMonth() {
     if (month === 0) { setYear((y) => y - 1); setMonth(11); }
@@ -184,44 +196,68 @@ export default function CalendarioPage() {
     setSelectedDay(null);
   }
 
-  const daysInMonth  = getDaysInMonth(year, month);
-  const firstDayISO  = getFirstDayISO(year, month);
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDayISO = getFirstDayISO(year, month);
 
-  // Build grid cells: nulls for leading blanks, then 1-N
   const cells = useMemo<(number | null)[]>(() => {
     const arr: (number | null)[] = Array(firstDayISO).fill(null);
     for (let d = 1; d <= daysInMonth; d++) arr.push(d);
-    // Pad to full weeks
     while (arr.length % 7 !== 0) arr.push(null);
     return arr;
   }, [firstDayISO, daysInMonth]);
 
+  // Events for this month only
+  const monthEvents = useMemo(
+    () => events.filter((e) => e.year === year && e.month === month),
+    [events, year, month],
+  );
+
   const eventsByDay = useMemo(() => {
     const map: Record<number, CalEvent[]> = {};
-    for (const ev of MOCK_EVENTS) {
+    for (const ev of monthEvents) {
       if (!map[ev.day]) map[ev.day] = [];
       map[ev.day].push(ev);
     }
     return map;
-  }, []);
+  }, [monthEvents]);
 
   const selectedEvents = selectedDay ? (eventsByDay[selectedDay] ?? []) : [];
-  // Month-level: all events (for the list below when nothing is selected)
-  const allMonthEvents = MOCK_EVENTS.slice().sort((a, b) => a.day - b.day);
+  const listEvents = selectedDay
+    ? selectedEvents
+    : monthEvents.slice().sort((a, b) => a.day - b.day);
+
+  // Upcoming: next event from today across all months
+  const upcomingEvent = useMemo(() => {
+    const nowMs = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    return events
+      .map((e) => ({ ev: e, ms: new Date(e.year, e.month, e.day).getTime() }))
+      .filter(({ ms }) => ms >= nowMs)
+      .sort((a, b) => a.ms - b.ms)[0]?.ev ?? null;
+  }, [events, today]);
 
   return (
     <div className="space-y-6">
       {/* Page header */}
       <div>
         <h1 className="text-[20px] font-semibold text-sse-ink leading-tight">
-          Calendario Estratégico
-          {unidad ? ` — ${unidad.nombre}` : ""}
+          Calendario{unidad ? ` — ${unidad.nombre}` : ""}
         </h1>
         <p className="mt-1 text-[13px] text-sse-muted">
-          Fechas clave de actualización de indicadores, envío de evidencias y
-          generación de reportes.
+          Fechas de entrega de indicadores propuestas por el administrador.
         </p>
       </div>
+
+      {/* No events notice */}
+      {events.length === 0 && (
+        <div className="rounded-xl border border-dashed border-sse-border bg-sse-surface px-5 py-6 text-center">
+          <p className="text-[13px] text-sse-muted">
+            Aún no hay fechas de entrega configuradas para los indicadores de esta unidad.
+          </p>
+          <p className="mt-1 text-[12px] text-sse-muted">
+            Ve a <strong>Indicadores → Editar</strong> y agrega la fecha de entrega propuesta en cada indicador.
+          </p>
+        </div>
+      )}
 
       {/* Calendar card */}
       <div className="rounded-xl border border-sse-border bg-sse-surface overflow-hidden">
@@ -285,17 +321,21 @@ export default function CalendarioPage() {
       <div>
         <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-sse-muted">
           {selectedDay
-            ? `Eventos del día ${selectedDay} de ${MONTH_NAMES_ES[month]}`
-            : `Todos los eventos — ${MONTH_NAMES_ES[month]} ${year}`}
+            ? `Entregas el ${fmtFullDate(year, month, selectedDay)}`
+            : `Entregas en ${MONTH_NAMES_ES[month]} ${year}`}
         </h2>
 
-        {(selectedDay ? selectedEvents : allMonthEvents).length === 0 ? (
+        {listEvents.length === 0 ? (
           <div className="rounded-xl border border-sse-border bg-sse-surface px-5 py-8 text-center">
-            <p className="text-[13px] text-sse-muted">No hay eventos para este día.</p>
+            <p className="text-[13px] text-sse-muted">
+              {selectedDay
+                ? "No hay entregas programadas para este día."
+                : "No hay entregas programadas para este mes."}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
-            {(selectedDay ? selectedEvents : allMonthEvents).map((ev, i) => {
+            {listEvents.map((ev, i) => {
               const cfg = CATEGORY_CONFIG[ev.category];
               return (
                 <div
@@ -305,15 +345,13 @@ export default function CalendarioPage() {
                   <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${cfg.dot}`} />
                   <div className="flex-1 min-w-0">
                     <p className="truncate text-[13px] font-medium text-sse-ink">{ev.label}</p>
-                    {!selectedDay && (
-                      <p className="text-[11px] text-sse-muted">
-                        {MONTH_NAMES_ES[month]} {ev.day}, {year}
-                      </p>
-                    )}
+                    <p className="text-[11px] text-sse-muted">
+                      {!selectedDay && `${MONTH_NAMES_ES[month]} ${ev.day}, ${year}`}
+                      {!selectedDay && ev.sub && " · "}
+                      {ev.sub}
+                    </p>
                   </div>
-                  <span
-                    className={`flex-shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${cfg.badge}`}
-                  >
+                  <span className={`flex-shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${cfg.badge}`}>
                     {cfg.label}
                   </span>
                 </div>
@@ -324,18 +362,22 @@ export default function CalendarioPage() {
       </div>
 
       {/* Upcoming deadline callout */}
-      <div className="flex items-start gap-3 rounded-xl border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3">
-        <span className="mt-0.5 text-lg leading-none">📅</span>
-        <div>
-          <p className="text-[13px] font-semibold text-[#92400E]">
-            Próximo deadline crítico
-          </p>
-          <p className="mt-0.5 text-[12px] text-[#92400E]/80">
-            Reporte mensual agosto 2026 — 31 de agosto de 2026. Todos los
-            indicadores y evidencias deben estar validados antes de esta fecha.
-          </p>
+      {upcomingEvent && (
+        <div className="flex items-start gap-3 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] dark:border-[#1E40AF]/40 dark:bg-[#1E3A8A]/20 px-4 py-3">
+          <span className="mt-0.5 text-lg leading-none">📅</span>
+          <div>
+            <p className="text-[13px] font-semibold text-[#1D4ED8] dark:text-[#93C5FD]">
+              Próxima entrega
+            </p>
+            <p className="mt-0.5 text-[12px] text-[#1D4ED8]/80 dark:text-[#93C5FD]/80">
+              {upcomingEvent.label}
+              {" — "}
+              {fmtFullDate(upcomingEvent.year, upcomingEvent.month, upcomingEvent.day)}
+              {upcomingEvent.sub && ` · ${upcomingEvent.sub}`}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { persist } from "zustand/middleware";
 export interface IndicadorMeta {
   descripcion?: string;
   formula?: string;
+  fechaEntrega?: string; // ISO date YYYY-MM-DD — stored locally only
 }
 
 interface IndicadorMetaState {
