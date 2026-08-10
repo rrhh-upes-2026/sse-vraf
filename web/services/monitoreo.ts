@@ -10,6 +10,7 @@ export interface IndicadorMonitoreo {
   id: string;
   nombre: string;
   descripcion: string;
+  formula: string;
   meta: number;
   resultado: number | null;
   unidad: "%" | "días" | "#" | "$" | "h";
@@ -175,6 +176,7 @@ function transformIndicador(gas: GasIndicador, wsId: string): IndicadorMonitoreo
     id:                 gas.codigo || gas.nombre,
     nombre:             gas.nombre,
     descripcion:        gas.observacion || "",
+    formula:            "",
     meta:               gas.meta ?? 0,
     resultado:          gas.resultado,
     unidad:             normalizeUnidad(gas.unidad),

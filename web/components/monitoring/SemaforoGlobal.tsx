@@ -156,7 +156,10 @@ export function SemaforoGlobal({ indicadores, className }: Props) {
   }
 
   const total       = indicadores.length;
-  const avgPct      = indicadores.reduce((acc, ind) => acc + ind.porcentaje, 0) / total;
+  const withData    = indicadores.filter((i) => i.porcentaje !== null);
+  const avgPct      = withData.length > 0
+    ? withData.reduce((acc, ind) => acc + (ind.porcentaje ?? 0), 0) / withData.length
+    : 0;
   const capped      = Math.min(Math.max(avgPct, 0), 100);
 
   const verdeCount  = indicadores.filter((i) => i.semaforo === 'verde').length;

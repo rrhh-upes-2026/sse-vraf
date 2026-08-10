@@ -10,10 +10,10 @@ interface Indicador {
   nombre: string;
   descripcion: string;
   meta: number;
-  resultado: number;
+  resultado: number | null;
   unidad: string;
-  porcentaje: number;
-  semaforo: 'verde' | 'amarillo' | 'rojo';
+  porcentaje: number | null;
+  semaforo: 'verde' | 'amarillo' | 'rojo' | 'gris';
   tendencia: 'sube' | 'baja' | 'estable';
   responsable: string;
   periodicidad: 'mensual' | 'trimestral' | 'semestral' | 'anual';
@@ -33,6 +33,7 @@ const SEMAFORO_COLOR: Record<Indicador['semaforo'], string> = {
   verde:    '#22C55E',
   amarillo: '#F59E0B',
   rojo:     '#EF4444',
+  gris:     '#94A3B8',
 };
 
 const TENDENCIA_ICON: Record<Indicador['tendencia'], string> = {
@@ -68,7 +69,8 @@ function formatDate(iso: string): string {
   }
 }
 
-function formatValue(value: number, unidad: string): string {
+function formatValue(value: number | null, unidad: string): string {
+  if (value === null) return '—';
   if (unidad === '$') return `$${value.toLocaleString('es-SV', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   if (unidad === '%') return `${value.toFixed(1)}%`;
   if (unidad === 'días') return `${value} días`;
@@ -161,9 +163,8 @@ export function IndicadorCard({ indicador, onClick }: Props) {
     historial,
   } = indicador;
 
-  const semaforoColor = SEMAFORO_COLOR[semaforo];
-  // Cap the visual progress bar at 100
-  const barPct = Math.min(porcentaje, 100);
+  const semaforoColor = SEMAFORO_COLOR[semaforo] ?? '#94A3B8';
+  const barPct = porcentaje !== null ? Math.min(porcentaje, 100) : 0;
 
   return (
     <div
@@ -230,7 +231,7 @@ export function IndicadorCard({ indicador, onClick }: Props) {
           className="text-[12px] font-semibold tabular-nums"
           style={{ color: semaforoColor }}
         >
-          {porcentaje.toFixed(1)}%
+          {porcentaje !== null ? `${porcentaje.toFixed(1)}%` : '—'}
         </span>
         <span
           className={cn('text-[13px] font-bold', TENDENCIA_COLOR[tendencia])}
