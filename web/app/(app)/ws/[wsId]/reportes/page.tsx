@@ -3,9 +3,7 @@
 import { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useMonitoreoReportes } from "@/hooks/useMonitoreoReportes";
-import { useMonitoreoIndicadores } from "@/hooks/useMonitoreoIndicadores";
 import { getUnidad } from "@/types/unidad";
-import type { IndicadorMonitoreo } from "@/services/monitoreo";
 import type { MesReporte, ArchivoReporte } from "@/services/reportes";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -14,42 +12,6 @@ const MESES = [
   "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
-
-const PERIODO_TO_NUM: Record<string, number> = {
-  enero: 1, febrero: 2, marzo: 3, abril: 4,
-  mayo: 5, junio: 6, julio: 7, agosto: 8,
-  septiembre: 9, octubre: 10, noviembre: 11, diciembre: 12,
-};
-
-function periodoToNum(periodo: string): number {
-  const s = periodo.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-  for (const [name, num] of Object.entries(PERIODO_TO_NUM)) {
-    if (s.includes(name)) return num;
-  }
-  return 0;
-}
-
-function getValorMes(ind: IndicadorMonitoreo, mesNum: number): number | null {
-  const entry = ind.historial.find((h) => periodoToNum(h.periodo) === mesNum);
-  return entry?.valor ?? null;
-}
-
-type Semaforo = "verde" | "amarillo" | "rojo" | "gris";
-
-function calcSemaforo(valor: number | null, meta: number | null): Semaforo {
-  if (valor === null || meta === null || meta === 0) return "gris";
-  const pct = (valor / meta) * 100;
-  if (pct >= 80) return "verde";
-  if (pct >= 60) return "amarillo";
-  return "rojo";
-}
-
-function fmtValor(valor: number | null, unidad: string): string {
-  if (valor === null) return "—";
-  if (unidad === "%") return `${valor}%`;
-  if (unidad === "$") return `$${valor.toLocaleString("es-SV")}`;
-  return `${valor} ${unidad}`;
-}
 
 function fmtFecha(iso: string): string {
   try {
@@ -97,28 +59,13 @@ function IconLoader({ className }: { className?: string }) {
   );
 }
 
-// ─── Semaforo dot ─────────────────────────────────────────────────────────────
-
-function SemaforoDot({ value, size = "sm" }: { value: Semaforo; size?: "sm" | "md" }) {
-  const cls = {
-    verde:    "bg-emerald-500",
-    amarillo: "bg-amber-400",
-    rojo:     "bg-red-500",
-    gris:     "bg-sse-border",
-  }[value];
-  const dim = size === "md" ? "h-3 w-3" : "h-2.5 w-2.5";
-  return <span className={`inline-block flex-shrink-0 rounded-full ${dim} ${cls}`} />;
-}
-
 // ─── Month selector ───────────────────────────────────────────────────────────
 
 function MonthSelector({
-  mesesConIndicadores,
   mesesConReporte,
   selected,
   onSelect,
 }: {
-  mesesConIndicadores: Set<number>;
   mesesConReporte: Set<number>;
   selected: number;
   onSelect: (n: number) => void;
@@ -126,40 +73,29 @@ function MonthSelector({
   return (
     <div className="grid grid-cols-6 gap-2 sm:grid-cols-12">
       {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
-        const hasInd = mesesConIndicadores.has(n);
         const hasRep = mesesConReporte.has(n);
         const isSelected = selected === n;
-        const hasData = hasInd || hasRep;
 
         return (
           <button
             key={n}
-            onClick={() => hasData && onSelect(n)}
-            disabled={!hasData && !isSelected}
+            onClick={() => onSelect(n)}
             title={MESES[n]}
             className={[
               "relative flex flex-col items-center gap-1.5 rounded-xl border px-1 py-2.5 transition",
               isSelected
                 ? "border-sse-primary bg-sse-primary text-white shadow-sm"
-                : hasData
+                : hasRep
                 ? "border-sse-border bg-sse-surface text-sse-ink hover:border-sse-primary/50 hover:bg-sse-primary/5"
-                : "cursor-default border-dashed border-sse-border/50 text-sse-muted/30",
+                : "border-dashed border-sse-border/50 text-sse-muted/40 hover:border-sse-border hover:text-sse-muted",
             ].join(" ")}
           >
             <span className="text-[11px] font-semibold uppercase tracking-wide leading-none">
               {MESES[n]?.slice(0, 3)}
             </span>
-            {/* Status dots */}
-            <div className="flex gap-0.5">
-              <span className={`h-1.5 w-1.5 rounded-full ${
-                isSelected ? "bg-white/80" :
-                hasInd ? "bg-sse-primary" : "bg-transparent"
-              }`} />
-              <span className={`h-1.5 w-1.5 rounded-full ${
-                isSelected ? "bg-white/80" :
-                hasRep ? "bg-emerald-500" : "bg-transparent"
-              }`} />
-            </div>
+            <span className={`h-1.5 w-1.5 rounded-full ${
+              isSelected ? "bg-white/80" : hasRep ? "bg-emerald-500" : "bg-transparent"
+            }`} />
           </button>
         );
       })}
@@ -167,156 +103,7 @@ function MonthSelector({
   );
 }
 
-// ─── Indicators dashboard for a month ────────────────────────────────────────
-
-function IndicadoresMes({
-  indicadores,
-  mesNum,
-}: {
-  indicadores: IndicadorMonitoreo[];
-  mesNum: number;
-}) {
-  const rows = useMemo(() => {
-    return indicadores
-      .map((ind) => {
-        const valor = getValorMes(ind, mesNum);
-        const sem = valor !== null ? calcSemaforo(valor, ind.meta) : "gris";
-        return { ind, valor, sem };
-      })
-      .filter((r) => r.valor !== null);
-  }, [indicadores, mesNum]);
-
-  if (rows.length === 0) {
-    return (
-      <p className="py-4 text-center text-[13px] text-sse-muted">
-        No hay resultados de indicadores registrados para este mes.
-      </p>
-    );
-  }
-
-  const counts = { verde: 0, amarillo: 0, rojo: 0, gris: 0 };
-  rows.forEach((r) => { counts[r.sem]++; });
-
-  return (
-    <div className="space-y-3">
-      {/* Traffic light summary */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { key: "verde" as const,    label: "En meta",    cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400" },
-          { key: "amarillo" as const, label: "En riesgo",  cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400" },
-          { key: "rojo" as const,     label: "Bajo meta",  cls: "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400" },
-        ].map(({ key, label, cls }) => (
-          <div key={key} className={`rounded-xl border px-3 py-2.5 ${cls}`}>
-            <p className="text-[22px] font-bold leading-none">{counts[key]}</p>
-            <p className="mt-0.5 text-[11px] font-medium">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Indicator table */}
-      <div className="overflow-x-auto rounded-xl border border-sse-border">
-        <table className="w-full min-w-[480px] text-[12px]">
-          <thead>
-            <tr className="border-b border-sse-border bg-sse-surface">
-              <th className="px-3 py-2.5 text-left font-semibold text-sse-muted">Indicador</th>
-              <th className="px-3 py-2.5 text-right font-semibold text-sse-muted">Resultado</th>
-              <th className="px-3 py-2.5 text-right font-semibold text-sse-muted">Meta</th>
-              <th className="px-3 py-2.5 text-right font-semibold text-sse-muted">%</th>
-              <th className="px-3 py-2.5 text-center font-semibold text-sse-muted">Estado</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-sse-border">
-            {rows.map(({ ind, valor, sem }) => {
-              const pct = ind.meta && valor !== null
-                ? Math.round((valor / ind.meta) * 100)
-                : null;
-              return (
-                <tr key={ind.id} className="hover:bg-sse-bg/50">
-                  <td className="px-3 py-2.5">
-                    <p className="font-medium text-sse-ink">{ind.nombre}</p>
-                    {ind.responsable && (
-                      <p className="text-[10px] text-sse-muted">{ind.responsable}</p>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-medium text-sse-ink tabular-nums">
-                    {fmtValor(valor, ind.unidad)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right text-sse-muted tabular-nums">
-                    {fmtValor(ind.meta, ind.unidad)}
-                  </td>
-                  <td className="px-3 py-2.5 text-right tabular-nums text-sse-muted">
-                    {pct !== null ? `${pct}%` : "—"}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex justify-center">
-                      <SemaforoDot value={sem} size="md" />
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-// ─── Report files for a month ─────────────────────────────────────────────────
-
-function InformeMes({
-  mes,
-}: {
-  mes: MesReporte | undefined;
-}) {
-  if (!mes) {
-    return (
-      <p className="py-2 text-[12px] text-sse-muted italic">
-        Esta unidad no tiene carpeta de reportes configurada en Drive.
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-[12px] text-sse-muted">
-          {mes.total > 0
-            ? `${mes.total} ${mes.total === 1 ? "archivo subido" : "archivos subidos"}`
-            : "Sin archivos subidos aún"}
-        </p>
-        <a
-          href={mes.driveUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-[11px] text-sse-muted transition hover:text-sse-primary"
-        >
-          <IconFolder className="h-3.5 w-3.5" />
-          Abrir carpeta
-        </a>
-      </div>
-
-      {mes.total > 0 ? (
-        mes.archivos.map((a) => <ArchivoRow key={a.id} archivo={a} />)
-      ) : (
-        <div className="rounded-lg border border-dashed border-sse-border px-4 py-3 text-center">
-          <p className="text-[12px] text-sse-muted">
-            El jefe de unidad no ha subido el informe de este mes.
-          </p>
-          <a
-            href={mes.driveUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1 inline-flex items-center gap-1 text-[12px] text-sse-primary hover:underline"
-          >
-            <IconFolder className="h-3.5 w-3.5" />
-            Ir a la carpeta en Drive
-          </a>
-        </div>
-      )}
-    </div>
-  );
-}
+// ─── Report file row ──────────────────────────────────────────────────────────
 
 function ArchivoRow({ archivo }: { archivo: ArchivoReporte }) {
   return (
@@ -344,43 +131,62 @@ function ArchivoRow({ archivo }: { archivo: ArchivoReporte }) {
   );
 }
 
-// ─── Main dashboard panel ─────────────────────────────────────────────────────
+// ─── Month detail ─────────────────────────────────────────────────────────────
 
-function MesDashboard({
-  mesNum,
-  indicadores,
-  mesReporte,
-}: {
-  mesNum: number;
-  indicadores: IndicadorMonitoreo[];
-  mesReporte: MesReporte | undefined;
-}) {
+function MesDetail({ mes, mesNum }: { mes: MesReporte | undefined; mesNum: number }) {
   return (
-    <div className="space-y-4">
-      {/* Indicators section */}
-      <div className="rounded-xl border border-sse-border bg-sse-surface">
-        <div className="border-b border-sse-border px-4 py-3">
+    <div className="rounded-xl border border-sse-border bg-sse-surface">
+      <div className="flex items-center justify-between border-b border-sse-border px-4 py-3">
+        <div>
           <h3 className="text-[13px] font-semibold text-sse-ink">
-            Indicadores — {MESES[mesNum]}
+            Informe — {MESES[mesNum]}
           </h3>
-          <p className="text-[11px] text-sse-muted">Resultados registrados en la hoja de indicadores</p>
+          <p className="text-[11px] text-sse-muted">
+            {mes
+              ? mes.total > 0
+                ? `${mes.total} ${mes.total === 1 ? "archivo" : "archivos"} subidos`
+                : "Sin archivos subidos aún"
+              : "Sin carpeta configurada para este mes"}
+          </p>
         </div>
-        <div className="px-4 py-4">
-          <IndicadoresMes indicadores={indicadores} mesNum={mesNum} />
-        </div>
+        {mes?.driveUrl && (
+          <a
+            href={mes.driveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-lg border border-sse-border px-3 py-1.5 text-[12px] text-sse-muted transition hover:border-sse-primary hover:text-sse-primary"
+          >
+            <IconFolder className="h-3.5 w-3.5" />
+            Carpeta
+          </a>
+        )}
       </div>
 
-      {/* Report section */}
-      <div className="rounded-xl border border-sse-border bg-sse-surface">
-        <div className="border-b border-sse-border px-4 py-3">
-          <h3 className="text-[13px] font-semibold text-sse-ink">
-            Informe mensual — {MESES[mesNum]}
-          </h3>
-          <p className="text-[11px] text-sse-muted">Documento subido por el jefe de unidad</p>
-        </div>
-        <div className="px-4 py-4">
-          <InformeMes mes={mesReporte} />
-        </div>
+      <div className="px-4 py-4">
+        {!mes ? (
+          <p className="py-2 text-center text-[12px] text-sse-muted italic">
+            No hay carpeta para este mes en Drive.
+          </p>
+        ) : mes.total === 0 ? (
+          <div className="rounded-lg border border-dashed border-sse-border px-4 py-6 text-center">
+            <p className="text-[13px] text-sse-muted">
+              No se ha subido ningún informe para {MESES[mesNum]}.
+            </p>
+            <a
+              href={mes.driveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1 text-[12px] text-sse-primary hover:underline"
+            >
+              <IconFolder className="h-3.5 w-3.5" />
+              Subir a Drive
+            </a>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {mes.archivos.map((a) => <ArchivoRow key={a.id} archivo={a} />)}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -394,25 +200,9 @@ export default function ReportesPage() {
   const unidad = getUnidad(wsId);
   const unidadNombre = unidad?.nombre ?? wsId?.toUpperCase() ?? "Unidad";
 
-  const indicadoresQ = useMonitoreoIndicadores(wsId);
-  const reportesQ    = useMonitoreoReportes(wsId);
-
-  const indicadores  = indicadoresQ.data ?? [];
+  const reportesQ = useMonitoreoReportes(wsId);
   const reportesData = reportesQ.data;
 
-  // Months that have at least one indicator result
-  const mesesConIndicadores = useMemo<Set<number>>(() => {
-    const s = new Set<number>();
-    indicadores.forEach((ind) => {
-      ind.historial.forEach((h) => {
-        const n = periodoToNum(h.periodo);
-        if (n > 0) s.add(n);
-      });
-    });
-    return s;
-  }, [indicadores]);
-
-  // Months that have at least one report file
   const mesesConReporte = useMemo<Set<number>>(() => {
     const s = new Set<number>();
     (reportesData?.meses ?? []).forEach((m) => {
@@ -421,30 +211,23 @@ export default function ReportesPage() {
     return s;
   }, [reportesData]);
 
-  // Build month map for report lookup
   const mesByNum = useMemo(() => {
     const m = new Map<number, MesReporte>();
     (reportesData?.meses ?? []).forEach((mes) => m.set(mes.mes, mes));
     return m;
   }, [reportesData]);
 
-  // Default: most recent month with indicator data
   const defaultMes = useMemo<number>(() => {
-    const all = [...mesesConIndicadores, ...mesesConReporte];
-    if (!all.length) return new Date().getMonth() + 1;
-    return Math.max(...all);
-  }, [mesesConIndicadores, mesesConReporte]);
+    if (mesesConReporte.size > 0) return Math.max(...mesesConReporte);
+    return new Date().getMonth() + 1;
+  }, [mesesConReporte]);
 
   const [selectedMes, setSelectedMes] = useState<number | null>(null);
   const activeMes = selectedMes ?? defaultMes;
 
-  const isLoading = indicadoresQ.isLoading || reportesQ.isLoading;
-  const isError   = indicadoresQ.isError && reportesQ.isError;
-
-  // Stats
   const totalReportes  = reportesData?.meses.reduce((s, m) => s + m.total, 0) ?? 0;
   const mesesCubiertos = mesesConReporte.size;
-  const indConResultado = indicadores.filter((i) => i.resultado !== null).length;
+  const totalMeses     = reportesData?.total ?? 0;
 
   return (
     <div className="space-y-6">
@@ -458,7 +241,7 @@ export default function ReportesPage() {
             Reportes — {unidadNombre}
           </h1>
           <p className="mt-1 text-[13px] text-sse-muted">
-            Dashboard mensual: selecciona un mes para ver indicadores e informe de actividades.
+            Selecciona un mes para ver el informe de actividades subido por la unidad.
           </p>
         </div>
         {reportesData?.carpetaUrl && (
@@ -475,28 +258,36 @@ export default function ReportesPage() {
       </div>
 
       {/* Loading */}
-      {isLoading && (
+      {reportesQ.isLoading && (
         <div className="flex items-center gap-3 rounded-xl border border-sse-border bg-sse-surface px-4 py-6">
           <IconLoader className="h-5 w-5 animate-spin text-sse-primary" />
-          <p className="text-[13px] text-sse-muted">Cargando datos…</p>
+          <p className="text-[13px] text-sse-muted">Cargando reportes…</p>
         </div>
       )}
 
-      {isError && (
+      {reportesQ.isError && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 dark:border-red-900 dark:bg-red-950/20">
           <p className="text-[13px] text-red-600 dark:text-red-400">
-            Error al cargar datos. Intenta de nuevo más tarde.
+            Error al cargar los reportes. Intenta de nuevo más tarde.
           </p>
         </div>
       )}
 
-      {!isLoading && !isError && (
+      {reportesData?.mensaje && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 dark:border-amber-900 dark:bg-amber-950/20">
+          <p className="text-[13px] text-amber-700 dark:text-amber-400">
+            {reportesData.mensaje}
+          </p>
+        </div>
+      )}
+
+      {!reportesQ.isLoading && !reportesQ.isError && !reportesData?.mensaje && (
         <>
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-3">
-              <p className="text-[24px] font-bold text-sse-ink">{indConResultado}</p>
-              <p className="text-[12px] text-sse-muted">Indicadores activos</p>
+              <p className="text-[24px] font-bold text-sse-ink">{totalMeses}</p>
+              <p className="text-[12px] text-sse-muted">Meses configurados</p>
             </div>
             <div className="rounded-xl border border-sse-border bg-sse-surface px-4 py-3">
               <p className="text-[24px] font-bold text-sse-ink">{mesesCubiertos}</p>
@@ -514,30 +305,22 @@ export default function ReportesPage() {
               Selecciona un mes
             </p>
             <MonthSelector
-              mesesConIndicadores={mesesConIndicadores}
               mesesConReporte={mesesConReporte}
               selected={activeMes}
               onSelect={(n) => setSelectedMes(n)}
             />
             <div className="mt-3 flex items-center gap-4 text-[11px] text-sse-muted">
               <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-sse-primary" /> Con indicadores
+                <span className="h-2 w-2 rounded-full bg-emerald-500" /> Con informe subido
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" /> Con informe
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full border border-sse-border" /> Sin datos
+                <span className="h-2 w-2 rounded-full border border-dashed border-sse-border" /> Sin informe
               </span>
             </div>
           </div>
 
-          {/* Month dashboard */}
-          <MesDashboard
-            mesNum={activeMes}
-            indicadores={indicadores}
-            mesReporte={mesByNum.get(activeMes)}
-          />
+          {/* Month detail */}
+          <MesDetail mes={mesByNum.get(activeMes)} mesNum={activeMes} />
         </>
       )}
     </div>
