@@ -66,15 +66,65 @@ export const VRAF_WORKSPACE = {
   icon: "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6",
 } as const;
 
+/** The 5 organizational unit workspaces — statically defined, no module required. */
+export const UNIT_WORKSPACES = [
+  {
+    id: "conta" as WorkspaceId,
+    short: "Contabilidad",
+    full: "Unidad de Contabilidad",
+    color: "#059669",
+    bg: "#ECFDF5",
+    icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
+  },
+  {
+    id: "rrhh" as WorkspaceId,
+    short: "Recursos Humanos",
+    full: "Unidad de Recursos Humanos",
+    color: "#7C3AED",
+    bg: "#F5F3FF",
+    icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100 8 4 4 0 000-8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
+  },
+  {
+    id: "mant" as WorkspaceId,
+    short: "Mantenimiento",
+    full: "Unidad de Mantenimiento e Infraestructura",
+    color: "#DC2626",
+    bg: "#FEF2F2",
+    icon: "M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z",
+  },
+  {
+    id: "compras" as WorkspaceId,
+    short: "Compras y Almacén",
+    full: "Unidad de Compras y Almacén",
+    color: "#D97706",
+    bg: "#FFFBEB",
+    icon: "M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0",
+  },
+  {
+    id: "salud" as WorkspaceId,
+    short: "Salud SSO",
+    full: "Comité de Seguridad y Salud Ocupacional",
+    color: "#0891B2",
+    bg: "#ECFEFF",
+    icon: "M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z",
+  },
+] as const;
+
+/** All organizational workspaces in display order. */
+export const ALL_ORG_WORKSPACES = [VRAF_WORKSPACE, ...UNIT_WORKSPACES];
+
 export const DEFAULT_WORKSPACE: WorkspaceId = "vraf";
 
+const _ORG_IDS = new Set(ALL_ORG_WORKSPACES.map((w) => w.id as string));
+
 export function isWorkspaceId(value: string): value is WorkspaceId {
-  if (value === VRAF_WORKSPACE.id) return true;
+  if (_ORG_IDS.has(value)) return true;
   return moduleRegistry.isModuleWorkspace(value);
 }
 
 export function getWorkspace(id: string) {
-  if (id === VRAF_WORKSPACE.id) return VRAF_WORKSPACE;
+  const orgUnit = ALL_ORG_WORKSPACES.find((w) => w.id === id);
+  if (orgUnit) return orgUnit;
   return moduleRegistry.getWorkspaceUnit(id);
 }
 
