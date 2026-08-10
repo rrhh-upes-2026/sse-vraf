@@ -2,6 +2,8 @@
  * Reportes service — fetches monthly report hierarchy from Google Apps Script.
  */
 
+import { getUnidad } from "@/services/monitoreo";
+
 const GAS_URL = process.env.APPS_SCRIPT_WEB_APP_URL ?? "";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -43,7 +45,9 @@ export interface ReportesHierarchy {
 
 export async function getReportes(wsId: string): Promise<ReportesHierarchy> {
   if (!GAS_URL) throw new Error("APPS_SCRIPT_WEB_APP_URL is not configured.");
-  const url = `${GAS_URL}?action=reportes&wsId=${encodeURIComponent(wsId)}`;
+  const unit = getUnidad(wsId);
+  if (!unit) throw new Error(`Unidad desconocida: ${wsId}`);
+  const url = `${GAS_URL}?action=reportes&wsId=${encodeURIComponent(unit.gasWsId)}`;
   const res = await fetch(url, { next: { revalidate: 600 } });
   if (!res.ok) throw new Error(`GAS error ${res.status}`);
   const data = await res.json();
