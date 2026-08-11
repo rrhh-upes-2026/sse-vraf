@@ -23,14 +23,10 @@ const BYPASS_USER = {
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const sessionUser = BYPASS_USER;
 
-  const isAdmin =
-    sessionUser.rol === "ADMINISTRADOR_GENERAL" ||
-    sessionUser.rol === "ADMINISTRADOR_UNIDAD";
-
   const user: SidebarUser = {
     name: sessionUser.name,
     initials: initialsFromName(sessionUser.name),
-    isAdmin,
+    role: "Administrador General",
   };
 
   return (

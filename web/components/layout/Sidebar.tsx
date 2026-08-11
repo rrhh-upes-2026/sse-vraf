@@ -4,19 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   DEFAULT_WORKSPACE,
-  ADMIN_NAV_ITEMS,
   WORKSPACE_SECTIONS,
   isWorkspaceId,
 } from "@/config/nav";
 import { GlyphIcon } from "@/components/layout/GlyphIcon";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
-import { useRoleStore } from "@/store/useRoleStore";
-import { demoRoleLabel } from "@/types/roles";
 
 export interface SidebarUser {
   name: string;
   initials: string;
-  isAdmin?: boolean;
+  role?: string;
 }
 
 interface SidebarProps {
@@ -30,12 +27,17 @@ function parseWorkspaceSegment(pathname: string) {
   return { wsId, section };
 }
 
+const DASHBOARD_EJECUTIVO = {
+  href: "/dashboard",
+  label: "Dashboard Ejecutivo",
+  icon: "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10 0a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z",
+};
+
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
-  const role = useRoleStore((s) => s.role);
-  const toggleRole = useRoleStore((s) => s.toggleRole);
 
   const { wsId, section } = parseWorkspaceSegment(pathname);
+  const dashboardActive = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 
   return (
     <aside className="flex h-screen w-[262px] flex-none flex-col bg-sse-sidebar-bg text-sse-sidebar-text">
@@ -43,9 +45,7 @@ export function Sidebar({ user }: SidebarProps) {
       <div className="flex items-center gap-[11px] border-b border-white/8 px-4 pt-[18px] pb-[14px]">
         <div
           className="flex size-9 flex-none items-center justify-center rounded-[10px] text-[14px] font-extrabold text-white"
-          style={{
-            background: "linear-gradient(135deg, #2E6BE6, #5B8DEF)",
-          }}
+          style={{ background: "linear-gradient(135deg, #2E6BE6, #5B8DEF)" }}
         >
           SS
         </div>
@@ -59,6 +59,21 @@ export function Sidebar({ user }: SidebarProps) {
 
       {/* Nav body */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-[18px]">
+        {/* Dashboard Ejecutivo — vista global */}
+        <div className="mb-2">
+          <Link
+            href={DASHBOARD_EJECUTIVO.href}
+            className={`flex w-full items-center gap-[11px] rounded-[9px] px-2.5 py-2 text-left text-[12.5px] font-sans ${
+              dashboardActive
+                ? "bg-[rgba(46,107,230,.20)] font-semibold text-white shadow-[inset_3px_0_0_#5B8DEF]"
+                : "font-medium text-sse-sidebar-text"
+            }`}
+          >
+            <GlyphIcon d={DASHBOARD_EJECUTIVO.icon} size={17} />
+            <span className="flex-1">{DASHBOARD_EJECUTIVO.label}</span>
+          </Link>
+        </div>
+
         {/* Workspace switcher + sections */}
         <WorkspaceSwitcher currentId={wsId} />
 
@@ -86,39 +101,6 @@ export function Sidebar({ user }: SidebarProps) {
             );
           })}
         </div>
-
-        {/* ── Administración — solo ADMIN / SUPER_ADMIN ─────────────────── */}
-        {user.isAdmin && (
-          <>
-            <div className="mt-4 mb-1.5 flex items-center gap-2 px-1">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-[9.5px] font-semibold uppercase tracking-[0.08em] text-sse-sidebar-text-dim">
-                Administración
-              </span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
-
-            <div className="flex flex-col gap-0.5">
-              {ADMIN_NAV_ITEMS.map((item) => {
-                const active = pathname === item.href || pathname.startsWith(item.href + "/");
-                return (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    className={`flex w-full items-center gap-[11px] rounded-[9px] px-2.5 py-[7px] text-left text-[12px] font-sans ${
-                      active
-                        ? "bg-[rgba(46,107,230,.20)] font-semibold text-white shadow-[inset_3px_0_0_#5B8DEF]"
-                        : "font-medium text-sse-sidebar-text"
-                    }`}
-                  >
-                    <GlyphIcon d={item.icon} size={15} />
-                    <span className="flex-1">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </>
-        )}
       </div>
 
       {/* Footer / profile */}
@@ -131,21 +113,9 @@ export function Sidebar({ user }: SidebarProps) {
             {user.name}
           </div>
           <div className="text-[10.5px] text-sse-sidebar-text-dim">
-            {demoRoleLabel(role)}
+            {user.role ?? "Administrador General"}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={toggleRole}
-          title="Cambiar perfil"
-          className="flex size-[30px] items-center justify-center rounded-[8px] border border-white/12 text-sse-sidebar-icon-muted"
-        >
-          <GlyphIcon
-            d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"
-            size={15}
-            strokeWidth={2}
-          />
-        </button>
       </div>
     </aside>
   );
