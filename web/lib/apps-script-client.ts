@@ -9,7 +9,7 @@ interface AppsScriptClient {
 }
 
 export function getAppsScriptClient(): AppsScriptClient {
-  const url = process.env.APPS_SCRIPT_URL;
+  const url = process.env.APPS_SCRIPT_WEB_APP_URL ?? process.env.APPS_SCRIPT_URL;
   if (!url) {
     throw new Error("APPS_SCRIPT_URL is not configured.");
   }

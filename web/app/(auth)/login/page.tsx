@@ -22,7 +22,7 @@ function LoginFlow() {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ email, password }),
       });
-      const data = await res.json() as { ok?: boolean; error?: string; mustChangePassword?: boolean };
+      const data = await res.json() as { ok?: boolean; error?: string; mustChangePassword?: boolean; unidadId?: string };
       if (!res.ok) {
         setError(data.error ?? "Credenciales inválidas.");
         return;
@@ -30,9 +30,14 @@ function LoginFlow() {
       if (data.mustChangePassword) {
         router.push("/change-password");
       } else {
-        const raw = searchParams.get("callbackUrl") ?? "/mi-trabajo";
-        const safeCallback = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/mi-trabajo";
-        router.push(safeCallback);
+        const callbackUrl = searchParams.get("callbackUrl");
+        const safeCallback = callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")
+          ? callbackUrl
+          : null;
+        const defaultDest = data.unidadId && data.unidadId !== "GLOBAL"
+          ? `/ws/${data.unidadId}/dashboard`
+          : "/dashboard";
+        router.push(safeCallback ?? defaultDest);
       }
     } catch {
       setError("Error de conexión. Intente nuevamente.");

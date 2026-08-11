@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   DEFAULT_WORKSPACE,
   WORKSPACE_SECTIONS,
@@ -35,8 +35,14 @@ const DASHBOARD_EJECUTIVO = {
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const router   = useRouter();
 
   const { wsId, section } = parseWorkspaceSegment(pathname);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  }
   const dashboardActive = pathname === "/dashboard" || pathname.startsWith("/dashboard/");
 
   return (
@@ -116,6 +122,18 @@ export function Sidebar({ user }: SidebarProps) {
             {user.role ?? "Administrador General"}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          title="Cerrar sesión"
+          className="flex size-[30px] items-center justify-center rounded-[8px] border border-white/12 text-sse-sidebar-icon-muted transition hover:border-white/30 hover:text-white"
+        >
+          <GlyphIcon
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            size={15}
+            strokeWidth={2}
+          />
+        </button>
       </div>
     </aside>
   );

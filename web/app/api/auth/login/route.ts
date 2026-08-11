@@ -49,7 +49,11 @@ export async function POST(req: NextRequest) {
       mustChangePassword: user.mustChangePassword ?? false,
     });
 
-    const res = NextResponse.json({ ok: true, mustChangePassword: user.mustChangePassword ?? false });
+    const res = NextResponse.json({
+      ok: true,
+      mustChangePassword: user.mustChangePassword ?? false,
+      unidadId: user.unidadId,
+    });
     res.cookies.set(SESSION_COOKIE, token, {
       httpOnly: true,
       secure:   process.env.NODE_ENV === "production",
