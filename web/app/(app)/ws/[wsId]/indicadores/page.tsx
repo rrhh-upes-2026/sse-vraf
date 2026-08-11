@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useMonitoreoIndicadores } from "@/hooks/useMonitoreoIndicadores";
 import { useIndicadorMetaStore } from "@/store/useIndicadorMetaStore";
-import { useRoleStore } from "@/store/useRoleStore";
+import { useEditAuthStore } from "@/store/useEditAuthStore";
+import { EditAuthModal } from "@/components/auth/EditAuthModal";
 import { getUnidad } from "@/types/unidad";
 import type { IndicadorMonitoreo } from "@/services/monitoreo";
 
@@ -230,11 +231,9 @@ function EditPanel({
 
 function IndicadorRow({
   ind,
-  isAdmin,
   onEdit,
 }: {
   ind: IndicadorMonitoreo & { _descripcion: string; _formula: string; _fechaEntrega: string };
-  isAdmin: boolean;
   onEdit: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -301,17 +300,15 @@ function IndicadorRow({
           </span>
         </td>
 
-        {/* Editar (admin) */}
+        {/* Editar */}
         <td className="px-4 py-3 w-16 text-right">
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onEdit(); }}
-              className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-medium"
-            >
-              Editar
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-medium"
+          >
+            Editar
+          </button>
           <span className="ml-1 text-[#CBD5E1] dark:text-[#2D3F5E] text-xs">
             {open ? "▲" : "▼"}
           </span>
@@ -330,9 +327,7 @@ function IndicadorRow({
                 </p>
                 <p className="text-[12px] text-[#334155] dark:text-[#CBD5E1] leading-relaxed">
                   {ind._descripcion || (
-                    <span className="italic text-[#CBD5E1]">Sin descripción. {
-                      isAdmin ? "Haz clic en Editar para agregar." : ""
-                    }</span>
+                    <span className="italic text-[#CBD5E1]">Sin descripción. Haz clic en Editar para agregar.</span>
                   )}
                 </p>
               </div>
@@ -348,7 +343,7 @@ function IndicadorRow({
                   </code>
                 ) : (
                   <p className="text-[12px] italic text-[#CBD5E1]">
-                    Sin fórmula definida.{isAdmin ? " Haz clic en Editar para agregar." : ""}
+                    Sin fórmula definida. Haz clic en Editar para agregar.
                   </p>
                 )}
               </div>
@@ -376,7 +371,7 @@ function IndicadorRow({
                   <p className="text-[12px] text-[#334155] dark:text-[#CBD5E1]">
                     {ind._fechaEntrega
                       ? new Intl.DateTimeFormat("es-SV", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(ind._fechaEntrega + "T00:00:00"))
-                      : <span className="italic text-[#CBD5E1]">{isAdmin ? "Sin fecha. Haz clic en Editar para agregar." : "No definida."}</span>
+                      : <span className="italic text-[#CBD5E1]">Sin fecha. Haz clic en Editar para agregar.</span>
                     }
                   </p>
                 </div>
@@ -397,12 +392,20 @@ export default function IndicadoresPage() {
 
   const { data: indicadores = [], isLoading, error, refetch } = useMonitoreoIndicadores(wsId);
   const { getMeta } = useIndicadorMetaStore();
-  const role = useRoleStore((s) => s.role);
-  const isAdmin = role === "admin";
+  const { isAuthenticated } = useEditAuthStore();
 
   const unidad = getUnidad(wsId);
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [editando, setEditando] = useState<IndicadorMonitoreo | null>(null);
+  const [authTarget, setAuthTarget] = useState<IndicadorMonitoreo | null>(null);
+
+  function handleEditClick(ind: IndicadorMonitoreo) {
+    if (isAuthenticated) {
+      setEditando(ind);
+    } else {
+      setAuthTarget(ind);
+    }
+  }
 
   // Merge Sheets data with local admin overrides
   const merged = indicadores.map((ind) => {
@@ -522,8 +525,7 @@ export default function IndicadoresPage() {
                   <IndicadorRow
                     key={ind.id}
                     ind={ind}
-                    isAdmin={isAdmin}
-                    onEdit={() => setEditando(ind)}
+                    onEdit={() => handleEditClick(ind)}
                   />
                 ))}
               </tbody>
@@ -531,9 +533,10 @@ export default function IndicadoresPage() {
           </div>
         )}
 
-        {isAdmin && !isLoading && indicadores.length > 0 && (
+        {!isLoading && indicadores.length > 0 && (
           <p className="mt-3 text-[11px] text-[#94A3B8]">
-            Rol actual: Administrador · Puedes editar la descripción y fórmula de cada indicador haciendo clic en <strong>Editar</strong>.
+            Haz clic en <strong>Editar</strong> para modificar la descripción o fórmula de un indicador.
+            {!isAuthenticated && " Se solicitarán credenciales institucionales la primera vez."}
           </p>
         )}
       </div>
@@ -543,6 +546,14 @@ export default function IndicadoresPage() {
         <EditPanel
           indicador={editando}
           onClose={() => setEditando(null)}
+        />
+      )}
+
+      {/* ── Auth modal (shown when user tries to edit without credentials) ──── */}
+      {authTarget && (
+        <EditAuthModal
+          onSuccess={() => { setEditando(authTarget); setAuthTarget(null); }}
+          onCancel={() => setAuthTarget(null)}
         />
       )}
     </div>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session";
 
 const PUBLIC_PATHS = ["/login", "/api/auth"];
-const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
+const skipAuth = true; // viewing is open; edit actions enforce auth via UI modal
 
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
