@@ -34,7 +34,7 @@ export const UNIDADES: UnidadConfig[] = [
   },
   {
     id: "conta",
-    nombre: "Contabilidad",
+    nombre: "Unidad de Contabilidad",
     codigo: "CONTA",
     color: "#059669",
     periodicidad: "mensual",
@@ -42,7 +42,7 @@ export const UNIDADES: UnidadConfig[] = [
   },
   {
     id: "compras",
-    nombre: "Compras",
+    nombre: "Unidad de Compras y Almacén",
     codigo: "COMPRAS",
     color: "#D97706",
     periodicidad: "mensual",
@@ -50,7 +50,7 @@ export const UNIDADES: UnidadConfig[] = [
   },
   {
     id: "mant",
-    nombre: "Mantenimiento",
+    nombre: "Unidad de Mantenimiento",
     codigo: "MANT",
     color: "#DC2626",
     periodicidad: "mensual",
@@ -58,7 +58,7 @@ export const UNIDADES: UnidadConfig[] = [
   },
   {
     id: "salud",
-    nombre: "Salud",
+    nombre: "Comité de Salud y Seguridad Ocupacional",
     codigo: "SALUD",
     color: "#0891B2",
     periodicidad: "mensual",

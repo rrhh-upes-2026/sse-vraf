@@ -1,6 +1,7 @@
 'use client';
 
 import { useMonitoreoIndicadores } from '@/hooks/useMonitoreoIndicadores';
+import { getUnidad } from '@/services/monitoreo';
 import type { IndicadorMonitoreo } from '@/services/monitoreo';
 
 type Semaforo = 'verde' | 'amarillo' | 'rojo' | 'gris';
@@ -36,9 +37,9 @@ function formatMetaResult(ind: IndicadorMonitoreo) {
   return { meta: fmt(ind.meta || null), resultado: fmt(ind.resultado) };
 }
 
-// ── Mock monthly compliance trend (replaced by real data when Sheets is connected) ──
+// Monthly compliance trend — placeholder until GAS provides historical data
 const MOCK_TREND = [74, 79, 81, 83, 86, 88, 90, 92];
-const CURRENT_MONTH = 7; // 0-indexed → Agosto
+const CURRENT_MONTH = new Date().getMonth(); // 0-indexed
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -239,23 +240,25 @@ function TrendChart({ trendData }: { trendData: number[] }) {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function UnidadDashboard({ wsId }: { wsId: string }) {
-  const { data, isLoading, error, refetch } = useMonitoreoIndicadores(wsId);
+  const { data, isLoading, error, refetch, dataUpdatedAt } = useMonitoreoIndicadores(wsId);
   const indicadores = data ?? [];
 
   const { pct: overallPct, semaforo: overallSemaforo } = computeOverall(indicadores);
   const enMeta   = indicadores.filter((i) => i.semaforo === 'verde').length;
   const criticos = indicadores.filter((i) => i.semaforo === 'rojo').length;
-  const totalEvidencias = indicadores.length * 5; // mock: 5 per indicator
+  const enRiesgo = indicadores.filter((i) => i.semaforo === 'amarillo').length;
 
-  const unidadNombre = wsId === 'rrhh' ? 'Recursos Humanos'
-    : wsId === 'conta' ? 'Contabilidad'
-    : wsId === 'compras' ? 'Compras'
-    : wsId === 'mant' ? 'Mantenimiento'
-    : wsId === 'salud' ? 'Salud SSO'
-    : wsId === 'vraf' ? 'VRAF'
-    : wsId.toUpperCase();
+  const unidad = getUnidad(wsId);
+  const unidadNombre = unidad?.nombre ?? wsId.toUpperCase();
 
-  const mesActual = 'Agosto 2026';
+  const now = new Date();
+  const mesActual = now.toLocaleDateString('es-SV', { month: 'long', year: 'numeric' });
+  const mesActualLabel = mesActual.charAt(0).toUpperCase() + mesActual.slice(1);
+
+  const ultimaActualizacion = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString('es-SV', { hour: '2-digit', minute: '2-digit' })
+    : null;
+
   const semaforoC = SEMAFORO_COLORS[overallSemaforo];
 
   if (error) {
@@ -284,12 +287,14 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
             {unidadNombre}
           </h1>
           <p className="text-[13px] text-[#4A5568] dark:text-[#A0B4C8]">
-            {mesActual} · Plan Estratégico 2026–2028
+            {mesActualLabel} · Plan Estratégico 2026–2028
           </p>
-          <div className="flex items-center gap-1.5 text-[12px] text-[#718096] mt-1">
-            <span className="w-[7px] h-[7px] rounded-full bg-[#16A34A] animate-pulse flex-shrink-0" />
-            Última actualización: hace 5 min
-          </div>
+          {ultimaActualizacion && (
+            <div className="flex items-center gap-1.5 text-[12px] text-[#718096] mt-1">
+              <span className="w-[7px] h-[7px] rounded-full bg-[#16A34A] animate-pulse flex-shrink-0" />
+              Última actualización: {ultimaActualizacion}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 pt-1">
           <button onClick={() => refetch()}
@@ -315,14 +320,14 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
               {overallPct === null ? '—' : `${overallPct}%`}
             </span>
             <SemaforoBadge semaforo={overallSemaforo} />
-            <span className="text-[13px] text-[#4A5568] dark:text-[#A0B4C8] mt-1">{mesActual}</span>
+            <span className="text-[13px] text-[#4A5568] dark:text-[#A0B4C8] mt-1">{mesActualLabel}</span>
           </div>
           {/* Stats */}
           {[
             { val: indicadores.length, label: 'Indicadores' },
             { val: enMeta,             label: 'En meta',    color: '#16A34A' },
+            { val: enRiesgo,           label: 'En riesgo',  color: enRiesgo > 0 ? '#D97706' : undefined },
             { val: criticos,           label: 'Críticos',   color: criticos > 0 ? '#DC2626' : undefined },
-            { val: totalEvidencias,    label: 'Evidencias' },
           ].map((s) => (
             <div key={s.label} className="flex flex-col gap-1 px-6 py-4 justify-center border-l border-[#CBD5E1] dark:border-[#243347]">
               <span className="font-mono text-[24px] font-bold leading-none" style={{ color: s.color ?? '#1A2332' }}

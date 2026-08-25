@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useMonitoreoEvidencias } from "@/hooks/useMonitoreoEvidencias";
 import { useEvidenciaMetaStore } from "@/store/useEvidenciaMetaStore";
-import { useRoleStore } from "@/store/useRoleStore";
+import { useEditAuthStore } from "@/store/useEditAuthStore";
+import { EditAuthModal } from "@/components/auth/EditAuthModal";
 import { getUnidad } from "@/services/monitoreo";
 import type { AreaEvidencia, IndicadorEvidencia, MesEvidencia, ArchivoEvidencia } from "@/services/monitoreo";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -198,15 +199,15 @@ function EditDescripcionPanel({
 function IndicadorCard({
   wsId,
   indicador,
-  isAdmin,
 }: {
   wsId: string;
   indicador: IndicadorEvidencia;
-  isAdmin: boolean;
 }) {
-  const [open, setOpen]     = useState(false);
-  const [editing, setEditing] = useState(false);
-  const { getMeta }           = useEvidenciaMetaStore();
+  const [open, setOpen]         = useState(false);
+  const [editing, setEditing]   = useState(false);
+  const [authPending, setAuthPending] = useState(false);
+  const { getMeta }             = useEvidenciaMetaStore();
+  const { isAuthenticated }     = useEditAuthStore();
 
   const meta        = getMeta(wsId, indicador.id);
   const descripcion = meta.descripcion ?? "";
@@ -240,18 +241,31 @@ function IndicadorCard({
           <ChevronIcon open={open} />
         </button>
 
-        {/* Admin: edit description button */}
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={() => { setEditing((v) => !v); setOpen(true); }}
-            title="Editar descripción de evidencia"
-            className="text-xs text-sse-muted hover:text-sse-primary px-2 py-1 rounded-md
-                       hover:bg-sse-primary/10 transition-colors shrink-0
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-sse-primary"
-          >
-            ✏️
-          </button>
+        {/* Edit description button */}
+        <button
+          type="button"
+          onClick={() => {
+            if (isAuthenticated) {
+              setEditing((v) => !v);
+              setOpen(true);
+            } else {
+              setAuthPending(true);
+            }
+          }}
+          title="Editar descripción de evidencia"
+          className="text-xs text-sse-muted hover:text-sse-primary px-2 py-1 rounded-md
+                     hover:bg-sse-primary/10 transition-colors shrink-0
+                     focus:outline-none focus-visible:ring-2 focus-visible:ring-sse-primary"
+        >
+          ✏️
+        </button>
+
+        {/* Credential modal */}
+        {authPending && (
+          <EditAuthModal
+            onSuccess={() => { setAuthPending(false); setEditing(true); setOpen(true); }}
+            onCancel={() => setAuthPending(false)}
+          />
         )}
       </div>
 
@@ -275,9 +289,7 @@ function IndicadorCard({
                 <p className="text-sm text-sse-ink">{descripcion}</p>
               ) : (
                 <p className="text-sm text-sse-muted italic">
-                  {isAdmin
-                    ? "Sin descripción — usa el botón ✏️ para agregar qué evidencia debe subirse."
-                    : "Sin descripción de evidencia requerida."}
+                  Sin descripción — usa el botón ✏️ para agregar qué evidencia debe subirse.
                 </p>
               )}
             </div>
@@ -319,11 +331,9 @@ function IndicadorCard({
 function AreaSection({
   wsId,
   area,
-  isAdmin,
 }: {
   wsId: string;
   area: AreaEvidencia;
-  isAdmin: boolean;
 }) {
   const [open, setOpen] = useState(true);
   const totalArchivos   = area.indicadores.reduce((s, i) => s + i.totalArchivos, 0);
@@ -360,7 +370,7 @@ function AreaSection({
       {open && (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           {area.indicadores.map((ind) => (
-            <IndicadorCard key={ind.id} wsId={wsId} indicador={ind} isAdmin={isAdmin} />
+            <IndicadorCard key={ind.id} wsId={wsId} indicador={ind} />
           ))}
         </div>
       )}
@@ -374,10 +384,10 @@ export default function EvidenciasPage() {
   const params  = useParams();
   const wsId    = params?.wsId as string;
   const unidad  = getUnidad(wsId);
-  const { role } = useRoleStore();
-  const isAdmin  = role === "admin";
+  const { isAuthenticated } = useEditAuthStore();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const { data, isLoading, error } = useMonitoreoEvidencias(wsId);
+  const { data, isLoading, error, refetch } = useMonitoreoEvidencias(wsId);
 
   const totalIndicadores = data?.areas.reduce((s, a) => s + a.indicadores.length, 0) ?? 0;
   const totalArchivos    = data?.areas.reduce((s, a) =>
@@ -396,20 +406,31 @@ export default function EvidenciasPage() {
           </p>
         </div>
 
-        {data?.carpetaUrl && (
-          <a
-            href={data.carpetaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => void refetch()}
             className="flex items-center gap-1.5 rounded-lg border border-sse-border bg-sse-surface
-                       px-3 py-1.5 text-[12px] text-sse-primary transition-colors
-                       hover:bg-black/[0.03] dark:hover:bg-white/[0.03]
+                       px-3 py-1.5 text-[12px] text-sse-muted hover:text-sse-ink transition-colors
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-sse-primary"
           >
-            <ExternalLinkIcon />
-            Abrir Drive
-          </a>
-        )}
+            ↻ Actualizar
+          </button>
+          {data?.carpetaUrl && (
+            <a
+              href={data.carpetaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg border border-sse-border bg-sse-surface
+                         px-3 py-1.5 text-[12px] text-sse-primary transition-colors
+                         hover:bg-black/[0.03] dark:hover:bg-white/[0.03]
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-sse-primary"
+            >
+              <ExternalLinkIcon />
+              Abrir Drive
+            </a>
+          )}
+        </div>
       </div>
 
       {/* Summary */}
@@ -468,9 +489,17 @@ export default function EvidenciasPage() {
       {!isLoading && !error && data && data.areas.length > 0 && (
         <div className="space-y-8">
           {data.areas.map((area) => (
-            <AreaSection key={area.id} wsId={wsId} area={area} isAdmin={isAdmin} />
+            <AreaSection key={area.id} wsId={wsId} area={area} />
           ))}
         </div>
+      )}
+
+      {/* Auth modal para editar descripción de evidencia */}
+      {showAuthModal && (
+        <EditAuthModal
+          onSuccess={() => setShowAuthModal(false)}
+          onCancel={() => setShowAuthModal(false)}
+        />
       )}
     </div>
   );

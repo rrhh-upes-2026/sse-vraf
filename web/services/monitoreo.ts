@@ -99,12 +99,12 @@ export function calcularSemaforo(pct: number): "verde" | "amarillo" | "rojo" {
 // ─── Unit configuration ───────────────────────────────────────────────────────
 
 export const UNIDADES: UnidadConfig[] = [
-  { id: "vraf",    gasWsId: "1-vicerrectoria-administrativa-y-financiera", nombre: "VRAF",             codigo: "VRAF", color: "#2563EB", periodicidad: "mensual", activo: true },
-  { id: "conta",   gasWsId: "2-contabilidad",                              nombre: "Contabilidad",     codigo: "CONT", color: "#059669", periodicidad: "mensual", activo: true },
-  { id: "rrhh",    gasWsId: "3-recursos-humanos",                          nombre: "Recursos Humanos", codigo: "RH",   color: "#7C3AED", periodicidad: "mensual", activo: true },
-  { id: "mant",    gasWsId: "4-mantenimiento-e-infraestructura",           nombre: "Mantenimiento",    codigo: "MANT", color: "#DC2626", periodicidad: "mensual", activo: true },
-  { id: "compras", gasWsId: "5-compras-y-almacen",                        nombre: "Compras",           codigo: "COMP", color: "#D97706", periodicidad: "mensual", activo: true },
-  { id: "salud",   gasWsId: "6-comite-de-seguridad-y-salud-ocupacional",  nombre: "Salud SSO",         codigo: "SSO",  color: "#0891B2", periodicidad: "mensual", activo: true },
+  { id: "vraf",    gasWsId: "1-vicerrectoria-administrativa-y-financiera", nombre: "Vicerrectoría Administrativa y Financiera", codigo: "VRAF", color: "#2563EB", periodicidad: "mensual", activo: true },
+  { id: "conta",   gasWsId: "2-contabilidad",                              nombre: "Unidad de Contabilidad",                    codigo: "CONT", color: "#059669", periodicidad: "mensual", activo: true },
+  { id: "rrhh",    gasWsId: "3-recursos-humanos",                          nombre: "Unidad de Recursos Humanos",                codigo: "RH",   color: "#7C3AED", periodicidad: "mensual", activo: true },
+  { id: "mant",    gasWsId: "4-mantenimiento-e-infraestructura",           nombre: "Unidad de Mantenimiento",                   codigo: "MANT", color: "#DC2626", periodicidad: "mensual", activo: true },
+  { id: "compras", gasWsId: "5-compras-y-almacen",                        nombre: "Unidad de Compras y Almacén",                codigo: "COMP", color: "#D97706", periodicidad: "mensual", activo: true },
+  { id: "salud",   gasWsId: "6-comite-de-seguridad-y-salud-ocupacional",  nombre: "Comité de Salud y Seguridad Ocupacional",   codigo: "SSO",  color: "#0891B2", periodicidad: "mensual", activo: true },
 ];
 
 export function getUnidad(wsId: string): UnidadConfig | undefined {

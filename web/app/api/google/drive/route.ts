@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const data = await getEvidencias(wsId);
     return NextResponse.json(data, {
       headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=60",
+        "Cache-Control": "no-store",
       },
     });
   } catch (err) {
