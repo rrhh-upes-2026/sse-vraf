@@ -296,7 +296,27 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-1 flex-wrap justify-end">
+          {unidad?.sheetId && (
+            <a
+              href={`https://docs.google.com/spreadsheets/d/${unidad.sheetId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[12px] font-medium text-[#059669] bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] px-3 py-1.5 rounded-[4px] hover:border-[#059669] transition-colors"
+            >
+              Abrir Sheets
+            </a>
+          )}
+          {unidad?.folderId && (
+            <a
+              href={`https://drive.google.com/drive/folders/${unidad.folderId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[12px] font-medium text-[#1B5E8F] bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] px-3 py-1.5 rounded-[4px] hover:border-[#1B5E8F] transition-colors"
+            >
+              Abrir Drive
+            </a>
+          )}
           <button onClick={() => refetch()}
             className="text-[12px] font-medium text-[#4A5568] dark:text-[#A0B4C8] bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] px-3 py-1.5 rounded-[4px] hover:border-[#1B5E8F] hover:text-[#1B5E8F] transition-colors">
             Actualizar

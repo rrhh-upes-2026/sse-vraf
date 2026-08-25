@@ -79,6 +79,10 @@ export interface UnidadConfig {
   nombre: string;
   codigo: string;
   color: string;
+  sheetId: string;
+  folderId: string;
+  evidenciaFolderId: string;
+  reportesFolderId: string;
   periodicidad: "mensual" | "trimestral";
   activo: boolean;
 }
@@ -99,12 +103,60 @@ export function calcularSemaforo(pct: number): "verde" | "amarillo" | "rojo" {
 // ─── Unit configuration ───────────────────────────────────────────────────────
 
 export const UNIDADES: UnidadConfig[] = [
-  { id: "vraf",    gasWsId: "1-vicerrectoria-administrativa-y-financiera", nombre: "Vicerrectoría Administrativa y Financiera", codigo: "VRAF", color: "#2563EB", periodicidad: "mensual", activo: true },
-  { id: "conta",   gasWsId: "2-contabilidad",                              nombre: "Unidad de Contabilidad",                    codigo: "CONT", color: "#059669", periodicidad: "mensual", activo: true },
-  { id: "rrhh",    gasWsId: "3-recursos-humanos",                          nombre: "Unidad de Recursos Humanos",                codigo: "RH",   color: "#7C3AED", periodicidad: "mensual", activo: true },
-  { id: "mant",    gasWsId: "4-mantenimiento-e-infraestructura",           nombre: "Unidad de Mantenimiento",                   codigo: "MANT", color: "#DC2626", periodicidad: "mensual", activo: true },
-  { id: "compras", gasWsId: "5-compras-y-almacen",                        nombre: "Unidad de Compras y Almacén",                codigo: "COMP", color: "#D97706", periodicidad: "mensual", activo: true },
-  { id: "salud",   gasWsId: "6-comite-de-seguridad-y-salud-ocupacional",  nombre: "Comité de Salud y Seguridad Ocupacional",   codigo: "SSO",  color: "#0891B2", periodicidad: "mensual", activo: true },
+  {
+    id: "vraf", gasWsId: "1-vicerrectoria-administrativa-y-financiera",
+    nombre: "Vicerrectoría Administrativa y Financiera", codigo: "VRAF", color: "#2563EB",
+    sheetId: "1ywkuf_nXlspFzQQPspOiG5RO6fexHVFTPCO5-V2dlhQ",
+    folderId: "1jHYsKPP1xlOr_MD3gC8Tc6WDClD7L_72",
+    evidenciaFolderId: "18Tke24fux0q9sjDk-PJ5W9S-dQbbaMtW",
+    reportesFolderId: "1d3T16aL46UZvAMzxQehEdXW9cFus-cAn",
+    periodicidad: "mensual", activo: true,
+  },
+  {
+    id: "conta", gasWsId: "2-contabilidad",
+    nombre: "Unidad de Contabilidad", codigo: "CONT", color: "#059669",
+    sheetId: "1NBSDIgUtCAt4xOLVX8BCmpKo9B3lwJFwLlWb3i7BHdg",
+    folderId: "1yLWvGkIqR5vb4HR_tQIeZ-VidpZf56Zb",
+    evidenciaFolderId: "1I4B02RBbNE-EDNacpkQ8UC13Ba8c93g8",
+    reportesFolderId: "1MY11V419c2Ev8eQbGf6CLUs5zZBMGhMm",
+    periodicidad: "mensual", activo: true,
+  },
+  {
+    id: "rrhh", gasWsId: "3-recursos-humanos",
+    nombre: "Unidad de Recursos Humanos", codigo: "RH", color: "#7C3AED",
+    sheetId: "1ZaqnD2_c-2ODjx3818MRhi4G9RS3TsXa1EnuxO_bUiQ",
+    folderId: "1SBBW4DMj9iFy2JJzXJYmRAbian4Mw_dK",
+    evidenciaFolderId: "1HEVnQB285slJlAZMVlOdhdU0U3O3ACh8",
+    reportesFolderId: "1M-i6MKFLoeGVmOBCTxRvAHXi3j5HVawv",
+    periodicidad: "mensual", activo: true,
+  },
+  {
+    id: "mant", gasWsId: "4-mantenimiento-e-infraestructura",
+    nombre: "Unidad de Mantenimiento", codigo: "MANT", color: "#DC2626",
+    sheetId: "1PsVaBhiqn5Jwf8B7Cn_r2IlwN0upduKG3oPvxFBi4Hs",
+    folderId: "1tVj6JsJsRKUHSrIzzrTpfo4AnO6RkI4N",
+    evidenciaFolderId: "1fMKb9WzCS1wS5juRjZzbr8OogzTvvm92",
+    reportesFolderId: "1-myB8uewMiwtVb-PaPD-M6gTBr1InKAT",
+    periodicidad: "mensual", activo: true,
+  },
+  {
+    id: "compras", gasWsId: "5-compras-y-almacen",
+    nombre: "Unidad de Compras y Almacén", codigo: "COMP", color: "#D97706",
+    sheetId: "1nfnLaPaVCcTbjneckEX4umxOY3A23ozra1q8jqZ3dn8",
+    folderId: "1tHoCVSXW7eE-9U5nM5qHZpyl9q1II9Ye",
+    evidenciaFolderId: "1dKf3plUaV3dbsVy7hGOBCUPaR5bKRcmx",
+    reportesFolderId: "1tWawHUr5hJZ4voUtt_oDe33MB80fa1OV",
+    periodicidad: "mensual", activo: true,
+  },
+  {
+    id: "salud", gasWsId: "6-comite-de-seguridad-y-salud-ocupacional",
+    nombre: "Comité de Salud y Seguridad Ocupacional", codigo: "SSO", color: "#0891B2",
+    sheetId: "18Hd7RzcOgQDdLJa8fQGH_ECn6R6dcmt4D6knK6pWZ9g",
+    folderId: "1qmZ6nmICrkGqn0hcTP5nxQ31Qy_G_xFS",
+    evidenciaFolderId: "1rp0_E-6EwGDfS7w4Um3jOBC9x-Mpqr1H",
+    reportesFolderId: "1B-Fdq-Jty2u1nHY3d4l6Y5EzovkDBxDR",
+    periodicidad: "mensual", activo: true,
+  },
 ];
 
 export function getUnidad(wsId: string): UnidadConfig | undefined {
