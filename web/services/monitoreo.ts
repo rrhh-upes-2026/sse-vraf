@@ -356,14 +356,14 @@ function transformEvidenciasHierarchy(gas: GasEvidenciasResponse): EvidenciaHier
  * Returns indicators for a workspace unit, fetched from Google Apps Script.
  * Throws on network or GAS errors — never returns stale mock data.
  */
-export async function getIndicadores(wsId: string): Promise<IndicadorMonitoreo[]> {
+export async function getIndicadores(wsId: string, refresh = false): Promise<IndicadorMonitoreo[]> {
   const unit = getUnidad(wsId);
   if (!unit) throw new Error(`Unidad desconocida: ${wsId}`);
 
   const gasUrl = process.env.APPS_SCRIPT_WEB_APP_URL;
   if (!gasUrl) throw new Error("APPS_SCRIPT_WEB_APP_URL no está configurado.");
 
-  const url = `${gasUrl}?action=indicadores&wsId=${encodeURIComponent(unit.gasWsId)}`;
+  const url = `${gasUrl}?action=indicadores&wsId=${encodeURIComponent(unit.gasWsId)}${refresh ? "&refresh=true" : ""}`;
   const res = await fetch(url, { cache: "no-store" });
 
   if (!res.ok) {
@@ -384,14 +384,14 @@ export async function getIndicadores(wsId: string): Promise<IndicadorMonitoreo[]
  * Structure: Unit → Areas → Indicator folders → Monthly folders → Files
  * Throws on network or GAS errors — never returns stale mock data.
  */
-export async function getEvidencias(wsId: string): Promise<EvidenciaHierarchy> {
+export async function getEvidencias(wsId: string, refresh = false): Promise<EvidenciaHierarchy> {
   const unit = getUnidad(wsId);
   if (!unit) throw new Error(`Unidad desconocida: ${wsId}`);
 
   const gasUrl = process.env.APPS_SCRIPT_WEB_APP_URL;
   if (!gasUrl) throw new Error("APPS_SCRIPT_WEB_APP_URL no está configurado.");
 
-  const url = `${gasUrl}?action=evidencias&wsId=${encodeURIComponent(unit.gasWsId)}`;
+  const url = `${gasUrl}?action=evidencias&wsId=${encodeURIComponent(unit.gasWsId)}${refresh ? "&refresh=true" : ""}`;
   const res = await fetch(url, { cache: "no-store" });
 
   if (!res.ok) {

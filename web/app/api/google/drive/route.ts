@@ -4,10 +4,11 @@ import { getEvidencias } from "@/services/monitoreo";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const wsId = req.nextUrl.searchParams.get("wsId") ?? "vraf";
+  const wsId    = req.nextUrl.searchParams.get("wsId") ?? "vraf";
+  const refresh = req.nextUrl.searchParams.get("refresh") === "true";
 
   try {
-    const data = await getEvidencias(wsId);
+    const data = await getEvidencias(wsId, refresh);
     return NextResponse.json(data, {
       headers: {
         "Cache-Control": "no-store",

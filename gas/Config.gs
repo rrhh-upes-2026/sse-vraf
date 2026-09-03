@@ -7,9 +7,9 @@ const VERSION = '1.0.0';
 
 const TTL = {
   REGISTRY:    30 * 60,   // 30 min — folder discovery
-  INDICADORES:  5 * 60,   //  5 min — sheet data
-  EVIDENCIAS:  10 * 60,   // 10 min — drive file list
-  REPORTES:    10 * 60,   // 10 min — drive report file list
+  INDICADORES:  2 * 60,   //  2 min — sheet data
+  EVIDENCIAS:   2 * 60,   //  2 min — drive file list
+  REPORTES:     2 * 60,   //  2 min — drive report file list
 };
 
 

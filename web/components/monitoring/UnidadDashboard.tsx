@@ -317,7 +317,11 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
               Abrir Drive
             </a>
           )}
-          <button onClick={() => refetch()}
+          <button
+            onClick={async () => {
+              await fetch(`/api/google/sheets?wsId=${wsId}&refresh=true`);
+              void refetch();
+            }}
             className="text-[12px] font-medium text-[#4A5568] dark:text-[#A0B4C8] bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] px-3 py-1.5 rounded-[4px] hover:border-[#1B5E8F] hover:text-[#1B5E8F] transition-colors">
             Actualizar
           </button>

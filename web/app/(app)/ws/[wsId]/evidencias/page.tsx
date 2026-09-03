@@ -388,6 +388,18 @@ export default function EvidenciasPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { data, isLoading, error, refetch } = useMonitoreoEvidencias(wsId);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  async function handleActualizar() {
+    setIsRefreshing(true);
+    try {
+      // Bust the GAS cache first, then update React Query
+      await fetch(`/api/google/drive?wsId=${wsId}&refresh=true`);
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
 
   const totalIndicadores = data?.areas.reduce((s, a) => s + a.indicadores.length, 0) ?? 0;
   const totalArchivos    = data?.areas.reduce((s, a) =>
@@ -409,12 +421,14 @@ export default function EvidenciasPage() {
         <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => void refetch()}
+            onClick={() => void handleActualizar()}
+            disabled={isRefreshing}
             className="flex items-center gap-1.5 rounded-lg border border-sse-border bg-sse-surface
                        px-3 py-1.5 text-[12px] text-sse-muted hover:text-sse-ink transition-colors
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-sse-primary"
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-sse-primary
+                       disabled:opacity-50 disabled:cursor-wait"
           >
-            ↻ Actualizar
+            {isRefreshing ? "Actualizando…" : "↻ Actualizar"}
           </button>
           {data?.carpetaUrl && (
             <a
