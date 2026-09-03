@@ -28,63 +28,97 @@ function getEvidencias(wsId, refresh) {
 }
 
 /**
- * Traverse 3 levels: Area → Indicator → Month → Files.
- * Returns the full nested structure.
+ * Traverse evidence folder hierarchy — adaptive to any folder depth.
+ *
+ * Expected ideal structure: evidenciaFolder → Area → Indicator → Month → Files
+ * Fallbacks handled automatically:
+ *   - Files placed directly in an Indicator folder → shown under synthetic month "Archivos"
+ *   - Files placed directly in an Area folder (no Indicator level) → synthetic Indicator
+ *   - No Area subfolders but direct Indicator folders → synthetic Area "General"
+ *   - Files directly in the evidence root → synthetic Area + Indicator
  */
 function readEvidenciaHierarchy(rootFolderId, wsId, unitNombre) {
   var rootFolder = DriveApp.getFolderById(rootFolderId);
   var areas      = [];
 
-  var areaIter = rootFolder.getFolders();
-  while (areaIter.hasNext()) {
-    var areaFolder = areaIter.next();
+  var areaSubfolders = collectFolders(rootFolder);
+
+  // No area subfolders at all — try treating root directly as an area
+  if (areaSubfolders.length === 0) {
+    var rootFiles = collectFiles(rootFolder);
+    if (rootFiles.length > 0) {
+      areas.push(buildSyntheticArea(rootFolder, rootFiles));
+    }
+    return buildResponse(wsId, unitNombre, rootFolderId, areas);
+  }
+
+  for (var a = 0; a < areaSubfolders.length; a++) {
+    var areaFolder = areaSubfolders[a];
     var area = {
-      id:        areaFolder.getId(),
-      nombre:    areaFolder.getName(),
-      driveId:   areaFolder.getId(),
-      driveUrl:  'https://drive.google.com/drive/folders/' + areaFolder.getId(),
+      id:          areaFolder.getId(),
+      nombre:      areaFolder.getName(),
+      driveId:     areaFolder.getId(),
+      driveUrl:    'https://drive.google.com/drive/folders/' + areaFolder.getId(),
       indicadores: [],
     };
 
-    var indIter = areaFolder.getFolders();
-    while (indIter.hasNext()) {
-      var indFolder = indIter.next();
-      var indicador = {
-        id:            indFolder.getId(),
-        nombre:        indFolder.getName(),
-        driveId:       indFolder.getId(),
-        driveUrl:      'https://drive.google.com/drive/folders/' + indFolder.getId(),
-        meses:         [],
-        totalArchivos: 0,
-      };
+    var indSubfolders = collectFolders(areaFolder);
+    var areaDirectFiles = collectFiles(areaFolder);
 
-      var mesIter = indFolder.getFolders();
-      while (mesIter.hasNext()) {
-        var mesFolder = mesIter.next();
-        var mesNombre = mesFolder.getName();
+    if (indSubfolders.length === 0) {
+      // Area has no indicator subfolders — treat area-level files as one synthetic indicator
+      if (areaDirectFiles.length > 0) {
+        area.indicadores.push(buildSyntheticIndicador(areaFolder, areaDirectFiles));
+      }
+    } else {
+      for (var i = 0; i < indSubfolders.length; i++) {
+        var indFolder = indSubfolders[i];
+        var indicador = {
+          id:            indFolder.getId(),
+          nombre:        indFolder.getName(),
+          driveId:       indFolder.getId(),
+          driveUrl:      'https://drive.google.com/drive/folders/' + indFolder.getId(),
+          meses:         [],
+          totalArchivos: 0,
+        };
 
-        var archivos  = [];
-        var fileIter  = mesFolder.getFiles();
-        while (fileIter.hasNext()) {
-          archivos.push(buildArchivoDescriptor(fileIter.next()));
+        var mesSubfolders   = collectFolders(indFolder);
+        var indDirectFiles  = collectFiles(indFolder);
+
+        // Files directly in the indicator folder — synthetic month entry
+        if (indDirectFiles.length > 0) {
+          var synMes = buildSyntheticMes(indFolder, indDirectFiles);
+          indicador.meses.push(synMes);
+          indicador.totalArchivos += synMes.total;
         }
-        archivos.sort(function(a, b) { return b.modificadoEn.localeCompare(a.modificadoEn); });
 
-        indicador.meses.push({
-          id:       mesFolder.getId(),
-          nombre:   mesNombre,
-          mes:      parseMesNum(mesNombre),
-          anio:     parseMesAnio(mesNombre),
-          driveId:  mesFolder.getId(),
-          driveUrl: 'https://drive.google.com/drive/folders/' + mesFolder.getId(),
-          archivos: archivos,
-          total:    archivos.length,
-        });
-        indicador.totalArchivos += archivos.length;
+        // Normal month subfolders
+        for (var m = 0; m < mesSubfolders.length; m++) {
+          var mesFolder = mesSubfolders[m];
+          var archivos  = collectFiles(mesFolder);
+          archivos.sort(function(a, b) { return b.modificadoEn.localeCompare(a.modificadoEn); });
+          var mesEntry = {
+            id:       mesFolder.getId(),
+            nombre:   mesFolder.getName(),
+            mes:      parseMesNum(mesFolder.getName()),
+            anio:     parseMesAnio(mesFolder.getName()),
+            driveId:  mesFolder.getId(),
+            driveUrl: 'https://drive.google.com/drive/folders/' + mesFolder.getId(),
+            archivos: archivos,
+            total:    archivos.length,
+          };
+          indicador.meses.push(mesEntry);
+          indicador.totalArchivos += mesEntry.total;
+        }
+
+        indicador.meses.sort(function(a, b) { return a.mes - b.mes; });
+        area.indicadores.push(indicador);
       }
 
-      indicador.meses.sort(function(a, b) { return a.mes - b.mes; });
-      area.indicadores.push(indicador);
+      // Also capture files sitting directly in the area (outside any indicator folder)
+      if (areaDirectFiles.length > 0 && indSubfolders.length > 0) {
+        area.indicadores.push(buildSyntheticIndicador(areaFolder, areaDirectFiles));
+      }
     }
 
     area.indicadores.sort(function(a, b) { return a.nombre.localeCompare(b.nombre); });
@@ -92,14 +126,76 @@ function readEvidenciaHierarchy(rootFolderId, wsId, unitNombre) {
   }
 
   areas.sort(function(a, b) { return a.nombre.localeCompare(b.nombre); });
+  return buildResponse(wsId, unitNombre, rootFolderId, areas);
+}
 
+// ─── Structure helpers ────────────────────────────────────────────────────────
+
+function collectFolders(folder) {
+  var iter    = folder.getFolders();
+  var result  = [];
+  while (iter.hasNext()) result.push(iter.next());
+  return result;
+}
+
+function collectFiles(folder) {
+  var iter    = folder.getFiles();
+  var result  = [];
+  while (iter.hasNext()) result.push(buildArchivoDescriptor(iter.next()));
+  result.sort(function(a, b) { return b.modificadoEn.localeCompare(a.modificadoEn); });
+  return result;
+}
+
+function buildSyntheticMes(parentFolder, archivos) {
+  return {
+    id:       parentFolder.getId() + '_files',
+    nombre:   'Archivos',
+    mes:      0,
+    anio:     new Date().getFullYear(),
+    driveId:  parentFolder.getId(),
+    driveUrl: 'https://drive.google.com/drive/folders/' + parentFolder.getId(),
+    archivos: archivos,
+    total:    archivos.length,
+  };
+}
+
+function buildSyntheticIndicador(folder, archivos) {
+  var mes = buildSyntheticMes(folder, archivos);
+  return {
+    id:            folder.getId() + '_ind',
+    nombre:        'Archivos sin clasificar',
+    driveId:       folder.getId(),
+    driveUrl:      'https://drive.google.com/drive/folders/' + folder.getId(),
+    meses:         [mes],
+    totalArchivos: archivos.length,
+  };
+}
+
+function buildSyntheticArea(folder, archivos) {
+  var ind = buildSyntheticIndicador(folder, archivos);
+  return {
+    id:          folder.getId() + '_area',
+    nombre:      'General',
+    driveId:     folder.getId(),
+    driveUrl:    'https://drive.google.com/drive/folders/' + folder.getId(),
+    indicadores: [ind],
+  };
+}
+
+function buildResponse(wsId, nombre, rootFolderId, areas) {
+  var total = 0;
+  for (var a = 0; a < areas.length; a++) {
+    for (var i = 0; i < areas[a].indicadores.length; i++) {
+      total += areas[a].indicadores[i].totalArchivos;
+    }
+  }
   return {
     wsId:       wsId,
-    nombre:     unitNombre,
+    nombre:     nombre,
     carpetaId:  rootFolderId,
     carpetaUrl: 'https://drive.google.com/drive/folders/' + rootFolderId,
     areas:      areas,
-    total:      areas.length,
+    total:      total,
     fetchedAt:  toISO(new Date()),
   };
 }

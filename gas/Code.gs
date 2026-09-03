@@ -31,6 +31,7 @@ function doGet(e) {
       case 'indicadores':    return handleIndicadores(wsId, refresh);
       case 'evidencias':     return handleEvidencias(wsId, refresh);
       case 'reportes':       return handleReportes(wsId, refresh);
+      case 'debug':          return handleDebug(wsId);
       default:
         return errorResponse('Acción desconocida: "' + action + '". Usa: health, registry, indicadores, evidencias, reportes.', 400);
     }
@@ -108,6 +109,61 @@ function handleReportes(wsId, refresh) {
   const data = getReportes(wsId, refresh);
   if (data && data.error) return errorResponse(data.message, data.code);
   return jsonResponse(data);
+}
+
+function handleDebug(wsId) {
+  if (!wsId) return errorResponse('Parámetro requerido: wsId', 400);
+  var registry = getRegistry(false);
+  var unit = null;
+  for (var i = 0; i < registry.units.length; i++) {
+    if (registry.units[i].id === wsId) { unit = registry.units[i]; break; }
+  }
+  if (!unit) return errorResponse('Unidad no encontrada: ' + wsId, 404);
+
+  var info = {
+    wsId:              wsId,
+    unitEncontrada:    true,
+    nombre:            unit.nombre,
+    folderId:          unit.folderId,
+    sheetId:           unit.sheetId,
+    evidenciaFolderId: unit.evidenciaFolderId,
+    reportesFolderId:  unit.reportesFolderId,
+    estructura:        null,
+  };
+
+  if (unit.evidenciaFolderId) {
+    try {
+      var root = DriveApp.getFolderById(unit.evidenciaFolderId);
+      var areas = collectFolders(root);
+      info.estructura = {
+        rootNombre: root.getName(),
+        archivosDirectos: collectFiles(root).length,
+        areas: areas.map(function(af) {
+          var inds = collectFolders(af);
+          var directFiles = collectFiles(af).length;
+          return {
+            nombre: af.getName(),
+            archivosDirectos: directFiles,
+            indicadores: inds.map(function(inf) {
+              var meses = collectFolders(inf);
+              var indFiles = collectFiles(inf).length;
+              return {
+                nombre: inf.getName(),
+                archivosDirectos: indFiles,
+                meses: meses.map(function(mf) {
+                  return { nombre: mf.getName(), archivos: collectFiles(mf).length };
+                }),
+              };
+            }),
+          };
+        }),
+      };
+    } catch (e) {
+      info.errorEstructura = e.message;
+    }
+  }
+
+  return jsonResponse(info);
 }
 
 
