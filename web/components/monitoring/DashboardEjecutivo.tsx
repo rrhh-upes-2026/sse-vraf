@@ -46,11 +46,12 @@ function IconRefresh({ className }: { className?: string }) {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function computeUnitMetrics(unidad: UnidadConfig, indicadores: Indicador[]): UnitMetrics {
+  const withData = indicadores.filter((i) => i.porcentaje != null);
   const count = indicadores.length;
   const pct =
-    count > 0
+    withData.length > 0
       ? Math.round(
-          indicadores.reduce((acc, i) => acc + Math.min(i.porcentaje, 100), 0) / count,
+          withData.reduce((acc, i) => acc + Math.min(i.porcentaje!, 100), 0) / withData.length,
         )
       : 0;
   const verdeCount    = indicadores.filter((i) => i.semaforo === 'verde').length;
@@ -246,10 +247,11 @@ export function DashboardEjecutivo() {
   const totalIndicadores = allIndicadores.length;
   const enRiesgo = allIndicadores.filter((i) => i.semaforo === 'amarillo').length;
   const criticos = allIndicadores.filter((i) => i.semaforo === 'rojo').length;
+  const allWithData = allIndicadores.filter((i) => i.porcentaje != null);
   const overallPct =
-    totalIndicadores > 0
+    allWithData.length > 0
       ? Math.round(
-          allIndicadores.reduce((acc, i) => acc + Math.min(i.porcentaje, 100), 0) / totalIndicadores,
+          allWithData.reduce((acc, i) => acc + Math.min(i.porcentaje!, 100), 0) / allWithData.length,
         )
       : 0;
 

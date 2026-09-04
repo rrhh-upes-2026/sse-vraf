@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getIndicadores } from "@/services/monitoreo";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
   const wsId    = req.nextUrl.searchParams.get("wsId") ?? "vraf";
