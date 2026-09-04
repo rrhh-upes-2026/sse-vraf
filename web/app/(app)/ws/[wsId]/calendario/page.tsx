@@ -139,13 +139,70 @@ function DayCell({ day, events, selected, today, onClick }: DayCellProps) {
         </div>
       )}
 
-      {events[0] && (
+      {events.length > 0 && (
         <p className="mt-1 truncate text-[9px] leading-tight text-sse-muted">
-          {events[0].label}
+          {events.length === 1
+            ? events[0].label
+            : `${events.length} entregas`}
         </p>
       )}
     </button>
   );
+}
+
+// ── Deadline scheduling helpers ───────────────────────────────────────────────
+
+// Day 5 of delivery month; if Sunday, use day 6 (Monday) — stays within the 3-7 window.
+function deadlineDay(evYear: number, evMonth: number): number {
+  return new Date(evYear, evMonth, 5).getDay() === 0 ? 6 : 5;
+}
+
+// Return all CalEvents for one indicator given its periodicidad and the calendar year.
+// Mensual   → Feb–Dec of evYear (for Jan–Nov data) + Jan next year (for Dec data)
+// Trimestral→ Apr, Jul, Oct of evYear + Jan next year
+// Semestral → Jun, Dec of evYear
+// Anual     → Nov of evYear
+function buildEvidenciaEvents(
+  indicadorNombre: string,
+  periodicidad: string,
+  evYear: number,
+): CalEvent[] {
+  const evts: CalEvent[] = [];
+
+  const push = (evMonth: number, evYearOverride: number, periodo: string) => {
+    evts.push({
+      day:      deadlineDay(evYearOverride, evMonth),
+      month:    evMonth,
+      year:     evYearOverride,
+      category: "evidencias" as const,
+      label:    indicadorNombre,
+      sub:      periodo,
+    });
+  };
+
+  switch (periodicidad) {
+    case "mensual":
+      for (let m = 0; m <= 10; m++) {
+        push(m + 1, evYear, MONTH_NAMES_ES[m]);
+      }
+      push(0, evYear + 1, "Diciembre " + evYear);
+      break;
+    case "trimestral":
+      push(3,  evYear,     "Ene–Mar");
+      push(6,  evYear,     "Abr–Jun");
+      push(9,  evYear,     "Jul–Sep");
+      push(0,  evYear + 1, "Oct–Dic");
+      break;
+    case "semestral":
+      push(5,  evYear, "Ene–May");
+      push(11, evYear, "Jun–Nov");
+      break;
+    case "anual":
+      push(10, evYear, String(evYear));
+      break;
+  }
+
+  return evts;
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -163,63 +220,6 @@ export default function CalendarioPage() {
   // Real indicator data
   const { data: indicadores = [] } = useMonitoreoIndicadores(wsId);
   const { getMeta }                = useIndicadorMetaStore();
-
-  // Day 5 of target month, moved to Mon if Sunday (never lands on Sunday, stays in 3-7 range)
-  function deadlineDay(evYear: number, evMonth: number): number {
-    const dow = new Date(evYear, evMonth, 5).getDay(); // 0=Sun
-    return dow === 0 ? 6 : 5;
-  }
-
-  // Generate all delivery deadline events for an indicator based on its periodicidad
-  // Rules:
-  //   Mensual     → 5th of each following month (Feb–Dec for Jan–Nov; Dec→Jan next year)
-  //   Trimestral  → 5th of Apr, Jul, Oct, Jan(next)
-  //   Semestral   → 5th of Jun, Dec
-  //   Anual       → 5th of Nov
-  // If the 5th is Sunday, use the 6th.
-  function buildEvidenciaEvents(ind: { id: string; nombre: string }, periodicidad: string, evYear: number): CalEvent[] {
-    const evts: CalEvent[] = [];
-
-    const push = (evMonth: number, evYearOverride: number, periodo: string) => {
-      evts.push({
-        day:      deadlineDay(evYearOverride, evMonth),
-        month:    evMonth,
-        year:     evYearOverride,
-        category: "evidencias",
-        label:    ind.nombre,
-        sub:      periodo,
-      });
-    };
-
-    switch (periodicidad) {
-      case "mensual":
-        // Jan–Nov → deliver Feb–Dec of evYear
-        for (let m = 0; m <= 10; m++) {
-          push(m + 1, evYear, MONTH_NAMES_ES[m]);
-        }
-        // Dec → deliver Jan of next year (visible when user navigates to next year)
-        push(0, evYear + 1, "Diciembre " + evYear);
-        break;
-
-      case "trimestral":
-        push(3,  evYear,     "Ene–Mar");   // Q1 → Apr
-        push(6,  evYear,     "Abr–Jun");   // Q2 → Jul
-        push(9,  evYear,     "Jul–Sep");   // Q3 → Oct
-        push(0,  evYear + 1, "Oct–Dic");   // Q4 → Jan next year
-        break;
-
-      case "semestral":
-        push(5,  evYear, "Ene–May");   // S1 → Jun
-        push(11, evYear, "Jun–Nov");   // S2 → Dec
-        break;
-
-      case "anual":
-        push(10, evYear, String(evYear));  // Annual → Nov
-        break;
-    }
-
-    return evts;
-  }
 
   // Build all calendar events
   const events = useMemo<CalEvent[]>(() => {
@@ -244,7 +244,7 @@ export default function CalendarioPage() {
     // Automatic evidencia deadlines based on periodicidad — generates all year events
     for (const ind of indicadores) {
       const periodos = buildEvidenciaEvents(
-        { id: ind.id, nombre: ind.nombre },
+        ind.nombre,
         ind.periodicidad ?? "mensual",
         year,
       );
