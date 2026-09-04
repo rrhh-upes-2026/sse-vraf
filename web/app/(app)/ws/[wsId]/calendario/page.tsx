@@ -5,8 +5,6 @@ import { useState, useMemo } from "react";
 import { getUnidad } from "@/types/unidad";
 import { useMonitoreoIndicadores } from "@/hooks/useMonitoreoIndicadores";
 import { useIndicadorMetaStore } from "@/store/useIndicadorMetaStore";
-import { useEvidenciaMetaStore } from "@/store/useEvidenciaMetaStore";
-import { useMonitoreoEvidencias } from "@/hooks/useMonitoreoEvidencias";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -165,24 +163,69 @@ export default function CalendarioPage() {
   // Real indicator data
   const { data: indicadores = [] } = useMonitoreoIndicadores(wsId);
   const { getMeta }                = useIndicadorMetaStore();
-  const { getMeta: getEvMeta }     = useEvidenciaMetaStore();
-  const { data: evidencias }       = useMonitoreoEvidencias(wsId);
 
-  // Months that trigger delivery per frequency
-  function getDeliveryMonths(frecuencia: string): number[] {
-    switch (frecuencia) {
-      case "trimestral": return [2, 5, 8, 11]; // Mar, Jun, Sep, Dec (0-indexed)
-      case "semestral":  return [5, 11];
-      case "anual":      return [11];
-      default:           return [0,1,2,3,4,5,6,7,8,9,10,11]; // mensual
-    }
+  // Day 5 of target month, moved to Mon if Sunday (never lands on Sunday, stays in 3-7 range)
+  function deadlineDay(evYear: number, evMonth: number): number {
+    const dow = new Date(evYear, evMonth, 5).getDay(); // 0=Sun
+    return dow === 0 ? 6 : 5;
   }
 
-  // Build events from indicator delivery dates AND evidencia deadlines
+  // Generate all delivery deadline events for an indicator based on its periodicidad
+  // Rules:
+  //   Mensual     → 5th of each following month (Feb–Dec for Jan–Nov; Dec→Jan next year)
+  //   Trimestral  → 5th of Apr, Jul, Oct, Jan(next)
+  //   Semestral   → 5th of Jun, Dec
+  //   Anual       → 5th of Nov
+  // If the 5th is Sunday, use the 6th.
+  function buildEvidenciaEvents(ind: { id: string; nombre: string }, periodicidad: string, evYear: number): CalEvent[] {
+    const evts: CalEvent[] = [];
+
+    const push = (evMonth: number, evYearOverride: number, periodo: string) => {
+      evts.push({
+        day:      deadlineDay(evYearOverride, evMonth),
+        month:    evMonth,
+        year:     evYearOverride,
+        category: "evidencias",
+        label:    ind.nombre,
+        sub:      periodo,
+      });
+    };
+
+    switch (periodicidad) {
+      case "mensual":
+        // Jan–Nov → deliver Feb–Dec of evYear
+        for (let m = 0; m <= 10; m++) {
+          push(m + 1, evYear, MONTH_NAMES_ES[m]);
+        }
+        // Dec → deliver Jan of next year (visible when user navigates to next year)
+        push(0, evYear + 1, "Diciembre " + evYear);
+        break;
+
+      case "trimestral":
+        push(3,  evYear,     "Ene–Mar");   // Q1 → Apr
+        push(6,  evYear,     "Abr–Jun");   // Q2 → Jul
+        push(9,  evYear,     "Jul–Sep");   // Q3 → Oct
+        push(0,  evYear + 1, "Oct–Dic");   // Q4 → Jan next year
+        break;
+
+      case "semestral":
+        push(5,  evYear, "Ene–May");   // S1 → Jun
+        push(11, evYear, "Jun–Nov");   // S2 → Dec
+        break;
+
+      case "anual":
+        push(10, evYear, String(evYear));  // Annual → Nov
+        break;
+    }
+
+    return evts;
+  }
+
+  // Build all calendar events
   const events = useMemo<CalEvent[]>(() => {
     const result: CalEvent[] = [];
 
-    // Indicator delivery dates (from useIndicadorMetaStore)
+    // Manual delivery dates from indicadorMetaStore
     for (const ind of indicadores) {
       const meta = getMeta(wsId, ind.id);
       if (!meta.fechaEntrega) continue;
@@ -198,26 +241,18 @@ export default function CalendarioPage() {
       });
     }
 
-    // Evidencia deadlines — one event per delivery month of the current year
-    const allIndicadores = (evidencias?.areas ?? []).flatMap((a) => a.indicadores);
-    for (const ind of allIndicadores) {
-      const evMeta = getEvMeta(wsId, ind.id);
-      if (!evMeta.frecuencia || !evMeta.diaVencimiento) continue;
-      const months = getDeliveryMonths(evMeta.frecuencia);
-      for (const m of months) {
-        result.push({
-          day:      evMeta.diaVencimiento,
-          month:    m,
-          year:     year, // current calendar year
-          category: "evidencias",
-          label:    ind.nombre,
-          sub:      evMeta.nombreDocumento || evMeta.frecuencia,
-        });
-      }
+    // Automatic evidencia deadlines based on periodicidad — generates all year events
+    for (const ind of indicadores) {
+      const periodos = buildEvidenciaEvents(
+        { id: ind.id, nombre: ind.nombre },
+        ind.periodicidad ?? "mensual",
+        year,
+      );
+      result.push(...periodos);
     }
 
     return result;
-  }, [indicadores, getMeta, wsId, evidencias, getEvMeta, year]);
+  }, [indicadores, getMeta, wsId, year]);
 
   function prevMonth() {
     if (month === 0) { setYear((y) => y - 1); setMonth(11); }
@@ -286,10 +321,10 @@ export default function CalendarioPage() {
       {events.length === 0 && (
         <div className="rounded-xl border border-dashed border-sse-border bg-sse-surface px-5 py-6 text-center">
           <p className="text-[13px] text-sse-muted">
-            Aún no hay fechas de entrega configuradas.
+            Aún no hay indicadores cargados para generar el calendario.
           </p>
           <p className="mt-1 text-[12px] text-sse-muted">
-            Ve a <strong>Evidencias → ✏️</strong> y configura la frecuencia y día límite para cada indicador.
+            Las fechas se generan automáticamente desde la periodicidad de cada indicador.
           </p>
         </div>
       )}
