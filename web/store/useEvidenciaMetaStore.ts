@@ -3,7 +3,10 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface EvidenciaIndicadorMeta {
-  descripcion?: string; // What evidence should be uploaded for this indicator
+  descripcion?: string;
+  nombreDocumento?: string;
+  frecuencia?: "mensual" | "trimestral" | "semestral" | "anual";
+  diaVencimiento?: number; // 1-31, day of month when evidence is due
 }
 
 interface EvidenciaMetaState {

@@ -5,6 +5,8 @@ import { useState, useMemo } from "react";
 import { getUnidad } from "@/types/unidad";
 import { useMonitoreoIndicadores } from "@/hooks/useMonitoreoIndicadores";
 import { useIndicadorMetaStore } from "@/store/useIndicadorMetaStore";
+import { useEvidenciaMetaStore } from "@/store/useEvidenciaMetaStore";
+import { useMonitoreoEvidencias } from "@/hooks/useMonitoreoEvidencias";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -162,11 +164,25 @@ export default function CalendarioPage() {
 
   // Real indicator data
   const { data: indicadores = [] } = useMonitoreoIndicadores(wsId);
-  const { getMeta } = useIndicadorMetaStore();
+  const { getMeta }                = useIndicadorMetaStore();
+  const { getMeta: getEvMeta }     = useEvidenciaMetaStore();
+  const { data: evidencias }       = useMonitoreoEvidencias(wsId);
 
-  // Build events from indicator delivery dates
+  // Months that trigger delivery per frequency
+  function getDeliveryMonths(frecuencia: string): number[] {
+    switch (frecuencia) {
+      case "trimestral": return [2, 5, 8, 11]; // Mar, Jun, Sep, Dec (0-indexed)
+      case "semestral":  return [5, 11];
+      case "anual":      return [11];
+      default:           return [0,1,2,3,4,5,6,7,8,9,10,11]; // mensual
+    }
+  }
+
+  // Build events from indicator delivery dates AND evidencia deadlines
   const events = useMemo<CalEvent[]>(() => {
     const result: CalEvent[] = [];
+
+    // Indicator delivery dates (from useIndicadorMetaStore)
     for (const ind of indicadores) {
       const meta = getMeta(wsId, ind.id);
       if (!meta.fechaEntrega) continue;
@@ -181,8 +197,27 @@ export default function CalendarioPage() {
         sub:      ind.responsable || undefined,
       });
     }
+
+    // Evidencia deadlines — one event per delivery month of the current year
+    const allIndicadores = (evidencias?.areas ?? []).flatMap((a) => a.indicadores);
+    for (const ind of allIndicadores) {
+      const evMeta = getEvMeta(wsId, ind.id);
+      if (!evMeta.frecuencia || !evMeta.diaVencimiento) continue;
+      const months = getDeliveryMonths(evMeta.frecuencia);
+      for (const m of months) {
+        result.push({
+          day:      evMeta.diaVencimiento,
+          month:    m,
+          year:     year, // current calendar year
+          category: "evidencias",
+          label:    ind.nombre,
+          sub:      evMeta.nombreDocumento || evMeta.frecuencia,
+        });
+      }
+    }
+
     return result;
-  }, [indicadores, getMeta, wsId]);
+  }, [indicadores, getMeta, wsId, evidencias, getEvMeta, year]);
 
   function prevMonth() {
     if (month === 0) { setYear((y) => y - 1); setMonth(11); }
@@ -243,7 +278,7 @@ export default function CalendarioPage() {
           Calendario{unidad ? ` — ${unidad.nombre}` : ""}
         </h1>
         <p className="mt-1 text-[13px] text-sse-muted">
-          Fechas de entrega de indicadores propuestas por el administrador.
+          Fechas límite de entrega de indicadores y evidencias por indicador.
         </p>
       </div>
 
@@ -251,10 +286,10 @@ export default function CalendarioPage() {
       {events.length === 0 && (
         <div className="rounded-xl border border-dashed border-sse-border bg-sse-surface px-5 py-6 text-center">
           <p className="text-[13px] text-sse-muted">
-            Aún no hay fechas de entrega configuradas para los indicadores de esta unidad.
+            Aún no hay fechas de entrega configuradas.
           </p>
           <p className="mt-1 text-[12px] text-sse-muted">
-            Ve a <strong>Indicadores → Editar</strong> y agrega la fecha de entrega propuesta en cada indicador.
+            Ve a <strong>Evidencias → ✏️</strong> y configura la frecuencia y día límite para cada indicador.
           </p>
         </div>
       )}

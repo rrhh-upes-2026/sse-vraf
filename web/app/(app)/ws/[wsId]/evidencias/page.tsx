@@ -136,42 +136,104 @@ function MesPanel({ mes }: { mes: MesEvidencia }) {
   );
 }
 
-// ─── Edit panel for indicator description ─────────────────────────────────────
+// ─── Edit panel for indicator evidence requirements ────────────────────────────
+
+const FRECUENCIA_OPTS = [
+  { value: "mensual",     label: "Mensual" },
+  { value: "trimestral",  label: "Trimestral" },
+  { value: "semestral",   label: "Semestral" },
+  { value: "anual",       label: "Anual" },
+] as const;
 
 function EditDescripcionPanel({
   wsId,
   indicador,
-  descripcion,
   onClose,
 }: {
   wsId: string;
   indicador: IndicadorEvidencia;
-  descripcion: string;
   onClose: () => void;
 }) {
-  const [value, setValue] = useState(descripcion);
-  const { setMeta } = useEvidenciaMetaStore();
+  const { getMeta, setMeta } = useEvidenciaMetaStore();
+  const current = getMeta(wsId, indicador.id);
+
+  const [descripcion,      setDescripcion]      = useState(current.descripcion      ?? "");
+  const [nombreDocumento,  setNombreDocumento]  = useState(current.nombreDocumento  ?? "");
+  const [frecuencia,       setFrecuencia]       = useState(current.frecuencia       ?? "mensual");
+  const [diaVencimiento,   setDiaVencimiento]   = useState(current.diaVencimiento   ?? 5);
 
   function save() {
-    setMeta(wsId, indicador.id, { descripcion: value });
+    setMeta(wsId, indicador.id, {
+      descripcion,
+      nombreDocumento,
+      frecuencia: frecuencia as "mensual" | "trimestral" | "semestral" | "anual",
+      diaVencimiento: Number(diaVencimiento),
+    });
     onClose();
   }
 
+  const inputClass = `w-full rounded-lg border border-sse-border bg-sse-surface px-3 py-2 text-sm
+    text-sse-ink placeholder:text-sse-muted focus:outline-none focus-visible:ring-2
+    focus-visible:ring-sse-primary`;
+
   return (
-    <div className="border-t border-sse-border bg-amber-50/60 dark:bg-amber-900/10 px-4 py-3 space-y-2">
-      <label className="block text-xs font-semibold text-sse-muted uppercase tracking-wide">
-        Descripción de evidencia requerida
-      </label>
-      <textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        rows={3}
-        placeholder="Describe qué documentos/archivos se deben subir para respaldar este indicador..."
-        className="w-full rounded-lg border border-sse-border bg-sse-surface px-3 py-2 text-sm
-                   text-sse-ink placeholder:text-sse-muted resize-none
-                   focus:outline-none focus-visible:ring-2 focus-visible:ring-sse-primary"
-      />
-      <div className="flex items-center justify-end gap-2">
+    <div className="border-t border-sse-border bg-amber-50/60 dark:bg-amber-900/10 px-4 py-4 space-y-4">
+      <p className="text-xs font-semibold text-sse-muted uppercase tracking-wide">
+        Requisitos de evidencia
+      </p>
+
+      {/* Description */}
+      <div className="space-y-1">
+        <label className="block text-xs text-sse-muted">¿Qué documento se debe subir?</label>
+        <textarea
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          rows={2}
+          placeholder="Ej: Reporte de asistencia a capacitaciones firmado por el jefe inmediato"
+          className={`${inputClass} resize-none`}
+        />
+      </div>
+
+      {/* Document name */}
+      <div className="space-y-1">
+        <label className="block text-xs text-sse-muted">Nombre del archivo requerido</label>
+        <input
+          type="text"
+          value={nombreDocumento}
+          onChange={(e) => setNombreDocumento(e.target.value)}
+          placeholder="Ej: Reporte_Capacitacion_Enero_2026.pdf"
+          className={inputClass}
+        />
+      </div>
+
+      {/* Frequency + deadline day */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label className="block text-xs text-sse-muted">Frecuencia de entrega</label>
+          <select
+            value={frecuencia}
+            onChange={(e) => setFrecuencia(e.target.value as "mensual" | "trimestral" | "semestral" | "anual")}
+            className={inputClass}
+          >
+            {FRECUENCIA_OPTS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="block text-xs text-sse-muted">Día límite del mes</label>
+          <input
+            type="number"
+            min={1}
+            max={28}
+            value={diaVencimiento}
+            onChange={(e) => setDiaVencimiento(Number(e.target.value))}
+            className={inputClass}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-2 pt-1">
         <button
           type="button"
           onClick={onClose}
@@ -209,8 +271,7 @@ function IndicadorCard({
   const { getMeta }             = useEvidenciaMetaStore();
   const { isAuthenticated }     = useEditAuthStore();
 
-  const meta        = getMeta(wsId, indicador.id);
-  const descripcion = meta.descripcion ?? "";
+  const meta = getMeta(wsId, indicador.id);
 
   const totalMeses    = indicador.meses.length;
   const mesesConDatos = indicador.meses.filter((m) => m.total > 0).length;
@@ -234,8 +295,14 @@ function IndicadorCard({
               {" · "}
               <span className="font-medium">{indicador.totalArchivos}</span> archivos totales
             </p>
-            {descripcion && !open && (
-              <p className="text-xs text-sse-muted mt-1 line-clamp-1 italic">{descripcion}</p>
+            {meta.descripcion && !open && (
+              <p className="text-xs text-sse-muted mt-1 line-clamp-1 italic">{meta.descripcion}</p>
+            )}
+            {meta.frecuencia && !open && (
+              <p className="text-xs text-sse-muted mt-0.5">
+                <span className="font-medium capitalize">{meta.frecuencia}</span>
+                {meta.diaVencimiento ? ` · día ${meta.diaVencimiento}` : ""}
+              </p>
             )}
           </div>
           <ChevronIcon open={open} />
@@ -277,20 +344,33 @@ function IndicadorCard({
             <EditDescripcionPanel
               wsId={wsId}
               indicador={indicador}
-              descripcion={descripcion}
               onClose={() => setEditing(false)}
             />
           ) : (
-            <div className="px-4 pb-3 border-t border-sse-border/40 pt-3">
-              <p className="text-xs font-semibold text-sse-muted uppercase tracking-wide mb-1">
+            <div className="px-4 pb-3 border-t border-sse-border/40 pt-3 space-y-2">
+              <p className="text-xs font-semibold text-sse-muted uppercase tracking-wide">
                 Evidencia requerida
               </p>
-              {descripcion ? (
-                <p className="text-sm text-sse-ink">{descripcion}</p>
+              {meta.descripcion ? (
+                <p className="text-sm text-sse-ink">{meta.descripcion}</p>
               ) : (
                 <p className="text-sm text-sse-muted italic">
-                  Sin descripción — usa el botón ✏️ para agregar qué evidencia debe subirse.
+                  Sin descripción — usa ✏️ para configurar qué evidencia se debe subir.
                 </p>
+              )}
+              {(meta.nombreDocumento || meta.frecuencia) && (
+                <div className="flex flex-wrap gap-3 pt-1">
+                  {meta.nombreDocumento && (
+                    <span className="inline-flex items-center gap-1 text-xs text-sse-muted">
+                      <span>📄</span> <span className="font-mono">{meta.nombreDocumento}</span>
+                    </span>
+                  )}
+                  {meta.frecuencia && (
+                    <span className="inline-flex items-center gap-1 text-xs rounded-full border border-sse-border px-2 py-0.5 text-sse-muted capitalize">
+                      🗓 {meta.frecuencia}{meta.diaVencimiento ? ` · día ${meta.diaVencimiento}` : ""}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           )}
