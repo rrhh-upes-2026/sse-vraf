@@ -17,6 +17,8 @@ interface UnitMetrics {
   unidad: UnidadConfig;
   count: number;
   pct: number;
+  pctMensual: number | null;
+  pctGeneral: number | null;
   semaforo: 'verde' | 'amarillo' | 'rojo';
   verdeCount: number;
   amarilloCount: number;
@@ -46,14 +48,24 @@ function IconRefresh({ className }: { className?: string }) {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function computeUnitMetrics(unidad: UnidadConfig, indicadores: Indicador[]): UnitMetrics {
-  const withData = indicadores.filter((i) => i.porcentaje != null);
   const count = indicadores.length;
-  const pct =
-    withData.length > 0
-      ? Math.round(
-          withData.reduce((acc, i) => acc + Math.min(i.porcentaje!, 100), 0) / withData.length,
-        )
-      : 0;
+
+  // Avance mensual: average porcentaje of indicators with a current result
+  const withCurrent = indicadores.filter((i) => i.porcentaje != null);
+  const pctMensual  = withCurrent.length > 0
+    ? Math.round(withCurrent.reduce((acc, i) => acc + Math.min(i.porcentaje!, 100), 0) / withCurrent.length)
+    : null;
+
+  // Avance general: year-to-date average across all historial entries
+  const allHist    = indicadores.flatMap((i) => i.historial ?? []);
+  const pctGeneral = allHist.length > 0
+    ? Math.round(
+        allHist.reduce((acc, h) => acc + (h.meta > 0 ? Math.min((h.valor / h.meta) * 100, 100) : 0), 0) / allHist.length,
+      )
+    : null;
+
+  const pct = pctMensual ?? pctGeneral ?? 0;
+
   const verdeCount    = indicadores.filter((i) => i.semaforo === 'verde').length;
   const amarilloCount = indicadores.filter((i) => i.semaforo === 'amarillo').length;
   const rojoCount     = indicadores.filter((i) => i.semaforo === 'rojo').length;
@@ -61,7 +73,7 @@ function computeUnitMetrics(unidad: UnidadConfig, indicadores: Indicador[]): Uni
   const semaforo: UnitMetrics['semaforo'] =
     rojoCount > 0 ? 'rojo' : amarilloCount > 0 ? 'amarillo' : 'verde';
 
-  return { unidad, count, pct, semaforo, verdeCount, amarilloCount, rojoCount };
+  return { unidad, count, pct, pctMensual, pctGeneral, semaforo, verdeCount, amarilloCount, rojoCount };
 }
 
 function formatDate(iso: string): string {
@@ -118,13 +130,40 @@ function SemaforoChip({ semaforo }: { semaforo: keyof typeof CHIP_STYLE }) {
 
 // ── Unit ranking row ──────────────────────────────────────────────────────────
 
+function MiniBar({ pct, color, label }: { pct: number | null; color: string; label: string }) {
+  const display = pct != null ? pct : null;
+  return (
+    <div className="flex flex-col gap-0.5 min-w-0">
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-[9px] font-semibold uppercase tracking-wider text-sse-muted">{label}</span>
+        <span className="text-[11px] font-semibold tabular-nums text-sse-ink">
+          {display != null ? `${display}%` : <span className="text-sse-muted font-normal">—</span>}
+        </span>
+      </div>
+      <div
+        className="w-full rounded-full overflow-hidden"
+        style={{ height: 5, backgroundColor: 'var(--sse-border, #E5E7EB)' }}
+        role="progressbar"
+        aria-valuenow={display ?? 0}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${display ?? 0}%`, backgroundColor: display != null ? color : 'transparent' }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function UnitRow({ metrics }: { metrics: UnitMetrics }) {
-  const { unidad, count, pct, semaforo } = metrics;
+  const { unidad, count, pctMensual, pctGeneral, semaforo } = metrics;
 
   return (
     <tr className="border-b border-sse-border last:border-0 transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
       {/* Unit name + color indicator */}
-      <td className="py-3 pl-4 pr-2">
+      <td className="py-3 pl-4 pr-3" style={{ width: '28%' }}>
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="h-7 w-1 flex-shrink-0 rounded-full" style={{ backgroundColor: unidad.color }} aria-hidden="true" />
           <div className="min-w-0">
@@ -134,28 +173,14 @@ function UnitRow({ metrics }: { metrics: UnitMetrics }) {
         </div>
       </td>
 
-      {/* Progress bar */}
-      <td className="hidden py-3 px-3 sm:table-cell" style={{ width: '35%' }}>
-        <div className="flex items-center gap-2">
-          <div
-            className="flex-1 rounded-full overflow-hidden"
-            style={{ height: 6, backgroundColor: 'var(--sse-border, #E5E7EB)' }}
-            role="progressbar"
-            aria-valuenow={pct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${pct}%`, backgroundColor: unidad.color }}
-            />
-          </div>
-        </div>
+      {/* Avance mensual */}
+      <td className="hidden py-3 px-3 sm:table-cell" style={{ width: '26%' }}>
+        <MiniBar pct={pctMensual} color={unidad.color} label="Mes actual" />
       </td>
 
-      {/* % value */}
-      <td className="py-3 px-3 text-right">
-        <span className="text-sm font-semibold tabular-nums text-sse-ink">{pct}%</span>
+      {/* Avance general */}
+      <td className="hidden py-3 px-3 sm:table-cell" style={{ width: '26%' }}>
+        <MiniBar pct={pctGeneral} color={unidad.color} label="Acumulado año" />
       </td>
 
       {/* Semáforo chip */}
@@ -344,14 +369,14 @@ export function DashboardEjecutivo() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-sse-border bg-black/[0.02] dark:bg-white/[0.02]">
-                <th className="py-2 pl-4 pr-2 text-[10px] font-semibold uppercase tracking-wider text-sse-muted">
+                <th className="py-2 pl-4 pr-3 text-[10px] font-semibold uppercase tracking-wider text-sse-muted">
                   Unidad
                 </th>
                 <th className="hidden py-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-sse-muted sm:table-cell">
-                  Avance
+                  Avance Mensual
                 </th>
-                <th className="py-2 px-3 text-right text-[10px] font-semibold uppercase tracking-wider text-sse-muted">
-                  %
+                <th className="hidden py-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-sse-muted sm:table-cell">
+                  Avance General
                 </th>
                 <th className="py-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-sse-muted">
                   Estado
