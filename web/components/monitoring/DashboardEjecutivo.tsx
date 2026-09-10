@@ -318,7 +318,7 @@ export function DashboardEjecutivo() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-sse-ink">
-            Dashboard Ejecutivo Institucional
+            Dashboard General
           </h1>
           <p className="mt-0.5 text-sm text-sse-muted">
             Vista consolidada · {formatDate(new Date().toISOString())}

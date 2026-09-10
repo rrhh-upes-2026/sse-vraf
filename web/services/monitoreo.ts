@@ -185,7 +185,7 @@ interface GasIndicador {
   porcentaje: number | null;
   semaforo: string;
   tendencia: string;
-  historial: { fecha: string; resultado: number }[];
+  historial: { periodo: string; valor: number; meta: number }[];
 }
 
 interface GasIndicadoresResponse {
@@ -301,9 +301,9 @@ function transformIndicador(gas: GasIndicador, wsId: string): IndicadorMonitoreo
     periodicidad:       normalizePeriodicidad(gas.periodicidad),
     ultimaActualizacion: gas.fecha || new Date().toISOString().split("T")[0],
     historial:          (gas.historial ?? []).map((h) => ({
-      periodo: h.fecha,
-      valor:   h.resultado,
-      meta:    gas.meta ?? 0,
+      periodo: h.periodo,
+      valor:   h.valor,
+      meta:    h.meta ?? gas.meta ?? 0,
     })),
     wsId,
   };
