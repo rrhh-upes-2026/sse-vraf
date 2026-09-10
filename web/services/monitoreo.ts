@@ -4,6 +4,12 @@
  * No mock fallback — GAS is the single source of truth.
  */
 
+// Returns Authorization header if GAS_BEARER_TOKEN is configured; empty object otherwise.
+function gasAuthHeaders(): HeadersInit {
+  const token = process.env.GAS_BEARER_TOKEN;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // ─── Public types ─────────────────────────────────────────────────────────────
 
 export interface IndicadorMonitoreo {
@@ -364,7 +370,8 @@ export async function getIndicadores(wsId: string, refresh = false): Promise<Ind
   if (!gasUrl) throw new Error("APPS_SCRIPT_WEB_APP_URL no está configurado.");
 
   const url = `${gasUrl}?action=indicadores&wsId=${encodeURIComponent(unit.gasWsId)}${refresh ? "&refresh=true" : ""}`;
-  const res = await fetch(url, { cache: "no-store" });
+  const headers = gasAuthHeaders();
+  const res = await fetch(url, { cache: "no-store", headers });
 
   if (!res.ok) {
     throw new Error(`No fue posible obtener la información de Google Workspace. (HTTP ${res.status})`);
@@ -392,7 +399,8 @@ export async function getEvidencias(wsId: string, refresh = false): Promise<Evid
   if (!gasUrl) throw new Error("APPS_SCRIPT_WEB_APP_URL no está configurado.");
 
   const url = `${gasUrl}?action=evidencias&wsId=${encodeURIComponent(unit.gasWsId)}${refresh ? "&refresh=true" : ""}`;
-  const res = await fetch(url, { cache: "no-store" });
+  const headers = gasAuthHeaders();
+  const res = await fetch(url, { cache: "no-store", headers });
 
   if (!res.ok) {
     throw new Error(`No fue posible obtener la información de Google Workspace. (HTTP ${res.status})`);

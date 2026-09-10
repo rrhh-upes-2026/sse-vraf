@@ -196,8 +196,9 @@ function isAuthorized(e) {
   const expected = getProp('BEARER_TOKEN', '');
   if (!expected) return true;
 
-  const token = (e.parameter && e.parameter.token) ||
-                ((e.headers && e.headers['Authorization']) || '').replace(/^Bearer\s+/i, '');
+  // Read token from Authorization header only — never from URL params (prevents logging in GAS/proxy logs).
+  const authHeader = (e.headers && e.headers['Authorization']) || '';
+  const token = authHeader.replace(/^Bearer\s+/i, '');
   return token === expected;
 }
 

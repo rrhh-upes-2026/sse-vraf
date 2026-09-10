@@ -4,7 +4,10 @@
 
 import { getUnidad } from "@/services/monitoreo";
 
-const GAS_URL = process.env.APPS_SCRIPT_WEB_APP_URL ?? "";
+function gasAuthHeaders(): HeadersInit {
+  const token = process.env.GAS_BEARER_TOKEN;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,11 +47,12 @@ export interface ReportesHierarchy {
 // ─── Fetcher ──────────────────────────────────────────────────────────────────
 
 export async function getReportes(wsId: string): Promise<ReportesHierarchy> {
+  const GAS_URL = process.env.APPS_SCRIPT_WEB_APP_URL ?? "";
   if (!GAS_URL) throw new Error("APPS_SCRIPT_WEB_APP_URL is not configured.");
   const unit = getUnidad(wsId);
   if (!unit) throw new Error(`Unidad desconocida: ${wsId}`);
   const url = `${GAS_URL}?action=reportes&wsId=${encodeURIComponent(unit.gasWsId)}`;
-  const res = await fetch(url, { next: { revalidate: 600 } });
+  const res = await fetch(url, { next: { revalidate: 600 }, headers: gasAuthHeaders() });
   if (!res.ok) throw new Error(`GAS error ${res.status}`);
   const data = await res.json();
   if (data.error) throw new Error(data.message ?? "GAS returned an error");
