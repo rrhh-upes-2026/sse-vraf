@@ -189,12 +189,12 @@ function getCurrentResultado(row, monthlyColumns) {
 /**
  * Build a historial array from all non-empty monthly columns.
  */
-function buildHistorialFromMonthly(row, monthlyColumns) {
+function buildHistorialFromMonthly(row, monthlyColumns, meta) {
   var hist = [];
   for (var i = 0; i < monthlyColumns.length; i++) {
     var val = row[monthlyColumns[i].colIndex];
     var n   = parseNumber(val);
-    if (n !== null) hist.push({ fecha: monthlyColumns[i].month, resultado: n });
+    if (n !== null) hist.push({ periodo: monthlyColumns[i].month, valor: n, meta: meta || 0 });
   }
   return hist;
 }
@@ -219,7 +219,7 @@ function parseRow(row, colIndex, monthlyColumns, seq) {
     var current  = getCurrentResultado(row, monthlyColumns);
     resultado    = current.resultado;
     fechaResultado = current.mes ? (current.mes + ' ' + new Date().getFullYear()) : '';
-    historial    = buildHistorialFromMonthly(row, monthlyColumns);
+    historial    = buildHistorialFromMonthly(row, monthlyColumns, meta);
   } else {
     resultado    = parseNumber(getCellValue(row, colIndex, 'resultado'));
     fechaResultado = formatCellDate(getCellValue(row, colIndex, 'fecha'));
@@ -305,8 +305,8 @@ function calcSemaforo(porcentaje) {
 
 function calcTendencia(historial, resultadoActual) {
   if (!historial || historial.length < 2 || resultadoActual === null) return 'estable';
-  var prev = historial[historial.length - 2].resultado;
-  if (prev === null) return 'estable';
+  var prev = historial[historial.length - 2].valor;
+  if (prev === null || prev === undefined) return 'estable';
   if (resultadoActual > prev) return 'subiendo';
   if (resultadoActual < prev) return 'bajando';
   return 'estable';
