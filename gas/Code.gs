@@ -112,6 +112,7 @@ function handleReportes(wsId, refresh) {
 }
 
 function handleDebug(wsId) {
+  if (!getProp('DEBUG_MODE', '')) return errorResponse('Endpoint de depuración deshabilitado.', 403);
   if (!wsId) return errorResponse('Parámetro requerido: wsId', 400);
   var registry = getRegistry(false);
   var unit = null;

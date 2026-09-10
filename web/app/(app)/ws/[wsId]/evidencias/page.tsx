@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMonitoreoEvidencias } from "@/hooks/useMonitoreoEvidencias";
 import { useEvidenciaMetaStore } from "@/store/useEvidenciaMetaStore";
 import { useEditAuthStore } from "@/store/useEditAuthStore";
 import { EditAuthModal } from "@/components/auth/EditAuthModal";
 import { getUnidad } from "@/services/monitoreo";
-import type { AreaEvidencia, IndicadorEvidencia, MesEvidencia, ArchivoEvidencia } from "@/services/monitoreo";
+import type { AreaEvidencia, IndicadorEvidencia, MesEvidencia, ArchivoEvidencia, EvidenciaHierarchy } from "@/services/monitoreo";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -467,15 +468,18 @@ export default function EvidenciasPage() {
   const { isAuthenticated } = useEditAuthStore();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const { data, isLoading, error, refetch } = useMonitoreoEvidencias(wsId);
+  const queryClient = useQueryClient();
+  const { data, isLoading, error } = useMonitoreoEvidencias(wsId);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   async function handleActualizar() {
     setIsRefreshing(true);
     try {
-      // Bust the GAS cache first, then update React Query
-      await fetch(`/api/google/drive?wsId=${wsId}&refresh=true`);
-      await refetch();
+      const res = await fetch(`/api/google/drive?wsId=${wsId}&refresh=true`);
+      if (res.ok) {
+        const fresh = await res.json() as EvidenciaHierarchy;
+        queryClient.setQueryData(["monitoreo", "evidencias", wsId], fresh);
+      }
     } finally {
       setIsRefreshing(false);
     }

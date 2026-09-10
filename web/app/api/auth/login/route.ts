@@ -64,7 +64,10 @@ export async function POST(req: NextRequest) {
     return res;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    const status = msg.includes("bloqueada") || msg.includes("intentos") ? 429
+    const gasCode = (err as Error & { gasCode?: number }).gasCode;
+    const status = gasCode === 429 ? 429
+                 : gasCode === 403 ? 403
+                 : msg.includes("bloqueada") || msg.includes("intentos") ? 429
                  : msg.includes("institucional") ? 403
                  : 401;
     return NextResponse.json({ error: msg }, { status });

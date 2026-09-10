@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useMonitoreoIndicadores } from '@/hooks/useMonitoreoIndicadores';
 import { getUnidad } from '@/services/monitoreo';
 import type { IndicadorMonitoreo } from '@/services/monitoreo';
@@ -37,9 +38,33 @@ function formatMetaResult(ind: IndicadorMonitoreo) {
   return { meta: fmt(ind.meta || null), resultado: fmt(ind.resultado) };
 }
 
-// Monthly compliance trend — placeholder until GAS provides historical data
-const MOCK_TREND = [74, 79, 81, 83, 86, 88, 90, 92];
 const CURRENT_MONTH = new Date().getMonth(); // 0-indexed
+
+const SPANISH_MONTHS: Record<string, number> = {
+  enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+  julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11,
+};
+
+function computeTrend(indicadores: IndicadorMonitoreo[]): number[] {
+  const byMonth: Record<number, number[]> = {};
+  for (const ind of indicadores) {
+    for (const h of ind.historial) {
+      const monthIdx = SPANISH_MONTHS[h.periodo.toLowerCase()];
+      if (monthIdx === undefined || !h.meta || h.meta <= 0) continue;
+      const pct = Math.round(Math.min((h.valor / h.meta) * 100, 100));
+      if (!byMonth[monthIdx]) byMonth[monthIdx] = [];
+      byMonth[monthIdx].push(pct);
+    }
+  }
+  const result: number[] = [];
+  for (let i = 0; i <= CURRENT_MONTH; i++) {
+    const vals = byMonth[i];
+    if (vals && vals.length > 0) {
+      result.push(Math.round(vals.reduce((a, b) => a + b, 0) / vals.length));
+    }
+  }
+  return result;
+}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -70,11 +95,6 @@ function ProgressBar({ pct, semaforo }: { pct: number; semaforo: Semaforo }) {
 function IndicadorCard({ ind }: { ind: IndicadorMonitoreo }) {
   const c = SEMAFORO_COLORS[ind.semaforo as Semaforo];
   const { meta, resultado } = formatMetaResult(ind);
-  // Mock evidence counts — replaced by Drive data in next iteration
-  const required = 5;
-  const loaded = ind.semaforo === 'rojo' ? 2 : ind.semaforo === 'amarillo' ? 3 : 4;
-  const evPct = Math.round((loaded / required) * 100);
-  const evSemaforo: Semaforo = evPct >= 80 ? 'verde' : evPct >= 60 ? 'amarillo' : 'rojo';
 
   return (
     <div
@@ -115,32 +135,13 @@ function IndicadorCard({ ind }: { ind: IndicadorMonitoreo }) {
       </div>
 
       {/* Progress bar */}
-      <div className="mb-3">
+      <div className="mb-2.5">
         <ProgressBar pct={ind.porcentaje ?? 0} semaforo={ind.semaforo as Semaforo} />
       </div>
 
-      {/* Bottom: evidencias + Editar */}
-      <div className="flex items-center justify-between gap-2 border-t border-[#CBD5E1] dark:border-[#243347] pt-2.5">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[10px] font-medium uppercase tracking-[.06em] text-[#718096] whitespace-nowrap">
-            Evidencias
-          </span>
-          <span className="text-[12px] text-[#4A5568] dark:text-[#A0B4C8] tabular-nums">
-            {required} req / {loaded} carg
-          </span>
-          <span
-            className="text-[11px] font-semibold px-1.5 py-px rounded-[3px] tabular-nums"
-            style={{ background: SEMAFORO_COLORS[evSemaforo].bg, color: SEMAFORO_COLORS[evSemaforo].text }}
-          >
-            {evPct}%
-          </span>
-        </div>
-        <button
-          disabled
-          className="text-[11px] font-medium text-[#718096] bg-[#F7FAFC] dark:bg-[#1C2A3E] border border-[#CBD5E1] dark:border-[#243347] px-2.5 py-1 rounded-[3px] opacity-60 flex-shrink-0 cursor-default"
-        >
-          Editar
-        </button>
+      {/* Bottom: semaforo */}
+      <div className="border-t border-[#CBD5E1] dark:border-[#243347] pt-2.5">
+        <SemaforoBadge semaforo={ind.semaforo as Semaforo} />
       </div>
     </div>
   );
@@ -148,9 +149,7 @@ function IndicadorCard({ ind }: { ind: IndicadorMonitoreo }) {
 
 function TrendChart({ trendData }: { trendData: number[] }) {
   const actual = trendData;
-  const projected = [91, 90, 89, 88]; // Sep-Dic projected
-  const all = [...actual, ...projected];
-  const max = Math.max(...all, 100);
+  const max = Math.max(...actual, 100);
   const chartH = 150;
   const _chartW = 840;
   const barW = 42;
@@ -181,11 +180,6 @@ function TrendChart({ trendData }: { trendData: number[] }) {
           );
         })}
 
-        {/* Projected separator */}
-        <line x1={xStart + xStep * actual.length} y1={10} x2={xStart + xStep * actual.length} y2={chartH + 10}
-          stroke="#CBD5E1" strokeWidth={1} strokeDasharray="5,4" opacity={0.6} />
-        <text x={xStart + xStep * actual.length + 4} y={22} fontSize={9} fill="#718096">→ proyectado</text>
-
         {/* Actual bars */}
         {actual.map((v, i) => {
           const x = xStart + xStep * i - barW / 2;
@@ -201,21 +195,6 @@ function TrendChart({ trendData }: { trendData: number[] }) {
               />
               <text x={xStart + xStep * i} y={y - 3} textAnchor="middle" fontSize={9.5}
                 fill="#1B5E8F" fontFamily="'Courier New',monospace" fontWeight={isCurrent ? '700' : '400'}
-              >{v}%</text>
-            </g>
-          );
-        })}
-
-        {/* Projected bars */}
-        {projected.map((v, i) => {
-          const x = xStart + xStep * (actual.length + i) - barW / 2;
-          const y = yScale(v);
-          const h = chartH + 10 - y;
-          return (
-            <g key={i}>
-              <rect x={x} y={y} width={barW} height={h} fill="#CBD5E1" opacity={0.7} rx={2} />
-              <text x={xStart + xStep * (actual.length + i)} y={y - 3} textAnchor="middle"
-                fontSize={9.5} fill="#718096" fontFamily="'Courier New',monospace"
               >{v}%</text>
             </g>
           );
@@ -240,7 +219,8 @@ function TrendChart({ trendData }: { trendData: number[] }) {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function UnidadDashboard({ wsId }: { wsId: string }) {
-  const { data, isLoading, error, refetch, dataUpdatedAt } = useMonitoreoIndicadores(wsId);
+  const queryClient = useQueryClient();
+  const { data, isLoading, error, dataUpdatedAt } = useMonitoreoIndicadores(wsId);
   const indicadores = data ?? [];
 
   const { pct: overallPct, semaforo: overallSemaforo } = computeOverall(indicadores);
@@ -266,7 +246,8 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
       <div className="flex flex-col items-center justify-center py-20 text-center px-8">
         <p className="font-semibold text-[#1A2332] dark:text-[#E2EBF5]">No fue posible obtener la información de Google Workspace.</p>
         <p className="text-sm text-[#718096] mt-1">{error.message}</p>
-        <button onClick={() => refetch()}
+        <button
+          onClick={() => queryClient.invalidateQueries({ queryKey: ['monitoreo', 'indicadores', wsId] })}
           className="mt-4 text-sm font-medium text-[#1B5E8F] underline underline-offset-2">
           Reintentar
         </button>
@@ -319,8 +300,11 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
           )}
           <button
             onClick={async () => {
-              await fetch(`/api/google/sheets?wsId=${wsId}&refresh=true`);
-              void refetch();
+              const res = await fetch(`/api/google/sheets?wsId=${wsId}&refresh=true`);
+              if (res.ok) {
+                const fresh: IndicadorMonitoreo[] = await res.json();
+                queryClient.setQueryData(['monitoreo', 'indicadores', wsId], fresh);
+              }
             }}
             className="text-[12px] font-medium text-[#4A5568] dark:text-[#A0B4C8] bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] px-3 py-1.5 rounded-[4px] hover:border-[#1B5E8F] hover:text-[#1B5E8F] transition-colors">
             Actualizar
@@ -394,30 +378,37 @@ export function UnidadDashboard({ wsId }: { wsId: string }) {
         </div>
       )}
 
-      {/* ── Trend chart ── */}
-      <div className="flex items-center gap-2.5">
-        <span className="text-[11px] font-bold uppercase tracking-[.1em] text-[#718096]">
-          Tendencia de cumplimiento
-        </span>
-        <div className="flex-1 h-px bg-[#CBD5E1] dark:bg-[#243347]" />
-        <span className="text-[11px] text-[#718096] bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] rounded-full px-2 py-px">
-          Ene – Dic 2026
-        </span>
-      </div>
+      {/* ── Trend chart — only shown when GAS has historial data ── */}
+      {(() => {
+        const trendData = computeTrend(indicadores);
+        if (trendData.length === 0) return null;
+        return (
+          <>
+            <div className="flex items-center gap-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-[.1em] text-[#718096]">
+                Tendencia de cumplimiento
+              </span>
+              <div className="flex-1 h-px bg-[#CBD5E1] dark:bg-[#243347]" />
+              <span className="text-[11px] text-[#718096] bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] rounded-full px-2 py-px">
+                Ene – Dic {new Date().getFullYear()}
+              </span>
+            </div>
 
-      <div className="bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] rounded-[6px] p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-[12px] font-semibold uppercase tracking-[.06em] text-[#4A5568] dark:text-[#A0B4C8]">
-            % cumplimiento mensual
-          </span>
-          <div className="flex gap-3 text-[11px] text-[#718096]">
-            <span><span className="inline-block w-2 h-2 rounded-[2px] bg-[#1B5E8F] mr-1 opacity-65 align-middle" />Real</span>
-            <span><span className="inline-block w-2 h-2 rounded-[2px] bg-[#CBD5E1] mr-1 align-middle" />Proyectado</span>
-            <span><span className="inline-block w-2 h-2 rounded-[2px] bg-[#DC2626] mr-1 opacity-50 align-middle" />Meta mín. (60%)</span>
-          </div>
-        </div>
-        <TrendChart trendData={MOCK_TREND} />
-      </div>
+            <div className="bg-white dark:bg-[#162032] border border-[#CBD5E1] dark:border-[#243347] rounded-[6px] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[12px] font-semibold uppercase tracking-[.06em] text-[#4A5568] dark:text-[#A0B4C8]">
+                  % cumplimiento mensual
+                </span>
+                <div className="flex gap-3 text-[11px] text-[#718096]">
+                  <span><span className="inline-block w-2 h-2 rounded-[2px] bg-[#1B5E8F] mr-1 opacity-65 align-middle" />Real</span>
+                  <span><span className="inline-block w-2 h-2 rounded-[2px] bg-[#DC2626] mr-1 opacity-50 align-middle" />Meta mín. (60%)</span>
+                </div>
+              </div>
+              <TrendChart trendData={trendData} />
+            </div>
+          </>
+        );
+      })()}
 
     </div>
   );

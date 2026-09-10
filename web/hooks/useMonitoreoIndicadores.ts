@@ -17,8 +17,9 @@ export function useMonitoreoIndicadores(wsId: string) {
   return useQuery<IndicadorMonitoreo[], Error>({
     queryKey: ["monitoreo", "indicadores", wsId],
     queryFn: () => fetchIndicadores(wsId),
-    staleTime: 1000 * 60 * 5,       // 5 min
-    refetchInterval: 1000 * 60 * 10, // auto-refresh 10 min
+    staleTime: 1000 * 60 * 5,
+    refetchInterval: 1000 * 60 * 10,
+    refetchIntervalInBackground: false,
     retry: 2,
   });
 }

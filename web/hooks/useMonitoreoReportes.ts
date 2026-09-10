@@ -15,6 +15,7 @@ export function useMonitoreoReportes(wsId: string) {
     queryFn: () => fetchReportes(wsId),
     staleTime: 1000 * 60 * 5,
     refetchInterval: 1000 * 60 * 10,
+    refetchIntervalInBackground: false,
     retry: 2,
   });
 }

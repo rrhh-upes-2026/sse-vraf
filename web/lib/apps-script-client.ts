@@ -27,13 +27,18 @@ export function getAppsScriptClient(): AppsScriptClient {
         throw new Error(text || `Apps Script error ${res.status}`);
       }
 
-      const data = await res.json() as { ok?: boolean; error?: string; data?: T } | T;
+      const data = await res.json() as unknown;
 
-      // Handle wrapped { ok, data } or { error } envelope
+      // Handle GAS envelope: { error: true, code: number, message: string } or { ok: true, data: T }
       if (data && typeof data === "object" && !Array.isArray(data)) {
-        const envelope = data as { ok?: boolean; error?: string; data?: T };
-        if (envelope.error) throw new Error(envelope.error);
-        if ("data" in envelope && envelope.data !== undefined) return envelope.data as T;
+        const obj = data as Record<string, unknown>;
+        if (obj["error"] === true) {
+          const message = typeof obj["message"] === "string" ? obj["message"] : "Error de Apps Script";
+          const err = new Error(message) as Error & { gasCode?: number };
+          err.gasCode = typeof obj["code"] === "number" ? obj["code"] : 400;
+          throw err;
+        }
+        if ("data" in obj && obj["data"] !== undefined) return obj["data"] as T;
       }
 
       return data as T;
