@@ -3,14 +3,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { UNIDADES } from '@/types/unidad';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Indicador } from '@/types/indicador';
+import type { IndicadorMonitoreo } from '@/services/monitoreo';
 import type { UnidadConfig } from '@/types/unidad';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface UnitData {
   unidad: UnidadConfig;
-  indicadores: Indicador[];
+  indicadores: IndicadorMonitoreo[];
 }
 
 interface UnitMetrics {
@@ -19,10 +19,11 @@ interface UnitMetrics {
   pct: number;
   pctMensual: number | null;
   pctGeneral: number | null;
-  semaforo: 'verde' | 'amarillo' | 'rojo';
+  semaforo: 'verde' | 'amarillo' | 'rojo' | 'gris';
   verdeCount: number;
   amarilloCount: number;
   rojoCount: number;
+  grisCount: number;
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -47,7 +48,7 @@ function IconRefresh({ className }: { className?: string }) {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function computeUnitMetrics(unidad: UnidadConfig, indicadores: Indicador[]): UnitMetrics {
+function computeUnitMetrics(unidad: UnidadConfig, indicadores: IndicadorMonitoreo[]): UnitMetrics {
   const count = indicadores.length;
 
   // Avance mensual: average porcentaje of indicators with a current result
@@ -69,11 +70,15 @@ function computeUnitMetrics(unidad: UnidadConfig, indicadores: Indicador[]): Uni
   const verdeCount    = indicadores.filter((i) => i.semaforo === 'verde').length;
   const amarilloCount = indicadores.filter((i) => i.semaforo === 'amarillo').length;
   const rojoCount     = indicadores.filter((i) => i.semaforo === 'rojo').length;
+  const grisCount     = indicadores.filter((i) => i.semaforo === 'gris').length;
 
   const semaforo: UnitMetrics['semaforo'] =
-    rojoCount > 0 ? 'rojo' : amarilloCount > 0 ? 'amarillo' : 'verde';
+    rojoCount > 0    ? 'rojo'
+    : amarilloCount > 0 ? 'amarillo'
+    : verdeCount > 0    ? 'verde'
+    : 'gris';
 
-  return { unidad, count, pct, pctMensual, pctGeneral, semaforo, verdeCount, amarilloCount, rojoCount };
+  return { unidad, count, pct, pctMensual, pctGeneral, semaforo, verdeCount, amarilloCount, rojoCount, grisCount };
 }
 
 function formatDate(iso: string): string {
@@ -114,9 +119,10 @@ function StatTile({ label, value, sub, valueColor = 'text-sse-ink', accent }: St
 // ── Semáforo chip ─────────────────────────────────────────────────────────────
 
 const CHIP_STYLE = {
-  verde:    { bg: 'bg-[#DCFCE7]',   text: 'text-[#15803D]',   label: 'En meta'   },
-  amarillo: { bg: 'bg-[#FEF9C3]',   text: 'text-[#A16207]',   label: 'En riesgo' },
-  rojo:     { bg: 'bg-[#FEE2E2]',   text: 'text-[#B91C1C]',   label: 'Crítico'   },
+  verde:    { bg: 'bg-[#DCFCE7]',   text: 'text-[#15803D]',   label: 'En meta'      },
+  amarillo: { bg: 'bg-[#FEF9C3]',   text: 'text-[#A16207]',   label: 'En riesgo'    },
+  rojo:     { bg: 'bg-[#FEE2E2]',   text: 'text-[#B91C1C]',   label: 'Crítico'      },
+  gris:     { bg: 'bg-[#F3F4F6]',   text: 'text-[#6B7280]',   label: 'Sin datos'    },
 } as const;
 
 function SemaforoChip({ semaforo }: { semaforo: keyof typeof CHIP_STYLE }) {
@@ -250,8 +256,8 @@ export function DashboardEjecutivo() {
       const settled = await Promise.allSettled(
         UNIDADES.filter((u) => u.activo).map(async (unidad) => {
           const res = await fetch(`/api/google/sheets?wsId=${unidad.id}`);
-          if (!res.ok) return { unidad, indicadores: [] as Indicador[] };
-          const indicadores: Indicador[] = await res.json();
+          if (!res.ok) return { unidad, indicadores: [] as IndicadorMonitoreo[] };
+          const indicadores: IndicadorMonitoreo[] = await res.json();
           return { unidad, indicadores };
         }),
       );
@@ -268,7 +274,7 @@ export function DashboardEjecutivo() {
     computeUnitMetrics(unidad, indicadores),
   );
 
-  const allIndicadores = unitsData.flatMap((u) => u.indicadores);
+  const allIndicadores: IndicadorMonitoreo[] = unitsData.flatMap((u) => u.indicadores);
   const totalIndicadores = allIndicadores.length;
   const enRiesgo = allIndicadores.filter((i) => i.semaforo === 'amarillo').length;
   const criticos = allIndicadores.filter((i) => i.semaforo === 'rojo').length;

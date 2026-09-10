@@ -19,7 +19,7 @@ export function getAppsScriptClient(): AppsScriptClient {
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ method, params }),
+        body: JSON.stringify({ action: method, params }),
       });
 
       if (!res.ok) {

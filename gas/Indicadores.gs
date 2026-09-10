@@ -218,7 +218,7 @@ function parseRow(row, colIndex, monthlyColumns, seq) {
   if (monthlyColumns.length > 0) {
     var current  = getCurrentResultado(row, monthlyColumns);
     resultado    = current.resultado;
-    fechaResultado = current.mes ? (current.mes + ' 2026') : '';
+    fechaResultado = current.mes ? (current.mes + ' ' + new Date().getFullYear()) : '';
     historial    = buildHistorialFromMonthly(row, monthlyColumns);
   } else {
     resultado    = parseNumber(getCellValue(row, colIndex, 'resultado'));
@@ -265,8 +265,14 @@ function getCellValue(row, colIndex, field) {
 function parseNumber(val) {
   if (val === '' || val === null || val === undefined) return null;
   if (typeof val === 'number') return isNaN(val) ? null : val;
-  var str = String(val).replace(/[%\s]/g, '').replace(',', '.');
-  var n   = parseFloat(str);
+  var str = String(val).replace(/[%\s]/g, '');
+  // Spanish format: "1.234,5" → dots are thousands, comma is decimal
+  if (str.indexOf('.') !== -1 && str.indexOf(',') !== -1) {
+    str = str.replace(/\./g, '').replace(',', '.');
+  } else {
+    str = str.replace(/,/g, '.');
+  }
+  var n = parseFloat(str);
   return isNaN(n) ? null : n;
 }
 
